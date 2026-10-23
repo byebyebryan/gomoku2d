@@ -123,31 +123,22 @@ copied `index.html` entries.
 
 ## v0.6.1 sharing release and compatibility
 
-The [v0.6.1 release plan](../../working/v0_6_1_release_plan.md) records the
-production baseline, scoped index changes, ordered checkpoints and public
-acceptance handoff for the first sharing publication. Release execution is
-authorized, and the version/changelog/product documentation are prepared
-locally as a direct follow-up to `v0.5.5`; the release is not published yet.
-Exact-head CI, backend preparation, tagging, deployment and public acceptance
-remain ordered release gates.
+### Rules-first sequence for sharing releases
 
-For the first sharing release:
+1. Freeze the reviewed `main` SHA and require exact-SHA CI success.
+2. Before tagging, manually deploy Firestore rules from that frozen SHA. Read
+   back the release pointer and source, and retain the previous ruleset ID.
+3. Apply only the reviewed single-field index changes through the scoped
+   operation. The rules workflow does not deploy index configurations. Read
+   back every field and verify unrelated settings remain unchanged.
+4. Tag only after both backend checkpoints succeed. The tag-triggered Release,
+   Pages and Firestore workflows run independently; do not rely on their
+   scheduling for rules-first order. Require all three to succeed on the tag
+   SHA, then verify deployed source and served bytes.
 
-1. Record the currently served web SHA and previous Firestore ruleset ID.
-2. After the reviewed preparation commit reaches `main` and exact-head CI passes,
-   manually dispatch the existing Firestore workflow on reviewed `main`
-   **before** publishing the new web app.
-   This additive ruleset retains schema-5 profile writes and opens the two
-   schema-1 sharing families. Verify its live release pointer and scoped access.
-3. Apply the reviewed `firestore.indexes.json` exemptions through the documented
-   scoped index deployment. The existing rules-only workflow does not deploy
-   indexes. Record their actual applied state; checked-in JSON is not evidence
-   of deployed exemptions. New functionality uses direct document gets and does
-   not require composite indexes, but payload indexing affects retained cost.
-4. Publish the web release using the established workflow. Tag workflows run
-   independently, so do not rely on their scheduling to provide rules-first
-   order. Verify direct HTTP success for `/replay/shared/` and `/player/`, then
-   disposable-account publication, guest viewing and cleanup against the host.
+`v0.6.1` is published. Its verified source, workflow runs, production checks,
+rules/index readbacks and pending signed-in acceptance are in the
+[release record](../../archive/v0_6_1_release.md).
 
 Compatibility and rollback:
 
@@ -183,6 +174,8 @@ Compatibility and rollback:
   it is not a compatible sharing rollback. Record and verify the selected
   web/rules pairing instead of treating either deployment alone as recovery.
 
-Local fixtures and limits live in the [candidate evidence](../../working/v0_6_evidence/README.md).
-Real OAuth, physical devices, human screen-reader use and public-host acceptance
-remain separate from emulator and desktop-engine automation.
+Local fixtures and limits live in the [candidate evidence](../../working/v0_6_1_evidence/README.md).
+The signed-in public-sharing round trip remains pending separately from
+emulator and desktop-engine automation. Historical physical-device/touch,
+human screen-reader/zoom, two-device private account/reset, and novice-feedback
+deferrals remain in force.

@@ -4,7 +4,16 @@ This roadmap tracks current sequencing. Completed phase detail lives in
 [`release_history.md`](../../archive/release_history.md); this file should stay
 short enough to answer "what is next and why?"
 
-## Current State: `v0.6.1` Release Preparation
+## Current State: `v0.6.1` Published; Acceptance Follow-up Open
+
+`v0.6.1` was published on October 23, 2026 as the direct successor to
+`v0.5.5`, adding shareable replays, saved continuations, opt-in public profiles
+and dated statistics. The real signed-in profile/statistics/game-publication
+round trip remains pending; see the
+[release record](../../archive/v0_6_1_release.md) for the verified deployment
+and open acceptance items.
+
+### Earlier `0.5.x` review closeout
 
 `v0.5.4` marked the July public-release reconciliation checkpoint. The product
 carries a complete local loop across play, configurable bots and hints, saved
@@ -51,11 +60,11 @@ Historical execution and findings:
 - [`v0.5.4 Reconciliation Findings`](../../archive/v0_5_4_findings.md)
 - [`v0.5 Public Release Plan`](../../archive/v0_5_public_release_plan.md)
 
-## `v0.6.1` Prepared Release: Public Profiles and Shareable Replays
+## `v0.6.1` Release: Public Profiles and Shareable Replays
 
 The v0.6 sharing and public-profile work, together with the v0.6.1 functional
-profile and presentation pass, is prepared as a direct successor to `v0.5.5`;
-there is no intermediate `v0.6.0` release. The [design draft](../../working/v0_6_profiles_and_replays.md)
+profile and presentation pass, shipped as a direct successor to `v0.5.5`; there
+was no intermediate `v0.6.0` release. The [design draft](../../working/v0_6_profiles_and_replays.md)
 maps the private/public profile split, portable replay links, explicit saving
 and publishing, replay continuations, public-page flows, and cost/lifecycle
 boundaries. Detailed technical bounds are fixed in the portable/sharing
@@ -63,11 +72,15 @@ reference contracts. M0–M5 and local M6 acceptance are complete; the
 [Luna execution record](../../working/v0_6_execution.md) and
 [evidence ledger](../../working/v0_6_evidence/README.md) record local acceptance.
 
-The version, changelog, product inventory, and release wording are prepared.
-Exact-head CI, rules/index preparation, tagging, deployment and public
-acceptance are the remaining ordered release gates; this preparation does not
-claim publication. The [v0.6.1 release plan](../../working/v0_6_1_release_plan.md)
-and [candidate evidence](../../working/v0_6_1_evidence/README.md) track them.
+Exact-source CI, backend preparation, tag workflows, served-byte parity and
+production-safe automated browser acceptance are complete. The real signed-in
+profile/statistics/game-publication round trip and existing physical-device,
+human accessibility, two-device account/reset and novice-feedback checks
+remain open or deferred as recorded in the
+[release record](../../archive/v0_6_1_release.md). The
+[v0.6.1 release plan](../../working/v0_6_1_release_plan.md) and local
+[evidence ledger](../../working/v0_6_1_evidence/README.md) preserve the release
+sequence and candidate evidence.
 
 The [0.6.1 functional public-profile pass](../../working/v0_6_1_public_profile.md)
 implements a full Profile tab, independently opt-in dated statistics snapshots,

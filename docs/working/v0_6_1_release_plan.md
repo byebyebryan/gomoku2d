@@ -1,7 +1,12 @@
 # v0.6.1 release plan
 
-Owner: Bryan. Release execution authorized October 23, 2026.
-This plans a direct `v0.5.5` to `v0.6.1` publication. It does not require an
+Owner: Bryan. `v0.6.1` was published on October 23, 2026; see the
+[release record](../archive/v0_6_1_release.md) for execution receipts and
+remaining acceptance. Exact-source CI, backend rollout, tag workflows,
+served-artifact parity and the production-safe browser smoke are complete. The
+real signed-in sharing round trip remains pending; this plan records the
+executed sequence and its remaining gate.
+This plan covers a direct `v0.5.5` to `v0.6.1` publication. It does not require an
 intermediate `v0.6.0` release. The maintained
 [release workflow](../reference/ops/release.md) owns the general process;
 this document fixes the scope, ordering and acceptance for this release.
@@ -19,12 +24,16 @@ Release theme: **share games and public player profiles**.
 - Do not add infrastructure, billing-plan changes, automatic statistics writes,
   polling or per-move cloud traffic to ship this release.
 
-The [final integrated review](v0_6_1_evidence/wrap_review.json) found no remaining
-functional/privacy/data-integrity defect: 493 web units, 49 rules/SDK checks,
-219 ordinary browser passes with six intentional WebGL skips, 42 cloud journeys,
-45 three-worker race repetitions, 18 clean accessibility audits, build/types,
-12 direct routes and the production npm audit passed. Retain these receipts;
-release CI must qualify the final preparation commit separately.
+The [final integrated review](v0_6_1_evidence/wrap_review.json) found no
+remaining functional/privacy/data-integrity defect: 493 web units, 49 rules/SDK
+checks, 219 ordinary browser passes with six intentional WebGL skips, 42 cloud
+journeys, 45 three-worker race repetitions, 18 clean accessibility audits,
+build/types, 12 direct routes and the production npm audit passed. Exact-source
+CI also passed with 348 Rust tests and those integrated web, rules, browser,
+cloud and race results. After deployment, all 89 selected served files matched
+the Pages artifact and the production smoke passed 96 checks with six
+intentional WebGL skips and no failures. The
+[release record](../archive/v0_6_1_release.md) links exact workflow identities.
 
 Read-only baseline immediately before version/documentation preparation,
 October 23, 2026:
@@ -42,23 +51,20 @@ October 23, 2026:
 | Five new sharing field exemptions | Not applied; fields still inherit the standard indexes |
 | OAuth | Live Firebase recorded Google sign-ins at 11:44:36 and 11:47:19 Pacific; Bryan reports renaming the client removed its inactivity warning |
 
-Current public HTML SHA-256:
+Pre-release public HTML SHA-256:
 `f5c4a0b2d8edb932e61b45a08ecc6408f616cd6b151268a2a3b2cb52e99f8e5e`.
-Entry script `/assets/index-DVVTG5oM.js` SHA-256:
+Pre-release entry script `/assets/index-DVVTG5oM.js` SHA-256:
 `e9c8c0e5a559e8e0328516395ea8aa6d5bbf248bff751e6be80f29d1b8ae39dd`.
-Refresh the baseline immediately before execution; do not infer live state from
-the recorded IDs alone. The version and release-documentation updates are now
-prepared locally. Fresh release-preparation production npm and Rust audits both
-passed with zero vulnerabilities; the Rust audit also reported zero warnings.
-The full npm audit retains three moderate dev-only affected entries through
-Firebase CLI, with no dependency resolution change. The production-configured
-0.6.1 build passed with the visible version and 12/12 direct entries at byte
-parity; current reports retain `git_dirty: false` provenance. A focused
-three-engine replay/profile/colour smoke passed 18 checks with six intentional
-Firefox/WebKit WebGL pixel skips. Exact-commit CI and the live rollout gates
-remain pending; the release has not been published.
+This table is a pre-preparation baseline; it is not current deployed state.
+The frozen source `b1a67d32feee5b57275e3d04c684e27bcd1a571f` is tagged and
+published. CI, GitHub Release, Firestore rules, and Pages workflows succeeded.
+The five planned field exemptions were applied and read back, with the four
+private-history settings unchanged. Served artifact parity and automated
+public-origin checks passed; the real signed-in sharing round trip remains
+pending. See the linked release record for exact workflow IDs, ruleset evidence,
+and retained manual deferrals.
 
-## 1. Prepare one release commit
+## 1. Prepare one release commit — complete
 
 1. Recheck clean branch, remote head and absent `v0.6.1` tag. Preserve any new
    concurrent work; use an isolated checkout if it prevents a clean release.
@@ -79,11 +85,12 @@ remain pending; the release has not been published.
    as 8014; preserve the manual preview/emulators and unrelated port 8001.
 7. Review and commit only preparation files. Record the resulting source SHA.
 
-**Checkpoint:** a concrete, clean release commit with correct version, release
-copy, fresh audits and build evidence. Existing integrated test evidence remains
-attached; any runtime/dependency fix reopens its affected validation gates.
+**Checkpoint passed:** release commit `b1a67d32feee5b57275e3d04c684e27bcd1a571f`
+has the `0.6.1` version and dated changelog. The production-configured build,
+advisory checks and focused smoke passed; existing integrated test evidence
+remains attached. Any future runtime/dependency fix reopens its affected gates.
 
-## 2. Push main and qualify the exact commit
+## 2. Push main and qualify the exact commit — complete
 
 Push the reviewed preparation commit directly to `main`, following the
 repository's existing workflow. This push starts CI; the deployment workflows
@@ -102,11 +109,14 @@ lane. Preserve the six intentional Firefox/WebKit WebGL skips explicitly.
 Any fix requires a new preparation commit and CI success on that new SHA.
 Freeze the selected `main` SHA through backend preparation and tagging.
 
-**Checkpoint:** pushed clean main, correct version/changelog, successful CI for
-that exact SHA. `scripts/release.sh --check 0.6.1` must pass before tagging;
-the script does not itself prove CI or production deployment readiness.
+**Checkpoint passed:** exact-source CI run
+[40027552184](https://github.com/byebyebryan/gomoku2d/actions/runs/40027552184)
+and `scripts/release.sh --check 0.6.1` succeeded before tagging. The original
+run `40026924846` caught a timezone-specific unit expectation; its fixture date
+assertion was corrected and passed in both UTC and America/Los_Angeles before
+the final CI run.
 
-## 3. Prepare the backend before publishing the web app
+## 3. Prepare the backend before publishing the web app — complete
 
 1. Capture the current Pages deployment/tag/SHA and served hashes, Firestore
    release pointer and source, and the nine reviewed field configurations.
@@ -135,11 +145,14 @@ the script does not itself prove CI or production deployment readiness.
    the reviewed additive version. A source/pointer comparison does not replace
    the end-user sharing acceptance in step 5.
 
-**Checkpoint:** the new rules and all five sharing exemptions are verified live
-before any new web release. No database migration, user-data reset or new
-service is needed. If this checkpoint fails, do not push the release tag.
+**Checkpoint passed:** pre-tag rules workflow
+[40029725502](https://github.com/byebyebryan/gomoku2d/actions/runs/40029725502)
+succeeded. Ruleset `dccb94b6-7dc7-41a5-bdf2-d9c807fb07f9` matched the reviewed
+source hash; all five exemptions were read back and the four private-history
+settings stayed unchanged. No database migration, user-data reset or new
+service was needed.
 
-## 4. Publish v0.6.1
+## 4. Publish v0.6.1 — complete
 
 1. Reconfirm the chosen `main` SHA, exact-commit CI success, clean tree and live
    backend checkpoint. Run `scripts/release.sh --check 0.6.1`.
@@ -154,23 +167,28 @@ service is needed. If this checkpoint fails, do not push the release tag.
 5. Verify release title/body/version, deployed Pages source identity and served
    artifact bytes, including entry JS/CSS/Wasm and the direct public routes.
 
-**Checkpoint:** the public web build and live rules match the selected release,
-all workflows succeeded, and the applied exemptions remain in place. A GitHub
-Release appearing by itself is not the completion gate.
+**Checkpoint passed:** tag `v0.6.1` peels to the frozen source SHA. The GitHub
+Release [40031565001](https://github.com/byebyebryan/gomoku2d/actions/runs/40031565001),
+Firestore rules [40031565082](https://github.com/byebyebryan/gomoku2d/actions/runs/40031565082),
+and Pages [40031565071](https://github.com/byebyebryan/gomoku2d/actions/runs/40031565071)
+workflows succeeded. Pages deployment `7289818516` serves the selected release
+artifact; the post-tag ruleset is recorded in the release receipt.
 
 ## 5. Accept the actual public release and close the receipt
 
-Automate production-safe checks in fresh headless contexts across the three
-engines: visible version, Home/Guide/Rules/Profile, reports/assets, local bot
-play, finished-game replay, portable links and continuation. Check Canvas
-colours explicitly and WebGL where qualified. Verify HTTP success for
-`/replay/shared/` and `/player/` and compare selected served files with the
-actual Pages deployment artifact. Do not point the destructive emulator cloud
-suite at production.
+The production-safe smoke passed 96 checks with six intentional WebGL skips
+and no failures in fresh headless contexts across Chromium, Firefox and WebKit.
+It covered visible version, public routes, reports/assets, local bot play,
+finished-game replay, portable links, continuations, Canvas colours and
+qualified WebGL. All 89 selected served files, including 12 direct/static
+routes, matched the Pages deployment artifact. The destructive emulator cloud
+suite was not pointed at production.
 
-One real signed-in round trip remains, using a designated disposable Google
-test account and synthetic game. If a signed-in browser is unavailable, Bryan
-performs these UI actions while the agent handles guest checks and receipts:
+One real signed-in round trip remains pending, using a designated disposable
+Google test account and synthetic game. It has not been counted as passed or
+explicitly deferred. When a test account and signed-in browser are available,
+Bryan performs these UI actions while the agent handles guest checks and
+receipts:
 
 1. Sign in on the deployed site, complete a short local game on the test
    account, and open the public-profile tab.
@@ -190,12 +208,12 @@ scope from this new publication/view/cleanup round trip. If the real round trip
 is not performed, record publication as deployed with that acceptance pending;
 do not silently call it a passed check.
 
-Close a release receipt with preparation/tag SHAs, exact CI and all deployment
-run IDs, Pages deployment/artifact and served hashes, previous/current ruleset
-IDs/source hashes, before/after index settings, smoke results, OAuth/public
-sharing evidence and cleanup. Keep local raw material under ignored
-`gomoku-bot-lab/outputs/release-prep/0.6.1/` and a concise tracked receipt under
-`docs/archive/`. Any receipt-only follow-up commit leaves the release tag fixed.
+The [release receipt](../archive/v0_6_1_release.md) records preparation/tag
+SHAs, exact CI and deployment run IDs, Pages deployment/artifact and served
+hashes, previous/current ruleset IDs/source hashes, before/after index
+settings, browser smoke and the pending signed-in sharing gate. Raw material is
+under ignored `gomoku-bot-lab/outputs/release-prep/0.6.1/`. Any receipt-only
+follow-up commit leaves the release tag fixed.
 
 Carry forward physical-device/touch performance, human screen-reader/zoom,
 two-device private account/reset and novice-feedback deferrals unless new

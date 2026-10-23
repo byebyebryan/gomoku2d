@@ -116,21 +116,17 @@ lists checks by area.
 
 ## Project Status
 
-The `0.6.1` version and release documentation are prepared as the direct
-successor to `v0.5.5`, with shareable games and opt-in public player profiles.
-There is no intermediate `v0.6.0` release. The release has not been published;
-exact-head CI, backend preparation, tagging, deployment, and public acceptance
-remain to be completed.
+`v0.6.1` is published as the direct successor to `v0.5.5`, adding shareable
+replays, saved continuations, opt-in public profiles and dated statistics. A
+real signed-in sharing round trip remains pending; see the
+[release record](docs/archive/v0_6_1_release.md) for evidence and open gates.
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
 [v0.6.1 changelog](CHANGELOG.md#061---2026-10-23) ·
 [Roadmap](docs/reference/product/roadmap.md)
 
-The local review receipts and remaining release gates are in the
-[v0.6.1 candidate evidence](docs/working/v0_6_1_evidence/README.md) and
-[release plan](docs/working/v0_6_1_release_plan.md). The accepted account,
-device, and human accessibility deferrals remain recorded in the
-[October release preparation record](docs/archive/v0_5_5_release_preparation.md).
+Detailed candidate evidence and retained manual acceptance deferrals are in
+the [acceptance ledger](docs/working/v0_6_1_evidence/README.md).
 
 ## Project References
 

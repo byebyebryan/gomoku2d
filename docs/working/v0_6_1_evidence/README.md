@@ -6,32 +6,40 @@ contracts, extracted shared played-game stats, isolated cloud acceptance from
 the manual preview, and owns integration and final acceptance. This historical
 functional checkpoint did not include a release, push or production deployment.
 
-## Current release preparation
+## Current publication
 
-Release execution was authorized on October 23, 2026. The web version and
-release-facing documentation are prepared locally for `0.6.1`, directly after
-`v0.5.5`; no intermediate `v0.6.0` release is planned. The receipts below
-record local candidate evidence at their stated source revisions. They do not
-qualify the final preparation commit or establish a public release.
+The direct `v0.5.5` successor `v0.6.1` was tagged and published on October 23,
+2026 from `b1a67d32feee5b57275e3d04c684e27bcd1a571f`; there was no intermediate
+`v0.6.0` release. Final CI and the GitHub Release, Firestore rules, and Pages
+workflows succeeded. The [release record](../../archive/v0_6_1_release.md)
+contains exact source/workflow identities, rules/index readbacks, served-byte
+parity, production browser results and remaining acceptance gates.
+
+All 89 selected served files match Pages deployment `7289818516`, including 12
+verified direct/static routes. The deployed Home shows `v0.6.1`; the smoke
+observed no page errors. The tag-triggered rules workflow succeeded and the
+post-tag ruleset source was read back. Production browser smoke passed 96
+checks, with six intentional WebGL skips and no failures, across Chromium,
+Firefox and WebKit. It exercised guest/local play, replay, profile, saved
+library, continuation and Canvas colour flows; the three WebGL pixel checks in
+each of Firefox and WebKit are the intentional skips.
+
+The real signed-in profile/statistics/game-publication round trip remains
+pending and has not been counted as a pass or explicitly deferred. No
+designated test account/data was supplied. Earlier real Google sign-ins and
+the reported cleared OAuth warning do not close that gate.
 
 Fresh release-preparation production npm and Rust advisory audits passed with
 zero vulnerabilities; the Rust audit also reported zero warnings using
 advisory DB `84d943a6deeb8cc6c6f632531aaf4f1c62275239` (1,351 advisories). The
-full npm audit retains three moderate dev-only affected entries through Firebase
+full npm audit retained three moderate dev-only affected entries through Firebase
 CLI (`firebase-tools` → `@google-cloud/pubsub` → `@opentelemetry/core`,
 GHSA-8988-4f7v-96qf), with no dependency resolution change. The production-
 configured `0.6.1` build passed with the visible version and 12/12 direct
-entries at byte parity; current reports retain `git_dirty: false` provenance.
+entries at byte parity; current reports retained `git_dirty: false` provenance.
 The focused three-engine replay/profile/colour smoke passed 18 checks with six
-intentional Firefox/WebKit WebGL pixel skips. Exact-commit CI remains pending.
-Raw check logs are under `gomoku-bot-lab/outputs/release-prep/0.6.1/`.
-
-Rules/index rollout, tagged deployment, and a production signed-in
-sharing/public-profile round trip also remain pending. Google sign-ins were
-recorded and Bryan reports that renaming the OAuth client cleared its inactivity
-warning; this is separate from the new-sharing round trip. Track these release
-gates in the [release plan](../v0_6_1_release_plan.md) and record deployment
-evidence in the future release receipt.
+intentional Firefox/WebKit WebGL pixel skips. Raw local check logs are under
+`gomoku-bot-lab/outputs/release-prep/0.6.1/`.
 
 ## Evidence boundaries
 
@@ -44,7 +52,8 @@ evidence in the future release receipt.
   or human assistive-technology acceptance.
 - The manual Carbon URL is forwarded to Starship's loopback demo preview and
   Auth/Firestore emulators. Test lanes use separate ports and disposable data.
-- Real Google OAuth and public-host/release acceptance remain separate. The
+- Real Google OAuth/public-sharing acceptance remains separate from guest
+  production-browser acceptance. The
   initial profile checkpoint included no rendering/core changes; the later
   colour remediation below closes the Canvas finding without core changes.
 

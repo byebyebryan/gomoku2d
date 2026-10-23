@@ -101,3 +101,21 @@ checkpoint rather than inherited cleanup.
 Historical plan: [`v0_5_public_release_plan.md`](v0_5_public_release_plan.md).
 Closeout plan:
 [`v0_5_4_reconciliation_plan.md`](v0_5_4_reconciliation_plan.md).
+
+`v0.5.5` packaged the October correctness, recovery, accessibility and mobile
+Rules/Guide closeout. Its [preparation record](v0_5_5_release_preparation.md)
+retains the packaging evidence and manual acceptance limits.
+
+## `v0.6` Shareable Replays And Public Profiles
+
+Published as `v0.6.1`, directly after `v0.5.5`: self-contained finished-game
+links, explicit private replay saves, ordinary continuation games, and opt-in
+public profiles with dated statistics and bounded game catalogs. Sharing and
+publishing use the existing UI patterns; the release also fixes board colours
+across Canvas and WebGL.
+
+Public sharing remains separate from private history and cloud continuity.
+Gameplay and analysis stay in the browser, and multiplayer remains deferred.
+The [release record](v0_6_1_release.md) records the verified deployment,
+automated production acceptance, pending real signed-in sharing round trip,
+and retained human/device deferrals.

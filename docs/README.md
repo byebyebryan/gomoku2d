@@ -7,24 +7,24 @@ historical context belongs in [`archive/`](archive/).
 
 ## Current Status
 
-The October `0.5.x` reconciliation, systematic code review, and selected mobile
-Rules/Guide refinement are complete on `main` and packaged in the prepared
-`0.5.5` patch. The [release preparation record](archive/v0_5_5_release_preparation.md)
-tracks packaging and acceptance limits; [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
-identifies the currently published build. Start with the
-[October closeout](archive/reconciliation_2026_10/README.md) for decisions,
-verification, and explicit acceptance deferrals, or the
-[roadmap](reference/product/roadmap.md) for what follows.
+`v0.6.1` is published with shareable replays, explicit saved copies, and opt-in
+public profiles, statistics and game catalogs. The
+[release record](archive/v0_6_1_release.md) owns deployment and automated
+production evidence, the pending real signed-in sharing check, and retained
+manual acceptance deferrals. [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
+identifies the published build; the [roadmap](reference/product/roadmap.md)
+tracks what follows. The earlier [October closeout](archive/reconciliation_2026_10/README.md)
+retains the `0.5.x` reconciliation decisions and evidence.
 
-The v0.6 local candidate implements public profiles and shareable replays. Its
+The v0.6 sharing work shipped in `v0.6.1`. Its
 [design draft](working/v0_6_profiles_and_replays.md) separates accepted scope
 from the original proposals; final formats and storage contracts live in
 [portable replay](reference/app/portable_replay.md) and
 [sharing data](reference/backend/sharing_data.md). The
 [implementation roadmap](working/v0_6_implementation_plan.md) sequences the guest
 sharing demo, private library, public publishing, and release checks.
-[Execution and evidence](working/v0_6_execution.md) record the local acceptance
-and separate release gates. Multiplayer research is retained as deferred work.
+[Execution and evidence](working/v0_6_execution.md) retain the local acceptance
+history. Multiplayer research is retained as deferred work.
 
 ## Choose A Path
 

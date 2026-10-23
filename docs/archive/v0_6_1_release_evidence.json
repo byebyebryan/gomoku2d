@@ -1,0 +1,1138 @@
+{
+  "release": "v0.6.1",
+  "recorded_at_utc": "2026-10-23T22:14:20.643539+00:00",
+  "status": "Published; automated production acceptance passed; real signed-in sharing acceptance pending.",
+  "source": {
+    "tag": "v0.6.1",
+    "commit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+    "annotated_tag_object": "a053bc552d7e7560f57d9f02f550d23d68fe7391",
+    "initial_preparation_commit": "789d5b1625ad2ff9b9a79fdab942478ded6e6e35",
+    "test_correction_commit": "b1a67d3",
+    "tagged_at": "2026-10-23T15:07:31-07:00"
+  },
+  "ci": {
+    "url": "https://github.com/byebyebryan/gomoku2d/actions/runs/40027552184",
+    "run_id": 40027552184,
+    "conclusion": "success",
+    "counts": {
+      "rust_workspace_tests": 348,
+      "web_units": 493,
+      "rules_sdk": 49,
+      "ordinary_browser": {
+        "passed": 219,
+        "skipped": 6
+      },
+      "cloud": 42,
+      "race_repetitions": 45,
+      "source": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+      "ci_run_id": 40027552184,
+      "race_workers": 1,
+      "race_repeat_each": 5
+    },
+    "earlier_failed_attempt": {
+      "sha": "789d5b1625ad2ff9b9a79fdab942478ded6e6e35",
+      "run_id": 40026924846,
+      "conclusion": "failure",
+      "cause": "One unit assertion hardcoded the Pacific date for a midnight-UTC public snapshot timestamp; no application defect."
+    },
+    "timezone_correction_validation": {
+      "UTC": {
+        "passed": 14
+      },
+      "America/Los_Angeles": {
+        "passed": 14
+      }
+    },
+    "local_parallel_race_supplement": {
+      "passed": 45,
+      "workers": 3,
+      "repeat_each": 5,
+      "source_receipt": "docs/working/v0_6_1_evidence/wrap_review.json",
+      "scope": "Prior local integrated candidate gate; separate from release CI."
+    }
+  },
+  "audits": {
+    "production_npm_vulnerabilities": 0,
+    "rust_vulnerabilities": 0,
+    "rust_informational_warnings": 0,
+    "rust_advisory_database": {
+      "advisory-count": 1351,
+      "last-commit": "84d943a6deeb8cc6c6f632531aaf4f1c62275239",
+      "last-updated": "2026-10-23T16:42:16+02:00"
+    },
+    "full_npm_dev_only": {
+      "moderate_affected_entries": 3,
+      "advisory": "GHSA-8988-4f7v-96qf",
+      "chain": "firebase-tools -> @google-cloud/pubsub -> @opentelemetry/core"
+    },
+    "dependency_resolution_changes": false
+  },
+  "publication_workflows": {
+    "release": {
+      "id": 40031565001,
+      "head_sha": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/byebyebryan/gomoku2d/actions/runs/40031565001",
+      "created_at": "2026-10-23T22:07:42Z",
+      "updated_at": "2026-10-23T22:08:01Z",
+      "event": "push"
+    },
+    "pages": {
+      "id": 40031565071,
+      "head_sha": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/byebyebryan/gomoku2d/actions/runs/40031565071",
+      "created_at": "2026-10-23T22:07:42Z",
+      "updated_at": "2026-10-23T22:09:03Z",
+      "event": "push"
+    },
+    "rules": {
+      "id": 40031565082,
+      "head_sha": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/byebyebryan/gomoku2d/actions/runs/40031565082",
+      "created_at": "2026-10-23T22:07:42Z",
+      "updated_at": "2026-10-23T22:07:56Z",
+      "event": "push"
+    }
+  },
+  "pages": {
+    "deployment_id": 7289818516,
+    "source_commit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+    "release_url": "https://github.com/byebyebryan/gomoku2d/releases/tag/v0.6.1",
+    "origin": "https://gomoku2d.byebyebryan.com/",
+    "index_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+    "entry_script": "/assets/index-CcWy7q8r.js",
+    "entry_sha256": "d60a151c7d3f48100208da77de13b34f57147e38e78247bc932ff900f1ef708d",
+    "artifact_id": 12534483135,
+    "artifact_tar_sha256": "9a313620517a189da4c2e26e8bb9a2aa5e96c1621dadce27fa383826250ad69a",
+    "verified_served_files": 89,
+    "verified_static_routes": 12,
+    "served_file_manifest": [
+      {
+        "path": "/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/guide/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/lab/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/match/local/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/privacy/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/profile/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/player/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/replay/shared/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/rules/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/settings/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/terms/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/visuals/",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4",
+        "served_sha256": "5b502c156b399a9db66ae82948f9181d66f7d94472ba2088e389a6565aaab8c4"
+      },
+      {
+        "path": "/og.png",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5270c76589e18c4dea8d35d567d08350134089bc4d8aebcfa0281348edacddb7",
+        "served_sha256": "5270c76589e18c4dea8d35d567d08350134089bc4d8aebcfa0281348edacddb7"
+      },
+      {
+        "path": "/assets/SharingPanels.module-qkviBkLZ.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "b2c2a1771395496bd422598a58df2559e0d2275bfa431254631375c114b3b9b4",
+        "served_sha256": "b2c2a1771395496bd422598a58df2559e0d2275bfa431254631375c114b3b9b4"
+      },
+      {
+        "path": "/assets/ProfileRoute-BSvRRF2y.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "d2fcfa8e83cdac99ddf7973f539bcdcae4683147d1d30cc98e38812e77dee5b3",
+        "served_sha256": "d2fcfa8e83cdac99ddf7973f539bcdcae4683147d1d30cc98e38812e77dee5b3"
+      },
+      {
+        "path": "/assets/jsx-runtime-7Zlu8Y5E.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "631bc431dbd6d276ae06a69ea6b526cfd488d3c3992c2e5b85c8d34310612ee6",
+        "served_sha256": "631bc431dbd6d276ae06a69ea6b526cfd488d3c3992c2e5b85c8d34310612ee6"
+      },
+      {
+        "path": "/assets/bot_config-BQyrbE-n.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "0dc9fccf06ce9b390c7123745d6a597c0b22bee6d07d0e86a8cac81a505ab663",
+        "served_sha256": "0dc9fccf06ce9b390c7123745d6a597c0b22bee6d07d0e86a8cac81a505ab663"
+      },
+      {
+        "path": "/assets/firebase-D9QeXs0u.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "bcdee33c8bf979eec0a28ad27d8527d7e3037fb19e8585b8e654557c092dec0a",
+        "served_sha256": "bcdee33c8bf979eec0a28ad27d8527d7e3037fb19e8585b8e654557c092dec0a"
+      },
+      {
+        "path": "/assets/SettingsRoute-Dh7LeZCo.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "f434a856d27e0d28066cc886a06e9853a4d49e37025f59659ca9161c4cfce4d3",
+        "served_sha256": "f434a856d27e0d28066cc886a06e9853a4d49e37025f59659ca9161c4cfce4d3"
+      },
+      {
+        "path": "/assets/PublicPlayerRoute-BkG9EP5J.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "da9733f3bc3f1131c5adc325fbe734e58dc04319b2d3f78417505810e7779cf6",
+        "served_sha256": "da9733f3bc3f1131c5adc325fbe734e58dc04319b2d3f78417505810e7779cf6"
+      },
+      {
+        "path": "/assets/rolldown-runtime-XKyaHtl9.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7",
+        "served_sha256": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7"
+      },
+      {
+        "path": "/assets/ReplayRoute-Vk219O_e.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "1c732321b1f02774c138fba64c2b1bd1747a614c135ce647b9c5cfcb29e0db4e",
+        "served_sha256": "1c732321b1f02774c138fba64c2b1bd1747a614c135ce647b9c5cfcb29e0db4e"
+      },
+      {
+        "path": "/assets/local_replay-D_wNot_M.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "ce0babcdf073a9ee8c40228d9aed429f9389d9f3eb9a777c1fccadca08dded01",
+        "served_sha256": "ce0babcdf073a9ee8c40228d9aed429f9389d9f3eb9a777c1fccadca08dded01"
+      },
+      {
+        "path": "/assets/ReplayRoute-BzbB2ylp.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "73c03f67b4316af87b72f9771741a4064349f855bae456173cce64d6085e92cc",
+        "served_sha256": "73c03f67b4316af87b72f9771741a4064349f855bae456173cce64d6085e92cc"
+      },
+      {
+        "path": "/assets/Board-ev2mndZK.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "eeef309417dfbdb542ba14c739ebf91de728d3701f865a6f6036d7a31b5da976",
+        "served_sha256": "eeef309417dfbdb542ba14c739ebf91de728d3701f865a6f6036d7a31b5da976"
+      },
+      {
+        "path": "/assets/constants-DKcsxR6O.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "6c98ff34ef26e8e4e8dc4aa3841abf5433a48525f611019ab0621d771356b64e",
+        "served_sha256": "6c98ff34ef26e8e4e8dc4aa3841abf5433a48525f611019ab0621d771356b64e"
+      },
+      {
+        "path": "/assets/SettingsRoute-5Bo-BqEd.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "7a0be42ded8ab0249c534bf45ed32307b47513f34e47ed1fa95c839583d59093",
+        "served_sha256": "7a0be42ded8ab0249c534bf45ed32307b47513f34e47ed1fa95c839583d59093"
+      },
+      {
+        "path": "/assets/local_replay_core-BAFN7GVw.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "3392fce975d817d089a603c41ad1682b5f5f1309df5040935ade5bee9c58e6f9",
+        "served_sha256": "3392fce975d817d089a603c41ad1682b5f5f1309df5040935ade5bee9c58e6f9"
+      },
+      {
+        "path": "/assets/GuideRoute-Dz9s15MR.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "7f1f97d4bc4c00175d4fddc227fae3a72fb4d39c824aaa7fb55c390fd47bdf53",
+        "served_sha256": "7f1f97d4bc4c00175d4fddc227fae3a72fb4d39c824aaa7fb55c390fd47bdf53"
+      },
+      {
+        "path": "/assets/LocalMatchRoute-Cgt5eHG7.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "fa33039658fc98c2764b7020fe434b880d5dad41aca80107ea5ede5256ffb1e2",
+        "served_sha256": "fa33039658fc98c2764b7020fe434b880d5dad41aca80107ea5ede5256ffb1e2"
+      },
+      {
+        "path": "/assets/SharingPanels-DRf2sfP2.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "94511efd9c7d5d0648e44c0ae713239ca5972ea635a9f972e4b5caa457474dd7",
+        "served_sha256": "94511efd9c7d5d0648e44c0ae713239ca5972ea635a9f972e4b5caa457474dd7"
+      },
+      {
+        "path": "/assets/index-CONOe58E.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "a8496eb2d20dfae92f1c3fedca8c7560783af149febc35e3ec60c31f252644b8",
+        "served_sha256": "a8496eb2d20dfae92f1c3fedca8c7560783af149febc35e3ec60c31f252644b8"
+      },
+      {
+        "path": "/assets/index-CcWy7q8r.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "d60a151c7d3f48100208da77de13b34f57147e38e78247bc932ff900f1ef708d",
+        "served_sha256": "d60a151c7d3f48100208da77de13b34f57147e38e78247bc932ff900f1ef708d"
+      },
+      {
+        "path": "/assets/PolicyRoute-BwlW-aSm.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "8c04758445645cb6182ee332a318d3d6747f614a3b247b5238caf56ec09ecdae",
+        "served_sha256": "8c04758445645cb6182ee332a318d3d6747f614a3b247b5238caf56ec09ecdae"
+      },
+      {
+        "path": "/assets/replay_analysis_worker-C0jK0twV.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "7da5afd13aa3d79a7b57ce6e98e1d44d20e1d170aa5c6ed0176e292daea5bd2d",
+        "served_sha256": "7da5afd13aa3d79a7b57ce6e98e1d44d20e1d170aa5c6ed0176e292daea5bd2d"
+      },
+      {
+        "path": "/assets/RulesRoute-fa-SA_jI.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "ffa39358a769ab19ca519326f5cefd1299ddf91cc405868fb86245232768bf18",
+        "served_sha256": "ffa39358a769ab19ca519326f5cefd1299ddf91cc405868fb86245232768bf18"
+      },
+      {
+        "path": "/assets/bot_worker-CssCkER2.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "95164970e575a1b1a8149227abb93f0e0266e1a1a9382ca43b5173138be8c6a4",
+        "served_sha256": "95164970e575a1b1a8149227abb93f0e0266e1a1a9382ca43b5173138be8c6a4"
+      },
+      {
+        "path": "/assets/Board-BmUfhmvV.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "565a903e4c21154929ce5c3735ab7ec08f85da4ce967bb74c494889abb7ee938",
+        "served_sha256": "565a903e4c21154929ce5c3735ab7ec08f85da4ce967bb74c494889abb7ee938"
+      },
+      {
+        "path": "/assets/SharedReplayRoute-CWFl841C.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "91b8fa084ecdacecb034c5e4331be45c47f3fffbea61916118f6d7c61c57fd79",
+        "served_sha256": "91b8fa084ecdacecb034c5e4331be45c47f3fffbea61916118f6d7c61c57fd79"
+      },
+      {
+        "path": "/assets/LabReportRoute-D0KJso5A.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "6bef12031451fe4088f796c5fa47c42469fa2dca7edce40a2cc56cb90dc7b0af",
+        "served_sha256": "6bef12031451fe4088f796c5fa47c42469fa2dca7edce40a2cc56cb90dc7b0af"
+      },
+      {
+        "path": "/assets/cloud_sync-DQmYKCmW.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "9282d114a353a005aaf80cbcd18c39743851bafc29fea3bf272df978632edbbd",
+        "served_sha256": "9282d114a353a005aaf80cbcd18c39743851bafc29fea3bf272df978632edbbd"
+      },
+      {
+        "path": "/assets/AssetPreviewRoute-Cs-bt5zU.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "80badacb7f9b1c2f4daa6260b98bc02e92df72d79dba83356a2237360fb6bbfb",
+        "served_sha256": "80badacb7f9b1c2f4daa6260b98bc02e92df72d79dba83356a2237360fb6bbfb"
+      },
+      {
+        "path": "/assets/board_model-CZzAtTO9.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "bf02c04acda5989da400e8cebfbc5e8d170fd7b2adfe1573f25c02bfb1c48ea3",
+        "served_sha256": "bf02c04acda5989da400e8cebfbc5e8d170fd7b2adfe1573f25c02bfb1c48ea3"
+      },
+      {
+        "path": "/assets/ProfileRoute-iBj2m9Ib.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "df83f9efd90c46fff3fc447421e6e9c612f487bc725f121d1a19a09fe408c4ce",
+        "served_sha256": "df83f9efd90c46fff3fc447421e6e9c612f487bc725f121d1a19a09fe408c4ce"
+      },
+      {
+        "path": "/assets/ReplayLibraryPanel-CURdW3qw.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "cf384c9d5fe5fdc6b7f4149301e2f653e37b330ca8dcf4db8d94aed9b0f3f1ff",
+        "served_sha256": "cf384c9d5fe5fdc6b7f4149301e2f653e37b330ca8dcf4db8d94aed9b0f3f1ff"
+      },
+      {
+        "path": "/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+        "served_sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+      },
+      {
+        "path": "/assets/sprites/stone.png",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "7bda65543e1fa51342f10924952ea34a89cc5856965c09c189b7070b1865135b",
+        "served_sha256": "7bda65543e1fa51342f10924952ea34a89cc5856965c09c189b7070b1865135b"
+      },
+      {
+        "path": "/assets/sprites/hover.png",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "4b938017d74b92b5f74c5a39036b1564bfa4ab00d16b56733d33a40175cbdfba",
+        "served_sha256": "4b938017d74b92b5f74c5a39036b1564bfa4ab00d16b56733d33a40175cbdfba"
+      },
+      {
+        "path": "/assets/sprites/transform.png",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "24b75a897b8032a4b737f3e1039a59e765b4154c1f18959e495f5228c33f0ffa",
+        "served_sha256": "24b75a897b8032a4b737f3e1039a59e765b4154c1f18959e495f5228c33f0ffa"
+      },
+      {
+        "path": "/assets/sprites/marker.png",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "862a4746ca27a0a3e25cfab61a9bed94b2d27c9c0dd4b0aa5e208a8343949bbd",
+        "served_sha256": "862a4746ca27a0a3e25cfab61a9bed94b2d27c9c0dd4b0aa5e208a8343949bbd"
+      },
+      {
+        "path": "/assets/sprites/highlighter.png",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "61a6798e4b17af416aba25af261ede8e7af1e0bab37dcf00c52434580a28bad5",
+        "served_sha256": "61a6798e4b17af416aba25af261ede8e7af1e0bab37dcf00c52434580a28bad5"
+      },
+      {
+        "path": "/assets/sprites/pointer.png",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "bda6179bae6d9e213948e5e10f6f65fd267779b1fc50188e936262c961f09136",
+        "served_sha256": "bda6179bae6d9e213948e5e10f6f65fd267779b1fc50188e936262c961f09136"
+      },
+      {
+        "path": "/assets/sprites/caution.png",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "d303a195993c640f9524a86cc262223e261c9bf2bc718ebbc0e9cdd1ffd51f49",
+        "served_sha256": "d303a195993c640f9524a86cc262223e261c9bf2bc718ebbc0e9cdd1ffd51f49"
+      },
+      {
+        "path": "/assets/sharing_public-BE_PRFVU.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "1b5f89c6a7d6b1fe0b913d2749072aa9b4644fdfc6fe799972f64063e16a15e6",
+        "served_sha256": "1b5f89c6a7d6b1fe0b913d2749072aa9b4644fdfc6fe799972f64063e16a15e6"
+      },
+      {
+        "path": "/assets/GuideRoute-DFEXHPF_.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "8f04a317d7072758b35a4d61a1937e0ab58f8bf39436259f267780c31f568d38",
+        "served_sha256": "8f04a317d7072758b35a4d61a1937e0ab58f8bf39436259f267780c31f568d38"
+      },
+      {
+        "path": "/assets/wasm_bridge-CfzYdRTX.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "ac7533d25d8a2e3342fcdfc0d19f592ab3ac84f70238b496caa68059672d4a0e",
+        "served_sha256": "ac7533d25d8a2e3342fcdfc0d19f592ab3ac84f70238b496caa68059672d4a0e"
+      },
+      {
+        "path": "/assets/PolicyRoute-C5FYF2V5.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "a5c09621f5c89725a8c485d879c4a6fa2c3e150dd2840a1c9f13e5887ff34bca",
+        "served_sha256": "a5c09621f5c89725a8c485d879c4a6fa2c3e150dd2840a1c9f13e5887ff34bca"
+      },
+      {
+        "path": "/assets/Icon-CyQgjiDu.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "8dd1beaf3f4d8d668224f49f8926c2faef315228db3c00d5c518789f08e2b2df",
+        "served_sha256": "8dd1beaf3f4d8d668224f49f8926c2faef315228db3c00d5c518789f08e2b2df"
+      },
+      {
+        "path": "/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+        "served_sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+      },
+      {
+        "path": "/assets/links-dgpv3VTZ.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "807abd7b62d3aa47f9e05d87d2a59da7b91b22619ab6f7e3cf83273e9b046713",
+        "served_sha256": "807abd7b62d3aa47f9e05d87d2a59da7b91b22619ab6f7e3cf83273e9b046713"
+      },
+      {
+        "path": "/assets/AssetPreviewRoute-B9p8d-8D.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "a58b954a0e909a09c30a92466d1777844813a11886154549ce8276b0f8c6f717",
+        "served_sha256": "a58b954a0e909a09c30a92466d1777844813a11886154549ce8276b0f8c6f717"
+      },
+      {
+        "path": "/assets/gomoku_wasm_bg-BTsdPKNo.wasm",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "c35620c9d52733990d1290d46890ca5a083cdca27c107554ec178f047f91db16",
+        "served_sha256": "c35620c9d52733990d1290d46890ca5a083cdca27c107554ec178f047f91db16"
+      },
+      {
+        "path": "/assets/saved_match-CBKVMc6K.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "b11a88d7911c634e53731a1c16e9fa22f34a83f7fd86fa27c0b9adbf3664ffac",
+        "served_sha256": "b11a88d7911c634e53731a1c16e9fa22f34a83f7fd86fa27c0b9adbf3664ffac"
+      },
+      {
+        "path": "/assets/LocalMatchRoute-jEMs5th3.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "c8d68c4ffac7e8c20b5e1aa91788ab60f8feea4dae7a296ed9287477c9ce68a2",
+        "served_sha256": "c8d68c4ffac7e8c20b5e1aa91788ab60f8feea4dae7a296ed9287477c9ce68a2"
+      },
+      {
+        "path": "/assets/PixelOperator-C4gCAeI2.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+        "served_sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+      },
+      {
+        "path": "/assets/fonts/PixelOperator8.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "5cccb9ef6cf18977b6e5721d49a1a6e78dd6a6f1c4f69537470f7dc1dc829ffc",
+        "served_sha256": "5cccb9ef6cf18977b6e5721d49a1a6e78dd6a6f1c4f69537470f7dc1dc829ffc"
+      },
+      {
+        "path": "/assets/fonts/PixelOperator-Bold.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+        "served_sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorHB.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "fba7efcd1595f795e7ced3dd88bcac890a4fd00a3d7a2212ec0ba67f9d7bff49",
+        "served_sha256": "fba7efcd1595f795e7ced3dd88bcac890a4fd00a3d7a2212ec0ba67f9d7bff49"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorHBSC.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "0d1092e620659d122285c310dfeed531df2d8f7d6bb112dddf6f93a776da8216",
+        "served_sha256": "0d1092e620659d122285c310dfeed531df2d8f7d6bb112dddf6f93a776da8216"
+      },
+      {
+        "path": "/assets/fonts/PixelOperator.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+        "served_sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorHB8.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "3569a5481727cc277be02ffa72348d40bf3ad9f03b9687b0da3b19fb717d00c8",
+        "served_sha256": "3569a5481727cc277be02ffa72348d40bf3ad9f03b9687b0da3b19fb717d00c8"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorMono8.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "b627505e178c0c51b0ce7d432f2974fdc2064339f17fb5242b7237becad3c467",
+        "served_sha256": "b627505e178c0c51b0ce7d432f2974fdc2064339f17fb5242b7237becad3c467"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorSC-Bold.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "41d6116e70a8118de331b60166be488b40d6cb93717eb4e87a9630aa2843a0b8",
+        "served_sha256": "41d6116e70a8118de331b60166be488b40d6cb93717eb4e87a9630aa2843a0b8"
+      },
+      {
+        "path": "/assets/fonts/PixelOperator8-Bold.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+        "served_sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorMono8-Bold.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "11704bf2bddcde0996909166ad9d10a7ff38eb311a59cb07991f63e5f0185f76",
+        "served_sha256": "11704bf2bddcde0996909166ad9d10a7ff38eb311a59cb07991f63e5f0185f76"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorMono-Bold.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "7b8a5f6cfd5fdb06ddac7d976935babf05afa5ef7bf6b8c1b8cf919b481d33e1",
+        "served_sha256": "7b8a5f6cfd5fdb06ddac7d976935babf05afa5ef7bf6b8c1b8cf919b481d33e1"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorMonoHB8.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "6cc07440ab17ad773fb2814c028d8fe70ecab835f2a577c081a3d226b256be92",
+        "served_sha256": "6cc07440ab17ad773fb2814c028d8fe70ecab835f2a577c081a3d226b256be92"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorMono.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "e171000f12d196e7a8a1a91c1a429ef3264a0ff007d5f62fa3dc44ef8df51226",
+        "served_sha256": "e171000f12d196e7a8a1a91c1a429ef3264a0ff007d5f62fa3dc44ef8df51226"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorSC.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "9cfa8dd81cf88ceb340d1aac09492a8d6197dcef70c377129225745dd5e7cfa1",
+        "served_sha256": "9cfa8dd81cf88ceb340d1aac09492a8d6197dcef70c377129225745dd5e7cfa1"
+      },
+      {
+        "path": "/assets/fonts/PixelOperatorMonoHB.ttf",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "ae7eda40c2fb15e3672a79dee3860d13ab62b3e25f0cccee770b3f45b84c4955",
+        "served_sha256": "ae7eda40c2fb15e3672a79dee3860d13ab62b3e25f0cccee770b3f45b84c4955"
+      },
+      {
+        "path": "/assets/replay_analysis_validation-BVMq5CcL.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "a00daba1d9ffa4a2d98b4bb943ae223f9fb7a72cac4edb26079f03f417ff0c52",
+        "served_sha256": "a00daba1d9ffa4a2d98b4bb943ae223f9fb7a72cac4edb26079f03f417ff0c52"
+      },
+      {
+        "path": "/assets/sequence_font-BHmT62ms.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "d1f198ff901270b972d412ce478f2dcd32efd781c9799711a3acf2f91539916f",
+        "served_sha256": "d1f198ff901270b972d412ce478f2dcd32efd781c9799711a3acf2f91539916f"
+      },
+      {
+        "path": "/assets/ReplayLibraryPanel-j_q3i7Wk.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "04914cd3bc2bc4d8a74414aefaf9e73f148a1d6c061639cd34b53ff6afaae484",
+        "served_sha256": "04914cd3bc2bc4d8a74414aefaf9e73f148a1d6c061639cd34b53ff6afaae484"
+      },
+      {
+        "path": "/assets/local_match_session-BQiYwhpJ.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "c88c29b9aaee2a9b6492ac23eb4add0443f18e0a4646539293206213ac183dde",
+        "served_sha256": "c88c29b9aaee2a9b6492ac23eb4add0443f18e0a4646539293206213ac183dde"
+      },
+      {
+        "path": "/assets/RulesRoute-Dv8yzwWR.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "f5865de48039a645986271ef2d12c31b87549d83ae2764548ea907046f459c15",
+        "served_sha256": "f5865de48039a645986271ef2d12c31b87549d83ae2764548ea907046f459c15"
+      },
+      {
+        "path": "/assets/ReplayRoute-gZYMTXYS.js",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "9c9234c05a7ee609d287f2f922ab30a4f3915517f03243bd1de48abe1fff0f10",
+        "served_sha256": "9c9234c05a7ee609d287f2f922ab30a4f3915517f03243bd1de48abe1fff0f10"
+      },
+      {
+        "path": "/assets/LabReportRoute-B8y-R7Ou.css",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "82876289389df7c63d798712c00153a09f65590ca94781218498fef3e93eb68f",
+        "served_sha256": "82876289389df7c63d798712c00153a09f65590ca94781218498fef3e93eb68f"
+      },
+      {
+        "path": "/bot-report/report.json",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43",
+        "served_sha256": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43"
+      },
+      {
+        "path": "/analysis-report/report.json",
+        "http_status": 200,
+        "matches": true,
+        "artifact_sha256": "3b8399fc1bbf5e797c7c56b52df5e7a579bf099e317cbc22e6297ea069391ca5",
+        "served_sha256": "3b8399fc1bbf5e797c7c56b52df5e7a579bf099e317cbc22e6297ea069391ca5"
+      }
+    ]
+  },
+  "backend": {
+    "original_ruleset": "projects/gomoku2d/rulesets/bb6ecb9e-0c7d-4e31-b601-82f95799b3b6",
+    "original_rules_source_sha256": "cf125b43445b87af94b3bec8b04237706ef7e1095c14badee43e2c365a6b202a",
+    "pretag_rules_run_id": 40029725502,
+    "pretag_ruleset": "projects/gomoku2d/rulesets/dccb94b6-7dc7-41a5-bdf2-d9c807fb07f9",
+    "final_ruleset": "projects/gomoku2d/rulesets/ec093a55-d063-48bd-a75b-19c2392bc1c3",
+    "rules_source_sha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+    "source_matches_tag": true,
+    "exemptions": [
+      {
+        "collection_group": "public_profiles",
+        "field": "display_name",
+        "operation_name": "projects/gomoku2d/databases/(default)/operations/AyBiM2IyMDRjZDkxMmQtZTAyYS0wMTI0LTI4MzMtZTYzY2IyYWQkGnNlbmlsZXBpcAkKMxI",
+        "operation_state": "SUCCESSFUL",
+        "done": true,
+        "indexes_disabled": true,
+        "inherits_default_indexes": false
+      },
+      {
+        "collection_group": "public_profiles",
+        "field": "shared_stats",
+        "operation_name": "projects/gomoku2d/databases/(default)/operations/AyA0NWM2NjQxMjliMWYtNDM2YS0wNTE0LTMyOGEtNjUxMmNkN2MkGnNlbmlsZXBpcAkKMxI",
+        "operation_state": "SUCCESSFUL",
+        "done": true,
+        "indexes_disabled": true,
+        "inherits_default_indexes": false
+      },
+      {
+        "collection_group": "public_profiles",
+        "field": "catalog_page_counts",
+        "operation_name": "projects/gomoku2d/databases/(default)/operations/AyAxODMwMGY2ZjIzOGMtZjY1YS0zM2Q0LTg3ODgtMTdmODQ2NDQkGnNlbmlsZXBpcAkKMxI",
+        "operation_state": "SUCCESSFUL",
+        "done": true,
+        "indexes_disabled": true,
+        "inherits_default_indexes": false
+      },
+      {
+        "collection_group": "pages",
+        "field": "entries",
+        "operation_name": "projects/gomoku2d/databases/(default)/operations/AyAzNmMxMjcwNmE5MjItNDNmOS1mYzI0LWQ0ODMtNTRhZmIwZWMkGnNlbmlsZXBpcAkKMxI",
+        "operation_state": "SUCCESSFUL",
+        "done": true,
+        "indexes_disabled": true,
+        "inherits_default_indexes": false
+      },
+      {
+        "collection_group": "replay_libraries",
+        "field": "entries_json",
+        "operation_name": "projects/gomoku2d/databases/(default)/operations/AyBhM2E3MDBhZGQxYTktZDdiYS1lMzc0LTgzNmQtMjU1YTc5MTgkGnNlbmlsZXBpcAkKMxI",
+        "operation_state": "SUCCESSFUL",
+        "done": true,
+        "indexes_disabled": true,
+        "inherits_default_indexes": false
+      }
+    ],
+    "existing_history_field_configs_unchanged": true,
+    "wait_strategy": "Sequential asynchronous field requests; jointly wait for every scoped LRO to succeed before the final read-back gate.",
+    "all_operations_completed_before_tag": true
+  },
+  "production_acceptance": {
+    "visible_version": {
+      "origin": "https://gomoku2d.byebyebryan.com/",
+      "visibleVersion": "v0.6.1",
+      "pageErrors": []
+    },
+    "browser": {
+      "passed": 96,
+      "failed": 0,
+      "skipped": 6,
+      "scheduled": 102,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "workers": 3,
+      "skip_reason": "Three Chromium-only WebGL pixel cases skipped in each of Firefox and WebKit; forced Canvas runs in all three engines.",
+      "scope": "Fresh unauthenticated contexts; guest/local game, replay share/save/continuation, profile, reports/routes and actual renderer colours. No production account writes."
+    },
+    "motion_reports": [
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-01f89-stone-use-the-player-colour-chromium/black-placement-animation.json",
+        "sha256": "68f1ba23eed2c0b6728968c777459cbaa72e9586d047d71f85b2d6c0ce241019",
+        "measurement": {
+          "frames": 181,
+          "distinctFrames": 1,
+          "maximumGrey": 64,
+          "blackPixels": 278016,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-24a49--rebuild-and-reduced-motion-chromium/black-removal-animation.json",
+        "sha256": "72543a7465123d2c51844ec83dc6a1da67c4de95a77d1bc2607b3b091f7fc184",
+        "measurement": {
+          "frames": 28,
+          "distinctFrames": 5,
+          "maximumGrey": 64,
+          "blackPixels": 9920,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-24a49--rebuild-and-reduced-motion-chromium/black-replay-animation.json",
+        "sha256": "44b5f93bcfffe27c7a90c3fcce45d1a9506df324c2e4f1a12028bd025d78b967",
+        "measurement": {
+          "frames": 139,
+          "distinctFrames": 16,
+          "maximumGrey": 64,
+          "blackPixels": 139104,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-24a49--rebuild-and-reduced-motion-firefox/black-removal-animation.json",
+        "sha256": "80e8c34d6359a16d180cb6d4585c49d984d70c8d5ca15ce66afc5ea5e3ccdd75",
+        "measurement": {
+          "frames": 28,
+          "distinctFrames": 6,
+          "maximumGrey": 64,
+          "blackPixels": 7392,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-24a49--rebuild-and-reduced-motion-firefox/black-replay-animation.json",
+        "sha256": "b260389d55bb69d044f2e385af5254c51ea67266da7f2f3091e002f00f6a583e",
+        "measurement": {
+          "frames": 139,
+          "distinctFrames": 16,
+          "maximumGrey": 64,
+          "blackPixels": 140224,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-24a49--rebuild-and-reduced-motion-webkit/black-removal-animation.json",
+        "sha256": "b1402c467a9f4e9d7928f5cd3a57af9a346993f53fe2dc20f7ec0d166182595a",
+        "measurement": {
+          "frames": 29,
+          "distinctFrames": 5,
+          "maximumGrey": 64,
+          "blackPixels": 10272,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-24a49--rebuild-and-reduced-motion-webkit/black-replay-animation.json",
+        "sha256": "59f627e7c5c17e4f71287a3a6acab67a0015415245d7cbeae0181bf3f8ffde91",
+        "measurement": {
+          "frames": 144,
+          "distinctFrames": 16,
+          "maximumGrey": 64,
+          "blackPixels": 145280,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-84ece--rebuild-and-reduced-motion-chromium/black-removal-animation.json",
+        "sha256": "e89b36af034704e9b516c9da9154cadaefd57a3b424abd09cb625c11241e117b",
+        "measurement": {
+          "frames": 28,
+          "distinctFrames": 5,
+          "maximumGrey": 64,
+          "blackPixels": 9696,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-84ece--rebuild-and-reduced-motion-chromium/black-replay-animation.json",
+        "sha256": "21323878054d292f28a4878569a7fe0eecaaf793f165a3221014f1cff4d42892",
+        "measurement": {
+          "frames": 139,
+          "distinctFrames": 4,
+          "maximumGrey": 64,
+          "blackPixels": 139104,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-e659d-stone-use-the-player-colour-chromium/black-placement-animation.json",
+        "sha256": "68f1ba23eed2c0b6728968c777459cbaa72e9586d047d71f85b2d6c0ce241019",
+        "measurement": {
+          "frames": 181,
+          "distinctFrames": 1,
+          "maximumGrey": 64,
+          "blackPixels": 278016,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-e659d-stone-use-the-player-colour-firefox/black-placement-animation.json",
+        "sha256": "68f1ba23eed2c0b6728968c777459cbaa72e9586d047d71f85b2d6c0ce241019",
+        "measurement": {
+          "frames": 181,
+          "distinctFrames": 1,
+          "maximumGrey": 64,
+          "blackPixels": 278016,
+          "glError": 0
+        }
+      },
+      {
+        "path": "gomoku-web/test-results/v061-release/production/board_colours-board-colour-e659d-stone-use-the-player-colour-webkit/black-placement-animation.json",
+        "sha256": "d21c77c298d59feebf440bf37d95ffc68ce3a980a1c9b6cbd33efff5c7da454c",
+        "measurement": {
+          "frames": 187,
+          "distinctFrames": 1,
+          "maximumGrey": 64,
+          "blackPixels": 287232,
+          "glError": 0
+        }
+      }
+    ],
+    "real_google_sign_in": "Earlier production Firebase metadata recorded two successful Google sign-ins; user reported the OAuth rename cleared its inactivity warning.",
+    "real_signed_in_sharing": {
+      "status": "pending",
+      "scope": "Designated test Google account publishes a test game and stats, guest verification, then unpublish/stats-off/disable. No completed check or explicit deferral has been reported."
+    }
+  },
+  "retained_deferrals": [
+    "Physical lower-powered/mobile performance and touch comfort",
+    "Human screen-reader and native browser zoom acceptance",
+    "Two-device private account/settings/history/reset round trip",
+    "Novice/human visual feedback"
+  ],
+  "scope_limits": [
+    "No user-data migration, production reset or cloud user/document write was performed by the agent.",
+    "Existing Auth/Firestore/Pages infrastructure retained; no IAM or billing-plan changes.",
+    "SDK operation counts do not establish billing totals or a free-tier volume guarantee."
+  ],
+  "contributions": {
+    "luna_max": "Release version/documentation preparation; production-safe test selection review; UTC/Pacific snapshot-test correction and focused validation; independent frozen-payload audit; publication documentation draft.",
+    "primary": "Contract decisions, reviews, audits/builds, exact-commit CI gates, scoped live rules/index rollout, tag/publication, deployed artifact/backend parity, production browser acceptance and final integration."
+  },
+  "raw_directory": "gomoku-bot-lab/outputs/release-prep/0.6.1/",
+  "raw_file_hashes": [
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/backend-rollout-sequential-partial.json",
+      "sha256": "8ae334749e7437ae3553fafcd8c9bbbc8424fec07bb9f221c34f71f5e6c664df"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/backend-rollout.json",
+      "sha256": "11b0a085c7913fbbcdf890370cf9c0127ad094af90bed4658244c05b9cc4a425"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/build.log",
+      "sha256": "ef41ac68685b82877f41f375334d4c0fc68ee653e033f9bfdd6c59ed55fc54f7"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/cargo-audit.json",
+      "sha256": "07058bf5f38b96d17db284dae86057d0c6c4df8ab6ef8b85ea6b22e81e33b01c"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/ci-check-counts.json",
+      "sha256": "00a0794d44978c551af97750398dd0c01d55d3239247a043021f6c1d34d973a9"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/ci-final-watch.log",
+      "sha256": "838bb905941f3ca08ced2c0e81967ddcaf6ba316ccae4e5acacbcb2ce9881a7f"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/ci-final.json",
+      "sha256": "eb8fd74b292f63cc129e2063e0bd29b796003689ef1e43c6ca3306fbd72d257f"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/ci-rust-final.log",
+      "sha256": "f951f31a08a38c2482753ab9a85621c54714259cdfd7d5ff8ffc56b97644501a"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/ci-watch.log",
+      "sha256": "a78161947fdc295e7f9225b5292d7302616d029c1684544591078b22ea2095b4"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/ci-web-final.log",
+      "sha256": "fd0de223d15ccddc517dc0e4994b02e82a80aff5f2a808a2c916815dfc31c6c1"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/ci-web-first.log",
+      "sha256": "ca0730eea444626d491d1c094b76a598dbdb5e7bce67ca37abd5f3126c9dd21b"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/firestore-rules-after.rules",
+      "sha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/firestore-rules-backend.rules",
+      "sha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/firestore-rules-before.rules",
+      "sha256": "cf125b43445b87af94b3bec8b04237706ef7e1095c14badee43e2c365a6b202a"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/firestore-rules-initial.rules",
+      "sha256": "cf125b43445b87af94b3bec8b04237706ef7e1095c14badee43e2c365a6b202a"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/firestore-rules-pretag.rules",
+      "sha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/index-operations-first.json",
+      "sha256": "4c6223f61c63525ef33ec974b9fdd7a69c2a19b2af390d25a6c1308821a36e97"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/index-wait-strategy.json",
+      "sha256": "79cb11eb90f3b7540ad714cf037aa3049390197d4b1eaee3b143a674625a8f63"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/manual-handoff.json",
+      "sha256": "27a065ccb501cca388dbd878fa004b2050fb4977022770cd56f955bdbcb61627"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/npm-audit-full.json",
+      "sha256": "02097373d7a4bea78b4fe1b62e37157aaa20818f1ccc1f3216915e94820ec838"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/npm-audit-production.json",
+      "sha256": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/operator-permissions.json",
+      "sha256": "9f8a8e702625d36e05a376680b0a7a32bb0ae87b74d0152f4c132929da967ec2"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/preparation-browser.log",
+      "sha256": "b8d76be6b0bdbc3ed5afdbba8f0efe8a7f799ab8815147e1bdb400d2730d567c"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/preparation-packaging.json",
+      "sha256": "883a965041a9d49e132bf81d2387fa1cc277582eb2eb0f6e9d3b8e3917c73a57"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/preparation-static-routes.json",
+      "sha256": "3eac49465361458f38800c592a813fe6243078aaa9e3ed1e63af048bac2126de"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/preparation-version.json",
+      "sha256": "216e2d6b60e4b6f0ffdcd8c62203f96456b45167798ea15f8bec5420662a6737"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/production-after.json",
+      "sha256": "d6d00203e97a4c34757586a1f5b60053711ac770dda3b977d1ce2477f7bdc6c8"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/production-backend.json",
+      "sha256": "368985d9fd52e945dd9b8553d14e52ebf6f812918cff4c39505f14cedc98385c"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/production-before.json",
+      "sha256": "5e180db3cee855079530f9a8405dd200b386b4c70f3767dd360aaf0204b1ad56"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/production-browser.log",
+      "sha256": "0c4491dc496043c0d9808c931169a0dba618c6022ca458df8abaef7d1e39481f"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/production-initial.json",
+      "sha256": "06b40a7d71b95be6b870a471280d7f6082e6f8b011b2c095d48c8b6d48b36e36"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/production-version.json",
+      "sha256": "0e4d4d3aae2c34f662c995a8f90ff44b8d6ac0ab1e9a3afbc20401f4d5ded9ca"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/public-sharing-tz-la-after.log",
+      "sha256": "b87c553e92cb748436c562fcfba4601cb61b1803a9d0953d84154d3bbde57d7d"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/public-sharing-tz-utc-after.log",
+      "sha256": "e0094014f3fa5e9e764a4992f5e0993d6f052b7c6822751e281df591ff8490a0"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/public-sharing-tz-utc-before.log",
+      "sha256": "af5032cd14b3bcc04a61928ec6bd47f13d5fcf85354b7a0f9fd14d3c76f37fa4"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/publication-workflows.json",
+      "sha256": "cc577d91911e88c4e6b5bb2252750682062b25084ba78dd1bc301b2fb2b03708"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/release-identity.json",
+      "sha256": "1503f4c57cf95c7743dd23f73caa2c4d8b3a4774cb58e58f956555c102f38b89"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/rules-pretag-run.json",
+      "sha256": "a806a350d41d384b4e05ba4c8c6ad5e54c111989dbff133389ad00448368e81a"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/rules-pretag-watch.log",
+      "sha256": "7796ced86c084a1463b0e15d73e2e1b392cb4c66aed64a1c7e4cc18b35e7a42a"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.1/served-artifact-parity.json",
+      "sha256": "666e40a2d64aea95e935707f5147da6610853b0e4b3926d4549da4646177e8c5"
+    }
+  ],
+  "manual_preview": "Existing Starship preview/emulators preserved; owned port8014 release-preparation service stopped; no user browser tabs opened."
+}
