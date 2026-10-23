@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 
@@ -390,9 +390,10 @@ describe("public profile routes and controls", () => {
         <PublicProfileManager stats={ownerStats} statsReady={false} statsBlocker="Wait for private history." />
       </MemoryRouter>,
     );
-    const toggle = await screen.findByRole("checkbox", { name: "Share My games statistics publicly" });
-    expect(toggle).not.toBeChecked();
-    expect(toggle).toBeDisabled();
+    const visibility = within(await screen.findByRole("group", { name: "Share My games statistics publicly" }));
+    expect(visibility.getByRole("button", { name: "Off" })).toHaveAttribute("aria-pressed", "true");
+    expect(visibility.getByRole("button", { name: "On" })).toBeDisabled();
+    fireEvent.click(visibility.getByRole("button", { name: "Off" }));
     expect(sharing.setPublicProfileStats).not.toHaveBeenCalled();
 
     rendered.rerender(
@@ -400,10 +401,13 @@ describe("public profile routes and controls", () => {
         <PublicProfileManager stats={ownerStats} statsReady statsBlocker="Wait for private history." />
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("checkbox", { name: "Share My games statistics publicly" }));
+    fireEvent.click(visibility.getByRole("button", { name: "On" }));
     await waitFor(() => expect(sharing.setPublicProfileStats).toHaveBeenCalledWith(signedInUser.uid, ownerStats, 4));
     expect(await screen.findByText("Published October 21, 2026")).toBeInTheDocument();
     expect(screen.getByText("100.0%")).toBeInTheDocument();
+    expect(visibility.getByRole("button", { name: "On" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(visibility.getByRole("button", { name: "On" }));
+    expect(sharing.setPublicProfileStats).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Update public stats" }));
     await waitFor(() => expect(sharing.setPublicProfileStats).toHaveBeenNthCalledWith(2, signedInUser.uid, ownerStats, 5));
@@ -412,7 +416,7 @@ describe("public profile routes and controls", () => {
         <PublicProfileManager stats={ownerStats} statsReady={false} statsBlocker="Wait for private history." />
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("checkbox", { name: "Share My games statistics publicly" }));
+    fireEvent.click(visibility.getByRole("button", { name: "Off" }));
     await waitFor(() => expect(sharing.setPublicProfileStats).toHaveBeenNthCalledWith(3, signedInUser.uid, null, 6));
     expect(await screen.findByRole("status")).toHaveTextContent("Public statistics removed");
   });
@@ -427,14 +431,14 @@ describe("public profile routes and controls", () => {
     let resolveSave!: (value: PublicProfileSnapshot) => void;
     sharing.setPublicProfileStats.mockImplementation(() => new Promise<PublicProfileSnapshot>((resolve) => { resolveSave = resolve; }));
     renderManager();
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Share My games statistics publicly" }));
+    fireEvent.click(within(await screen.findByRole("group", { name: "Share My games statistics publicly" })).getByRole("button", { name: "On" }));
     await waitFor(() => expect(sharing.setPublicProfileStats).toHaveBeenCalledTimes(1));
     await act(async () => { setSignedIn("second-owner"); });
     await screen.findByDisplayValue("second-owner");
     await act(async () => {
       resolveSave(publicProfile({ sharedStats: { ...ownerStats, updatedAt: "2026-10-22T00:00:00.000Z" } }));
     });
-    expect(screen.getByRole("checkbox", { name: "Share My games statistics publicly" })).not.toBeChecked();
+    expect(within(screen.getByRole("group", { name: "Share My games statistics publicly" })).getByRole("button", { name: "Off" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("Your current My games summary is now public.")).not.toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Public name" })).toHaveValue("second-owner");
   });
@@ -452,7 +456,7 @@ describe("public profile routes and controls", () => {
         <PublicProfileManager stats={zeroStats} statsReady statsBlocker="History is still loading." />
       </MemoryRouter>,
     );
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Share My games statistics publicly" }));
+    fireEvent.click(within(await screen.findByRole("group", { name: "Share My games statistics publicly" })).getByRole("button", { name: "On" }));
     await waitFor(() => expect(sharing.setPublicProfileStats).toHaveBeenCalledWith(signedInUser.uid, zeroStats, 4));
     expect(await screen.findByText("—")).toBeInTheDocument();
   });

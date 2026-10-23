@@ -109,6 +109,19 @@ Raw final cloud artifacts are retained under ignored
 `gomoku-web/test-results/v061-ui-final`. The current
 [preview receipt](preview.json) identifies the served runtime commit.
 
+## Statistics control follow-up
+
+Public statistics use the same Off/On segmented buttons as General Settings.
+The selected state follows the saved snapshot. On publishes once; selecting the
+active button does no cloud work. Off removes the snapshot even while private
+history is unavailable. Refresh stays a separate Update public stats action.
+
+The affected component suites passed 42/42, full app/scripts/tools type checks
+passed, and the emulator preview build passed. C11/C14/C15 passed 9/9 across
+Chromium, Firefox and WebKit; the eighteen [current audits](accessibility.json)
+have zero violations and incomplete checks. Owner desktop/mobile captures were
+refreshed; raw artifacts are in ignored `gomoku-web/test-results/v061-stats-buttons`.
+
 ## Contract review
 
 | Requirement | Acceptance evidence |

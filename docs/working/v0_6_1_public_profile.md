@@ -104,6 +104,8 @@ whole replay sidebar, matching Share replay's entry animation, paused playback,
 Back/Escape dismissal and focus/scroll restoration. Its compact publication
 preview shows the destination profile, title, opening move and both players.
 Public-copy and unverified-result notices remain concise and visible.
+Statistics sharing uses General Settings' Off/On segmented buttons. Selecting
+the active state does no cloud work; refreshing remains a separate action.
 
 ## Review and execution
 

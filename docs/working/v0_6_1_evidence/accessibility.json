@@ -1,6 +1,6 @@
 {
-  "scope": "Public-profile settings and Publish replay UI refinement. Final C11/C15 passed in all three engines, including owner controls and publishing at 640px/200% text. Automated checks do not establish human screen-reader/device acceptance.",
-  "raw_directory": "gomoku-web/test-results/v061-ui-final",
+  "scope": "Public statistics Off/On segmented buttons. C11/C14/C15 passed in all three engines, including removal without ready history (component coverage), private-reset preservation, and owner/publishing reflow at 200% text. Automated checks do not establish human screen-reader/device acceptance.",
+  "raw_directory": "gomoku-web/test-results/v061-stats-buttons",
   "reports": [
     {
       "engine": "chromium",

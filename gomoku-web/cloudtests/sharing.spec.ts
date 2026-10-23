@@ -290,7 +290,7 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
 
-  const publicStatsToggle = page.getByRole("checkbox", { name: "Share My games statistics publicly", exact: true });
+  const publicStatsToggle = page.getByRole("group", { name: "Share My games statistics publicly", exact: true }).getByRole("button", { name: "On", exact: true });
   await expect(publicStatsToggle).toBeEnabled();
   await publicStatsToggle.click();
   await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.shared_stats).not.toBeNull();
@@ -301,7 +301,7 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
   await page.getByRole("button", { name: "Update public stats", exact: true }).click();
   await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.revision as number)
     .toBeGreaterThan(firstStatsRevision);
-  await publicStatsToggle.click();
+  await page.getByRole("group", { name: "Share My games statistics publicly", exact: true }).getByRole("button", { name: "Off", exact: true }).click();
   await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.shared_stats).toBeNull();
   await publicStatsToggle.click();
   await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.shared_stats).not.toBeNull();
@@ -531,7 +531,7 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
 
-  const publicStatsToggle = page.getByRole("checkbox", { name: "Share My games statistics publicly", exact: true });
+  const publicStatsToggle = page.getByRole("group", { name: "Share My games statistics publicly", exact: true }).getByRole("button", { name: "On", exact: true });
   await expect(publicStatsToggle).toBeEnabled();
   await publicStatsToggle.click();
   await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.shared_stats).not.toBeNull();
@@ -637,7 +637,7 @@ test("C15: maximum Unicode public fields remain editable and reflow for owners a
   await expect(page.getByRole("textbox", { name: "Public name", exact: true })).toHaveValue(publicName);
   await page.getByRole("button", { name: "Save public name", exact: true }).click();
   await expect(page.getByText("Public name saved.", { exact: true })).toBeVisible();
-  const statsToggle = page.getByRole("checkbox", { name: "Share My games statistics publicly", exact: true });
+  const statsToggle = page.getByRole("group", { name: "Share My games statistics publicly", exact: true }).getByRole("button", { name: "On", exact: true });
   await expect(statsToggle).toBeEnabled();
   await statsToggle.click();
   await expect(page.getByRole("button", { name: "Update public stats", exact: true })).toBeEnabled();

@@ -389,12 +389,14 @@ export function PublicProfileManager({
                       <p className={styles.settingHint}>An optional snapshot. Update it when you choose.</p>
                     </div>
                     <div className={styles.settingControls}>
-                      <label className={styles.confirmRow}>
-                        <input type="checkbox" checked={sharedStats !== null}
-                          disabled={pendingAction !== null || (sharedStats === null && !statsReady)}
-                          onChange={(event) => void setStatsSharing(event.target.checked)} />
-                        <span>Share My games statistics publicly</span>
-                      </label>
+                      <div className={styles.statsVisibility} role="group" aria-label="Share My games statistics publicly">
+                        <button className={sharedStats === null ? "uiSegment uiSegmentActive" : "uiSegment"}
+                          type="button" aria-pressed={sharedStats === null} disabled={pendingAction !== null}
+                          onClick={() => { if (sharedStats !== null) void setStatsSharing(false); }}>Off</button>
+                        <button className={sharedStats !== null ? "uiSegment uiSegmentActive" : "uiSegment"}
+                          type="button" aria-pressed={sharedStats !== null} disabled={pendingAction !== null || !statsReady}
+                          onClick={() => { if (sharedStats === null) void setStatsSharing(true); }}>On</button>
+                      </div>
                       {!statsReady && <p className={styles.settingHint}>{statsBlocker}</p>}
                       {sharedStats && <>
                         <div className={`${styles.publicStatsGrid} ${styles.managerStatsGrid}`} role="group" aria-label="Published statistics snapshot">

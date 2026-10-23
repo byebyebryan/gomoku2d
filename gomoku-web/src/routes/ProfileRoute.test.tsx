@@ -378,7 +378,7 @@ describe("ProfileRoute cloud state", () => {
     });
 
     renderProfileRoute("/profile?tab=public");
-    const statsToggle = await screen.findByRole("checkbox", { name: "Share My games statistics publicly" });
+    const statsToggle = await screen.findByRole("button", { name: "On" });
     expect(statsToggle).toBeDisabled();
     expect(publicSharingMocks.setPublicProfileStats).not.toHaveBeenCalled();
 
