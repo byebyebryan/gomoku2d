@@ -65,6 +65,13 @@ candidate commands, logical storage operations and scope limits. Routine browser
 captures stay in test output; set `GOMOKU_WRITE_EVIDENCE=1` only when intentionally
 refreshing the checked-in candidate screenshots.
 
+When a manual preview owns the default ports, set `GOMOKU_CLOUD_PORT_OFFSET=1000`
+for `npm run test:cloud` (including `-- --container`). This runs the same lane
+against its own port range, generated emulator config, build and artifacts;
+the container inherits the offset. The command still refuses occupied ports
+and only terminates its own process groups. A zero/default offset keeps the
+existing CI ports and `dist-cloud` behavior.
+
 The profiling lane builds its own production preview on port 8012 and writes
 JSON under ignored `gomoku-bot-lab/outputs/browser-profile/`. Set
 `GOMOKU_PROFILE_OUTPUT` to retain it elsewhere. It records build/host identity,

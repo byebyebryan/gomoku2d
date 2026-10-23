@@ -1,7 +1,10 @@
 import { expect, test as base, type BrowserContext, type Frame, type Page } from "@playwright/test";
+import { cloudTestOrigins, cloudTestPorts } from "../scripts/cloud_test_environment.mjs";
+
+export { cloudTestOrigins, cloudTestPorts };
 
 export const projectId = "demo-gomoku2d-acceptance";
-const firestoreRoot = `http://127.0.0.1:18081/v1/projects/${projectId}/databases/(default)/documents`;
+const firestoreRoot = `${cloudTestOrigins.firestore}/v1/projects/${projectId}/databases/(default)/documents`;
 const readbacks = new Map<string, unknown>();
 
 export const test = base.extend<{ isolatedNetwork: void }>({
@@ -90,7 +93,7 @@ export async function signIn(page: Page | Frame, email: string, options: { navig
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   const popup = await popupPromise;
   await popup.waitForLoadState("domcontentloaded");
-  if (options.redirect) await page.waitForURL("http://127.0.0.1:19099/**");
+  if (options.redirect) await page.waitForURL(`${cloudTestOrigins.auth}/**`);
   const closed = options.redirect ? Promise.resolve() : (popup as Page).waitForEvent("close");
   if (await popup.getByText(email, { exact: true }).count()) {
     await popup.getByText(email, { exact: true }).click();
@@ -101,7 +104,7 @@ export async function signIn(page: Page | Frame, email: string, options: { navig
   }
   await closed;
   await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
-  const response = await fetch(`http://127.0.0.1:19099/identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts:batchGet?maxResults=1000`,
+  const response = await fetch(`${cloudTestOrigins.auth}/identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts:batchGet?maxResults=1000`,
     { headers: { Authorization: "Bearer owner" } });
   const data = await response.json() as { users: Array<{ email: string; localId: string }> };
   const user = data.users.find((user) => user.email === email);

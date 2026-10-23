@@ -1,4 +1,4 @@
-import { test, expect, signIn, readProfile } from "./helpers.js";
+import { test, expect, signIn, readProfile, cloudTestOrigins } from "./helpers.js";
 
 test("emulated redirect sign-in restores the account in an embedded client", async ({ page }) => {
   // Embedding is an actual supported redirect-policy input in every engine.
@@ -11,6 +11,6 @@ test("emulated redirect sign-in restores the account in an embedded client", asy
   await frame.waitForURL("**/profile");
   const uid = await signIn(frame, `redirect-${Date.now()}@example.test`, { redirect: true, navigate: false });
   await expect.poll(async () => (await readProfile(uid))?.uid).toBe(uid);
-  await frame.goto("http://127.0.0.1:8013/profile");
+  await frame.goto(`${cloudTestOrigins.preview}/profile`);
   await expect(frame.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
 });

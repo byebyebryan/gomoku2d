@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { Page, TestInfo } from "@playwright/test";
 import axe from "axe-core";
 
-import { makeProfileEligible, projectId, protectContext, readProfile, signIn, test, expect } from "./helpers.js";
+import { makeProfileEligible, projectId, protectContext, readProfile, signIn, test, expect, cloudTestOrigins, cloudTestPorts } from "./helpers.js";
 import { seedLocalSavedMatch } from "../playtests/helpers/local_history.js";
 
 const WIN_MOVES = [110, 0, 111, 1, 112, 2, 113, 3, 114];
@@ -34,7 +34,7 @@ function watchFirestoreRequests(page: Page): string[] {
   const requests: string[] = [];
   page.on("request", (request) => {
     const url = new URL(request.url());
-    if (url.port === "18081" || /firestore\.googleapis\.com|google\.firestore/.test(url.href)) {
+    if (url.port === String(cloudTestPorts.firestore) || /firestore\.googleapis\.com|google\.firestore/.test(url.href)) {
       requests.push(`${request.method()} ${url.pathname}`);
     }
   });
@@ -66,7 +66,7 @@ function decodeRestFields(fields: Record<string, unknown>): Record<string, unkno
 
 async function readFirestoreDocument(path: string): Promise<Record<string, unknown> | null> {
   const encodedPath = path.split("/").map(encodeURIComponent).join("/");
-  const response = await fetch(`http://127.0.0.1:18081/v1/projects/${projectId}/databases/(default)/documents/${encodedPath}`, {
+  const response = await fetch(`${cloudTestOrigins.firestore}/v1/projects/${projectId}/databases/(default)/documents/${encodedPath}`, {
     headers: { Authorization: "Bearer owner" },
   });
   if (response.status === 404) return null;

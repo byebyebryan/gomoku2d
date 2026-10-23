@@ -1,4 +1,4 @@
-import { test, expect, signIn, readProfile, protectContext, makeProfileEligible, projectId } from "./helpers.js";
+import { test, expect, signIn, readProfile, protectContext, makeProfileEligible, projectId, cloudTestOrigins } from "./helpers.js";
 import { seedLocalSavedMatch } from "../playtests/helpers/local_history.js";
 
 const ending = [112, 0, 113, 15, 114, 30, 115, 1, 116].map((cell) => ({ row: Math.floor(cell / 15), col: cell % 15 }));
@@ -13,7 +13,7 @@ async function readyCloud(page: import("@playwright/test").Page) {
 }
 
 async function readPrivateLibrary(uid: string): Promise<{ revision: number; entries: unknown[] } | null> {
-  const response = await fetch(`http://127.0.0.1:18081/v1/projects/${projectId}/databases/(default)/documents/replay_libraries/${uid}`, {
+  const response = await fetch(`${cloudTestOrigins.firestore}/v1/projects/${projectId}/databases/(default)/documents/replay_libraries/${uid}`, {
     headers: { Authorization: "Bearer owner" },
   });
   if (response.status === 404) return null;
@@ -108,7 +108,7 @@ test("C5/C8: failed transport preserves a completed continuation in My games and
   await page.getByRole("button", { name: "Previous move", exact: true }).click();
   await page.getByRole("button", { name: "Play From Here", exact: true }).click();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 8");
-  await context.route("http://127.0.0.1:18081/**", (route) => route.abort("connectionfailed"));
+  await context.route(`${cloudTestOrigins.firestore}/**`, (route) => route.abort("connectionfailed"));
   const winningCell = page.getByRole("gridcell", { name: /^L8:/ });
   await winningCell.focus(); await winningCell.press("Enter");
   await expect(page.getByTestId("match-status")).toHaveText(/wins$/);
@@ -120,7 +120,7 @@ test("C5/C8: failed transport preserves a completed continuation in My games and
 
   await page.reload();
   await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
-  await context.unroute("http://127.0.0.1:18081/**");
+  await context.unroute(`${cloudTestOrigins.firestore}/**`);
   await page.reload(); await readyCloud(page);
   await expect.poll(async () => (await readProfile(uid))?.match_history.replay_matches.length).toBe(2);
   await page.reload(); await readyCloud(page);
