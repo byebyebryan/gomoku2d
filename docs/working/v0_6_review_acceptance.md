@@ -224,3 +224,8 @@ Snap HTTP checks confirm the current index and emulator connectivity. C11's
 sign-in, enable/publish, guest replay, unpublish, disable/re-enable and copied-link
 flow passes in Chromium, Firefox and WebKit (3/3) against the served preview.
 This is demo-emulator evidence, separate from real Google OAuth acceptance.
+
+The manual review subsequently moved to Carbon. Preview and emulators remain on
+Starship; `gomoku2d-v06-carbon-tunnel.service` now forwards the same three
+loopback ports to Carbon, and the owned Snap tunnel is stopped. Carbon-side
+HTTP checks match the served index hash and confirm Auth/Firestore connectivity.
