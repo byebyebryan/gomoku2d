@@ -1,18 +1,84 @@
 {
-  "url": "http://127.0.0.1:8013/icon-review/publish/",
+  "url": "http://127.0.0.1:8013/icon-review/actions/",
+  "previous_url": "http://127.0.0.1:8013/icon-review/publish/",
   "carbon": {
-    "index.html": {
-      "status": 200,
-      "sha256": "68ab1a305f2e7ef9cbc6f602c40e2f5782271a53b93cd04ed398e880bea9dec7"
+    "actions": {
+      "index.html": {
+        "status": 200,
+        "sha256": "019490b9e08a523bb3195ad5c1a6c2493a9fa5ea4d6775f5535e53d561d15db5"
+      },
+      "publish.svg": {
+        "status": 200,
+        "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019"
+      },
+      "sign_in.svg": {
+        "status": 200,
+        "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea"
+      },
+      "sign_out.svg": {
+        "status": 200,
+        "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa"
+      },
+      "trash.svg": {
+        "status": 200,
+        "sha256": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28"
+      },
+      "sync.svg": {
+        "status": 200,
+        "sha256": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33"
+      },
+      "comparison.png": {
+        "status": 200,
+        "sha256": "f6deba861ee965f101f5466c6f93e0350e0f41db1fbf6e5626de49e45a9fabde"
+      },
+      "new-icons.png": {
+        "status": 200,
+        "sha256": "a9ddc6950e5fea65816708be4223c3894c96f3a5e15b73c4ff106da5fdf208e7"
+      },
+      "new-icons-light.png": {
+        "status": 200,
+        "sha256": "4db1b1367f7ca41b52be25347a0803fa6f667dc59e4c24ecc73f9e420557fc97"
+      }
     },
-    "publish.svg": {
-      "status": 200,
-      "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019"
-    },
-    "comparison.png": {
-      "status": 200,
-      "sha256": "9faf195c82b2ffe61dea2cc2608207495810dec437b0926ca9b8c1a78fac2f34"
+    "publish": {
+      "index.html": {
+        "status": 200,
+        "sha256": "019490b9e08a523bb3195ad5c1a6c2493a9fa5ea4d6775f5535e53d561d15db5"
+      },
+      "publish.svg": {
+        "status": 200,
+        "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019"
+      },
+      "sign_in.svg": {
+        "status": 200,
+        "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea"
+      },
+      "sign_out.svg": {
+        "status": 200,
+        "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa"
+      },
+      "trash.svg": {
+        "status": 200,
+        "sha256": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28"
+      },
+      "sync.svg": {
+        "status": 200,
+        "sha256": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33"
+      },
+      "comparison.png": {
+        "status": 200,
+        "sha256": "f6deba861ee965f101f5466c6f93e0350e0f41db1fbf6e5626de49e45a9fabde"
+      },
+      "new-icons.png": {
+        "status": 200,
+        "sha256": "a9ddc6950e5fea65816708be4223c3894c96f3a5e15b73c4ff106da5fdf208e7"
+      },
+      "new-icons-light.png": {
+        "status": 200,
+        "sha256": "4db1b1367f7ca41b52be25347a0803fa6f667dc59e4c24ecc73f9e420557fc97"
+      }
     }
   },
-  "app_integration": false
+  "app_integration": false,
+  "selected_globe_unchanged": true
 }

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Publish icon — pixel comparison</title><style>
+<title>Action icons — pixel comparison</title><style>
 @font-face { font-family: Pixel; src: url('/assets/fonts/PixelOperator.ttf'); }
 @font-face { font-family: PixelBold; src: url('/assets/fonts/PixelOperator-Bold.ttf'); }
 * { box-sizing: border-box; }
@@ -19,6 +19,7 @@ button:focus-visible,a:focus-visible { outline:2px solid var(--accent); outline-
 .comparison { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
 .card { display:grid; justify-items:center; align-content:start; min-width:0; padding:16px; background:var(--panel); border:1px solid var(--border); }
 .candidate { border-color:var(--accent); }
+.accepted { border-color:#5f8b82; }
 h2 { font-size:28px; margin:0; justify-self:start; }
 .note { font-size:16px; min-height:38px; justify-self:start; margin:4px 0 8px; }
 .sizes { display:flex; align-items:flex-end; gap:36px; margin:0 0 16px; height:75px; }
@@ -33,17 +34,523 @@ svg { display:block; }
 .grid::before { content:""; position:absolute; inset:0; pointer-events:none; z-index:1; background-image:linear-gradient(to right,transparent 120px,#d6aa4d99 120px,#d6aa4d99 121px,transparent 121px),linear-gradient(to bottom,transparent 120px,#d6aa4d99 120px,#d6aa4d99 121px,transparent 121px); }
 .no-grid .grid::after,.no-grid .grid::before { display:none; }
 .metrics { font-size:16px; margin-top:12px; text-align:center; }
+.source { font-size:16px; margin-top:4px; }
 footer { margin-top:20px; }
 @media(max-width:940px) { .comparison { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:620px) { body { padding:16px; } .comparison { grid-template-columns:minmax(0,1fr); } h1 { font-size:32px; } }
 </style></head><body><main>
-<nav aria-label="Icon reviews"><a href="/icon-review/">Existing icon comparison</a><a href="publish.svg">Draft SVG</a><a href="comparison.png">Comparison image</a></nav>
-<h1>Publish replay · globe draft</h1>
+<nav aria-label="Icon reviews"><a href="/icon-review/">Existing icon comparison</a><a href="#sign_in">Sign in / out</a><a href="#trash">Trash</a><a href="#sync">Sync</a><a href="new-icons.png">New icon image</a><a href="new-icons-light.png">Light image</a><a href="comparison.png">Full comparison image</a></nav>
+<h1>Action icons · four new drafts</h1>
 <p>24 × 24 source pixels · 10× pixel grid · two-pixel outer margins</p>
 <p>Gold lines mark the centre axes. The 1× and 2× samples show the actual SVGs without grid overlays.</p>
+<p>Gold cards are the new proposals. Teal marks the selected Publish globe; plain cards are existing assets.</p>
 <div class="toolbar"><button id="grid-toggle" type="button" aria-pressed="true">Grid on</button><button id="theme-toggle" type="button" aria-pressed="false">Light surface</button></div>
-<section class="comparison" aria-label="Publish icon compared with current icons"><article class="card candidate" aria-labelledby="publish-title">
-      <h2 id="publish-title">Publish</h2><p class="note">New draft · globe · 2px meridians / equator</p>
+<section class="comparison" aria-label="New action icons compared with current icons"><article class="card candidate" id="sign_in" aria-labelledby="sign_in-title">
+      <h2 id="sign_in-title">Sign In</h2><p class="note">New draft · fixed C frame / inward arrow</p>
+      <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="2" y="2" width="10" height="1" />
+    <rect x="2" y="3" width="10" height="1" />
+    <rect x="2" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="2" height="1" />
+    <rect x="14" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="2" height="1" />
+    <rect x="13" y="6" width="3" height="1" />
+    <rect x="2" y="7" width="2" height="1" />
+    <rect x="12" y="7" width="4" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="11" y="8" width="4" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="10" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="9" y="10" width="13" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="14" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="14" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="9" y="13" width="13" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="10" y="14" width="4" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="11" y="15" width="4" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="12" y="16" width="4" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="13" y="17" width="3" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="14" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="10" height="1" />
+    <rect x="2" y="21" width="10" height="1" />
+  </g>
+</svg>
+</div></div><div><span>2×</span><div class="double"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="2" y="2" width="10" height="1" />
+    <rect x="2" y="3" width="10" height="1" />
+    <rect x="2" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="2" height="1" />
+    <rect x="14" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="2" height="1" />
+    <rect x="13" y="6" width="3" height="1" />
+    <rect x="2" y="7" width="2" height="1" />
+    <rect x="12" y="7" width="4" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="11" y="8" width="4" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="10" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="9" y="10" width="13" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="14" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="14" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="9" y="13" width="13" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="10" y="14" width="4" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="11" y="15" width="4" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="12" y="16" width="4" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="13" y="17" width="3" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="14" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="10" height="1" />
+    <rect x="2" y="21" width="10" height="1" />
+  </g>
+</svg>
+</div></div></div>
+      <div class="grid" role="img" aria-label="Sign In, 24 by 24 pixel grid"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="2" y="2" width="10" height="1" />
+    <rect x="2" y="3" width="10" height="1" />
+    <rect x="2" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="2" height="1" />
+    <rect x="14" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="2" height="1" />
+    <rect x="13" y="6" width="3" height="1" />
+    <rect x="2" y="7" width="2" height="1" />
+    <rect x="12" y="7" width="4" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="11" y="8" width="4" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="10" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="9" y="10" width="13" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="14" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="14" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="9" y="13" width="13" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="10" y="14" width="4" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="11" y="15" width="4" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="12" y="16" width="4" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="13" y="17" width="3" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="14" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="10" height="1" />
+    <rect x="2" y="21" width="10" height="1" />
+  </g>
+</svg>
+</div>
+      <p class="metrics">Margins 2 / 2 / 2 / 2 · 160 filled pixels</p>
+      <a class="source" href="sign_in.svg">Source SVG</a>
+    </article><article class="card candidate" id="sign_out" aria-labelledby="sign_out-title">
+      <h2 id="sign_out-title">Sign Out</h2><p class="note">New draft · fixed C frame / outward arrow</p>
+      <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="2" y="2" width="10" height="1" />
+    <rect x="2" y="3" width="10" height="1" />
+    <rect x="2" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="2" height="1" />
+    <rect x="14" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="2" height="1" />
+    <rect x="14" y="6" width="3" height="1" />
+    <rect x="2" y="7" width="2" height="1" />
+    <rect x="14" y="7" width="4" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="15" y="8" width="4" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="8" y="10" width="13" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="14" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="14" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="8" y="13" width="13" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="16" y="14" width="4" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="15" y="15" width="4" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="14" y="16" width="4" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="14" y="17" width="3" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="14" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="10" height="1" />
+    <rect x="2" y="21" width="10" height="1" />
+  </g>
+</svg>
+</div></div><div><span>2×</span><div class="double"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="2" y="2" width="10" height="1" />
+    <rect x="2" y="3" width="10" height="1" />
+    <rect x="2" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="2" height="1" />
+    <rect x="14" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="2" height="1" />
+    <rect x="14" y="6" width="3" height="1" />
+    <rect x="2" y="7" width="2" height="1" />
+    <rect x="14" y="7" width="4" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="15" y="8" width="4" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="8" y="10" width="13" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="14" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="14" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="8" y="13" width="13" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="16" y="14" width="4" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="15" y="15" width="4" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="14" y="16" width="4" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="14" y="17" width="3" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="14" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="10" height="1" />
+    <rect x="2" y="21" width="10" height="1" />
+  </g>
+</svg>
+</div></div></div>
+      <div class="grid" role="img" aria-label="Sign Out, 24 by 24 pixel grid"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="2" y="2" width="10" height="1" />
+    <rect x="2" y="3" width="10" height="1" />
+    <rect x="2" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="2" height="1" />
+    <rect x="14" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="2" height="1" />
+    <rect x="14" y="6" width="3" height="1" />
+    <rect x="2" y="7" width="2" height="1" />
+    <rect x="14" y="7" width="4" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="15" y="8" width="4" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="8" y="10" width="13" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="14" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="14" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="8" y="13" width="13" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="16" y="14" width="4" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="15" y="15" width="4" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="14" y="16" width="4" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="14" y="17" width="3" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="14" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="10" height="1" />
+    <rect x="2" y="21" width="10" height="1" />
+  </g>
+</svg>
+</div>
+      <p class="metrics">Margins 2 / 2 / 2 / 2 · 160 filled pixels</p>
+      <a class="source" href="sign_out.svg">Source SVG</a>
+    </article><article class="card candidate" id="trash" aria-labelledby="trash-title">
+      <h2 id="trash-title">Trash</h2><p class="note">New draft · 2px lid, body and bin details</p>
+      <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="8" y="2" width="8" height="1" />
+    <rect x="8" y="3" width="8" height="1" />
+    <rect x="8" y="4" width="2" height="1" />
+    <rect x="14" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="20" height="1" />
+    <rect x="2" y="6" width="20" height="1" />
+    <rect x="4" y="8" width="2" height="1" />
+    <rect x="18" y="8" width="2" height="1" />
+    <rect x="4" y="9" width="2" height="1" />
+    <rect x="18" y="9" width="2" height="1" />
+    <rect x="4" y="10" width="2" height="1" />
+    <rect x="8" y="10" width="2" height="1" />
+    <rect x="14" y="10" width="2" height="1" />
+    <rect x="18" y="10" width="2" height="1" />
+    <rect x="4" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="2" height="1" />
+    <rect x="14" y="11" width="2" height="1" />
+    <rect x="18" y="11" width="2" height="1" />
+    <rect x="4" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="2" height="1" />
+    <rect x="14" y="12" width="2" height="1" />
+    <rect x="18" y="12" width="2" height="1" />
+    <rect x="4" y="13" width="2" height="1" />
+    <rect x="8" y="13" width="2" height="1" />
+    <rect x="14" y="13" width="2" height="1" />
+    <rect x="18" y="13" width="2" height="1" />
+    <rect x="4" y="14" width="2" height="1" />
+    <rect x="8" y="14" width="2" height="1" />
+    <rect x="14" y="14" width="2" height="1" />
+    <rect x="18" y="14" width="2" height="1" />
+    <rect x="4" y="15" width="2" height="1" />
+    <rect x="8" y="15" width="2" height="1" />
+    <rect x="14" y="15" width="2" height="1" />
+    <rect x="18" y="15" width="2" height="1" />
+    <rect x="4" y="16" width="2" height="1" />
+    <rect x="8" y="16" width="2" height="1" />
+    <rect x="14" y="16" width="2" height="1" />
+    <rect x="18" y="16" width="2" height="1" />
+    <rect x="4" y="17" width="2" height="1" />
+    <rect x="8" y="17" width="2" height="1" />
+    <rect x="14" y="17" width="2" height="1" />
+    <rect x="18" y="17" width="2" height="1" />
+    <rect x="4" y="18" width="2" height="1" />
+    <rect x="18" y="18" width="2" height="1" />
+    <rect x="4" y="19" width="2" height="1" />
+    <rect x="18" y="19" width="2" height="1" />
+    <rect x="4" y="20" width="16" height="1" />
+    <rect x="4" y="21" width="16" height="1" />
+  </g>
+</svg>
+</div></div><div><span>2×</span><div class="double"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="8" y="2" width="8" height="1" />
+    <rect x="8" y="3" width="8" height="1" />
+    <rect x="8" y="4" width="2" height="1" />
+    <rect x="14" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="20" height="1" />
+    <rect x="2" y="6" width="20" height="1" />
+    <rect x="4" y="8" width="2" height="1" />
+    <rect x="18" y="8" width="2" height="1" />
+    <rect x="4" y="9" width="2" height="1" />
+    <rect x="18" y="9" width="2" height="1" />
+    <rect x="4" y="10" width="2" height="1" />
+    <rect x="8" y="10" width="2" height="1" />
+    <rect x="14" y="10" width="2" height="1" />
+    <rect x="18" y="10" width="2" height="1" />
+    <rect x="4" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="2" height="1" />
+    <rect x="14" y="11" width="2" height="1" />
+    <rect x="18" y="11" width="2" height="1" />
+    <rect x="4" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="2" height="1" />
+    <rect x="14" y="12" width="2" height="1" />
+    <rect x="18" y="12" width="2" height="1" />
+    <rect x="4" y="13" width="2" height="1" />
+    <rect x="8" y="13" width="2" height="1" />
+    <rect x="14" y="13" width="2" height="1" />
+    <rect x="18" y="13" width="2" height="1" />
+    <rect x="4" y="14" width="2" height="1" />
+    <rect x="8" y="14" width="2" height="1" />
+    <rect x="14" y="14" width="2" height="1" />
+    <rect x="18" y="14" width="2" height="1" />
+    <rect x="4" y="15" width="2" height="1" />
+    <rect x="8" y="15" width="2" height="1" />
+    <rect x="14" y="15" width="2" height="1" />
+    <rect x="18" y="15" width="2" height="1" />
+    <rect x="4" y="16" width="2" height="1" />
+    <rect x="8" y="16" width="2" height="1" />
+    <rect x="14" y="16" width="2" height="1" />
+    <rect x="18" y="16" width="2" height="1" />
+    <rect x="4" y="17" width="2" height="1" />
+    <rect x="8" y="17" width="2" height="1" />
+    <rect x="14" y="17" width="2" height="1" />
+    <rect x="18" y="17" width="2" height="1" />
+    <rect x="4" y="18" width="2" height="1" />
+    <rect x="18" y="18" width="2" height="1" />
+    <rect x="4" y="19" width="2" height="1" />
+    <rect x="18" y="19" width="2" height="1" />
+    <rect x="4" y="20" width="16" height="1" />
+    <rect x="4" y="21" width="16" height="1" />
+  </g>
+</svg>
+</div></div></div>
+      <div class="grid" role="img" aria-label="Trash, 24 by 24 pixel grid"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="8" y="2" width="8" height="1" />
+    <rect x="8" y="3" width="8" height="1" />
+    <rect x="8" y="4" width="2" height="1" />
+    <rect x="14" y="4" width="2" height="1" />
+    <rect x="2" y="5" width="20" height="1" />
+    <rect x="2" y="6" width="20" height="1" />
+    <rect x="4" y="8" width="2" height="1" />
+    <rect x="18" y="8" width="2" height="1" />
+    <rect x="4" y="9" width="2" height="1" />
+    <rect x="18" y="9" width="2" height="1" />
+    <rect x="4" y="10" width="2" height="1" />
+    <rect x="8" y="10" width="2" height="1" />
+    <rect x="14" y="10" width="2" height="1" />
+    <rect x="18" y="10" width="2" height="1" />
+    <rect x="4" y="11" width="2" height="1" />
+    <rect x="8" y="11" width="2" height="1" />
+    <rect x="14" y="11" width="2" height="1" />
+    <rect x="18" y="11" width="2" height="1" />
+    <rect x="4" y="12" width="2" height="1" />
+    <rect x="8" y="12" width="2" height="1" />
+    <rect x="14" y="12" width="2" height="1" />
+    <rect x="18" y="12" width="2" height="1" />
+    <rect x="4" y="13" width="2" height="1" />
+    <rect x="8" y="13" width="2" height="1" />
+    <rect x="14" y="13" width="2" height="1" />
+    <rect x="18" y="13" width="2" height="1" />
+    <rect x="4" y="14" width="2" height="1" />
+    <rect x="8" y="14" width="2" height="1" />
+    <rect x="14" y="14" width="2" height="1" />
+    <rect x="18" y="14" width="2" height="1" />
+    <rect x="4" y="15" width="2" height="1" />
+    <rect x="8" y="15" width="2" height="1" />
+    <rect x="14" y="15" width="2" height="1" />
+    <rect x="18" y="15" width="2" height="1" />
+    <rect x="4" y="16" width="2" height="1" />
+    <rect x="8" y="16" width="2" height="1" />
+    <rect x="14" y="16" width="2" height="1" />
+    <rect x="18" y="16" width="2" height="1" />
+    <rect x="4" y="17" width="2" height="1" />
+    <rect x="8" y="17" width="2" height="1" />
+    <rect x="14" y="17" width="2" height="1" />
+    <rect x="18" y="17" width="2" height="1" />
+    <rect x="4" y="18" width="2" height="1" />
+    <rect x="18" y="18" width="2" height="1" />
+    <rect x="4" y="19" width="2" height="1" />
+    <rect x="18" y="19" width="2" height="1" />
+    <rect x="4" y="20" width="16" height="1" />
+    <rect x="4" y="21" width="16" height="1" />
+  </g>
+</svg>
+</div>
+      <p class="metrics">Margins 2 / 2 / 2 / 2 · 172 filled pixels</p>
+      <a class="source" href="trash.svg">Source SVG</a>
+    </article><article class="card candidate" id="sync" aria-labelledby="sync-title">
+      <h2 id="sync-title">Sync</h2><p class="note">New draft · opposing arrows / return tails</p>
+      <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="16" y="2" width="2" height="1" />
+    <rect x="16" y="3" width="3" height="1" />
+    <rect x="16" y="4" width="4" height="1" />
+    <rect x="16" y="5" width="5" height="1" />
+    <rect x="2" y="6" width="20" height="1" />
+    <rect x="2" y="7" width="20" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="16" y="8" width="5" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="16" y="10" width="3" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="16" y="11" width="2" height="1" />
+    <rect x="6" y="12" width="2" height="1" />
+    <rect x="20" y="12" width="2" height="1" />
+    <rect x="5" y="13" width="3" height="1" />
+    <rect x="20" y="13" width="2" height="1" />
+    <rect x="4" y="14" width="4" height="1" />
+    <rect x="20" y="14" width="2" height="1" />
+    <rect x="3" y="15" width="5" height="1" />
+    <rect x="20" y="15" width="2" height="1" />
+    <rect x="2" y="16" width="20" height="1" />
+    <rect x="2" y="17" width="20" height="1" />
+    <rect x="3" y="18" width="5" height="1" />
+    <rect x="4" y="19" width="4" height="1" />
+    <rect x="5" y="20" width="3" height="1" />
+    <rect x="6" y="21" width="2" height="1" />
+  </g>
+</svg>
+</div></div><div><span>2×</span><div class="double"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="16" y="2" width="2" height="1" />
+    <rect x="16" y="3" width="3" height="1" />
+    <rect x="16" y="4" width="4" height="1" />
+    <rect x="16" y="5" width="5" height="1" />
+    <rect x="2" y="6" width="20" height="1" />
+    <rect x="2" y="7" width="20" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="16" y="8" width="5" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="16" y="10" width="3" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="16" y="11" width="2" height="1" />
+    <rect x="6" y="12" width="2" height="1" />
+    <rect x="20" y="12" width="2" height="1" />
+    <rect x="5" y="13" width="3" height="1" />
+    <rect x="20" y="13" width="2" height="1" />
+    <rect x="4" y="14" width="4" height="1" />
+    <rect x="20" y="14" width="2" height="1" />
+    <rect x="3" y="15" width="5" height="1" />
+    <rect x="20" y="15" width="2" height="1" />
+    <rect x="2" y="16" width="20" height="1" />
+    <rect x="2" y="17" width="20" height="1" />
+    <rect x="3" y="18" width="5" height="1" />
+    <rect x="4" y="19" width="4" height="1" />
+    <rect x="5" y="20" width="3" height="1" />
+    <rect x="6" y="21" width="2" height="1" />
+  </g>
+</svg>
+</div></div></div>
+      <div class="grid" role="img" aria-label="Sync, 24 by 24 pixel grid"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="16" y="2" width="2" height="1" />
+    <rect x="16" y="3" width="3" height="1" />
+    <rect x="16" y="4" width="4" height="1" />
+    <rect x="16" y="5" width="5" height="1" />
+    <rect x="2" y="6" width="20" height="1" />
+    <rect x="2" y="7" width="20" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="16" y="8" width="5" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="4" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="16" y="10" width="3" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="16" y="11" width="2" height="1" />
+    <rect x="6" y="12" width="2" height="1" />
+    <rect x="20" y="12" width="2" height="1" />
+    <rect x="5" y="13" width="3" height="1" />
+    <rect x="20" y="13" width="2" height="1" />
+    <rect x="4" y="14" width="4" height="1" />
+    <rect x="20" y="14" width="2" height="1" />
+    <rect x="3" y="15" width="5" height="1" />
+    <rect x="20" y="15" width="2" height="1" />
+    <rect x="2" y="16" width="20" height="1" />
+    <rect x="2" y="17" width="20" height="1" />
+    <rect x="3" y="18" width="5" height="1" />
+    <rect x="4" y="19" width="4" height="1" />
+    <rect x="5" y="20" width="3" height="1" />
+    <rect x="6" y="21" width="2" height="1" />
+  </g>
+</svg>
+</div>
+      <p class="metrics">Margins 2 / 2 / 2 / 2 · 152 filled pixels</p>
+      <a class="source" href="sync.svg">Source SVG</a>
+    </article><article class="card accepted" id="publish" aria-labelledby="publish-title">
+      <h2 id="publish-title">Publish</h2><p class="note">Selected · globe · 2px meridians / equator</p>
       <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <g fill="currentColor" shape-rendering="crispEdges">
     <rect x="9" y="2" width="6" height="1" />
@@ -239,7 +746,8 @@ footer { margin-top:20px; }
 </svg>
 </div>
       <p class="metrics">Margins 2 / 2 / 2 / 2 · 196 filled pixels</p>
-    </article><article class="card " aria-labelledby="share-title">
+      <a class="source" href="publish.svg">Source SVG</a>
+    </article><article class="card " id="share" aria-labelledby="share-title">
       <h2 id="share-title">Share</h2><p class="note">Current addition · 2px tray / stepped arrow</p>
       <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <g fill="currentColor" shape-rendering="crispEdges">
@@ -364,7 +872,8 @@ footer { margin-top:20px; }
 </svg>
 </div>
       <p class="metrics">Margins 2 / 2 / 2 / 2 · 160 filled pixels</p>
-    </article><article class="card " aria-labelledby="save-title">
+      <a class="source" href="/assets/icons/share.svg">Source SVG</a>
+    </article><article class="card " id="save" aria-labelledby="save-title">
       <h2 id="save-title">Save</h2><p class="note">Current addition · 2px frame / floppy disk</p>
       <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <g fill="currentColor" shape-rendering="crispEdges">
@@ -570,7 +1079,8 @@ footer { margin-top:20px; }
 </svg>
 </div>
       <p class="metrics">Margins 2 / 2 / 2 / 2 · 233 filled pixels</p>
-    </article><article class="card " aria-labelledby="profile-title">
+      <a class="source" href="/assets/icons/save.svg">Source SVG</a>
+    </article><article class="card " id="profile" aria-labelledby="profile-title">
       <h2 id="profile-title">Profile</h2><p class="note">Original set · 2px frame / filled details</p>
       <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <g fill="currentColor" shape-rendering="crispEdges">
@@ -746,7 +1256,263 @@ footer { margin-top:20px; }
 </svg>
 </div>
       <p class="metrics">Margins 2 / 2 / 2 / 2 · 249 filled pixels</p>
-    </article><article class="card " aria-labelledby="circle-title">
+      <a class="source" href="/assets/icons/profile.svg">Source SVG</a>
+    </article><article class="card " id="reset" aria-labelledby="reset-title">
+      <h2 id="reset-title">Reset</h2><p class="note">Original set · single curved reset arrow</p>
+      <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+  <rect x="12" y="1" width="2" height="1" />
+  <rect x="12" y="2" width="3" height="1" />
+  <rect x="12" y="3" width="4" height="1" />
+  <rect x="9" y="4" width="8" height="1" />
+  <rect x="7" y="5" width="11" height="1" />
+  <rect x="6" y="6" width="11" height="1" />
+  <rect x="5" y="7" width="4" height="1" />
+  <rect x="12" y="7" width="4" height="1" />
+  <rect x="4" y="8" width="4" height="1" />
+  <rect x="12" y="8" width="3" height="1" />
+  <rect x="3" y="9" width="4" height="1" />
+  <rect x="12" y="9" width="2" height="1" />
+  <rect x="3" y="10" width="3" height="1" />
+  <rect x="3" y="11" width="3" height="1" />
+  <rect x="3" y="12" width="3" height="1" />
+  <rect x="18" y="12" width="3" height="1" />
+  <rect x="3" y="13" width="3" height="1" />
+  <rect x="18" y="13" width="3" height="1" />
+  <rect x="3" y="14" width="3" height="1" />
+  <rect x="18" y="14" width="3" height="1" />
+  <rect x="3" y="15" width="3" height="1" />
+  <rect x="18" y="15" width="3" height="1" />
+  <rect x="4" y="16" width="3" height="1" />
+  <rect x="17" y="16" width="3" height="1" />
+  <rect x="4" y="17" width="4" height="1" />
+  <rect x="16" y="17" width="4" height="1" />
+  <rect x="5" y="18" width="4" height="1" />
+  <rect x="15" y="18" width="4" height="1" />
+  <rect x="6" y="19" width="12" height="1" />
+  <rect x="7" y="20" width="10" height="1" />
+  <rect x="9" y="21" width="6" height="1" />
+  </g>
+</svg>
+</div></div><div><span>2×</span><div class="double"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+  <rect x="12" y="1" width="2" height="1" />
+  <rect x="12" y="2" width="3" height="1" />
+  <rect x="12" y="3" width="4" height="1" />
+  <rect x="9" y="4" width="8" height="1" />
+  <rect x="7" y="5" width="11" height="1" />
+  <rect x="6" y="6" width="11" height="1" />
+  <rect x="5" y="7" width="4" height="1" />
+  <rect x="12" y="7" width="4" height="1" />
+  <rect x="4" y="8" width="4" height="1" />
+  <rect x="12" y="8" width="3" height="1" />
+  <rect x="3" y="9" width="4" height="1" />
+  <rect x="12" y="9" width="2" height="1" />
+  <rect x="3" y="10" width="3" height="1" />
+  <rect x="3" y="11" width="3" height="1" />
+  <rect x="3" y="12" width="3" height="1" />
+  <rect x="18" y="12" width="3" height="1" />
+  <rect x="3" y="13" width="3" height="1" />
+  <rect x="18" y="13" width="3" height="1" />
+  <rect x="3" y="14" width="3" height="1" />
+  <rect x="18" y="14" width="3" height="1" />
+  <rect x="3" y="15" width="3" height="1" />
+  <rect x="18" y="15" width="3" height="1" />
+  <rect x="4" y="16" width="3" height="1" />
+  <rect x="17" y="16" width="3" height="1" />
+  <rect x="4" y="17" width="4" height="1" />
+  <rect x="16" y="17" width="4" height="1" />
+  <rect x="5" y="18" width="4" height="1" />
+  <rect x="15" y="18" width="4" height="1" />
+  <rect x="6" y="19" width="12" height="1" />
+  <rect x="7" y="20" width="10" height="1" />
+  <rect x="9" y="21" width="6" height="1" />
+  </g>
+</svg>
+</div></div></div>
+      <div class="grid" role="img" aria-label="Reset, 24 by 24 pixel grid"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+  <rect x="12" y="1" width="2" height="1" />
+  <rect x="12" y="2" width="3" height="1" />
+  <rect x="12" y="3" width="4" height="1" />
+  <rect x="9" y="4" width="8" height="1" />
+  <rect x="7" y="5" width="11" height="1" />
+  <rect x="6" y="6" width="11" height="1" />
+  <rect x="5" y="7" width="4" height="1" />
+  <rect x="12" y="7" width="4" height="1" />
+  <rect x="4" y="8" width="4" height="1" />
+  <rect x="12" y="8" width="3" height="1" />
+  <rect x="3" y="9" width="4" height="1" />
+  <rect x="12" y="9" width="2" height="1" />
+  <rect x="3" y="10" width="3" height="1" />
+  <rect x="3" y="11" width="3" height="1" />
+  <rect x="3" y="12" width="3" height="1" />
+  <rect x="18" y="12" width="3" height="1" />
+  <rect x="3" y="13" width="3" height="1" />
+  <rect x="18" y="13" width="3" height="1" />
+  <rect x="3" y="14" width="3" height="1" />
+  <rect x="18" y="14" width="3" height="1" />
+  <rect x="3" y="15" width="3" height="1" />
+  <rect x="18" y="15" width="3" height="1" />
+  <rect x="4" y="16" width="3" height="1" />
+  <rect x="17" y="16" width="3" height="1" />
+  <rect x="4" y="17" width="4" height="1" />
+  <rect x="16" y="17" width="4" height="1" />
+  <rect x="5" y="18" width="4" height="1" />
+  <rect x="15" y="18" width="4" height="1" />
+  <rect x="6" y="19" width="12" height="1" />
+  <rect x="7" y="20" width="10" height="1" />
+  <rect x="9" y="21" width="6" height="1" />
+  </g>
+</svg>
+</div>
+      <p class="metrics">Margins 3 / 1 / 3 / 2 · 140 filled pixels</p>
+      <a class="source" href="/assets/icons/reset.svg">Source SVG</a>
+    </article><article class="card " id="copy" aria-labelledby="copy-title">
+      <h2 id="copy-title">Copy</h2><p class="note">Current addition · overlapping 2px frames</p>
+      <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="8" y="2" width="14" height="1" />
+    <rect x="8" y="3" width="14" height="1" />
+    <rect x="8" y="4" width="2" height="1" />
+    <rect x="20" y="4" width="2" height="1" />
+    <rect x="8" y="5" width="2" height="1" />
+    <rect x="20" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="16" height="1" />
+    <rect x="20" y="6" width="2" height="1" />
+    <rect x="2" y="7" width="16" height="1" />
+    <rect x="20" y="7" width="2" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="16" y="8" width="2" height="1" />
+    <rect x="20" y="8" width="2" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="2" height="1" />
+    <rect x="20" y="9" width="2" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="16" y="10" width="2" height="1" />
+    <rect x="20" y="10" width="2" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="16" y="11" width="2" height="1" />
+    <rect x="20" y="11" width="2" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="16" y="12" width="2" height="1" />
+    <rect x="20" y="12" width="2" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="16" y="13" width="2" height="1" />
+    <rect x="20" y="13" width="2" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="16" y="14" width="6" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="16" y="15" width="6" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="16" y="16" width="2" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="16" y="17" width="2" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="16" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="16" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="16" height="1" />
+    <rect x="2" y="21" width="16" height="1" />
+  </g>
+</svg>
+</div></div><div><span>2×</span><div class="double"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="8" y="2" width="14" height="1" />
+    <rect x="8" y="3" width="14" height="1" />
+    <rect x="8" y="4" width="2" height="1" />
+    <rect x="20" y="4" width="2" height="1" />
+    <rect x="8" y="5" width="2" height="1" />
+    <rect x="20" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="16" height="1" />
+    <rect x="20" y="6" width="2" height="1" />
+    <rect x="2" y="7" width="16" height="1" />
+    <rect x="20" y="7" width="2" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="16" y="8" width="2" height="1" />
+    <rect x="20" y="8" width="2" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="2" height="1" />
+    <rect x="20" y="9" width="2" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="16" y="10" width="2" height="1" />
+    <rect x="20" y="10" width="2" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="16" y="11" width="2" height="1" />
+    <rect x="20" y="11" width="2" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="16" y="12" width="2" height="1" />
+    <rect x="20" y="12" width="2" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="16" y="13" width="2" height="1" />
+    <rect x="20" y="13" width="2" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="16" y="14" width="6" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="16" y="15" width="6" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="16" y="16" width="2" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="16" y="17" width="2" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="16" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="16" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="16" height="1" />
+    <rect x="2" y="21" width="16" height="1" />
+  </g>
+</svg>
+</div></div></div>
+      <div class="grid" role="img" aria-label="Copy, 24 by 24 pixel grid"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <g fill="currentColor" shape-rendering="crispEdges">
+    <rect x="8" y="2" width="14" height="1" />
+    <rect x="8" y="3" width="14" height="1" />
+    <rect x="8" y="4" width="2" height="1" />
+    <rect x="20" y="4" width="2" height="1" />
+    <rect x="8" y="5" width="2" height="1" />
+    <rect x="20" y="5" width="2" height="1" />
+    <rect x="2" y="6" width="16" height="1" />
+    <rect x="20" y="6" width="2" height="1" />
+    <rect x="2" y="7" width="16" height="1" />
+    <rect x="20" y="7" width="2" height="1" />
+    <rect x="2" y="8" width="2" height="1" />
+    <rect x="16" y="8" width="2" height="1" />
+    <rect x="20" y="8" width="2" height="1" />
+    <rect x="2" y="9" width="2" height="1" />
+    <rect x="16" y="9" width="2" height="1" />
+    <rect x="20" y="9" width="2" height="1" />
+    <rect x="2" y="10" width="2" height="1" />
+    <rect x="16" y="10" width="2" height="1" />
+    <rect x="20" y="10" width="2" height="1" />
+    <rect x="2" y="11" width="2" height="1" />
+    <rect x="16" y="11" width="2" height="1" />
+    <rect x="20" y="11" width="2" height="1" />
+    <rect x="2" y="12" width="2" height="1" />
+    <rect x="16" y="12" width="2" height="1" />
+    <rect x="20" y="12" width="2" height="1" />
+    <rect x="2" y="13" width="2" height="1" />
+    <rect x="16" y="13" width="2" height="1" />
+    <rect x="20" y="13" width="2" height="1" />
+    <rect x="2" y="14" width="2" height="1" />
+    <rect x="16" y="14" width="6" height="1" />
+    <rect x="2" y="15" width="2" height="1" />
+    <rect x="16" y="15" width="6" height="1" />
+    <rect x="2" y="16" width="2" height="1" />
+    <rect x="16" y="16" width="2" height="1" />
+    <rect x="2" y="17" width="2" height="1" />
+    <rect x="16" y="17" width="2" height="1" />
+    <rect x="2" y="18" width="2" height="1" />
+    <rect x="16" y="18" width="2" height="1" />
+    <rect x="2" y="19" width="2" height="1" />
+    <rect x="16" y="19" width="2" height="1" />
+    <rect x="2" y="20" width="16" height="1" />
+    <rect x="2" y="21" width="16" height="1" />
+  </g>
+</svg>
+</div>
+      <p class="metrics">Margins 2 / 2 / 2 / 2 · 172 filled pixels</p>
+      <a class="source" href="/assets/icons/copy.svg">Source SVG</a>
+    </article><article class="card " id="circle" aria-labelledby="circle-title">
       <h2 id="circle-title">Circle</h2><p class="note">Original set · stepped circular contour</p>
       <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <g fill="currentColor" shape-rendering="crispEdges">
@@ -865,7 +1631,8 @@ footer { margin-top:20px; }
 </svg>
 </div>
       <p class="metrics">Margins 2 / 2 / 2 / 2 · 168 filled pixels</p>
-    </article><article class="card " aria-labelledby="home-title">
+      <a class="source" href="/assets/icons/circle.svg">Source SVG</a>
+    </article><article class="card " id="home" aria-labelledby="home-title">
       <h2 id="home-title">Home</h2><p class="note">Original set · filled silhouette</p>
       <div class="sizes"><div><span>1×</span><div class="native"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <g fill="currentColor" shape-rendering="crispEdges">
@@ -960,8 +1727,9 @@ footer { margin-top:20px; }
 </svg>
 </div>
       <p class="metrics">Margins 2 / 2 / 2 / 2 · 250 filled pixels</p>
+      <a class="source" href="/assets/icons/home.svg">Source SVG</a>
     </article></section>
-<footer><p>Draft for visual review. The app's Publish replay button has not changed.</p><p>Geometry uses integer rectangle runs, transparent backgrounds and currentColor. Existing icons are copied directly from their source SVGs.</p></footer>
+<footer><p>Icon review only. The app controls have not changed.</p><p>Geometry uses integer rectangle runs, transparent backgrounds and currentColor. Existing icons are copied directly from their source SVGs.</p></footer>
 </main><script>
 document.querySelector('#grid-toggle').addEventListener('click',event=>{ const hidden=document.body.classList.toggle('no-grid'); event.currentTarget.setAttribute('aria-pressed',String(!hidden)); event.currentTarget.textContent=hidden?'Grid off':'Grid on'; });
 document.querySelector('#theme-toggle').addEventListener('click',event=>{ const light=document.body.classList.toggle('light'); event.currentTarget.setAttribute('aria-pressed',String(light)); event.currentTarget.textContent=light?'Dark surface':'Light surface'; });
