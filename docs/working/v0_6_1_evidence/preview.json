@@ -1,20 +1,20 @@
 {
-  "source_commit": "81922a4",
+  "source_commit": "e39e4aa",
   "scope": "Local emulator candidate; no production deployment. Carbon loopback is reverse-forwarded to Starship. Existing demo data, approved icons and old hashed assets retained.",
   "carbon": {
     "host": "carbon",
     "profile_status": 200,
-    "index_sha256": "7d36366861e1e8ffbce008b1514e7ffb7117ec9fb6ece147cf88a2d1bd9b4d71",
-    "entry_script": "/assets/index-3_FlmmOw.js",
-    "entry_sha256": "f5e0c26c9b3286cef06658c2e105313664e222adad11be3463df7b5d29570cba",
+    "index_sha256": "9b460c4eb4a225ae942913bd7cf5c47e6172466a5423c25f939f9da50c5acc0a",
+    "entry_script": "/assets/index-CL9DPf7S.js",
+    "entry_sha256": "1604143c745bbdb7233d0f87f0a149f09645448e5bf0e09833aea1d0c3e07d90",
     "auth_ready": true,
     "public_demo_name": "Demo Player"
   },
   "starship": {
     "host": "starship",
-    "index_sha256": "7d36366861e1e8ffbce008b1514e7ffb7117ec9fb6ece147cf88a2d1bd9b4d71",
-    "entry_script": "/assets/index-3_FlmmOw.js",
-    "entry_sha256": "f5e0c26c9b3286cef06658c2e105313664e222adad11be3463df7b5d29570cba",
+    "index_sha256": "9b460c4eb4a225ae942913bd7cf5c47e6172466a5423c25f939f9da50c5acc0a",
+    "entry_script": "/assets/index-CL9DPf7S.js",
+    "entry_sha256": "1604143c745bbdb7233d0f87f0a149f09645448e5bf0e09833aea1d0c3e07d90",
     "managed_services": [
       "active",
       "active",
