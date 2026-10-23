@@ -18,18 +18,27 @@ import {
   parseCatalogPageSnapshot,
   parsePublicProfileSnapshot,
   resolveSharingFirestore,
+  validateCatalogPageCounts,
   validateCatalogEntries,
+  validatePublicProfileStatsCounters,
   type PublicCatalogEntry,
+  type PublicCatalogPageCounts,
   type PublicCatalogPageSnapshot,
   type PublicProfileSnapshot,
+  type PublicProfileStatsCounters,
+  type SaveCatalogPageResult,
   type SharingFirestoreOptions,
   type SharingPageId,
 } from "./sharing_common.js";
 
 export type {
   PublicCatalogEntry,
+  PublicCatalogPageCounts,
   PublicCatalogPageSnapshot,
   PublicProfileSnapshot,
+  PublicProfileStatsCounters,
+  PublicProfileStatsSnapshot,
+  SaveCatalogPageResult,
 } from "./sharing_common.js";
 
 function publicProfileRef(firestore: Firestore, uid: string): DocumentReference {
@@ -59,7 +68,9 @@ function readPage(data: unknown, uid: string, pageId: SharingPageId): PublicCata
   return parseCatalogPageSnapshot(data, uid, pageId);
 }
 
-function profileDocument(uid: string, displayName: string, enabled: boolean, generation: number, revision: number) {
+const EMPTY_CATALOG_PAGE_COUNTS: PublicCatalogPageCounts = [0, 0, 0, 0];
+
+function newProfileDocument(uid: string, displayName: string, enabled: boolean, generation: number, revision: number) {
   return {
     schema_version: SHARING_SCHEMA_VERSION,
     uid,
@@ -68,7 +79,33 @@ function profileDocument(uid: string, displayName: string, enabled: boolean, gen
     generation,
     revision,
     updated_at: serverTimestamp(),
+    shared_stats: null,
+    catalog_page_counts: EMPTY_CATALOG_PAGE_COUNTS,
   };
+}
+
+function updatedProfileDocument(
+  current: Record<string, unknown>,
+  uid: string,
+  displayName: string,
+  enabled: boolean,
+  generation: number,
+  revision: number,
+  overrides: { sharedStats?: unknown; catalogPageCounts?: unknown } = {},
+) {
+  const document: Record<string, unknown> = {
+    ...current,
+    schema_version: SHARING_SCHEMA_VERSION,
+    uid,
+    display_name: displayName,
+    enabled,
+    generation,
+    revision,
+    updated_at: serverTimestamp(),
+  };
+  if (Object.prototype.hasOwnProperty.call(overrides, "sharedStats")) document.shared_stats = overrides.sharedStats;
+  if (Object.prototype.hasOwnProperty.call(overrides, "catalogPageCounts")) document.catalog_page_counts = overrides.catalogPageCounts;
+  return document;
 }
 
 function pageDocument(generation: number, revision: number, entries: PublicCatalogEntry[]) {
@@ -140,11 +177,14 @@ export async function setPublicProfile(
       if (pageSnapshots.some((snapshot) => snapshot.exists())) {
         throw new SharingDataError("Public profile markers are incomplete. Reload before changing visibility.");
       }
-      transaction.set(rootRef, profileDocument(uid, normalizedName, enabled, generation, revision));
+      transaction.set(rootRef, newProfileDocument(uid, normalizedName, enabled, generation, revision));
       SHARING_PAGE_IDS.forEach((pageId) => {
         transaction.set(catalogPageRef(firestore, uid, Number(pageId) as SharingPageId), emptyPageDocument(generation, 1));
       });
-      result = { uid, displayName: normalizedName, enabled, generation, revision, updatedAt: timestampNow() };
+      result = {
+        uid, displayName: normalizedName, enabled, generation, revision, updatedAt: timestampNow(),
+        sharedStats: null, catalogPageCounts: [...EMPTY_CATALOG_PAGE_COUNTS],
+      };
       return;
     }
 
@@ -178,59 +218,165 @@ export async function setPublicProfile(
       });
     }
 
-    transaction.set(rootRef, profileDocument(uid, normalizedName, enabled, generation, revision));
-    result = { uid, displayName: normalizedName, enabled, generation, revision, updatedAt: timestampNow() };
+    transaction.set(rootRef, updatedProfileDocument(
+      rootSnapshot.data()!,
+      uid,
+      normalizedName,
+      enabled,
+      generation,
+      revision,
+      changedVisibility
+        ? { sharedStats: null, catalogPageCounts: EMPTY_CATALOG_PAGE_COUNTS }
+        : {},
+    ));
+    result = {
+      uid,
+      displayName: normalizedName,
+      enabled,
+      generation,
+      revision,
+      updatedAt: timestampNow(),
+      sharedStats: changedVisibility ? null : current.sharedStats,
+      catalogPageCounts: changedVisibility ? [...EMPTY_CATALOG_PAGE_COUNTS] : current.catalogPageCounts,
+    };
   });
 
   if (!result) throw new SharingDataError("Public profile update completed without a result.");
   return result;
 }
 
-/** Writes one fixed catalog page only if both its generation and revision remain current. */
+/**
+ * Atomically writes one fixed catalog page and its root manifest only while
+ * the loaded root, generation, and page revisions remain current.
+ */
 export async function saveCatalogPage(
   uid: string,
   pageId: number,
   entries: unknown,
+  expectedRootRevision: number,
   expectedGeneration: number,
   expectedPageRevision: number,
   options: SharingFirestoreOptions = {},
-): Promise<PublicCatalogPageSnapshot> {
+): Promise<SaveCatalogPageResult> {
   assertPageId(pageId);
+  assertExpectedRevision(expectedRootRevision, "Expected public profile revision");
   assertExpectedRevision(expectedGeneration, "Expected public profile generation");
   assertExpectedRevision(expectedPageRevision, "Expected catalog page revision");
   const normalizedEntries = validateCatalogEntries(entries);
   const firestore = resolveSharingFirestore(options);
   const rootRef = publicProfileRef(firestore, uid);
   const pageRef = catalogPageRef(firestore, uid, pageId);
-  let result: PublicCatalogPageSnapshot | null = null;
+  let result: SaveCatalogPageResult | null = null;
 
   await runTransaction(firestore, async (transaction) => {
     const rootSnapshot = await transaction.get(rootRef);
-    const pageSnapshot = await transaction.get(pageRef);
-    if (!rootSnapshot.exists() || !pageSnapshot.exists()) {
-      throw new SharingConflictError("Public profile or catalog page is missing. Reload before publishing.");
-    }
+    if (!rootSnapshot.exists()) throw new SharingConflictError("Public profile is missing. Reload before publishing.");
     const profile = readProfile(rootSnapshot.data(), uid);
-    const page = readPage(pageSnapshot.data(), uid, pageId);
+    if (profile.revision !== expectedRootRevision) {
+      throw new SharingConflictError(`Public profile revision changed from ${expectedRootRevision} to ${profile.revision}. Reload before publishing.`);
+    }
     if (!profile.enabled) throw new SharingDataError("Enable the public profile before publishing games.");
-    if (profile.generation !== expectedGeneration || page.generation !== expectedGeneration
-      || page.revision !== expectedPageRevision) {
+    if (profile.generation !== expectedGeneration) {
+      throw new SharingConflictError("Public profile generation changed. Reload and review before publishing.");
+    }
+
+    let page: PublicCatalogPageSnapshot;
+    let catalogPageCounts: PublicCatalogPageCounts;
+    if (profile.catalogPageCounts === null) {
+      const pageSnapshots = await Promise.all(SHARING_PAGE_IDS.map((candidatePageId) => (
+        transaction.get(catalogPageRef(firestore, uid, Number(candidatePageId) as SharingPageId))
+      )));
+      const pages = pageSnapshots.map((snapshot, index) => {
+        if (!snapshot.exists()) throw new SharingDataError("A legacy public catalog marker is missing. Reload before publishing.");
+        const loadedPage = readPage(snapshot.data(), uid, index as SharingPageId);
+        if (loadedPage.generation !== profile.generation) {
+          throw new SharingDataError("Legacy public catalog generations do not match. Reload before publishing.");
+        }
+        return loadedPage;
+      });
+      page = pages[pageId];
+      catalogPageCounts = validateCatalogPageCounts(pages.map((candidate) => candidate.entries.length));
+    } else {
+      const pageSnapshot = await transaction.get(pageRef);
+      if (!pageSnapshot.exists()) throw new SharingConflictError("Public catalog page is missing. Reload before publishing.");
+      page = readPage(pageSnapshot.data(), uid, pageId);
+      if (page.entries.length !== profile.catalogPageCounts[pageId]) {
+        throw new SharingDataError("Public catalog counts do not match this page. Reload before publishing.");
+      }
+      catalogPageCounts = [...profile.catalogPageCounts] as PublicCatalogPageCounts;
+    }
+
+    if (page.generation !== expectedGeneration || page.revision !== expectedPageRevision) {
       throw new SharingConflictError("Public catalog changed on another device. Reload and review before publishing.");
     }
 
     const revision = nextRevision(page.revision, "Catalog page revision");
+    const rootRevision = nextRevision(profile.revision, "Public profile revision");
+    catalogPageCounts[pageId] = normalizedEntries.length;
     transaction.set(pageRef, pageDocument(profile.generation, revision, normalizedEntries));
-    result = {
+    transaction.set(rootRef, updatedProfileDocument(
+      rootSnapshot.data()!,
       uid,
-      pageId,
-      generation: profile.generation,
-      revision,
-      entries: normalizedEntries,
-      updatedAt: timestampNow(),
+      profile.displayName,
+      profile.enabled,
+      profile.generation,
+      rootRevision,
+      { catalogPageCounts },
+    ));
+    const updatedAt = timestampNow();
+    result = {
+      profile: { ...profile, revision: rootRevision, catalogPageCounts, updatedAt },
+      page: { uid, pageId, generation: profile.generation, revision, entries: normalizedEntries, updatedAt },
     };
   });
 
   if (!result) throw new SharingDataError("Catalog page update completed without a result.");
+  return result;
+}
+
+/** Explicitly shares, refreshes, or removes the public aggregate statistics snapshot. */
+export async function setPublicProfileStats(
+  uid: string,
+  stats: PublicProfileStatsCounters | null,
+  expectedRootRevision: number,
+  options: SharingFirestoreOptions = {},
+): Promise<PublicProfileSnapshot> {
+  assertExpectedRevision(expectedRootRevision, "Expected public profile revision");
+  const normalizedStats = stats === null ? null : validatePublicProfileStatsCounters(stats);
+  const firestore = resolveSharingFirestore(options);
+  const rootRef = publicProfileRef(firestore, uid);
+  let result: PublicProfileSnapshot | null = null;
+
+  await runTransaction(firestore, async (transaction) => {
+    const rootSnapshot = await transaction.get(rootRef);
+    if (!rootSnapshot.exists()) throw new SharingConflictError("Public profile no longer exists. Reload before changing statistics.");
+    const current = readProfile(rootSnapshot.data(), uid);
+    if (current.revision !== expectedRootRevision) {
+      throw new SharingConflictError(`Public profile revision changed from ${expectedRootRevision} to ${current.revision}. Reload before changing statistics.`);
+    }
+    if (normalizedStats !== null && !current.enabled) {
+      throw new SharingDataError("Enable the public profile before sharing statistics.");
+    }
+
+    const revision = nextRevision(current.revision, "Public profile revision");
+    const updatedAt = timestampNow();
+    const sharedStats = normalizedStats === null ? null : { ...normalizedStats, updatedAt };
+    const rawStats = normalizedStats === null
+      ? null
+      : { ...normalizedStats, updated_at: serverTimestamp() };
+    transaction.set(rootRef, updatedProfileDocument(
+      rootSnapshot.data()!,
+      uid,
+      current.displayName,
+      current.enabled,
+      current.generation,
+      revision,
+      { sharedStats: rawStats },
+    ));
+    result = { ...current, revision, sharedStats, updatedAt };
+  });
+
+  if (!result) throw new SharingDataError("Public statistics update completed without a result.");
   return result;
 }
 

@@ -178,6 +178,31 @@ async function createPublicProfile(uid = "uid-1", displayName = "Public Name") {
   return setPublicProfile(uid, displayName, true, null, { firestore: apiDb(uid) });
 }
 
+async function seedLegacyPublicProfile(entriesByPage: unknown[][] = [[], [], [], []]) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const timestamp = new Date("2020-01-01T00:00:00.000Z");
+    await db.doc("public_profiles/uid-1").set({
+      schema_version: 1,
+      uid: "uid-1",
+      display_name: "Legacy Name",
+      enabled: true,
+      generation: 1,
+      revision: 1,
+      updated_at: timestamp,
+    });
+    for (let pageId = 0; pageId < 4; pageId += 1) {
+      await db.doc(`public_profiles/uid-1/pages/${pageId}`).set({
+        schema_version: 1,
+        generation: 1,
+        revision: 1,
+        updated_at: timestamp,
+        entries: entriesByPage[pageId],
+      });
+    }
+  });
+}
+
 beforeAll(async () => {
   const rules = await readFile(new URL("../../firestore.rules", import.meta.url), "utf8");
   testEnv = await initializeTestEnvironment({ projectId, firestore: { rules } });
@@ -213,6 +238,27 @@ describe("Firestore public replay sharing rules and APIs", () => {
       await context.firestore().doc("profiles/uid-2").set({ uid: "uid-2" });
     });
     await assertSucceeds(ownerDb("uid-2").doc("profiles/uid-2").delete());
+  });
+
+  it("blocks legacy deletion while a disabled public root still has shared statistics", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await db.doc("profiles/uid-1").set({ uid: "uid-1" });
+      await db.doc("public_profiles/uid-1").set({
+        schema_version: 1,
+        uid: "uid-1",
+        display_name: "",
+        enabled: false,
+        generation: 1,
+        revision: 1,
+        updated_at: new Date("2020-01-01T00:00:00.000Z"),
+        shared_stats: {
+          matches: 1, wins: 1, losses: 0, draws: 0,
+          updated_at: new Date("2020-01-01T00:00:00.000Z"),
+        },
+      });
+    });
+    await assertFails(ownerDb().doc("profiles/uid-1").delete());
   });
 
   it("creates all four empty pages atomically and exposes only enabled known-UID reads", async () => {
@@ -262,14 +308,14 @@ describe("Firestore public replay sharing rules and APIs", () => {
   it("rejects stale page/profile revisions and rejects invalid API inputs before writing", async () => {
     const { saveCatalogPage, setPublicProfile } = await import(sharingPublicModule);
     await createPublicProfile();
-    await saveCatalogPage("uid-1", 0, [entry()], 1, 1, { firestore: apiDb() });
-    await expect(saveCatalogPage("uid-1", 0, [], 1, 1, { firestore: apiDb() })).rejects.toMatchObject({ name: "SharingConflictError" });
-    await setPublicProfile("uid-1", "Other", true, 1, { firestore: apiDb() });
+    await saveCatalogPage("uid-1", 0, [entry()], 1, 1, 1, { firestore: apiDb() });
+    await expect(saveCatalogPage("uid-1", 0, [], 1, 1, 1, { firestore: apiDb() })).rejects.toMatchObject({ name: "SharingConflictError" });
+    await setPublicProfile("uid-1", "Other", true, 2, { firestore: apiDb() });
     await expect(setPublicProfile("uid-1", "Third", true, 1, { firestore: apiDb() })).rejects.toMatchObject({ name: "SharingConflictError" });
-    await expect(saveCatalogPage("uid-1", 4, [], 1, 1, { firestore: apiDb() })).rejects.toThrow(/page/);
-    await expect(saveCatalogPage("uid-1", 0, Array.from({ length: 9 }, (_, index) => entry(index + 1)), 1, 2, { firestore: apiDb() })).rejects.toThrow(/at most 8/);
-    await expect(saveCatalogPage("uid-1", 0, [entry(), entry()], 1, 2, { firestore: apiDb() })).rejects.toThrow(/repeat a fingerprint/);
-    await expect(setPublicProfile("uid-1", "", true, 1, { firestore: apiDb() })).rejects.toThrow(/Public name/);
+    await expect(saveCatalogPage("uid-1", 4, [], 3, 1, 2, { firestore: apiDb() })).rejects.toThrow(/page/);
+    await expect(saveCatalogPage("uid-1", 0, Array.from({ length: 9 }, (_, index) => entry(index + 1)), 3, 2, 2, { firestore: apiDb() })).rejects.toThrow(/at most 8/);
+    await expect(saveCatalogPage("uid-1", 0, [entry(), entry()], 3, 1, 2, { firestore: apiDb() })).rejects.toThrow(/repeat a fingerprint/);
+    await expect(setPublicProfile("uid-1", "", true, 2, { firestore: apiDb() })).rejects.toThrow(/Public name/);
   });
 
   it("accepts Unicode names and titles at both client size limits", async () => {
@@ -277,20 +323,20 @@ describe("Firestore public replay sharing rules and APIs", () => {
     const name = "🙂".repeat(80);
     const title = "🙂".repeat(80);
     await setPublicProfile("uid-1", name, true, null, { firestore: apiDb() });
-    await expect(saveCatalogPage("uid-1", 0, [{ ...entry(), title }], 1, 1, { firestore: apiDb() }))
-      .resolves.toMatchObject({ revision: 2, entries: [{ title }] });
+    const firstPage = await saveCatalogPage("uid-1", 0, [{ ...entry(), title }], 1, 1, 1, { firestore: apiDb() });
+    expect(firstPage.page).toMatchObject({ revision: 2, entries: [{ title }] });
     const payload = "A".repeat(8192);
-    await expect(saveCatalogPage("uid-1", 1, [{ ...entry(2), payload }], 1, 1, { firestore: apiDb() }))
-      .resolves.toMatchObject({ revision: 2, entries: [{ payload }] });
-    await expect(setPublicProfile("uid-1", "🙂".repeat(81), true, 1, { firestore: apiDb() })).rejects.toThrow(/Public name/);
+    const secondPage = await saveCatalogPage("uid-1", 1, [{ ...entry(2), payload }], 2, 1, 1, { firestore: apiDb() });
+    expect(secondPage.page).toMatchObject({ revision: 2, entries: [{ payload }] });
+    await expect(setPublicProfile("uid-1", "🙂".repeat(81), true, 3, { firestore: apiDb() })).rejects.toThrow(/Public name/);
   });
 
   it("supports eight entries and rejects ninth entries in Firestore rules", async () => {
     const { saveCatalogPage } = await import(sharingPublicModule);
     await createPublicProfile();
     const entries = Array.from({ length: 8 }, (_, index) => entry(index + 1));
-    await expect(saveCatalogPage("uid-1", 0, entries, 1, 1, { firestore: apiDb() }))
-      .resolves.toMatchObject({ revision: 2, entries });
+    const saved = await saveCatalogPage("uid-1", 0, entries, 1, 1, 1, { firestore: apiDb() });
+    expect(saved.page).toMatchObject({ revision: 2, entries });
     const page = ownerDb().doc("public_profiles/uid-1/pages/0");
     const current = (await page.get()).data()!;
     await assertFails(page.set({
@@ -304,15 +350,15 @@ describe("Firestore public replay sharing rules and APIs", () => {
   it("makes visibility transitions and clear operations atomic across the four retained pages", async () => {
     const { saveCatalogPage, setPublicProfile } = await import(sharingPublicModule);
     await createPublicProfile();
-    await saveCatalogPage("uid-1", 0, [entry()], 1, 1, { firestore: apiDb() });
-    const disabled = await setPublicProfile("uid-1", "", false, 1, { firestore: apiDb() });
-    expect(disabled).toMatchObject({ enabled: false, displayName: "", generation: 2, revision: 2 });
+    await saveCatalogPage("uid-1", 0, [entry()], 1, 1, 1, { firestore: apiDb() });
+    const disabled = await setPublicProfile("uid-1", "", false, 2, { firestore: apiDb() });
+    expect(disabled).toMatchObject({ enabled: false, displayName: "", generation: 2, revision: 3 });
     for (let pageId = 0; pageId < 4; pageId += 1) {
       const page = (await ownerDb().doc(`public_profiles/uid-1/pages/${pageId}`).get()).data();
       expect(page).toMatchObject({ generation: 2, revision: pageId === 0 ? 3 : 2, entries: [] });
     }
-    const enabledAgain = await setPublicProfile("uid-1", "Fresh Name", true, 2, { firestore: apiDb() });
-    expect(enabledAgain).toMatchObject({ enabled: true, generation: 3, revision: 3 });
+    const enabledAgain = await setPublicProfile("uid-1", "Fresh Name", true, 3, { firestore: apiDb() });
+    expect(enabledAgain).toMatchObject({ enabled: true, generation: 3, revision: 4 });
     for (let pageId = 0; pageId < 4; pageId += 1) {
       const page = (await ownerDb().doc(`public_profiles/uid-1/pages/${pageId}`).get()).data();
       expect(page).toMatchObject({ generation: 3, revision: pageId === 0 ? 4 : 3, entries: [] });
@@ -331,22 +377,164 @@ describe("Firestore public replay sharing rules and APIs", () => {
     await assertFails(ownerDb().doc("public_profiles/uid-1/pages/0").delete());
   });
 
+  it("preserves the exact shared-stats server timestamp across name and catalog writes", async () => {
+    const { saveCatalogPage, setPublicProfile, setPublicProfileStats } = await import(sharingPublicModule);
+    const counters = { matches: 3, wins: 2, losses: 1, draws: 0 };
+    const created = await createPublicProfile();
+    const shared = await setPublicProfileStats("uid-1", counters, created.revision, { firestore: apiDb() });
+    const rootRef = ownerDb().doc("public_profiles/uid-1");
+    const sharedRoot = (await rootRef.get()).data()!;
+    const originalStatsTimestamp = (sharedRoot.shared_stats as Record<string, unknown>).updated_at as {
+      isEqual?: (other: unknown) => boolean;
+    };
+    const rootWithoutStats = { ...sharedRoot };
+    delete rootWithoutStats.shared_stats;
+    await assertFails(rootRef.set({
+      ...rootWithoutStats,
+      revision: (sharedRoot.revision as number) + 1,
+      updated_at: serverTimestamp(),
+    }));
+
+    const renamed = await setPublicProfile("uid-1", "Renamed", true, shared.revision, { firestore: apiDb() });
+    const renamedRoot = (await rootRef.get()).data()!;
+    const renamedStatsTimestamp = (renamedRoot.shared_stats as Record<string, unknown>).updated_at as typeof originalStatsTimestamp;
+    expect(renamedRoot.shared_stats).toMatchObject(counters);
+    expect(renamedStatsTimestamp.isEqual?.(originalStatsTimestamp)).toBe(true);
+
+    const published = await saveCatalogPage("uid-1", 0, [entry()], renamed.revision, renamed.generation, 1, { firestore: apiDb() });
+    const publishedRoot = (await rootRef.get()).data()!;
+    const publishedStatsTimestamp = (publishedRoot.shared_stats as Record<string, unknown>).updated_at as typeof originalStatsTimestamp;
+    expect(published.profile).toMatchObject({ revision: renamed.revision + 1, sharedStats: counters });
+    expect(publishedStatsTimestamp.isEqual?.(originalStatsTimestamp)).toBe(true);
+    await expect(setPublicProfileStats("uid-1", { matches: 1, wins: 1, losses: 0, draws: 0 }, shared.revision, { firestore: apiDb() }))
+      .rejects.toMatchObject({ name: "SharingConflictError" });
+
+    const optedOut = await setPublicProfileStats("uid-1", null, published.profile.revision, { firestore: apiDb() });
+    expect(optedOut.sharedStats).toBeNull();
+    expect((await rootRef.get()).data()?.shared_stats).toBeNull();
+    await expect(setPublicProfileStats("uid-1", counters, published.profile.revision, { firestore: apiDb() }))
+      .rejects.toMatchObject({ name: "SharingConflictError" });
+    const refreshed = await setPublicProfileStats("uid-1", counters, optedOut.revision, { firestore: apiDb() });
+    const disabled = await setPublicProfile("uid-1", "", false, refreshed.revision, { firestore: apiDb() });
+    expect(disabled).toMatchObject({ enabled: false, sharedStats: null, catalogPageCounts: [0, 0, 0, 0] });
+    expect((await rootRef.get()).data()?.shared_stats).toBeNull();
+    await expect(setPublicProfileStats("uid-1", counters, disabled.revision, { firestore: apiDb() }))
+      .rejects.toMatchObject({ name: "SharingDataError" });
+    await expect(setPublicProfileStats("uid-1", { matches: 2, wins: 1, losses: 0, draws: 0 }, disabled.revision, { firestore: apiDb() }))
+      .rejects.toThrow(/matches must equal/);
+  });
+
+  it("validates catalog manifest agreement and rejects page-only or mismatched root writes", async () => {
+    const { saveCatalogPage } = await import(sharingPublicModule);
+    await createPublicProfile();
+    const page = ownerDb().doc("public_profiles/uid-1/pages/0");
+    const root = ownerDb().doc("public_profiles/uid-1");
+    const currentPage = (await page.get()).data()!;
+    await assertFails(page.set({
+      ...currentPage,
+      revision: currentPage.revision + 1,
+      updated_at: serverTimestamp(),
+      entries: [entry()],
+    }));
+    const saved = await saveCatalogPage("uid-1", 0, [entry()], 1, 1, 1, { firestore: apiDb() });
+    const publishedPage = (await page.get()).data()!;
+    await assertFails(page.set({
+      ...publishedPage,
+      revision: publishedPage.revision + 1,
+      updated_at: serverTimestamp(),
+      entries: [entry(2)],
+    }));
+    const currentRootAfterPublish = (await root.get()).data()!;
+    const rootWithoutCounts = { ...currentRootAfterPublish };
+    delete rootWithoutCounts.catalog_page_counts;
+    await assertFails(root.set({
+      ...rootWithoutCounts,
+      revision: (currentRootAfterPublish.revision as number) + 1,
+      updated_at: serverTimestamp(),
+    }));
+    await assertFails(root.set({
+      ...currentRootAfterPublish,
+      revision: (currentRootAfterPublish.revision as number) + 1,
+      updated_at: serverTimestamp(),
+      catalog_page_counts: [2, 0, 0, 0],
+    }));
+    await assertFails(root.set({
+      ...currentRootAfterPublish,
+      revision: (currentRootAfterPublish.revision as number) + 1,
+      updated_at: serverTimestamp(),
+      catalog_page_counts: [9, 0, 0, 0],
+    }));
+    expect(saved.profile.catalogPageCounts).toEqual([1, 0, 0, 0]);
+  });
+
+  it("rejects invalid aggregate counters and client timestamps in Firestore rules", async () => {
+    await createPublicProfile();
+    const root = ownerDb().doc("public_profiles/uid-1");
+    const current = (await root.get()).data()!;
+    const updateWithStats = (stats: unknown) => root.set({
+      ...current,
+      revision: current.revision + 1,
+      updated_at: serverTimestamp(),
+      shared_stats: stats,
+    });
+    await assertFails(updateWithStats({
+      matches: 2, wins: 1, losses: 0, draws: 0,
+      updated_at: serverTimestamp(),
+    }));
+    await assertFails(updateWithStats({
+      matches: 2_147_483_648, wins: 2_147_483_648, losses: 0, draws: 0,
+      updated_at: serverTimestamp(),
+    }));
+    await assertFails(updateWithStats({
+      matches: 1, wins: 1, losses: 0, draws: 0,
+      updated_at: new Date("2020-01-01T00:00:00.000Z"),
+    }));
+    await assertFails(updateWithStats({
+      matches: 1, wins: 1, losses: 0, draws: 0,
+      updated_at: "2026-10-22T12:00:00.000Z",
+    }));
+  });
+
+  it("initializes a legacy catalog manifest from four pages with bounded transaction operations", async () => {
+    await seedLegacyPublicProfile([[entry(1)], [], [entry(3)], []]);
+    const { loadPublicProfile, saveCatalogPage } = await import(sharingPublicModule);
+    await expect(loadPublicProfile("uid-1", { firestore: apiDb() })).resolves.toMatchObject({
+      revision: 1,
+      sharedStats: null,
+      catalogPageCounts: null,
+    });
+
+    firestoreCallCounts.reset();
+    const saved = await saveCatalogPage("uid-1", 1, [entry(2)], 1, 1, 1, { firestore: apiDb() });
+    expect(saved).toMatchObject({
+      profile: { revision: 2, catalogPageCounts: [1, 1, 1, 0] },
+      page: { pageId: 1, revision: 2, entries: [entry(2)] },
+    });
+    expect(firestoreCallCounts.snapshot()).toMatchObject({ transactionGet: 5, transactionSet: 2 });
+    await expect(loadPublicProfile("uid-1", { firestore: apiDb() })).resolves.toMatchObject({
+      revision: 2,
+      catalogPageCounts: [1, 1, 1, 0],
+    });
+  });
+
   it("retains empty markers and blocks stale publication after clear", async () => {
     const { clearSharingData } = await import(sharingLifecycleModule);
-    const { saveCatalogPage } = await import(sharingPublicModule);
+    const { saveCatalogPage, setPublicProfileStats } = await import(sharingPublicModule);
     const { savePrivateLibrary } = await import(sharingPrivateModule);
     await createPublicProfile();
-    await saveCatalogPage("uid-1", 0, [entry()], 1, 1, { firestore: apiDb() });
+    const published = await saveCatalogPage("uid-1", 0, [entry()], 1, 1, 1, { firestore: apiDb() });
+    await setPublicProfileStats("uid-1", { matches: 1, wins: 1, losses: 0, draws: 0 }, published.profile.revision, { firestore: apiDb() });
     await savePrivateLibrary("uid-1", [privateEntry()], null, { firestore: apiDb() });
 
     const cleared = await clearSharingData("uid-1", { firestore: apiDb() });
-    expect(cleared.publicProfile).toMatchObject({ enabled: false, displayName: "", generation: 2, revision: 2 });
+    expect(cleared.publicProfile).toMatchObject({ enabled: false, displayName: "", generation: 2, revision: 4, sharedStats: null });
+    expect((await ownerDb().doc("public_profiles/uid-1").get()).data()?.shared_stats).toBeNull();
     expect(cleared.pages).toHaveLength(4);
     const clearedPages = cleared.pages as Array<{ generation: number; revision: number; entries: unknown[] }>;
     expect(clearedPages.every((page) => page.generation === 2 && page.entries.length === 0)).toBe(true);
     expect(clearedPages.map((page) => page.revision)).toEqual([3, 2, 2, 2]);
     expect(cleared.privateLibrary).toMatchObject({ revision: 2, entries: [] });
-    await expect(saveCatalogPage("uid-1", 0, [entry(2)], 1, 2, { firestore: apiDb() })).rejects.toMatchObject({ name: "SharingDataError" });
+    await expect(saveCatalogPage("uid-1", 0, [entry(2)], 1, 2, 2, { firestore: apiDb() })).rejects.toMatchObject({ name: "SharingConflictError" });
     await expect(savePrivateLibrary("uid-1", [privateEntry(2)], 1, { firestore: apiDb() })).rejects.toMatchObject({ name: "SharingConflictError" });
     await assertFails(ownerDb().doc("public_profiles/uid-1").delete());
     await assertFails(ownerDb().doc("public_profiles/uid-1/pages/0").delete());
@@ -354,19 +542,49 @@ describe("Firestore public replay sharing rules and APIs", () => {
     await expect(ownerDb().doc("public_profiles/uid-1").get()).resolves.toMatchObject({ exists: true });
   });
 
+  it("conflicts a stats refresh with clear and prevents a stale refresh from restoring cleared stats", async () => {
+    const { clearSharingData } = await import(sharingLifecycleModule);
+    const { setPublicProfileStats } = await import(sharingPublicModule);
+    const initial = await createPublicProfile();
+    const shared = await setPublicProfileStats("uid-1", { matches: 1, wins: 1, losses: 0, draws: 0 }, initial.revision, { firestore: apiDb() });
+
+    clearTransactionPause.arm();
+    const clearing = clearSharingData("uid-1", { firestore: apiDb() });
+    try {
+      await clearTransactionPause.waitForReads();
+      const refreshed = await setPublicProfileStats("uid-1", { matches: 2, wins: 2, losses: 0, draws: 0 }, shared.revision, { firestore: apiDb() });
+      clearTransactionPause.release();
+
+      await expect(clearing).rejects.toMatchObject({ code: "permission-denied" });
+      const afterRefresh = (await ownerDb().doc("public_profiles/uid-1").get()).data()!;
+      expect(afterRefresh).toMatchObject({ enabled: true, generation: 1, revision: refreshed.revision });
+      expect(afterRefresh.shared_stats).toMatchObject({ matches: 2, wins: 2, losses: 0, draws: 0 });
+
+      const cleared = await clearSharingData("uid-1", { firestore: apiDb() });
+      expect(cleared.publicProfile).toMatchObject({ enabled: false, generation: 2, sharedStats: null });
+      await expect(setPublicProfileStats("uid-1", { matches: 2, wins: 2, losses: 0, draws: 0 }, refreshed.revision, { firestore: apiDb() }))
+        .rejects.toMatchObject({ name: "SharingConflictError" });
+      const afterClear = (await ownerDb().doc("public_profiles/uid-1").get()).data()!;
+      expect(afterClear).toMatchObject({ enabled: false, shared_stats: null });
+    } finally {
+      clearTransactionPause.release();
+      clearTransactionPause.reset();
+    }
+  });
+
   it("preserves concurrent publication and library saves when clear loses the race", async () => {
     const { clearSharingData } = await import(sharingLifecycleModule);
     const { saveCatalogPage } = await import(sharingPublicModule);
     const { loadPrivateLibrary, savePrivateLibrary } = await import(sharingPrivateModule);
     await createPublicProfile();
-    await saveCatalogPage("uid-1", 0, [entry()], 1, 1, { firestore: apiDb() });
+    await saveCatalogPage("uid-1", 0, [entry()], 1, 1, 1, { firestore: apiDb() });
     await savePrivateLibrary("uid-1", [privateEntry()], null, { firestore: apiDb() });
 
     clearTransactionPause.arm();
     const clearing = clearSharingData("uid-1", { firestore: apiDb() });
     try {
       await clearTransactionPause.waitForReads();
-      await saveCatalogPage("uid-1", 0, [entry(2)], 1, 2, { firestore: apiDb() });
+      await saveCatalogPage("uid-1", 0, [entry(2)], 2, 1, 2, { firestore: apiDb() });
       await savePrivateLibrary("uid-1", [privateEntry(2)], 1, { firestore: apiDb() });
       clearTransactionPause.release();
 
@@ -380,7 +598,7 @@ describe("Firestore public replay sharing rules and APIs", () => {
       await expect(loadPrivateLibrary("uid-1", { firestore: apiDb() }))
         .resolves.toMatchObject({ revision: 2, entries: [privateEntry(2)] });
       const unchangedRoot = await ownerDb().doc("public_profiles/uid-1").get();
-      expect(unchangedRoot.data()).toMatchObject({ enabled: true, generation: 1, revision: 1 });
+      expect(unchangedRoot.data()).toMatchObject({ enabled: true, generation: 1, revision: 3 });
     } finally {
       clearTransactionPause.release();
       clearTransactionPause.reset();
@@ -458,7 +676,7 @@ describe("Firestore private replay library rules and APIs", () => {
       await assertFails(closedEnv.unauthenticatedContext().firestore().doc("public_profiles/uid-1").get());
       const { saveCatalogPage, setPublicProfile } = await import(sharingPublicModule);
       const { savePrivateLibrary } = await import(sharingPrivateModule);
-      await expect(saveCatalogPage("uid-1", 0, [entry()], 1, 1, { firestore: closedOwner })).rejects.toMatchObject({ code: "permission-denied" });
+      await expect(saveCatalogPage("uid-1", 0, [entry()], 1, 1, 1, { firestore: closedOwner })).rejects.toMatchObject({ code: "permission-denied" });
       await expect(setPublicProfile("uid-2", "Public Name", true, null, {
         firestore: closedEnv.authenticatedContext("uid-2").firestore() as unknown as Firestore,
       })).rejects.toMatchObject({ code: "permission-denied" });
@@ -474,7 +692,7 @@ describe("Firestore private replay library rules and APIs", () => {
 
 describe("Firestore sharing operation and document shape evidence", () => {
   it("records API method counts and bounded JSON fixture sizes", async () => {
-    const { loadCatalogPage, loadPublicProfile, saveCatalogPage, setPublicProfile } = await import("../src/cloud/sharing_public.js");
+    const { loadCatalogPage, loadPublicProfile, saveCatalogPage, setPublicProfile, setPublicProfileStats } = await import("../src/cloud/sharing_public.js");
     const { loadPrivateLibrary, savePrivateLibrary } = await import("../src/cloud/sharing_private.js");
     const { clearSharingData } = await import("../src/cloud/sharing_lifecycle.js");
     const counts: Record<string, ReturnType<typeof firestoreCallCounts.snapshot>> = {};
@@ -488,6 +706,12 @@ describe("Firestore sharing operation and document shape evidence", () => {
     const enabled = await measure("public_profile_enable_create", () => (
       setPublicProfile("uid-1", "Public Name", true, null, { firestore: apiDb() })
     ));
+    const sharedStats = await measure("public_stats_share", () => (
+      setPublicProfileStats("uid-1", { matches: 1, wins: 1, losses: 0, draws: 0 }, enabled.revision, { firestore: apiDb() })
+    ));
+    const optedOutStats = await measure("public_stats_opt_out", () => (
+      setPublicProfileStats("uid-1", null, sharedStats.revision, { firestore: apiDb() })
+    ));
     await measure("public_profile_load", () => loadPublicProfile("uid-1", { firestore: apiDb() }));
     await measure("public_first_page_load", () => loadCatalogPage("uid-1", 0, { firestore: apiDb() }));
     await measure("public_profile_manager_load_all_four_pages", async () => {
@@ -497,16 +721,16 @@ describe("Firestore sharing operation and document shape evidence", () => {
       }
     });
     const renamed = await measure("public_profile_rename", () => (
-      setPublicProfile("uid-1", "Renamed Public Name", true, enabled.revision, { firestore: apiDb() })
+      setPublicProfile("uid-1", "Renamed Public Name", true, optedOutStats.revision, { firestore: apiDb() })
     ));
     const published = await measure("public_page_publish", () => (
-      saveCatalogPage("uid-1", 0, [entry()], enabled.generation, 1, { firestore: apiDb() })
+      saveCatalogPage("uid-1", 0, [entry()], renamed.revision, enabled.generation, 1, { firestore: apiDb() })
     ));
-    await measure("public_page_remove", () => (
-      saveCatalogPage("uid-1", 0, [], enabled.generation, published.revision, { firestore: apiDb() })
+    const removed = await measure("public_page_remove", () => (
+      saveCatalogPage("uid-1", 0, [], published.profile.revision, enabled.generation, published.page.revision, { firestore: apiDb() })
     ));
     await measure("public_profile_disable", () => (
-      setPublicProfile("uid-1", "", false, renamed.revision, { firestore: apiDb() })
+      setPublicProfile("uid-1", "", false, removed.profile.revision, { firestore: apiDb() })
     ));
     await measure("private_library_load_missing", () => loadPrivateLibrary("uid-1", { firestore: apiDb() }));
     await measure("private_library_save_create", () => (
@@ -519,9 +743,11 @@ describe("Firestore sharing operation and document shape evidence", () => {
     expect(counts.public_profile_load).toMatchObject({ getDocFromServer: 1, transactionGet: 0, transactionSet: 0 });
     expect(counts.public_first_page_load).toMatchObject({ getDocFromServer: 1, transactionGet: 0, transactionSet: 0 });
     expect(counts.public_profile_manager_load_all_four_pages.getDocFromServer).toBe(5);
+    expect(counts.public_stats_share).toMatchObject({ transactionGet: 1, transactionSet: 1 });
+    expect(counts.public_stats_opt_out).toMatchObject({ transactionGet: 1, transactionSet: 1 });
     expect(counts.public_profile_rename).toMatchObject({ transactionGet: 1, transactionSet: 1 });
-    expect(counts.public_page_publish).toMatchObject({ transactionGet: 2, transactionSet: 1 });
-    expect(counts.public_page_remove).toMatchObject({ transactionGet: 2, transactionSet: 1 });
+    expect(counts.public_page_publish).toMatchObject({ transactionGet: 2, transactionSet: 2 });
+    expect(counts.public_page_remove).toMatchObject({ transactionGet: 2, transactionSet: 2 });
     expect(counts.public_profile_disable).toMatchObject({ transactionGet: 5, transactionSet: 5 });
     expect(counts.private_library_load_missing).toMatchObject({ getDocFromServer: 1, transactionGet: 0, transactionSet: 0 });
     expect(counts.private_library_save_create).toMatchObject({ transactionGet: 1, transactionSet: 1 });

@@ -7,6 +7,7 @@ import {
 import {
   SHARING_PAGE_IDS,
   SHARING_SCHEMA_VERSION,
+  validateCatalogPageCounts,
   SharingConflictError,
   SharingDataError,
   nextRevision,
@@ -77,6 +78,10 @@ export async function clearSharingData(
       }
       return page;
     });
+    if (current?.catalogPageCounts !== null && current?.catalogPageCounts !== undefined
+      && pages.some((page, index) => page?.entries.length !== current.catalogPageCounts?.[index])) {
+      throw new SharingDataError("Public catalog counts do not match the pages. Sharing data could not be cleared safely.");
+    }
     const currentLibrary = librarySnapshot.exists()
       ? parsePrivateLibrarySnapshot(librarySnapshot.data(), uid)
       : null;
@@ -94,6 +99,8 @@ export async function clearSharingData(
       generation,
       revision: rootRevision,
       updatedAt: new Date().toISOString(),
+      sharedStats: null,
+      catalogPageCounts: validateCatalogPageCounts([0, 0, 0, 0]),
     };
     const clearedPages = pages.map((page, index) => ({
       uid,
@@ -121,6 +128,8 @@ export async function clearSharingData(
       generation,
       revision: rootRevision,
       updated_at: serverTimestamp(),
+      shared_stats: null,
+      catalog_page_counts: validateCatalogPageCounts([0, 0, 0, 0]),
     });
     pageRefs.forEach((pageRef, index) => {
       transaction.set(pageRef, {

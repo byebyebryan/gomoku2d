@@ -9,6 +9,7 @@ export const SHARING_PRIVATE_LIBRARY_LIMIT = 64;
 export const SHARING_PAYLOAD_LIMIT = 8192;
 export const SHARING_PRIVATE_JSON_LIMIT = 600_000;
 export const SHARING_REVISION_LIMIT = 2_147_483_647;
+export const SHARING_PUBLIC_STATS_LIMIT = 2_147_483_647;
 export const SHARING_PAGE_IDS = ["0", "1", "2", "3"] as const;
 
 export type SharingPageId = 0 | 1 | 2 | 3;
@@ -31,6 +32,26 @@ export interface PublicProfileSnapshot {
   generation: number;
   revision: number;
   updatedAt: string;
+  sharedStats: PublicProfileStatsSnapshot | null;
+  catalogPageCounts: PublicCatalogPageCounts | null;
+}
+
+export interface PublicProfileStatsCounters {
+  matches: number;
+  wins: number;
+  losses: number;
+  draws: number;
+}
+
+export interface PublicProfileStatsSnapshot extends PublicProfileStatsCounters {
+  updatedAt: string;
+}
+
+export type PublicCatalogPageCounts = [number, number, number, number];
+
+export interface SaveCatalogPageResult {
+  profile: PublicProfileSnapshot;
+  page: PublicCatalogPageSnapshot;
 }
 
 export interface PublicCatalogPageSnapshot {
@@ -228,12 +249,70 @@ export const PUBLIC_PROFILE_KEYS = [
   "schema_version", "uid", "display_name", "enabled", "generation", "revision", "updated_at",
 ] as const;
 
+export const PUBLIC_PROFILE_OPTIONAL_KEYS = ["shared_stats", "catalog_page_counts"] as const;
+
 export const CATALOG_PAGE_KEYS = ["schema_version", "generation", "revision", "updated_at", "entries"] as const;
 
 export const PRIVATE_LIBRARY_KEYS = ["schema_version", "uid", "revision", "updated_at", "entries_json"] as const;
 
+function hasPublicProfileKeys(value: Record<string, unknown>): boolean {
+  const allowed = new Set<string>([...PUBLIC_PROFILE_KEYS, ...PUBLIC_PROFILE_OPTIONAL_KEYS]);
+  return PUBLIC_PROFILE_KEYS.every((key) => Object.prototype.hasOwnProperty.call(value, key))
+    && Object.keys(value).every((key) => allowed.has(key));
+}
+
+export function validatePublicProfileStatsCounters(value: unknown): PublicProfileStatsCounters {
+  if (!isRecord(value) || !hasExactKeys(value, ["matches", "wins", "losses", "draws"])) {
+    throw new SharingDataError("Public statistics counters have an invalid shape.");
+  }
+  for (const [key, count] of Object.entries(value)) {
+    if (!Number.isInteger(count) || (count as number) < 0 || (count as number) > SHARING_PUBLIC_STATS_LIMIT) {
+      throw new SharingDataError(`Public statistics ${key} must be a nonnegative bounded integer.`);
+    }
+  }
+  if (value.matches !== (value.wins as number) + (value.losses as number) + (value.draws as number)) {
+    throw new SharingDataError("Public statistics matches must equal wins, losses, and draws combined.");
+  }
+  return {
+    matches: value.matches as number,
+    wins: value.wins as number,
+    losses: value.losses as number,
+    draws: value.draws as number,
+  };
+}
+
+export function validateCatalogPageCounts(value: unknown): PublicCatalogPageCounts {
+  if (!Array.isArray(value) || value.length !== SHARING_PUBLIC_PAGE_COUNT) {
+    throw new SharingDataError("Public catalog page counts must contain four values.");
+  }
+  const counts = value.map((count, index) => {
+    if (!Number.isInteger(count) || (count as number) < 0 || (count as number) > SHARING_CATALOG_PAGE_LIMIT) {
+      throw new SharingDataError(`Public catalog page count ${index} must be from 0 to ${SHARING_CATALOG_PAGE_LIMIT}.`);
+    }
+    return count as number;
+  });
+  return counts as PublicCatalogPageCounts;
+}
+
+function parsePublicProfileStats(value: unknown): PublicProfileStatsSnapshot | null {
+  if (value === null) return null;
+  if (!isRecord(value) || !hasExactKeys(value, ["matches", "wins", "losses", "draws", "updated_at"])) {
+    throw new SharingDataError("Public statistics snapshot has an invalid document shape.");
+  }
+  const counters = validatePublicProfileStatsCounters({
+    matches: value.matches,
+    wins: value.wins,
+    losses: value.losses,
+    draws: value.draws,
+  });
+  return {
+    ...counters,
+    updatedAt: timestampIso(value.updated_at, "Public statistics updated_at"),
+  };
+}
+
 export function parsePublicProfileSnapshot(value: unknown, expectedUid: string): PublicProfileSnapshot {
-  if (!isRecord(value) || !hasExactKeys(value, PUBLIC_PROFILE_KEYS)
+  if (!isRecord(value) || !hasPublicProfileKeys(value)
     || value.schema_version !== SHARING_SCHEMA_VERSION || value.uid !== expectedUid
     || typeof value.display_name !== "string" || typeof value.enabled !== "boolean") {
     throw new SharingDataError("Public profile has an invalid document shape.");
@@ -245,6 +324,13 @@ export function parsePublicProfileSnapshot(value: unknown, expectedUid: string):
   }
   assertRevision(value.generation, "Public profile generation");
   assertRevision(value.revision, "Public profile revision");
+  const sharedStats = Object.prototype.hasOwnProperty.call(value, "shared_stats") ? parsePublicProfileStats(value.shared_stats) : null;
+  if (!value.enabled && sharedStats !== null) {
+    throw new SharingDataError("Disabled public profiles cannot contain shared statistics.");
+  }
+  const catalogPageCounts = Object.prototype.hasOwnProperty.call(value, "catalog_page_counts")
+    ? validateCatalogPageCounts(value.catalog_page_counts)
+    : null;
   return {
     uid: expectedUid,
     displayName: value.display_name,
@@ -252,6 +338,8 @@ export function parsePublicProfileSnapshot(value: unknown, expectedUid: string):
     generation: value.generation,
     revision: value.revision,
     updatedAt: timestampIso(value.updated_at, "Public profile updated_at"),
+    sharedStats,
+    catalogPageCounts,
   };
 }
 

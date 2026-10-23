@@ -314,6 +314,7 @@ service cloud.firestore {
         ])
         && data.keys().hasOnly([
           'schema_version', 'uid', 'display_name', 'enabled', 'generation', 'revision', 'updated_at',
+          'shared_stats', 'catalog_page_counts',
         ])
         && data.schema_version == 1
         && data.uid == uid
@@ -323,8 +324,32 @@ service cloud.firestore {
         && (data.enabled ? data.display_name.matches('^.{1,80}$') : data.display_name == '')
         && validSharingRevision(data.generation)
         && validSharingRevision(data.revision)
+        && (!('shared_stats' in data) || data.shared_stats == null || validPublicStats(data.shared_stats))
+        && (!('shared_stats' in data) || data.shared_stats == null || data.enabled)
+        && (!('catalog_page_counts' in data) || validPublicCatalogPageCounts(data.catalog_page_counts))
         && data.updated_at is timestamp
         && data.updated_at == request.time;
+    }
+
+    function validPublicStats(value) {
+      return value is map
+        && value.keys().hasAll(['matches', 'wins', 'losses', 'draws', 'updated_at'])
+        && value.keys().hasOnly(['matches', 'wins', 'losses', 'draws', 'updated_at'])
+        && value.matches is int && value.matches >= 0 && value.matches <= 2147483647
+        && value.wins is int && value.wins >= 0 && value.wins <= 2147483647
+        && value.losses is int && value.losses >= 0 && value.losses <= 2147483647
+        && value.draws is int && value.draws >= 0 && value.draws <= 2147483647
+        && value.matches == value.wins + value.losses + value.draws
+        && value.updated_at is timestamp;
+    }
+
+    function validPublicCatalogPageCounts(value) {
+      return value is list
+        && value.size() == 4
+        && value[0] is int && value[0] >= 0 && value[0] <= 8
+        && value[1] is int && value[1] >= 0 && value[1] <= 8
+        && value[2] is int && value[2] >= 0 && value[2] <= 8
+        && value[3] is int && value[3] >= 0 && value[3] <= 8;
     }
 
     function validPublicCatalogEntry(entry) {
@@ -386,6 +411,97 @@ service cloud.firestore {
         && validEmptyCatalogPageAfter(uid, '3', generation);
     }
 
+    function publicCatalogCountsMatchAfter(uid, counts, generation) {
+      let pagesAfter = [
+        getAfter(publicCatalogPagePath(uid, '0')).data,
+        getAfter(publicCatalogPagePath(uid, '1')).data,
+        getAfter(publicCatalogPagePath(uid, '2')).data,
+        getAfter(publicCatalogPagePath(uid, '3')).data,
+      ];
+      let pagesBefore = [
+        get(publicCatalogPagePath(uid, '0')).data,
+        get(publicCatalogPagePath(uid, '1')).data,
+        get(publicCatalogPagePath(uid, '2')).data,
+        get(publicCatalogPagePath(uid, '3')).data,
+      ];
+      return validPublicCatalogPageCounts(counts)
+        && existsAfter(publicCatalogPagePath(uid, '0')) && pagesAfter[0].generation == generation && pagesAfter[0].entries.size() == counts[0]
+        && existsAfter(publicCatalogPagePath(uid, '1')) && pagesAfter[1].generation == generation && pagesAfter[1].entries.size() == counts[1]
+        && existsAfter(publicCatalogPagePath(uid, '2')) && pagesAfter[2].generation == generation && pagesAfter[2].entries.size() == counts[2]
+        && existsAfter(publicCatalogPagePath(uid, '3')) && pagesAfter[3].generation == generation && pagesAfter[3].entries.size() == counts[3]
+        && (pagesAfter[0].revision == pagesBefore[0].revision + 1
+          || pagesAfter[1].revision == pagesBefore[1].revision + 1
+          || pagesAfter[2].revision == pagesBefore[2].revision + 1
+          || pagesAfter[3].revision == pagesBefore[3].revision + 1);
+    }
+
+    function publicCatalogManifestUpdateValid(uid) {
+      let beforeHasCounts = 'catalog_page_counts' in resource.data;
+      let afterHasCounts = 'catalog_page_counts' in request.resource.data;
+      return (!beforeHasCounts || afterHasCounts)
+        && (
+          (beforeHasCounts == afterHasCounts
+            && (!beforeHasCounts || request.resource.data.catalog_page_counts == resource.data.catalog_page_counts))
+          || (afterHasCounts
+            && publicCatalogCountsMatchAfter(
+              uid,
+              request.resource.data.catalog_page_counts,
+              request.resource.data.generation,
+            ))
+        );
+    }
+
+    function publicSharedStatsUpdateValid() {
+      let beforeHasStats = 'shared_stats' in resource.data;
+      let afterHasStats = 'shared_stats' in request.resource.data;
+      return (beforeHasStats && !afterHasStats) == false
+        && (
+          !afterHasStats
+          || request.resource.data.shared_stats == null
+          || (beforeHasStats && request.resource.data.shared_stats == resource.data.shared_stats)
+          || request.resource.data.shared_stats.updated_at == request.time
+        );
+    }
+
+    function publicProfilePageMutationMatchesAfter(uid, pageId, entries) {
+      let root = publicProfilePath(uid);
+      let profileBefore = get(root).data;
+      let profileAfter = getAfter(root).data;
+      let pageIndex = pageId == '0' ? 0 : pageId == '1' ? 1 : pageId == '2' ? 2 : 3;
+      return existsAfter(root)
+        && profileAfter.enabled == true
+        && profileAfter.generation == resource.data.generation
+        && profileAfter.revision == profileBefore.revision + 1
+        && (
+          !('catalog_page_counts' in profileAfter)
+          || (validPublicCatalogPageCounts(profileAfter.catalog_page_counts)
+            && profileAfter.catalog_page_counts[pageIndex] == entries.size())
+        );
+    }
+
+    function publicProfilePageCreateMatchesAfter(uid, pageId, page) {
+      let root = publicProfilePath(uid);
+      let profileAfter = getAfter(root).data;
+      let pageIndex = pageId == '0' ? 0 : pageId == '1' ? 1 : pageId == '2' ? 2 : 3;
+      return existsAfter(root)
+        && profileAfter.generation == page.generation
+        && validPublicCatalogPageCounts(profileAfter.catalog_page_counts)
+        && profileAfter.catalog_page_counts[pageIndex] == page.entries.size();
+    }
+
+    function publicProfilePageClearMatchesAfter(uid, page) {
+      let root = publicProfilePath(uid);
+      let profileBefore = get(root).data;
+      let profileAfter = getAfter(root).data;
+      return existsAfter(root)
+        && profileAfter.generation == resource.data.generation + 1
+        && profileAfter.revision == profileBefore.revision + 1
+        && profileAfter.shared_stats == null
+        && profileAfter.catalog_page_counts == [0, 0, 0, 0]
+        && page.generation == profileAfter.generation
+        && page.entries.size() == 0;
+    }
+
     function publicProfileGenerationMatchesAfter(uid, generation) {
       let path = publicProfilePath(uid);
       let profileAfter = getAfter(path).data;
@@ -415,7 +531,9 @@ service cloud.firestore {
     function sharingDataClearedBeforeProfileDelete(uid) {
       let root = publicProfilePath(uid);
       let library = /databases/$(database)/documents/replay_libraries/$(uid);
-      return (!exists(root) || (get(root).data.enabled == false && get(root).data.display_name == ''))
+      return (!exists(root) || (get(root).data.enabled == false
+        && get(root).data.display_name == ''
+        && (!('shared_stats' in get(root).data) || get(root).data.shared_stats == null)))
         && (!exists(library) || get(library).data.entries_json == '[]');
     }
 
@@ -453,6 +571,8 @@ service cloud.firestore {
         && validPublicProfileDocument(uid, request.resource.data)
         && request.resource.data.revision == 1
         && request.resource.data.generation == 1
+        && request.resource.data.shared_stats == null
+        && request.resource.data.catalog_page_counts == [0, 0, 0, 0]
         && (!request.resource.data.enabled || publicSharingEnabled())
         && allPublicCatalogPagesClearedAfter(uid, 1);
       allow update: if isOwner(uid)
@@ -460,6 +580,8 @@ service cloud.firestore {
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.schema_version == resource.data.schema_version
         && request.resource.data.revision == resource.data.revision + 1
+        && publicCatalogManifestUpdateValid(uid)
+        && publicSharedStatsUpdateValid()
         && (
           (
             request.resource.data.generation == resource.data.generation
@@ -472,6 +594,8 @@ service cloud.firestore {
               || (!resource.data.enabled && !request.resource.data.enabled)
             )
             && (!request.resource.data.enabled || publicSharingEnabled())
+            && request.resource.data.shared_stats == null
+            && request.resource.data.catalog_page_counts == [0, 0, 0, 0]
             && allPublicCatalogPagesClearedAfter(uid, request.resource.data.generation)
           )
         );
@@ -492,24 +616,22 @@ service cloud.firestore {
           && validPublicCatalogPageDocument(request.resource.data)
           && request.resource.data.revision == 1
           && request.resource.data.entries.size() == 0
+          && publicProfilePageCreateMatchesAfter(uid, pageId, request.resource.data)
           && publicProfileGenerationMatchesAfter(uid, request.resource.data.generation);
         allow update: if isOwner(uid)
           && pageId in ['0', '1', '2', '3']
           && validPublicCatalogPageDocument(request.resource.data)
           && request.resource.data.revision == resource.data.revision + 1
-          && publicProfileGenerationMatchesAfter(uid, request.resource.data.generation)
           && (
             (
               request.resource.data.generation == resource.data.generation
-              && (
-                getAfter(publicProfilePath(uid)).data.enabled
-                || request.resource.data.entries.size() == 0
-              )
+              && publicProfilePageMutationMatchesAfter(uid, pageId, request.resource.data.entries)
               && (request.resource.data.entries.size() == 0 || publicSharingEnabled())
             )
             || (
               request.resource.data.generation == resource.data.generation + 1
               && request.resource.data.entries.size() == 0
+              && publicProfilePageClearMatchesAfter(uid, request.resource.data)
             )
           );
         allow delete: if false;

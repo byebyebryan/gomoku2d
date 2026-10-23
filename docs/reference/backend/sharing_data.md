@@ -17,13 +17,27 @@ schema-5 `profiles/{uid}` record and its played-match history.
 | `generation` | Positive monotonic integer, at most 2,147,483,647 |
 | `revision` | Positive monotonic integer, at most 2,147,483,647 |
 | `updated_at` | Firestore server timestamp |
+| `shared_stats` | Optional/null means off. Otherwise exactly `matches`, `wins`, `losses`, `draws`, and `updated_at`; each counter is a nonnegative integer up to 2,147,483,647, `matches` equals the three outcomes combined, and the nested update time is a server timestamp. |
+| `catalog_page_counts` | Optional four-entry manifest in storage-page order. Each count is an integer from 0 through 8 and must match the corresponding page's entry count. |
+
+New roots write `shared_stats: null` and `catalog_page_counts: [0, 0, 0, 0]`.
+Readers accept legacy roots with only the original required fields and current
+roots with either or both known optional fields; other fields are rejected.
+Legacy roots without a catalog manifest remain readable. Their first catalog
+mutation reads the four page markers, validates their generations, and writes
+derived counts with the changed page. It performs no separate migration write.
+A mismatch between a manifest and its page is an error that requires reload or
+repair, not an empty catalog.
 
 The owner can fetch their own document while it is disabled. A visitor can
 fetch a known UID only while public sharing is enabled globally and that
 profile is enabled. Directory queries are denied. The four fixed documents
 `public_profiles/{uid}/pages/{0,1,2,3}` each hold at most eight entries, for a
-maximum of 32 publications. A visitor fetches the identity and only the page
-they open; pages are fetched directly by ID, with no listener.
+maximum of 32 publications. Visitors use the manifest to fill logical pages
+across empty storage pages and fetch only physical pages needed for the
+selected logical page. Legacy roots without a manifest use one bounded read of
+all four pages to derive counts. Pages are fetched directly by ID, with no
+listener.
 
 Each page entry has exactly `fingerprint`, `payload`, `title`, and `view_ply`.
 Fingerprints are 43 base64url characters. Payloads are unpadded base64url and
@@ -36,10 +50,24 @@ the legality and format checks for payload contents.
 Create, visibility changes, and explicit clear operations write the profile
 and all four empty page markers atomically. A visibility transition increments
 the generation and each page revision. Re-enabling starts with empty pages.
-An enabled-name change increments only the root revision. A normal publication
-write increments only its page revision and requires both the loaded page
-revision and profile generation to remain current. Empty page documents are
-retained; pages and profiles cannot be deleted.
+An enabled-name change increments only the root revision and preserves the raw
+statistics snapshot, including its exact Firestore timestamp. Catalog mutations
+compare the expected root revision, page revision, and generation, then
+atomically update both the page and root manifest/revision while preserving
+name and statistics. They return both updated snapshots for owner state.
+Ordinary catalog updates use two transaction reads and two writes. Initializing
+a legacy manifest reads at most five documents (root plus four pages) and
+writes two. The rules validate manifest/page agreement, prevent removal of an
+existing manifest, and reject page-only writes that would desynchronize it.
+Empty page documents are retained; pages and profiles cannot be deleted.
+
+Statistics sharing is a separate explicit owner action. `setPublicProfileStats`
+compares the expected root revision, advances it, and writes one root document
+with a server timestamp; it does not change catalog generation or pages. A
+null snapshot opts out and removes public counters. Name and catalog writes
+preserve the existing snapshot and update date. Disabling or clearing public
+sharing nulls statistics and resets page counts. Deleting the legacy profile
+is blocked while a disabled public root still contains statistics.
 
 The `publicSharingEnabled()` Firestore rule helper is the operational switch.
 Changing its literal result to `false` blocks visitor reads and new enabling or
@@ -74,7 +102,9 @@ its existing sync instead of adding private-library entries.
 ## Client API and operational behavior
 
 `src/cloud/sharing_public.ts` exports `loadPublicProfile`, `loadCatalogPage`,
-`setPublicProfile`, and `saveCatalogPage`. `src/cloud/sharing_private.ts`
+`setPublicProfile`, `setPublicProfileStats`, and `saveCatalogPage`.
+`saveCatalogPage` returns `{ profile, page }` so callers can refresh both root
+and page revisions. `src/cloud/sharing_private.ts`
 exports `loadPrivateLibrary` and `savePrivateLibrary`. Both accept an optional
 injected Firestore instance for tests and use the configured Firebase client
 otherwise. Loads use explicit server reads; mutations use transactions and do
