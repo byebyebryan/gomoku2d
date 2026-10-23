@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState, type KeyboardEvent } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { useDocumentTitle } from "../app/useDocumentTitle";
@@ -12,6 +12,7 @@ import { replayLibraryStore } from "../replay/replay_library_store";
 import { replayLibrarySync } from "../replay/replay_library_sync";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import {
+  savedMatchIsAfterReset,
   savedMatchPlayerForSide,
   type SavedMatchV2,
   type SavedMatchSide,
@@ -251,6 +252,8 @@ function cloudTitleText({
 export function ProfileRoute() {
   useDocumentTitle("Profile");
   const [recordTab, setRecordTab] = useState<"games" | "saved">("games");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") === "public" ? "public" : recordTab;
 
   const navigate = useNavigate();
   const [confirmingProfileAction, setConfirmingProfileAction] = useState<ProfileDangerAction | null>(null);
@@ -332,11 +335,81 @@ export function ProfileRoute() {
     ].join(" ")
     : "";
   const signedIn = cloudAuth.status === "signed_in" && Boolean(cloudAuth.user);
+  const cachedMatchIds = new Set(cloudUserCache?.cachedMatches.map((match) => match.id) ?? []);
+  const currentProfileMatchIds = cloudProfile.profile?.matchHistory.replayMatches
+    .filter((match) => savedMatchIsAfterReset(match, cloudProfile.profile?.resetAt))
+    .map((match) => match.id) ?? [];
+  const profileHistoryMatchesCache = currentProfileMatchIds.every((matchId) => cachedMatchIds.has(matchId));
+  const statsReady = Boolean(
+    signedIn
+    && cloudProfile.status === "ready"
+    && cloudProfile.profile?.uid === cloudAuth.user?.uid
+    && cloudHistory.loadStatus === "ready"
+    && cloudUserCache?.loadedAt
+    && profileHistoryMatchesCache
+    && cloudHistory.syncStatus !== "syncing"
+    && cloudHistory.syncStatus !== "error"
+    && pendingCloudMatchCount === 0
+    && !hasPendingCloudMatchError
+    && cloudPromotion.status !== "promoting"
+    && cloudPromotion.status !== "error",
+  );
+  const statsBlocker = !signedIn
+    ? "Sign in before sharing public statistics."
+    : cloudProfile.status !== "ready" || cloudProfile.profile?.uid !== cloudAuth.user?.uid
+      ? "Wait for this account’s cloud profile to load."
+      : cloudHistory.loadStatus !== "ready" || !cloudUserCache?.loadedAt
+        ? "Wait for this account’s private game history to finish loading."
+        : !profileHistoryMatchesCache
+          ? "Wait for the loaded game history to match this account’s cloud profile."
+        : cloudPromotion.status === "promoting"
+          ? "Wait for local history promotion to finish."
+          : cloudPromotion.status === "error"
+            ? "Resolve the history promotion error before sharing statistics."
+            : cloudHistory.syncStatus === "syncing" || pendingCloudMatchCount > 0
+              ? "Wait for pending game history sync to finish."
+              : cloudHistory.syncStatus === "error" || hasPendingCloudMatchError
+                ? "Resolve the game history sync error before sharing statistics."
+                : "Your complete game history is not ready to share.";
+
+  function selectTab(tab: "games" | "saved" | "public"): void {
+    if (tab === "public") {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.set("tab", "public");
+        return next;
+      });
+      return;
+    }
+    setRecordTab(tab);
+    if (searchParams.has("tab")) {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.delete("tab");
+        return next;
+      });
+    }
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>): void {
+    const tabs = ["games", "saved", "public"] as const;
+    const currentIndex = tabs.indexOf(activeTab);
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowLeft") nextIndex = (currentIndex + tabs.length - 1) % tabs.length;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = tabs.length - 1;
+    if (nextIndex === null) return;
+    const nextTab = tabs[nextIndex]!;
+    selectTab(nextTab);
+    document.getElementById(`${nextTab}-tab`)?.focus();
+    event.preventDefault();
+  }
   const profileActionDisabled = profileActionBusy || (signedIn && cloudProfile.status === "loading");
   const confirmationText = confirmingProfileAction === "delete"
-    ? "Delete your cloud profile, history, saved replays, public name and publications, then sign out? Local copies stay on this device. Empty revision markers remain to block stale writes. Copied replay links still work."
+    ? "Delete your cloud profile, history, saved replays, public name, shared statistics and publications, then sign out? Local copies stay on this device. Empty revision markers remain to block stale writes. Copied replay links still work."
     : signedIn
-      ? "Reset private settings, games and saved replays here and in the cloud? Local replay analyses are cleared. Your public profile and publications stay unchanged; empty cloud revision markers remain."
+      ? "Reset private settings, games and saved replays here and in the cloud? Local replay analyses are cleared. Your public profile, shared statistics and publications stay unchanged; empty cloud revision markers remain."
       : "Reset this profile? This clears settings, games, saved replays and replay analyses on this device.";
   const confirmationButtonText = confirmingProfileAction === "delete" ? "Delete" : "Reset";
 
@@ -560,30 +633,26 @@ export function ProfileRoute() {
               </button>
             )}
           </section>
-          <PublicProfileManager />
         </aside>
 
         <section className={styles.recordPanel}>
           <div className={styles.recordHeader}>
-            <div role="tablist" aria-label="Private records" className={styles.recordTabs}>
-              {([['games', 'My games'], ['saved', 'Saved replays']] as const).map(([tab, label]) =>
-                <button key={tab} id={`${tab}-tab`} type="button" role="tab" aria-selected={recordTab === tab}
-                  aria-controls={`${tab}-records`} tabIndex={recordTab === tab ? 0 : -1}
-                  className={`uiAction ${recordTab === tab ? 'uiActionSecondary' : 'uiActionNeutral'}`}
-                  onClick={() => setRecordTab(tab)} onKeyDown={(event) => {
-                    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-                      const next = recordTab === 'games' ? 'saved' : 'games';
-                      setRecordTab(next); document.getElementById(`${next}-tab`)?.focus(); event.preventDefault();
-                    }
-                  }}>{label}</button>)}
+            <div role="tablist" aria-label="Profile sections" className={styles.recordTabs}>
+              {([['games', 'My games'], ['saved', 'Saved replays'], ['public', 'Public profile']] as const).map(([tab, label]) =>
+                <button key={tab} id={`${tab}-tab`} type="button" role="tab" aria-selected={activeTab === tab}
+                  aria-controls={`${tab}-records`} tabIndex={activeTab === tab ? 0 : -1}
+                  className={`uiAction ${activeTab === tab ? 'uiActionSecondary' : 'uiActionNeutral'}`}
+                  onClick={() => selectTab(tab)} onKeyDown={handleTabKeyDown}>{label}</button>)}
             </div>
             {historyStatus ? (
               <p className={historyStatusClassName} aria-live="polite">{historyStatus.label}</p>
             ) : null}
           </div>
-          <div id={`${recordTab}-records`} role="tabpanel" aria-labelledby={`${recordTab}-tab`}
-            className={recordTab === 'games' ? styles.recordContents : styles.libraryContents}>
-          {recordTab === 'saved' ? <ReplayLibraryPanel /> : <>
+          <div id={`${activeTab}-records`} role="tabpanel" aria-labelledby={`${activeTab}-tab`}
+            className={activeTab === 'games' ? styles.recordContents : styles.libraryContents}>
+          {activeTab === 'public' ? (
+            <PublicProfileManager stats={stats} statsReady={statsReady} statsBlocker={statsBlocker} />
+          ) : activeTab === 'saved' ? <ReplayLibraryPanel /> : <>
           <div className={styles.summaryGrid}>
             <article className={styles.summaryTile}>
               <span className={styles.summaryValue}>{stats.matches}</span>

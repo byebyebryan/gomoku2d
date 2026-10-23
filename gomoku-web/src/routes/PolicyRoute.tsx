@@ -11,8 +11,8 @@ interface PolicyRouteProps {
 }
 
 const UPDATED: Record<PolicyPageKind, string> = {
-  privacy: "October 21, 2026",
-  terms: "October 21, 2026",
+  privacy: "October 22, 2026",
+  terms: "October 22, 2026",
 };
 
 export function PolicyRoute({ kind }: PolicyRouteProps) {
@@ -102,8 +102,8 @@ function PrivacyContent() {
         <section className={styles.section}>
           <h2>Sharing replays and public profiles</h2>
           <p>A replay link contains the game moves, player names, optional public profile identifiers, bot settings and any starting-position origin metadata. Anyone with the link can view or copy it without signing in. Sharing a link does not automatically publish it or save it to someone’s private history.</p>
-          <p>Your public profile stays off until you choose and confirm a public name. Its name, account identifier and games you explicitly publish are readable by anyone with the profile link. Public profiles do not expose your private settings, provider metadata or private history. Player attribution is supplied by the publisher and is not independently verified.</p>
-          <p>Unpublishing removes a catalog entry. Disabling your public profile hides it and removes its catalog; re-enabling starts empty. Replay links and copies already obtained by other people cannot be recalled.</p>
+          <p>Your public profile stays off until you choose and confirm a public name. Its name, account identifier and games you explicitly publish are readable by anyone with the profile link. Aggregate Matches, Wins, Losses, Draws, win rate and the snapshot update date are public only when you separately opt in; the snapshot is updated only when you explicitly publish or refresh it. Public profiles do not expose your private settings, provider metadata or private history. Player attribution is supplied by the publisher and is not independently verified.</p>
+          <p>Unpublishing removes a catalog entry. Turning statistics off removes the aggregate snapshot. Disabling your public profile hides it and removes statistics and its catalog; re-enabling starts empty with statistics off. Replay links and copies already obtained by other people cannot be recalled.</p>
         </section>
 
         <section className={styles.section}>
@@ -135,11 +135,11 @@ function PrivacyContent() {
           <h2>Data deletion</h2>
           <p>
             Use Reset Profile from the Profile screen to clear the current profile.
-            Signed out, it clears local settings, match history, guest saved copies and cached replay analyses on this device. Signed in, it resets your private cloud profile, history and replay library, then clears the corresponding local profile data and account copies. Guest copies remain separate. Private reset does not change your public profile or publications.
+            Signed out, it clears local settings, match history, guest saved copies and cached replay analyses on this device. Signed in, it resets your private cloud profile, history and replay library, then clears the corresponding local profile data and account copies. Guest copies remain separate. Private reset does not change your public profile, shared statistics or publications.
           </p>
           <p>
             Signed-in users can choose Delete Cloud inside Reset Profile to delete
-            the Gomoku2D cloud profile, history, private replay library, public name and publications, then sign out. That action preserves local data on this device; account-library copies require explicit review before uploading again. Empty public/private revision markers remain, without names or game payloads, to block stale writes. Copied replay links still work. Clear the site’s browser data to remove all local copies.
+            the Gomoku2D cloud profile, history, private replay library, public name, shared statistics and publications, then sign out. That action preserves local data on this device; account-library copies require explicit review before uploading again. Empty public/private revision markers remain, without names or game payloads, to block stale writes. Copied replay links still work. Clear the site’s browser data to remove all local copies.
           </p>
         </section>
 
@@ -195,7 +195,7 @@ function TermsContent() {
           <p>
             You can reset your local or cloud profile from the Profile screen. If
             you are signed in, open Reset Profile and choose Delete Cloud to delete
-            your Gomoku2D cloud profile, replay library and publications, and sign out. Empty revision markers remain to prevent stale writes; copied replay links cannot be recalled. Local browser data remains
+            your Gomoku2D cloud profile, replay library, shared statistics and publications, and sign out. Empty revision markers remain to prevent stale writes; copied replay links cannot be recalled. Local browser data remains
             local unless you reset it or clear site data manually.
           </p>
         </section>

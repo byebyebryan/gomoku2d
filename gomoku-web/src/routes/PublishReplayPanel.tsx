@@ -185,7 +185,10 @@ export function PublishReplayPanel({
 
       const pages = await Promise.all([0, 1, 2, 3].map((pageId) => loadCatalogPage(currentUid, pageId)));
       if (!isCurrent()) return;
-      if (pages.some((page) => !page || page.generation !== root.generation)) {
+      if (pages.some((page, pageId) => (
+        !page || page.generation !== root.generation
+          || (root.catalogPageCounts !== null && page.entries.length !== root.catalogPageCounts[pageId])
+      ))) {
         throw new Error("The public catalog changed or is incomplete. Reload your public profile and try again.");
       }
 
@@ -212,10 +215,10 @@ export function PublishReplayPanel({
           title: cleanTitle,
           view_ply: validated.replay.viewPly ?? 0,
         },
-      ], root.generation, availablePage.revision);
+      ], root.revision, root.generation, availablePage.revision);
       if (!isCurrent()) return;
-      setPublisher({ uid: currentUid, status: "ready", profile: root, message: null });
-      setNotice(`Published “${updated.entries[updated.entries.length - 1]?.title ?? cleanTitle}” to ${root.displayName}'s public profile.`);
+      setPublisher({ uid: currentUid, status: "ready", profile: updated.profile, message: null });
+      setNotice(`Published “${updated.page.entries[updated.page.entries.length - 1]?.title ?? cleanTitle}” to ${updated.profile.displayName}'s public profile.`);
     } catch (publishError) {
       if (isCurrent()) setError(errorText(publishError, "This replay could not be published."));
     } finally {
@@ -268,7 +271,7 @@ export function PublishReplayPanel({
           {publisherForCurrentUid?.status === "ready" && !publisherForCurrentUid.profile?.enabled && (
             <div className={styles.profileRequired}>
               <p>Your public profile is not enabled. Review and enable it from Profile before publishing games.</p>
-              <Link className="uiAction uiActionSecondary" to="/profile">Manage public profile</Link>
+              <Link className="uiAction uiActionSecondary" to="/profile?tab=public">Manage public profile</Link>
             </div>
           )}
 

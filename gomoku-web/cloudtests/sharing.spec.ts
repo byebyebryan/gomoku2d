@@ -8,7 +8,7 @@ import { makeProfileEligible, projectId, protectContext, readProfile, signIn, te
 import { seedLocalSavedMatch } from "../playtests/helpers/local_history.js";
 
 const WIN_MOVES = [110, 0, 111, 1, 112, 2, 113, 3, 114];
-const EVIDENCE_DIRECTORY = resolve(dirname(fileURLToPath(import.meta.url)), "../../docs/working/v0_6_evidence");
+const EVIDENCE_DIRECTORY = resolve(dirname(fileURLToPath(import.meta.url)), "../../docs/working/v0_6_1_evidence");
 const FINISHED_MATCH_MOVES = [112, 0, 113, 15, 114, 30, 115, 1, 116].map((cell) => ({
   row: Math.floor(cell / 15),
   col: cell % 15,
@@ -64,6 +64,29 @@ function decodeRestFields(fields: Record<string, unknown>): Record<string, unkno
   return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, decodeRestValue(value)]));
 }
 
+function encodeRestValue(value: unknown): unknown {
+  if (value === null) return { nullValue: null };
+  if (typeof value === "string") return { stringValue: value };
+  if (typeof value === "boolean") return { booleanValue: value };
+  if (typeof value === "number" && Number.isInteger(value)) return { integerValue: String(value) };
+  if (Array.isArray(value)) return { arrayValue: { values: value.map(encodeRestValue) } };
+  if (value && typeof value === "object") {
+    if ("__timestampValue" in value && typeof (value as { __timestampValue?: unknown }).__timestampValue === "string") {
+      return { timestampValue: (value as { __timestampValue: string }).__timestampValue };
+    }
+    return { mapValue: { fields: encodeRestFields(value as Record<string, unknown>) } };
+  }
+  throw new Error("Unsupported Firestore fixture value.");
+}
+
+function firestoreTimestamp(value: string): { __timestampValue: string } {
+  return { __timestampValue: value };
+}
+
+function encodeRestFields(fields: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, encodeRestValue(value)]));
+}
+
 async function readFirestoreDocument(path: string): Promise<Record<string, unknown> | null> {
   const encodedPath = path.split("/").map(encodeURIComponent).join("/");
   const response = await fetch(`${cloudTestOrigins.firestore}/v1/projects/${projectId}/databases/(default)/documents/${encodedPath}`, {
@@ -73,6 +96,16 @@ async function readFirestoreDocument(path: string): Promise<Record<string, unkno
   if (!response.ok) throw new Error(`Firestore REST read failed for ${path}: ${await response.text()}`);
   const document = await response.json() as { fields?: Record<string, unknown> };
   return decodeRestFields(document.fields ?? {});
+}
+
+async function seedFirestoreDocument(path: string, fields: Record<string, unknown>): Promise<void> {
+  const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+  const response = await fetch(`${cloudTestOrigins.firestore}/v1/projects/${projectId}/databases/(default)/documents/${encodedPath}`, {
+    method: "PATCH",
+    headers: { Authorization: "Bearer owner", "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: encodeRestFields(fields) }),
+  });
+  if (!response.ok) throw new Error(`Firestore REST seed failed for ${path}: ${await response.text()}`);
 }
 
 async function auditAccessibility(page: Page, testInfo: TestInfo, name: string): Promise<void> {
@@ -122,12 +155,21 @@ async function openSavedReplays(page: Page): Promise<void> {
   await expect(page.getByRole("button", { name: "Reload cloud library", exact: true })).toBeEnabled();
 }
 
+async function openPublicProfile(page: Page): Promise<void> {
+  await page.getByRole("tab", { name: "Public profile", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Public profile", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reload public profile", exact: true })).toBeEnabled();
+}
+
 async function expectNoHorizontalOverflow(page: Page): Promise<void> {
   const widths = await page.evaluate(() => ({
     viewport: window.innerWidth,
     document: document.documentElement.scrollWidth,
+    mainClientWidth: document.querySelector("main")?.clientWidth ?? 0,
+    mainScrollWidth: document.querySelector("main")?.scrollWidth ?? 0,
   }));
   expect(widths.document).toBeLessThanOrEqual(widths.viewport);
+  expect(widths.mainScrollWidth - widths.mainClientWidth).toBeLessThanOrEqual(2);
 }
 
 async function captureSharingEvidence(page: Page, testInfo: TestInfo, name: string, selector: string): Promise<void> {
@@ -163,11 +205,11 @@ test("C10: fresh signed-in shared/public route variants do no private Firestore 
   await prepareEligibleProfile(page, uid);
   const baseline = await readProfile(uid);
   expect(baseline).not.toBeNull();
-  await page.getByRole("button", { name: "Manage public profile", exact: true }).click();
+  await openPublicProfile(page);
   await page.getByLabel("Choose your public name", { exact: true }).fill("Network-isolated public player");
   await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
-  await expect(page.getByText("Public profile enabled with an empty catalog.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
 
   // Seed after sign-in so the source page's already-running cloud session never
   // sees it; the new page hydrates this unsynced history from local storage.
@@ -239,11 +281,27 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
   )).toBe(true);
   await prepareEligibleProfile(page, uid);
 
-  await page.getByRole("button", { name: "Manage public profile", exact: true }).click();
+  await openPublicProfile(page);
   await page.getByLabel("Choose your public name", { exact: true }).fill(publicName);
   await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
+
+  const publicStatsToggle = page.getByRole("checkbox", { name: "Share My games statistics publicly", exact: true });
+  await expect(publicStatsToggle).toBeEnabled();
+  await publicStatsToggle.click();
+  await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.shared_stats).not.toBeNull();
+  const publishedStatsRoot = await readFirestoreDocument(`public_profiles/${uid}`);
+  expect(publishedStatsRoot?.shared_stats).toMatchObject({ matches: 1, wins: 1, losses: 0, draws: 0 });
+  await expect(page.getByText(/Published [A-Z]/)).toBeVisible();
+  const firstStatsRevision = publishedStatsRoot?.revision as number;
+  await page.getByRole("button", { name: "Update public stats", exact: true }).click();
+  await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.revision as number)
+    .toBeGreaterThan(firstStatsRevision);
+  await publicStatsToggle.click();
+  await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.shared_stats).toBeNull();
+  await publicStatsToggle.click();
+  await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.shared_stats).not.toBeNull();
   await auditAccessibility(page, testInfo, "public-manager");
   await expectNoHorizontalOverflow(page);
   await captureSharingEvidence(page, testInfo, "profile-manager", 'section[aria-labelledby="public-profile-manager-title"]');
@@ -266,10 +324,11 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
     await visitor.goto(`/player/?id=${encodeURIComponent(uid)}`);
     await expect(visitor.getByRole("heading", { name: publicName, exact: true })).toBeVisible();
     await expect(visitor.getByText(title, { exact: true })).toBeVisible();
+    await expect(visitor.getByText("Matches", { exact: true })).toBeVisible();
     await auditAccessibility(visitor, testInfo, "public-visitor-profile");
     await expectNoHorizontalOverflow(visitor);
     await captureSharingEvidence(visitor, testInfo, "public-profile", "main");
-    const portableUrl = await visitor.getByRole("link", { name: "View replay", exact: true }).getAttribute("href");
+    const portableUrl = await visitor.getByRole("link", { name: "Replay", exact: true }).getAttribute("href");
     expect(portableUrl).toMatch(/^\/replay\/shared\/#g2r1=/);
 
     const openPortableCopy = async () => {
@@ -292,26 +351,26 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
     await openPortableCopy();
 
     await page.goto("/profile");
-    await page.getByRole("button", { name: "Manage public profile", exact: true }).click();
+    await openPublicProfile(page);
     await expect(page.getByText(title, { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Unpublish", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Publication removed from the public catalog." })).toBeVisible();
 
     await visitor.goto(`/player/?id=${encodeURIComponent(uid)}`);
-    await expect(visitor.getByText("No games have been published on this page.", { exact: true })).toBeVisible();
+    await expect(visitor.getByText("No games have been published.", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Disable public profile", exact: true }).click();
     await page.getByRole("button", { name: "Confirm disable", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Public profile disabled and its catalog removed." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Public profile disabled. Statistics and catalog publications were removed." })).toBeVisible();
     await visitor.reload();
     await expect(visitor.getByRole("heading", { name: "Public profile unavailable", exact: true })).toBeVisible();
 
     await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
     await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog." })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
     await visitor.goto(`/player/?id=${encodeURIComponent(uid)}`);
     await expect(visitor.getByRole("heading", { name: publicName, exact: true })).toBeVisible();
-    await expect(visitor.getByText("No games have been published on this page.", { exact: true })).toBeVisible();
+    await expect(visitor.getByText("No games have been published.", { exact: true })).toBeVisible();
 
     await openPortableCopy();
   } finally {
@@ -436,11 +495,16 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
   await openSavedReplays(page);
   await expect(page.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
 
-  await page.getByRole("button", { name: "Manage public profile", exact: true }).click();
+  await openPublicProfile(page);
   await page.getByLabel("Choose your public name", { exact: true }).fill(publicName);
   await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
+
+  const publicStatsToggle = page.getByRole("checkbox", { name: "Share My games statistics publicly", exact: true });
+  await expect(publicStatsToggle).toBeEnabled();
+  await publicStatsToggle.click();
+  await expect.poll(async () => (await readFirestoreDocument(`public_profiles/${uid}`))?.shared_stats).not.toBeNull();
 
   await page.goto(`/replay/${matchId}`);
   await page.getByRole("button", { name: "Publish replay", exact: true }).click();
@@ -459,7 +523,7 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
 
   await page.goto("/profile");
   await page.getByRole("button", { name: "Reset Profile", exact: true }).click();
-  await expect(page.getByText(/Your public profile and publications stay unchanged/)).toBeVisible();
+  await expect(page.getByText(/Your public profile, shared statistics and publications stay unchanged/)).toBeVisible();
   await page.getByRole("button", { name: "Reset", exact: true }).click();
   await expect(page.getByRole("button", { name: "Reset Profile", exact: true })).toBeVisible();
   await expect.poll(async () => (await readProfile(uid))?.match_history?.replay_matches).toEqual([]);
@@ -469,6 +533,7 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
     readFirestoreDocument(`public_profiles/${uid}/pages/${id}`)));
   const privateAfterReset = await readFirestoreDocument(`replay_libraries/${uid}`);
   expect(publicRootAfterReset).toEqual(publicRootBeforeReset);
+  expect(publicRootAfterReset?.shared_stats).toMatchObject({ matches: 1, wins: 1, losses: 0, draws: 0 });
   expect(publicPagesAfterReset).toEqual(publicPagesBeforeReset);
   expect(privateAfterReset?.entries_json).toBe("[]");
   expect(privateAfterReset?.revision).toBe((privateBeforeReset?.revision as number) + 1);
@@ -481,7 +546,7 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
   await page.goto("/profile");
   await page.getByRole("button", { name: "Reset Profile", exact: true }).click();
   await page.getByRole("button", { name: "Delete Cloud", exact: true }).click();
-  await expect(page.getByText(/Delete your cloud profile, history, saved replays, public name and publications/)).toBeVisible();
+  await expect(page.getByText(/Delete your cloud profile, history, saved replays, public name, shared statistics and publications/)).toBeVisible();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign out", exact: true })).toHaveCount(0);
@@ -493,6 +558,8 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
   const privateAfterDelete = await readFirestoreDocument(`replay_libraries/${uid}`);
   expect(deletedProfile).toBeNull();
   expect(publicRootAfterDelete).toMatchObject({ enabled: false, display_name: "" });
+  expect(publicRootAfterDelete?.shared_stats).toBeNull();
+  expect(publicRootAfterDelete?.catalog_page_counts).toEqual([0, 0, 0, 0]);
   expect(publicRootAfterDelete?.generation).toBeGreaterThan(publicRootAfterReset?.generation as number);
   expect(publicPagesAfterDelete).toHaveLength(4);
   for (const pageSnapshot of publicPagesAfterDelete) {
@@ -527,19 +594,23 @@ test("C15: maximum Unicode public fields remain editable and reflow for owners a
     (match: { id: string }) => match.id === matchId,
   )).toBe(true);
   await prepareEligibleProfile(page, uid);
-  await page.getByRole("button", { name: "Manage public profile", exact: true }).click();
+  await openPublicProfile(page);
   const chosenName = page.getByRole("textbox", { name: "Choose your public name", exact: true });
   await chosenName.fill(unicodeName);
   await expect(chosenName).toHaveValue(unicodeName);
   await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
-  await expect(page.getByText("Public profile enabled with an empty catalog.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
   await page.getByRole("textbox", { name: "Public name", exact: true }).fill(publicName);
   await page.getByRole("textbox", { name: "Public name", exact: true }).press("End");
   await page.getByRole("textbox", { name: "Public name", exact: true }).pressSequentially("Z");
   await expect(page.getByRole("textbox", { name: "Public name", exact: true })).toHaveValue(publicName);
   await page.getByRole("button", { name: "Save public name", exact: true }).click();
   await expect(page.getByText("Public name saved.", { exact: true })).toBeVisible();
+  const statsToggle = page.getByRole("checkbox", { name: "Share My games statistics publicly", exact: true });
+  await expect(statsToggle).toBeEnabled();
+  await statsToggle.click();
+  await expect(page.getByRole("button", { name: "Update public stats", exact: true })).toBeEnabled();
   await expectNoHorizontalOverflow(page);
   await captureSharingEvidence(page, testInfo, "maximum-owner", 'section[aria-labelledby="public-profile-manager-title"]');
 
@@ -569,4 +640,93 @@ test("C15: maximum Unicode public fields remain editable and reflow for owners a
   } finally {
     await visitorContext.close();
   }
+});
+
+test("C16: sparse catalog pages, zero stats, last-page removal and legacy roots remain navigable", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  const uid = unique("sparse-public-catalog");
+  const pageCounts = [5, 0, 8, 5];
+  const updatedAt = "2026-10-22T00:00:00.000Z";
+  const rootFields = {
+    schema_version: 1,
+    uid,
+    display_name: "Sparse catalog player",
+    enabled: true,
+    generation: 1,
+    revision: 1,
+    updated_at: firestoreTimestamp(updatedAt),
+    shared_stats: { matches: 0, wins: 0, losses: 0, draws: 0, updated_at: firestoreTimestamp(updatedAt) },
+    catalog_page_counts: pageCounts,
+  };
+  await seedFirestoreDocument(`public_profiles/${uid}`, rootFields);
+  let lastPageEntries: Array<{ fingerprint: string; payload: string; title: string; view_ply: number }> = [];
+  for (const pageId of [0, 1, 2, 3]) {
+    const count = pageCounts[pageId]!;
+    const entries = Array.from({ length: count }, (_, index) => ({
+      fingerprint: Buffer.from(`${pageId}-${index}`).toString("base64url").padEnd(43, "x"),
+      payload: "YWJj",
+      title: `Storage ${pageId} game ${index + 1}`,
+      view_ply: 0,
+    }));
+    if (pageId === 3) lastPageEntries = entries;
+    await seedFirestoreDocument(`public_profiles/${uid}/pages/${pageId}`, {
+      schema_version: 1,
+      generation: 1,
+      revision: 1,
+      updated_at: firestoreTimestamp(updatedAt),
+      entries,
+    });
+  }
+
+  await page.goto(`/player/?id=${encodeURIComponent(uid)}`);
+  await expect(page.getByRole("heading", { name: "Sparse catalog player", exact: true })).toBeVisible();
+  await expect(page.getByText("Page 1 of 3")).toBeVisible();
+  await expect(page.getByText("—", { exact: true })).toBeVisible();
+  await expect(page.getByRole("listitem")).toHaveCount(8);
+  await expect(page.getByText("Storage 0 game 5", { exact: true })).toBeVisible();
+  await expect(page.getByText("Storage 2 game 3", { exact: true })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  await page.getByRole("button", { name: "Next page", exact: true }).click();
+  await expect(page.getByText("Page 2 of 3")).toBeVisible();
+  await expect(page.getByRole("listitem")).toHaveCount(8);
+  await expect(page.getByText("Storage 2 game 4", { exact: true })).toBeVisible();
+  await expect(page.getByText("Storage 3 game 3", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Next page", exact: true }).click();
+  await expect(page.getByText("Page 3 of 3")).toBeVisible();
+  await expect(page.getByRole("listitem")).toHaveCount(2);
+  await expect(page.getByText("Storage 3 game 4", { exact: true })).toBeVisible();
+  await expect(page.getByText("Storage 3 game 5", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next page", exact: true })).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+
+  // Model removal of the two entries on the last logical page. The UI must
+  // recalculate from current content after reload, with no empty third page.
+  await seedFirestoreDocument(`public_profiles/${uid}/pages/3`, {
+    schema_version: 1, generation: 1, revision: 2,
+    updated_at: firestoreTimestamp(updatedAt), entries: lastPageEntries.slice(0, 3),
+  });
+  await seedFirestoreDocument(`public_profiles/${uid}`, {
+    ...rootFields, revision: 2, catalog_page_counts: [5, 0, 8, 3],
+  });
+  await page.reload();
+  await expect(page.getByText("Page 1 of 2")).toBeVisible();
+  await page.getByRole("button", { name: "Next page", exact: true }).click();
+  await expect(page.getByText("Page 2 of 2")).toBeVisible();
+  await expect(page.getByRole("listitem")).toHaveCount(8);
+  await expect(page.getByRole("button", { name: "Next page", exact: true })).toHaveCount(0);
+
+  // A legacy root has no manifest. The same real SDK route derives counts
+  // from its four bounded pages without requiring a migration write.
+  const { catalog_page_counts: _counts, ...legacyFields } = rootFields;
+  await seedFirestoreDocument(`public_profiles/${uid}`, { ...legacyFields, revision: 3 });
+  await page.reload();
+  await expect(page.getByText("Page 1 of 2")).toBeVisible();
+  await expect(page.getByRole("listitem")).toHaveCount(8);
+  await page.getByRole("button", { name: "Next page", exact: true }).click();
+  await expect(page.getByText("Page 2 of 2")).toBeVisible();
+  await expect(page.getByRole("listitem")).toHaveCount(8);
+  expect((await readFirestoreDocument(`public_profiles/${uid}`))?.catalog_page_counts).toBeUndefined();
+  await expectNoHorizontalOverflow(page);
 });

@@ -7,10 +7,14 @@ import {
   loadPublicProfile,
   saveCatalogPage,
   setPublicProfile,
+  setPublicProfileStats,
   type PublicCatalogPageSnapshot,
   type PublicProfileSnapshot,
+  type PublicProfileStatsCounters,
 } from "../cloud/sharing_public";
+import { playerWinRate, type PlayerStats } from "../profile/player_stats";
 import { localProfileStore } from "../profile/local_profile_store";
+import { publicProfileDateLabel } from "./public_catalog";
 
 import styles from "./SharingPanels.module.css";
 
@@ -51,11 +55,38 @@ function publicProfileHref(uid: string): string {
   return url.href;
 }
 
-export function PublicProfileManager() {
+function snapshotMarkersValid(
+  uid: string,
+  profile: PublicProfileSnapshot | null,
+  pages: (PublicCatalogPageSnapshot | null)[] | null,
+): boolean {
+  if (!pages || pages.length !== 4) return false;
+  if (!profile) return pages.every((page) => page === null);
+  return pages.every((page, pageId) => (
+    page !== null
+    && page.uid === uid
+    && page.pageId === pageId
+    && page.generation === profile.generation
+    && (profile.catalogPageCounts === null || page.entries.length === profile.catalogPageCounts[pageId])
+  ));
+}
+
+function catalogReady(profile: PublicProfileSnapshot | null, pages: (PublicCatalogPageSnapshot | null)[] | null): boolean {
+  return Boolean(profile?.enabled && pages?.length === 4 && pages.every((page) => page !== null));
+}
+
+export function PublicProfileManager({
+  stats,
+  statsReady,
+  statsBlocker,
+}: {
+  stats: PlayerStats;
+  statsReady: boolean;
+  statsBlocker: string;
+}) {
   const auth = useStore(cloudAuthStore);
   const localProfile = useStore(localProfileStore, (state) => state.profile);
   const uid = auth.status === "signed_in" ? auth.user?.uid ?? null : null;
-  const [open, setOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<OwnerSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -69,34 +100,6 @@ export function PublicProfileManager() {
   const latestUidRef = useRef<string | null>(uid);
   latestUidRef.current = uid;
   const requestRef = useRef(0);
-
-  useEffect(() => {
-    requestRef.current += 1;
-    setSnapshot(null);
-    setLoading(false);
-    setPendingAction(null);
-    setError(null);
-    setNotice(null);
-    setDraftName(localProfile?.displayName ?? "Player");
-    setConfirmEnable(false);
-    setConfirmDisable(false);
-    setLinkMessage("");
-  }, [uid]);
-
-  const visibleSnapshot = snapshot?.uid === uid ? snapshot : null;
-  const profile = visibleSnapshot?.profile ?? null;
-  const pages = visibleSnapshot?.pages ?? null;
-  const catalogReady = Boolean(
-    profile
-    && pages?.length === 4
-    && pages.every((page) => page !== null && page.generation === profile.generation),
-  );
-  const markerStateValid = Boolean(
-    visibleSnapshot
-    && (profile
-      ? pages?.length === 4 && pages.every((page) => page !== null && page.generation === profile.generation)
-      : pages?.length === 4 && pages.every((page) => page === null)),
-  );
 
   const isCurrent = (requestedUid: string, request: number) => (
     latestUidRef.current === requestedUid
@@ -112,6 +115,7 @@ export function PublicProfileManager() {
     setLoading(true);
     setError(null);
     setNotice(null);
+    setLinkMessage("");
     try {
       const [loadedProfile, page0, page1, page2, page3] = await Promise.all([
         loadPublicProfile(requestedUid),
@@ -122,12 +126,8 @@ export function PublicProfileManager() {
       ]);
       if (!isCurrent(requestedUid, request)) return;
       const catalogPages = [page0, page1, page2, page3];
-      if (loadedProfile) {
-        if (catalogPages.length !== 4 || catalogPages.some((page) => !page || page.generation !== loadedProfile.generation)) {
-          throw new Error("The public catalog markers do not match this profile. Reload before changing anything.");
-        }
-      } else if (catalogPages.some((page) => page !== null)) {
-        throw new Error("Public profile markers are incomplete. Reload before enabling a profile.");
+      if (!snapshotMarkersValid(requestedUid, loadedProfile, catalogPages)) {
+        throw new Error("Public profile and catalog markers do not match. Reload before changing anything.");
       }
 
       setSnapshot({ uid: requestedUid, profile: loadedProfile, pages: catalogPages });
@@ -142,8 +142,32 @@ export function PublicProfileManager() {
     }
   };
 
+  useEffect(() => {
+    requestRef.current += 1;
+    setSnapshot(null);
+    setLoading(false);
+    setPendingAction(null);
+    setError(null);
+    setNotice(null);
+    setDraftName(localProfile?.displayName ?? "Player");
+    setConfirmEnable(false);
+    setConfirmDisable(false);
+    setLinkMessage("");
+    if (uid) void reload(uid);
+  }, [uid]);
+
+  useEffect(() => () => { requestRef.current += 1; }, []);
+
+  const visibleSnapshot = snapshot?.uid === uid ? snapshot : null;
+  const profile = visibleSnapshot?.profile ?? null;
+  const pages = visibleSnapshot?.pages ?? null;
+  const markersValid = snapshotMarkersValid(uid ?? "", profile, pages);
+  const readyCatalog = catalogReady(profile, pages);
+  const publishedEntries = pages?.flatMap((page) => page?.entries.map((entry) => ({ page, entry })) ?? []) ?? [];
+  const isProfileLoaded = visibleSnapshot !== null && !loading && markersValid;
+
   const saveName = async () => {
-    if (!uid || !profile?.enabled || !markerStateValid) return;
+    if (!uid || !profile?.enabled || !markersValid) return;
     const request = ++requestRef.current;
     setPendingAction("name");
     setError(null);
@@ -151,9 +175,7 @@ export function PublicProfileManager() {
     try {
       const updated = await setPublicProfile(uid, draftName, true, profile.revision);
       if (!isCurrent(uid, request)) return;
-      setSnapshot((current) => current?.uid === uid
-        ? { ...current, profile: updated }
-        : current);
+      setSnapshot((current) => current?.uid === uid ? { ...current, profile: updated } : current);
       setDraftName(updated.displayName);
       setNotice("Public name saved.");
     } catch (saveError) {
@@ -164,7 +186,7 @@ export function PublicProfileManager() {
   };
 
   const enableProfile = async () => {
-    if (!uid || !markerStateValid || !confirmEnable || profile?.enabled) return;
+    if (!uid || !markersValid || !confirmEnable || profile?.enabled) return;
     const request = ++requestRef.current;
     setPendingAction("enable");
     setError(null);
@@ -179,7 +201,7 @@ export function PublicProfileManager() {
       });
       setDraftName(updated.displayName);
       setConfirmEnable(false);
-      setNotice("Public profile enabled with an empty catalog.");
+      setNotice("Public profile enabled with an empty catalog. Public statistics stay off until you opt in.");
     } catch (enableError) {
       if (isCurrent(uid, request)) setError(errorText(enableError, "The public profile could not be enabled."));
     } finally {
@@ -188,7 +210,7 @@ export function PublicProfileManager() {
   };
 
   const disableProfile = async () => {
-    if (!uid || !profile?.enabled || !confirmDisable || !markerStateValid) return;
+    if (!uid || !profile?.enabled || !confirmDisable || !markersValid) return;
     const request = ++requestRef.current;
     setPendingAction("disable");
     setError(null);
@@ -202,7 +224,7 @@ export function PublicProfileManager() {
         pages: emptyCatalogPagesAfterVisibilityChange(uid, updated.generation, updated.updatedAt, pages),
       });
       setConfirmDisable(false);
-      setNotice("Public profile disabled and its catalog removed.");
+      setNotice("Public profile disabled. Statistics and catalog publications were removed.");
     } catch (disableError) {
       if (isCurrent(uid, request)) setError(errorText(disableError, "The public profile could not be disabled."));
     } finally {
@@ -210,25 +232,24 @@ export function PublicProfileManager() {
     }
   };
 
-  const unpublish = async (page: PublicCatalogPageSnapshot, fingerprint: string) => {
-    if (!uid || !profile?.enabled || !markerStateValid || !pages) return;
+  const setStatsSharing = async (share: boolean) => {
+    if (!uid || !profile?.enabled || !markersValid || pendingAction !== null) return;
+    if (share && !statsReady) {
+      setError(statsBlocker);
+      return;
+    }
     const request = ++requestRef.current;
-    setPendingAction(fingerprint);
+    setPendingAction(share ? "share-stats" : "remove-stats");
     setError(null);
     setNotice(null);
     try {
-      const entries = page.entries.filter((entry) => entry.fingerprint !== fingerprint);
-      const updated = await saveCatalogPage(uid, page.pageId, entries, profile.generation, page.revision);
+      const counters: PublicProfileStatsCounters | null = share ? stats : null;
+      const updated = await setPublicProfileStats(uid, counters, profile.revision);
       if (!isCurrent(uid, request)) return;
-      setSnapshot((current) => current?.uid === uid && current.pages
-        ? {
-          ...current,
-          pages: current.pages.map((candidate) => candidate?.pageId === updated.pageId ? updated : candidate),
-        }
-        : current);
-      setNotice("Publication removed from the public catalog.");
-    } catch (unpublishError) {
-      if (isCurrent(uid, request)) setError(errorText(unpublishError, "The publication could not be removed."));
+      setSnapshot((current) => current?.uid === uid ? { ...current, profile: updated } : current);
+      setNotice(share ? "Your current My games summary is now public." : "Public statistics removed.");
+    } catch (statsError) {
+      if (isCurrent(uid, request)) setError(errorText(statsError, "Public statistics could not be updated. Reload before retrying."));
     } finally {
       if (isCurrent(uid, request)) setPendingAction(null);
     }
@@ -247,6 +268,40 @@ export function PublicProfileManager() {
     }
   };
 
+  const unpublish = async (page: PublicCatalogPageSnapshot, fingerprint: string) => {
+    if (!uid || !profile?.enabled || !markersValid) return;
+    const request = ++requestRef.current;
+    setPendingAction(fingerprint);
+    setError(null);
+    setNotice(null);
+    try {
+      const updated = await saveCatalogPage(
+        uid,
+        page.pageId,
+        page.entries.filter((entry) => entry.fingerprint !== fingerprint),
+        profile.revision,
+        profile.generation,
+        page.revision,
+      );
+      if (!isCurrent(uid, request)) return;
+      setSnapshot((current) => current?.uid === uid && current.pages
+        ? {
+          ...current,
+          profile: updated.profile,
+          pages: current.pages.map((candidate) => candidate?.pageId === updated.page.pageId ? updated.page : candidate),
+        }
+        : current);
+      setNotice("Publication removed from the public catalog.");
+    } catch (unpublishError) {
+      if (isCurrent(uid, request)) setError(errorText(unpublishError, "The publication could not be removed."));
+    } finally {
+      if (isCurrent(uid, request)) setPendingAction(null);
+    }
+  };
+
+  const sharedStats = profile?.sharedStats ?? null;
+  const winRate = sharedStats ? playerWinRate(sharedStats) : null;
+
   return (
     <section className={`${styles.manager} uiPanel`} aria-labelledby="public-profile-manager-title">
       <div className={styles.managerHeader}>
@@ -254,155 +309,171 @@ export function PublicProfileManager() {
           <p className="uiPageEyebrow">Optional sharing</p>
           <h2 className={styles.sectionTitle} id="public-profile-manager-title">Public profile</h2>
         </div>
-        <button
-          className="uiAction uiActionSecondary"
-          type="button"
-          aria-expanded={open}
-          aria-controls="public-profile-manager-body"
-          onClick={() => {
-            const nextOpen = !open;
-            setOpen(nextOpen);
-            setError(null);
-            setNotice(null);
-            if (nextOpen && uid && pendingAction === null) {
-              setDraftName(localProfile?.displayName ?? "Player");
-              void reload(uid);
-            }
-          }}
-        >
-          {open ? "Public profile" : "Manage public profile"}
-        </button>
+        {uid ? (
+          <div className={styles.managerActions}>
+            <button className="uiAction uiActionNeutral" type="button" disabled={loading || pendingAction !== null}
+              onClick={() => void reload(uid)}>
+              {loading ? "Loading profile" : "Reload public profile"}
+            </button>
+            {profile?.enabled ? (
+              <>
+                <button className="uiAction uiActionNeutral" type="button" onClick={() => void copyLink()}>
+                  Copy link
+                </button>
+                <a className="uiAction uiActionSecondary" href={publicProfileHref(uid)}>
+                  View public profile
+                </a>
+              </>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {open && (
-        <div className={styles.managerBody} id="public-profile-manager-body">
-          {!uid ? (
-            <p className={styles.mutedText}>
-              Sign in from this Profile page to manage a public profile. Your public profile stays off until you enable it.
-            </p>
-          ) : (
-            <>
-              <div className={styles.managerActions}>
-                <button className="uiAction uiActionNeutral" type="button" disabled={loading || pendingAction !== null}
-                  onClick={() => void reload(uid)}>
-                  {loading ? "Loading profile" : "Reload public profile"}
-                </button>
-                {profile?.enabled && (
-                  <button className="uiAction uiActionNeutral" type="button" onClick={() => void copyLink()}>
-                    Copy public profile link
-                  </button>
-                )}
-              </div>
+      {!uid ? (
+        <p className={styles.mutedText}>
+          Sign in to manage a public profile. Your public profile and statistics stay off until you choose to share them.
+        </p>
+      ) : (
+        <div className={styles.managerBody}>
+          {loading && <p className={styles.mutedText} role="status">Loading your public profile.</p>}
+          {error && <p className={styles.errorText} role="alert">{error}</p>}
+          {notice && <p className={styles.successText} role="status">{notice}</p>}
+          {linkMessage && <p className={styles.mutedText} role="status">{linkMessage}</p>}
 
-              {loading && <p className={styles.mutedText} role="status">Loading your public profile.</p>}
-              {error && <p className={styles.errorText} role="alert">{error}</p>}
-              {notice && <p className={styles.successText} role="status">{notice}</p>}
-              {linkMessage && <p className={styles.mutedText} role="status">{linkMessage}</p>}
+          {profile?.enabled ? (
+            <label className={styles.field}>
+              <span>Public profile link</span>
+              <input ref={linkRef} className="uiInput" readOnly value={publicProfileHref(uid)} />
+            </label>
+          ) : null}
 
-              {profile?.enabled && (
+          {isProfileLoaded ? (
+            profile?.enabled ? (
+              <>
                 <label className={styles.field}>
-                  <span>Public profile link</span>
-                  <input ref={linkRef} className="uiInput" readOnly value={publicProfileHref(uid)} />
+                  <span>Public name</span>
+                  <input className="uiInput" maxLength={160} value={draftName}
+                    onChange={(event) => setDraftName(Array.from(event.target.value).slice(0, 80).join(""))} />
                 </label>
-              )}
+                <button className="uiAction uiActionPrimary" type="button"
+                  disabled={pendingAction !== null || draftName.trim() === profile.displayName}
+                  onClick={() => void saveName()}>
+                  {pendingAction === "name" ? "Saving name" : "Save public name"}
+                </button>
 
-              {visibleSnapshot && !loading && markerStateValid && (
-                <>
-                  {profile?.enabled ? (
+                <section className={styles.statsSection} aria-labelledby="public-stats-title">
+                  <h3 className={styles.subTitle} id="public-stats-title">Public statistics</h3>
+                  <p className={styles.mutedText}>
+                    Statistics are separate from game sharing and start off. Only the latest summary is shown.
+                  </p>
+                  <label className={styles.confirmRow}>
+                    <input
+                      type="checkbox"
+                      checked={sharedStats !== null}
+                      disabled={pendingAction !== null || (sharedStats === null && !statsReady)}
+                      onChange={(event) => void setStatsSharing(event.target.checked)}
+                    />
+                    <span>Share My games statistics publicly</span>
+                  </label>
+                  {!statsReady && sharedStats === null ? <p className={styles.mutedText}>{statsBlocker}</p> : null}
+                  {sharedStats ? (
                     <>
-                      <label className={styles.field}>
-                        <span>Public name</span>
-                        <input className="uiInput" maxLength={160} value={draftName}
-                          onChange={(event) => setDraftName(Array.from(event.target.value).slice(0, 80).join(""))} />
-                      </label>
-                      <button className="uiAction uiActionPrimary" type="button"
-                        disabled={pendingAction !== null || draftName.trim() === profile.displayName}
-                        onClick={() => void saveName()}>
-                        {pendingAction === "name" ? "Saving name" : "Save public name"}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <label className={styles.field}>
-                        <span>Choose your public name</span>
-                        <input className="uiInput" maxLength={160} value={draftName}
-                          onChange={(event) => { setDraftName(Array.from(event.target.value).slice(0, 80).join("")); setConfirmEnable(false); }} />
-                      </label>
-                      <p className={styles.preview}>
-                        Anyone with your profile link will see <strong>{draftName.trim() || "your chosen name"}</strong> and games you explicitly publish.
-                      </p>
-                      <label className={styles.confirmRow}>
-                        <input type="checkbox" checked={confirmEnable} onChange={(event) => setConfirmEnable(event.target.checked)} />
-                        <span>I want to enable this public profile with the name shown above.</span>
-                      </label>
-                      <button className="uiAction uiActionPrimary" type="button"
-                        disabled={!confirmEnable || pendingAction !== null}
-                        onClick={() => void enableProfile()}>
-                        {pendingAction === "enable" ? "Enabling public profile" : "Enable public profile"}
-                      </button>
-                    </>
-                  )}
-
-                  {profile?.enabled && catalogReady && (
-                    <div className={styles.publicationSection}>
-                      <h3 className={styles.subTitle}>Published games</h3>
-                      <p className={styles.mutedText}>Unpublishing removes a catalog entry. Portable copies already shared cannot be recalled.</p>
-                      {pages?.flatMap((page) => page?.entries.map((entry) => ({ page, entry })) ?? []).length ? (
-                        <ul className={styles.publicationList}>
-                          {pages?.flatMap((page) => page?.entries.map((entry) => ({ page, entry })) ?? []).map(({ page, entry }) => (
-                            <li className={styles.publicationRow} key={entry.fingerprint}>
-                              <span>{entry.title}</span>
-                              <button className="uiAction uiActionDanger" type="button"
-                                disabled={pendingAction !== null}
-                                onClick={() => void unpublish(page, entry.fingerprint)}>
-                                {pendingAction === entry.fingerprint ? "Removing" : "Unpublish"}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : <p className={styles.emptyState}>No games are currently published.</p>}
-                    </div>
-                  )}
-
-                  {profile?.enabled && !catalogReady && (
-                    <p className={styles.mutedText}>Reload your public profile before making changes.</p>
-                  )}
-
-                  {profile?.enabled && (
-                    <div className={styles.dangerSection}>
-                      <h3 className={styles.subTitle}>Disable public profile</h3>
-                      {!confirmDisable ? (
-                        <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
-                          onClick={() => setConfirmDisable(true)}>
-                          Disable public profile
-                        </button>
-                      ) : (
-                        <div className={styles.confirmPanel}>
-                          <p>
-                            Disabling removes every published game and makes this page unavailable. Re-enabling starts with an empty catalog. Portable replay copies already made by others cannot be recalled. Empty cloud control markers remain to reject stale writes.
-                          </p>
-                          <div className={styles.managerActions}>
-                            <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
-                              onClick={() => void disableProfile()}>
-                              {pendingAction === "disable" ? "Disabling profile" : "Confirm disable"}
-                            </button>
-                            <button className="uiAction uiActionNeutral" type="button" disabled={pendingAction !== null}
-                              onClick={() => setConfirmDisable(false)}>
-                              Keep profile enabled
-                            </button>
+                      <div className={styles.publicStatsGrid} aria-label="Published statistics snapshot">
+                        {([
+                          ["Matches", sharedStats.matches],
+                          ["Wins", sharedStats.wins],
+                          ["Losses", sharedStats.losses],
+                          ["Draws", sharedStats.draws],
+                          ["Win rate", winRate === null ? "—" : `${(winRate * 100).toFixed(1)}%`],
+                        ] as const).map(([label, value]) => (
+                          <div className={styles.publicStatsTile} key={label}>
+                            <span className={styles.publicStatsValue}>{value}</span>
+                            <span className={styles.publicStatsLabel}>{label}</span>
                           </div>
-                        </div>
-                      )}
+                        ))}
+                      </div>
+                      <p className={styles.publicStatsDate}>Published {publicProfileDateLabel(sharedStats.updatedAt)}</p>
+                      <button className="uiAction uiActionSecondary" type="button"
+                        disabled={pendingAction !== null || !statsReady}
+                        onClick={() => void setStatsSharing(true)}>
+                        {pendingAction === "share-stats" ? "Updating public stats" : "Update public stats"}
+                      </button>
+                      {!statsReady ? <p className={styles.mutedText}>{statsBlocker}</p> : null}
+                    </>
+                  ) : null}
+                </section>
+
+                {readyCatalog ? (
+                  <div className={styles.publicationSection}>
+                    <h3 className={styles.subTitle}>Published games</h3>
+                    <p className={styles.mutedText}>Unpublishing removes a catalog entry. Portable copies already shared cannot be recalled.</p>
+                    {publishedEntries.length ? (
+                      <ul className={styles.publicationList}>
+                        {publishedEntries.map(({ page, entry }) => page ? (
+                          <li className={styles.publicationRow} key={entry.fingerprint}>
+                            <span>{entry.title}</span>
+                            <button className="uiAction uiActionDanger" type="button"
+                              disabled={pendingAction !== null}
+                              onClick={() => void unpublish(page, entry.fingerprint)}>
+                              {pendingAction === entry.fingerprint ? "Removing" : "Unpublish"}
+                            </button>
+                          </li>
+                        ) : null)}
+                      </ul>
+                    ) : <p className={styles.emptyState}>No games are currently published.</p>}
+                  </div>
+                ) : <p className={styles.mutedText}>Reload your public profile before managing publications.</p>}
+
+                <div className={styles.dangerSection}>
+                  <h3 className={styles.subTitle}>Disable public profile</h3>
+                  {!confirmDisable ? (
+                    <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
+                      onClick={() => setConfirmDisable(true)}>
+                      Disable public profile
+                    </button>
+                  ) : (
+                    <div className={styles.confirmPanel}>
+                      <p>
+                        Disabling removes public statistics and every published game, and makes this page unavailable. Re-enabling starts empty with statistics off. Portable replay copies already made by others cannot be recalled.
+                      </p>
+                      <div className={styles.managerActions}>
+                        <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
+                          onClick={() => void disableProfile()}>
+                          {pendingAction === "disable" ? "Disabling profile" : "Confirm disable"}
+                        </button>
+                        <button className="uiAction uiActionNeutral" type="button" disabled={pendingAction !== null}
+                          onClick={() => setConfirmDisable(false)}>
+                          Keep profile enabled
+                        </button>
+                      </div>
                     </div>
                   )}
-                </>
-              )}
-
-              {visibleSnapshot && !loading && !markerStateValid && (
-                <p className={styles.mutedText}>Reload to inspect the current public profile before making changes.</p>
-              )}
-            </>
-          )}
+                </div>
+              </>
+            ) : (
+              <>
+                <label className={styles.field}>
+                  <span>Choose your public name</span>
+                  <input className="uiInput" maxLength={160} value={draftName}
+                    onChange={(event) => { setDraftName(Array.from(event.target.value).slice(0, 80).join("")); setConfirmEnable(false); }} />
+                </label>
+                <p className={styles.preview}>
+                  Anyone with your profile link will see <strong>{draftName.trim() || "your chosen name"}</strong> and games you explicitly publish. Statistics stay off until you opt in.
+                </p>
+                <label className={styles.confirmRow}>
+                  <input type="checkbox" checked={confirmEnable} onChange={(event) => setConfirmEnable(event.target.checked)} />
+                  <span>I want to enable this public profile with the name shown above.</span>
+                </label>
+                <button className="uiAction uiActionPrimary" type="button"
+                  disabled={!confirmEnable || pendingAction !== null}
+                  onClick={() => void enableProfile()}>
+                  {pendingAction === "enable" ? "Enabling public profile" : "Enable public profile"}
+                </button>
+              </>
+            )
+          ) : !loading && !error ? (
+            <p className={styles.mutedText}>Public profile data is not ready yet. Reload to try again.</p>
+          ) : null}
         </div>
       )}
     </section>

@@ -11,6 +11,7 @@
 }
 
 .pageCard {
+  container-type: inline-size;
   display: grid;
   width: min(100%, 820px);
   min-width: 0;
@@ -105,7 +106,13 @@
 }
 
 .publicGame {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns:
+    minmax(120px, 1.8fr)
+    minmax(84px, 1.2fr)
+    minmax(64px, 0.7fr)
+    minmax(82px, 0.9fr)
+    minmax(74px, 0.8fr)
+    auto;
 }
 
 .publicGameTitle {
@@ -115,17 +122,90 @@
 }
 
 .publicGameMeta {
-  grid-column: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--text-muted);
   font-size: var(--type-meta);
 }
 
+.publicGameOpponent,
+.publicGameResult {
+  min-width: 0;
+  font-size: var(--type-meta);
+  overflow-wrap: anywhere;
+}
+
+.publicGameResult {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+}
+
+.publicGameResultWin {
+  color: var(--success);
+}
+
+.publicGameResultLoss {
+  color: var(--danger);
+}
+
+.publicGameResultDraw {
+  color: var(--accent-strong);
+}
+
 .publicGame :global(.uiAction) {
-  grid-column: 2;
-  grid-row: 1 / span 2;
   width: fit-content;
   min-width: 0;
   max-width: 100%;
+}
+
+.replayUnavailable {
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+}
+
+.publicStats,
+.statsSection {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.publicStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 6rem), 1fr));
+  gap: 8px;
+}
+
+.publicStatsTile {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
+.publicStatsValue {
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 3vw, 1.7rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.publicStatsLabel,
+.publicStatsDate {
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+}
+
+.publicStatsDate {
+  margin: 0;
+}
+
+.pageError {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
 }
 
 .pagingControls,
@@ -287,17 +367,6 @@
     width: 100%;
   }
 
-  .publicGame {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .publicGameMeta,
-  .publicGame :global(.uiAction) {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  .publicGame :global(.uiAction),
   .publicationRow :global(.uiAction) {
     width: 100%;
   }
@@ -313,6 +382,27 @@
 
   .pagingControls :global(.uiAction),
   .pageCard > :global(.uiAction) {
+    width: 100%;
+  }
+}
+
+/* Follow the card's available width and enlarged text, including desktop zoom. */
+@container (max-width: 40rem) {
+  .publicGame {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .publicGameTitle,
+  .publicGameOpponent,
+  .publicGameResult,
+  .publicGameMeta,
+  .publicGame :global(.uiAction),
+  .replayUnavailable {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .publicGame :global(.uiAction) {
     width: 100%;
   }
 }

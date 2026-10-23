@@ -316,3 +316,29 @@ test("portrait profile scrolls the page instead of the history pane", async ({ p
     )
     .toBeLessThan(before!.headerTop - 20);
 });
+
+test("public profile tab opens by deep link and supports three-tab keyboard navigation on narrow screens", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/profile?tab=public");
+
+  const gamesTab = page.getByRole("tab", { name: "My games", exact: true });
+  const savedTab = page.getByRole("tab", { name: "Saved replays", exact: true });
+  const publicTab = page.getByRole("tab", { name: "Public profile", exact: true });
+  await expect(publicTab).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Public profile", exact: true })).toBeVisible();
+
+  await publicTab.focus();
+  await page.keyboard.press("Home");
+  await expect(gamesTab).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("ArrowRight");
+  await expect(savedTab).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("End");
+  await expect(publicTab).toHaveAttribute("aria-selected", "true");
+
+  await page.addStyleTag({ content: "html { font-size: 200%; }" });
+  const widths = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    document: document.documentElement.scrollWidth,
+  }));
+  expect(widths.document - widths.viewport).toBeLessThanOrEqual(2);
+});

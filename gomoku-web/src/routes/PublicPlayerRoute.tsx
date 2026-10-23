@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { useDocumentTitle } from "../app/useDocumentTitle";
@@ -8,16 +8,25 @@ import {
   type PublicCatalogPageSnapshot,
   type PublicProfileSnapshot,
 } from "../cloud/sharing_public";
+import { playerWinRate } from "../profile/player_stats";
+import {
+  publicGameDetails,
+  publicLogicalPageCount,
+  publicLogicalPageEntries,
+  publicLogicalPagePhysicalIds,
+  publicProfileDateLabel,
+} from "./public_catalog";
 
 import styles from "./SharingPanels.module.css";
 
 const PUBLIC_UID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+const PUBLIC_PAGE_IDS = [0, 1, 2, 3] as const;
 
 interface PublicPlayerView {
   uid: string;
   status: "loading" | "unavailable" | "error" | "ready";
   profile?: PublicProfileSnapshot;
-  page?: PublicCatalogPageSnapshot;
+  counts: [number, number, number, number] | null;
   pageCache: Partial<Record<number, PublicCatalogPageSnapshot>>;
   pageIndex: number;
   pageLoading: boolean;
@@ -38,6 +47,23 @@ function isUnavailableReadError(error: unknown): boolean {
   return ["permission-denied", "not-found"].includes(codeName);
 }
 
+function pageMismatchMessage(): string {
+  return "The public catalog changed or no longer matches its page counts. Reload the public profile to try again.";
+}
+
+function unavailableView(uid: string, message: string): PublicPlayerView {
+  return {
+    uid,
+    status: "unavailable",
+    counts: null,
+    pageCache: {},
+    pageIndex: 0,
+    pageLoading: false,
+    pageError: null,
+    message,
+  };
+}
+
 export function PublicPlayerRoute() {
   useDocumentTitle("Public Player");
   const { search } = useLocation();
@@ -52,21 +78,14 @@ export function PublicPlayerRoute() {
     const current = () => !cancelled && requestRef.current === request;
 
     if (!PUBLIC_UID_PATTERN.test(uid)) {
-      setView({
-        uid,
-        status: "unavailable",
-        pageCache: {},
-        pageIndex: 0,
-        pageLoading: false,
-        pageError: null,
-        message: "This public player link is unavailable.",
-      });
+      setView(unavailableView(uid, "This public player link is unavailable."));
       return () => { cancelled = true; };
     }
 
     setView({
       uid,
       status: "loading",
+      counts: null,
       pageCache: {},
       pageIndex: 0,
       pageLoading: false,
@@ -78,30 +97,43 @@ export function PublicPlayerRoute() {
       try {
         const profile = await loadPublicProfile(uid);
         if (!current()) return;
-        if (!profile?.enabled) {
-          setView({
-            uid,
-            status: "unavailable",
-            pageCache: {},
-            pageIndex: 0,
-            pageLoading: false,
-            pageError: null,
-            message: "This public player is unavailable.",
-          });
+        if (!profile?.enabled || profile.uid !== uid) {
+          setView(unavailableView(uid, "This public player is unavailable."));
           return;
         }
 
-        const page = await loadCatalogPage(uid, 0);
-        if (!current()) return;
-        if (!page || page.generation !== profile.generation) {
-          throw new Error("The public catalog is unavailable. Please try again.");
+        let counts: [number, number, number, number];
+        let pageCache: Partial<Record<number, PublicCatalogPageSnapshot>> = {};
+        if (profile.catalogPageCounts === null) {
+          const legacyPages = await Promise.all(PUBLIC_PAGE_IDS.map((pageId) => loadCatalogPage(uid, pageId)));
+          if (!current()) return;
+          if (legacyPages.some((page, pageId) => (
+            !page || page.generation !== profile.generation || page.pageId !== pageId
+          ))) {
+            throw new Error(pageMismatchMessage());
+          }
+          counts = legacyPages.map((page) => page!.entries.length) as [number, number, number, number];
+          pageCache = Object.fromEntries(legacyPages.map((page) => [page!.pageId, page!])) as PublicPlayerView["pageCache"];
+        } else {
+          counts = [...profile.catalogPageCounts] as [number, number, number, number];
+          const firstPageIds = publicLogicalPagePhysicalIds(counts, 0);
+          const firstPages = await Promise.all(firstPageIds.map((pageId) => loadCatalogPage(uid, pageId)));
+          if (!current()) return;
+          if (firstPages.some((page, index) => (
+            !page || page.generation !== profile.generation || page.pageId !== firstPageIds[index]
+              || page.entries.length !== counts[firstPageIds[index]!]
+          ))) {
+            throw new Error(pageMismatchMessage());
+          }
+          pageCache = Object.fromEntries(firstPages.map((page) => [page!.pageId, page!])) as PublicPlayerView["pageCache"];
         }
+
         setView({
           uid,
           status: "ready",
           profile,
-          page,
-          pageCache: { 0: page },
+          counts,
+          pageCache,
           pageIndex: 0,
           pageLoading: false,
           pageError: null,
@@ -110,15 +142,13 @@ export function PublicPlayerRoute() {
       } catch (error) {
         if (!current()) return;
         setView({
-          uid,
+          ...unavailableView(
+            uid,
+            isUnavailableReadError(error)
+              ? "This public player is unavailable."
+              : errorText(error, "This public player could not be loaded."),
+          ),
           status: isUnavailableReadError(error) ? "unavailable" : "error",
-          pageCache: {},
-          pageIndex: 0,
-          pageLoading: false,
-          pageError: null,
-          message: isUnavailableReadError(error)
-            ? "This public player is unavailable."
-            : errorText(error, "This public player could not be loaded."),
         });
       }
     })();
@@ -127,32 +157,39 @@ export function PublicPlayerRoute() {
   }, [retryKey, uid]);
 
   const visibleView = view?.uid === uid ? view : null;
-  const loadNextPage = async () => {
-    if (!visibleView?.profile || visibleView.pageIndex >= 3 || visibleView.pageLoading) return;
-    const nextPageIndex = visibleView.pageIndex + 1;
-    const cachedPage = visibleView.pageCache[nextPageIndex];
-    if (cachedPage) {
-      setView({
-        ...visibleView,
-        page: cachedPage,
-        pageIndex: nextPageIndex,
-        pageLoading: false,
-        pageError: null,
-      });
-      return;
-    }
+  const pageCount = visibleView?.counts ? publicLogicalPageCount(visibleView.counts) : 0;
+  const visibleEntries = useMemo(() => (
+    visibleView?.counts
+      ? publicLogicalPageEntries(visibleView.counts, visibleView.pageCache, visibleView.pageIndex)
+      : []
+  ), [visibleView?.counts, visibleView?.pageCache, visibleView?.pageIndex]);
+  const visibleRows = useMemo(() => visibleView?.profile
+    ? visibleEntries.map((entry) => ({ entry, details: publicGameDetails(entry, visibleView.profile!.uid) }))
+    : [], [visibleEntries, visibleView?.profile]);
+
+  const loadLogicalPage = async (nextPageIndex: number) => {
+    if (!visibleView?.profile || !visibleView.counts || visibleView.pageLoading
+      || nextPageIndex < 0 || nextPageIndex >= pageCount) return;
+    const physicalIds = publicLogicalPagePhysicalIds(visibleView.counts, nextPageIndex);
+    const missingIds = physicalIds.filter((pageId) => !visibleView.pageCache[pageId]);
     const request = requestRef.current;
     setView({ ...visibleView, pageLoading: true, pageError: null });
     try {
-      const page = await loadCatalogPage(uid, nextPageIndex);
+      const loadedPages = await Promise.all(missingIds.map((pageId) => loadCatalogPage(uid, pageId)));
       if (requestRef.current !== request) return;
-      if (!page || page.generation !== visibleView.profile.generation) {
-        throw new Error("This catalog page is unavailable. Please try again.");
+      if (loadedPages.some((page, index) => (
+        !page || page.generation !== visibleView.profile!.generation || page.pageId !== missingIds[index]
+          || page.entries.length !== visibleView.counts![missingIds[index]!]
+      ))) {
+        throw new Error(pageMismatchMessage());
       }
+      const pageCache = {
+        ...visibleView.pageCache,
+        ...Object.fromEntries(loadedPages.map((page) => [page!.pageId, page!])),
+      };
       setView({
         ...visibleView,
-        page,
-        pageCache: { ...visibleView.pageCache, [nextPageIndex]: page },
+        pageCache,
         pageIndex: nextPageIndex,
         pageLoading: false,
         pageError: null,
@@ -160,15 +197,7 @@ export function PublicPlayerRoute() {
     } catch (error) {
       if (requestRef.current !== request) return;
       if (isUnavailableReadError(error)) {
-        setView({
-          uid,
-          status: "unavailable",
-          pageCache: {},
-          pageIndex: 0,
-          pageLoading: false,
-          pageError: null,
-          message: "This public player is unavailable.",
-        });
+        setView(unavailableView(uid, "This public player is unavailable."));
         return;
       }
       setView({
@@ -177,19 +206,6 @@ export function PublicPlayerRoute() {
         pageError: errorText(error, "This catalog page could not be loaded."),
       });
     }
-  };
-
-  const loadPreviousPage = () => {
-    if (!visibleView?.profile || visibleView.pageIndex <= 0 || visibleView.pageLoading) return;
-    const previousIndex = visibleView.pageIndex - 1;
-    const cachedPage = visibleView.pageCache[previousIndex];
-    if (!cachedPage) return;
-    setView({
-      ...visibleView,
-      page: cachedPage,
-      pageIndex: previousIndex,
-      pageError: null,
-    });
   };
 
   const retryLabel = visibleView?.status === "loading" ? "Loading" : "Try again";
@@ -201,48 +217,100 @@ export function PublicPlayerRoute() {
         {visibleView?.status === "ready" && visibleView.profile ? (
           <>
             <h1 className={styles.pageTitle} id="public-player-title">{visibleView.profile.displayName}</h1>
+            {visibleView.profile.sharedStats ? (
+              <section className={styles.publicStats} aria-label="Shared player statistics">
+                <div className={styles.publicStatsGrid}>
+                  {([
+                    ["Matches", visibleView.profile.sharedStats.matches],
+                    ["Wins", visibleView.profile.sharedStats.wins],
+                    ["Losses", visibleView.profile.sharedStats.losses],
+                    ["Draws", visibleView.profile.sharedStats.draws],
+                    ["Win rate", (() => {
+                      const rate = playerWinRate(visibleView.profile!.sharedStats!);
+                      return rate === null ? "—" : `${(rate * 100).toFixed(1)}%`;
+                    })()],
+                  ] as const).map(([label, value]) => (
+                    <div className={styles.publicStatsTile} key={label}>
+                      <span className={styles.publicStatsValue}>{value}</span>
+                      <span className={styles.publicStatsLabel}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className={styles.publicStatsDate}>
+                  Updated {publicProfileDateLabel(visibleView.profile.sharedStats.updatedAt)}
+                </p>
+              </section>
+            ) : null}
             <p className={styles.mutedText}>Games selected for public sharing</p>
             <p className={styles.disclosure}>
               Player names and game details are supplied by the publisher. These games are casual records and are not independently verified.
             </p>
-            {visibleView.page?.entries.length ? (
+            {visibleRows.length ? (
               <ol className={styles.publicGameList} aria-label={`Public games, page ${visibleView.pageIndex + 1}`}>
-                {visibleView.page.entries.map((entry) => (
+                {visibleRows.map(({ entry, details }) => (
                   <li className={styles.publicGame} key={entry.fingerprint}>
                     <span className={styles.publicGameTitle}>{entry.title}</span>
-                    <span className={styles.publicGameMeta}>Opens at move {entry.view_ply}</span>
-                    <Link
-                      className="uiAction uiActionSecondary"
-                      to={`/replay/shared/#g2r1=${entry.payload}`}
-                    >
-                      View replay
-                    </Link>
+                    <span className={styles.publicGameOpponent} aria-label={`Opponent: ${details.opponent ? `vs ${details.opponent}` : "unavailable"}`}>
+                      {details.opponent ? `vs ${details.opponent}` : "Unavailable"}
+                    </span>
+                    <span className={`${styles.publicGameResult} ${
+                      details.result === "Win" ? styles.publicGameResultWin
+                        : details.result === "Loss" ? styles.publicGameResultLoss
+                          : details.result === "Draw" ? styles.publicGameResultDraw : ""
+                    }`} aria-label={`Result: ${details.result ?? "unavailable"}`}>
+                      {details.result ?? "Unavailable"}
+                    </span>
+                    <span className={styles.publicGameMeta} aria-label={`Rule: ${details.rule ?? "unavailable"}`}>
+                      {details.rule ?? "Unavailable"}
+                    </span>
+                    <span className={styles.publicGameMeta} aria-label={`Moves: ${details.moves ?? "unavailable"}`}>
+                      {details.moves === null ? "Unavailable" : `${details.moves} moves`}
+                    </span>
+                    {details.canReplay ? (
+                      <Link
+                        className="uiAction uiActionSecondary"
+                        to={`/replay/shared/#g2r1=${entry.payload}`}
+                      >
+                        Replay
+                      </Link>
+                    ) : (
+                      <span className={styles.replayUnavailable}>Replay unavailable</span>
+                    )}
                   </li>
                 ))}
               </ol>
             ) : (
-              <p className={styles.emptyState}>No games have been published on this page.</p>
+              <p className={styles.emptyState}>No games have been published.</p>
             )}
-            <div className={styles.pagingControls}>
-              <span>Page {visibleView.pageIndex + 1} of 4</span>
-              {visibleView.pageIndex > 0 && (
-                <button className="uiAction uiActionNeutral" type="button" disabled={visibleView.pageLoading}
-                  onClick={loadPreviousPage}>
-                  Previous page
+            {pageCount > 1 ? (
+              <div className={styles.pagingControls}>
+                <span>Page {visibleView.pageIndex + 1} of {pageCount}</span>
+                {visibleView.pageIndex > 0 ? (
+                  <button className="uiAction uiActionNeutral" type="button" disabled={visibleView.pageLoading}
+                    onClick={() => void loadLogicalPage(visibleView.pageIndex - 1)}>
+                    Previous page
+                  </button>
+                ) : null}
+                {visibleView.pageIndex < pageCount - 1 ? (
+                  <button
+                    className="uiAction uiActionNeutral"
+                    type="button"
+                    disabled={visibleView.pageLoading}
+                    onClick={() => void loadLogicalPage(visibleView.pageIndex + 1)}
+                  >
+                    {visibleView.pageLoading ? "Loading page" : visibleView.pageError ? "Retry page" : "Next page"}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            {visibleView.pageError ? (
+              <div className={styles.pageError}>
+                <p role="alert" className={styles.errorText}>{visibleView.pageError}</p>
+                <button className="uiAction uiActionNeutral" type="button" onClick={() => setRetryKey((key) => key + 1)}>
+                  Reload public profile
                 </button>
-              )}
-              {visibleView.pageIndex < 3 && (
-                <button
-                  className="uiAction uiActionNeutral"
-                  type="button"
-                  disabled={visibleView.pageLoading}
-                  onClick={() => void loadNextPage()}
-                >
-                  {visibleView.pageLoading ? "Loading page" : visibleView.pageError ? "Retry page" : "Next page"}
-                </button>
-              )}
-            </div>
-            {visibleView.pageError && <p role="alert" className={styles.errorText}>{visibleView.pageError}</p>}
+              </div>
+            ) : null}
           </>
         ) : (
           <>

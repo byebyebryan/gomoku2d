@@ -20,6 +20,7 @@ import {
 } from "../replay/replay_analysis_cache";
 import { replayLibraryStore } from "../replay/replay_library_store";
 import { replayLibrarySync } from "../replay/replay_library_sync";
+import type { PublicCatalogPageSnapshot, PublicProfileSnapshot } from "../cloud/sharing_public";
 
 import { ProfileRoute } from "./ProfileRoute";
 
@@ -27,6 +28,14 @@ const sharingMocks = vi.hoisted(() => ({
   clearSharingData: vi.fn(),
   loadPrivateLibrary: vi.fn(),
   savePrivateLibrary: vi.fn(),
+}));
+
+const publicSharingMocks = vi.hoisted(() => ({
+  loadCatalogPage: vi.fn(),
+  loadPublicProfile: vi.fn(),
+  saveCatalogPage: vi.fn(),
+  setPublicProfile: vi.fn(),
+  setPublicProfileStats: vi.fn(),
 }));
 
 vi.mock("../cloud/sharing_lifecycle", () => ({
@@ -37,6 +46,8 @@ vi.mock("../cloud/sharing_private", () => ({
   loadPrivateLibrary: sharingMocks.loadPrivateLibrary,
   savePrivateLibrary: sharingMocks.savePrivateLibrary,
 }));
+
+vi.mock("../cloud/sharing_public", () => publicSharingMocks);
 
 const cloudUser: CloudAuthUser = {
   avatarUrl: null,
@@ -68,15 +79,39 @@ const cloudProfile: CloudProfile = {
   username: null,
 };
 
+function publicRoot(uid: string): PublicProfileSnapshot {
+  return {
+    uid,
+    displayName: "Public name",
+    enabled: true,
+    generation: 2,
+    revision: 3,
+    updatedAt: "2026-10-22T00:00:00.000Z",
+    sharedStats: null,
+    catalogPageCounts: [0, 0, 0, 0],
+  };
+}
+
+function publicPage(uid: string, pageId: 0 | 1 | 2 | 3): PublicCatalogPageSnapshot {
+  return {
+    uid,
+    pageId,
+    generation: 2,
+    revision: 1,
+    entries: [],
+    updatedAt: "2026-10-22T00:00:00.000Z",
+  };
+}
+
 const initialCloudAuthState = cloudAuthStore.getState();
 const initialCloudHistoryState = cloudHistoryStore.getState();
 const initialCloudProfileState = cloudProfileStore.getState();
 const initialCloudPromotionState = cloudPromotionStore.getState();
 const initialLocalProfileState = localProfileStore.getState();
 
-function renderProfileRoute() {
+function renderProfileRoute(initialEntry = "/profile") {
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <CloudSessionController />
       <ProfileRoute />
     </MemoryRouter>,
@@ -239,6 +274,13 @@ describe("ProfileRoute cloud state", () => {
       entries: Array.isArray(entries) ? entries : [],
       updatedAt: "2026-04-28T01:00:00.000Z",
     }));
+    publicSharingMocks.loadCatalogPage.mockReset();
+    publicSharingMocks.loadCatalogPage.mockResolvedValue(null);
+    publicSharingMocks.loadPublicProfile.mockReset();
+    publicSharingMocks.loadPublicProfile.mockResolvedValue(null);
+    publicSharingMocks.saveCatalogPage.mockReset();
+    publicSharingMocks.setPublicProfile.mockReset();
+    publicSharingMocks.setPublicProfileStats.mockReset();
     localProfileStore.setState({
       matchHistory: emptyLocalMatchHistory(),
       profile: null,
@@ -281,6 +323,84 @@ describe("ProfileRoute cloud state", () => {
       result: null,
       status: "idle",
     });
+  });
+
+  it("opens the public tab by deep link and supports Home, End and arrow navigation", () => {
+    renderProfileRoute("/profile?tab=public");
+    const gamesTab = screen.getByRole("tab", { name: "My games" });
+    const savedTab = screen.getByRole("tab", { name: "Saved replays" });
+    const publicTab = screen.getByRole("tab", { name: "Public profile" });
+    expect(publicTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { name: "Public profile" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Manage public profile" })).not.toBeInTheDocument();
+
+    fireEvent.keyDown(publicTab, { key: "Home" });
+    expect(gamesTab).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(gamesTab, { key: "ArrowRight" });
+    expect(savedTab).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(savedTab, { key: "End" });
+    expect(publicTab).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("blocks statistics publication until the current account cache matches its ready profile", async () => {
+    const nextUser = { ...cloudUser, uid: "uid-2" };
+    const nextMatch = localSavedMatch("uid-2-match", "local-uid-2");
+    cloudAuthStore.setState({ status: "signed_in", isConfigured: true, user: nextUser });
+    cloudProfileStore.setState({
+      errorMessage: null,
+      loadForUser: vi.fn(),
+      profile: {
+        ...cloudProfile,
+        uid: nextUser.uid,
+        matchHistory: { ...emptyCloudMatchHistory(), replayMatches: [nextMatch] },
+      },
+      reset: vi.fn(),
+      resetForUser: vi.fn(),
+      status: "ready",
+    });
+    cloudHistoryStore.setState({
+      loadStatus: "ready",
+      syncStatus: "idle",
+      users: {
+        [nextUser.uid]: { cachedMatches: [], loadedAt: "2026-10-21T00:00:00.000Z", pendingMatches: {}, sync: {} },
+      },
+    });
+    cloudPromotionStore.setState({ status: "idle" });
+    publicSharingMocks.loadPublicProfile.mockResolvedValue(publicRoot(nextUser.uid));
+    publicSharingMocks.loadCatalogPage.mockImplementation(async (uid: string, pageId: number) => publicPage(
+      uid,
+      pageId as 0 | 1 | 2 | 3,
+    ));
+    publicSharingMocks.setPublicProfileStats.mockResolvedValue({
+      ...publicRoot(nextUser.uid),
+      revision: 4,
+      sharedStats: { matches: 1, wins: 0, losses: 0, draws: 1, updatedAt: "2026-10-22T00:00:00.000Z" },
+    });
+
+    renderProfileRoute("/profile?tab=public");
+    const statsToggle = await screen.findByRole("checkbox", { name: "Share My games statistics publicly" });
+    expect(statsToggle).toBeDisabled();
+    expect(publicSharingMocks.setPublicProfileStats).not.toHaveBeenCalled();
+
+    await act(async () => {
+      cloudHistoryStore.setState({
+        users: {
+          [nextUser.uid]: {
+            cachedMatches: [nextMatch],
+            loadedAt: "2026-10-22T00:00:00.000Z",
+            pendingMatches: {},
+            sync: {},
+          },
+        },
+      });
+    });
+    await waitFor(() => expect(statsToggle).toBeEnabled());
+    fireEvent.click(statsToggle);
+    await waitFor(() => expect(publicSharingMocks.setPublicProfileStats).toHaveBeenCalledWith(
+      nextUser.uid,
+      { matches: 1, wins: 0, losses: 0, draws: 1 },
+      3,
+    ));
   });
 
   it("keeps game setup controls out of the profile page", () => {
@@ -802,7 +922,7 @@ describe("ProfileRoute cloud state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
     expect(
       screen.getByText(
-        "Reset private settings, games and saved replays here and in the cloud? Local replay analyses are cleared. Your public profile and publications stay unchanged; empty cloud revision markers remain.",
+        "Reset private settings, games and saved replays here and in the cloud? Local replay analyses are cleared. Your public profile, shared statistics and publications stay unchanged; empty cloud revision markers remain.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -924,7 +1044,7 @@ describe("ProfileRoute cloud state", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete Cloud" }));
     expect(
       screen.getByText(
-        "Delete your cloud profile, history, saved replays, public name and publications, then sign out? Local copies stay on this device. Empty revision markers remain to block stale writes. Copied replay links still work.",
+        "Delete your cloud profile, history, saved replays, public name, shared statistics and publications, then sign out? Local copies stay on this device. Empty revision markers remain to block stale writes. Copied replay links still work.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
