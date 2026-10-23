@@ -161,6 +161,9 @@ Chrome session selected Canvas and showed both sides white despite correct game
 data. The same tint-only implementation exists in v0.5.5. A Canvas fallback fix
 and appropriate rendering coverage remain required before release acceptance.
 
+Resolved in the later 0.6.1 [remediation checkpoint](v0_6_1_evidence/README.md#remediation-completed--october-23-2026)
+at `31096e4`, with actual Canvas/WebGL pixel and animation checks.
+
 The saved-library, practice and public-profile manual journeys remain open.
 The demo preview/emulators are running for that review; production publication
 and real OAuth/device acceptance remain separate.

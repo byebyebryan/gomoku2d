@@ -1,0 +1,389 @@
+{
+  "date": "2026-10-23",
+  "fixture_commit": "8bcaad0",
+  "runtime_commit": "31096e46145aeb9170deefd3559f0c04f4fee4c4",
+  "scope": "Approved 0.6.1 Canvas colour and fixture-collision remediation; local candidate only.",
+  "contributions": {
+    "luna_max": "Both bounded implementation slices and focused units/typecheck/cloud validation.",
+    "primary": "Contract decisions, source review, last-frame/lifecycle corrections, renderer qualification, browser pixel regressions, integration, local commits and preview/evidence."
+  },
+  "findings": [
+    {
+      "priority": "P1",
+      "status": "closed",
+      "resolution": "Actual per-game coloured sprite-sheet/animation variants are used in Canvas and WebGL; alpha, source sheets, palette and timing are preserved.",
+      "commit": "31096e46145aeb9170deefd3559f0c04f4fee4c4"
+    },
+    {
+      "priority": "P3",
+      "status": "closed",
+      "resolution": "Shared Node crypto.randomUUID fixture IDs replace timestamp-only and separate random identities; strict selectors and within-test identity reuse remain.",
+      "commit": "8bcaad0"
+    }
+  ],
+  "checks": {
+    "typecheck": {
+      "passed": true,
+      "scope": "Luna ran full npm run typecheck on the integrated helper; primary production build typechecks the app and tsc --project tsconfig.tools.json passed after report persistence changes."
+    },
+    "focused_board_units": {
+      "passed": 63,
+      "files": 4,
+      "actor": "Luna Max"
+    },
+    "full_web_units": {
+      "passed": 493,
+      "files": 49
+    },
+    "production_build": {
+      "passed": true,
+      "static_http_entries": 12
+    },
+    "ordinary_browser": {
+      "passed": 219,
+      "failed": 0,
+      "skipped": 6,
+      "workers": 3,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "skip_reason": "Three explicit WebGL pixel cases are Chromium-only; they are skipped in Firefox and WebKit. All three engines run the forced Canvas cases."
+    },
+    "retained_pixel_evidence_rerun": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 6,
+      "raw_motion_reports": 12,
+      "reason": "Persist successful JSON reports explicitly so the line reporter cannot discard them; application code unchanged."
+    },
+    "full_cloud_fixture_gate": {
+      "passed": 42,
+      "workers": 1,
+      "source": "8bcaad0 fixture content before the renderer slice; schemas/backend unchanged."
+    },
+    "parallel_cloud_fixture_gate": {
+      "passed": 45,
+      "workers": 3,
+      "repeat_each": 5,
+      "grep": "C4:|C6:|C7/C9:"
+    },
+    "rules_and_core": {
+      "changed": false,
+      "fresh_runs": false,
+      "baseline": "49/49 rules/SDK scenarios in the preceding overall review."
+    }
+  },
+  "renderer_qualification": [
+    {
+      "label": "default",
+      "args": [],
+      "actualContext": "webgl",
+      "errors": [],
+      "banners": [
+        "Phaser v4.2.1 (WebGL | Web Audio)"
+      ],
+      "pixels": [
+        {
+          "cell": 110,
+          "rgba": [
+            64,
+            64,
+            64,
+            255
+          ]
+        },
+        {
+          "cell": 0,
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ],
+      "screenshot_sha256": "a05761dfa3ec26cb8a346f8ae3af26ab4df243792112cff5dac51b2b11fd6f57"
+    },
+    {
+      "label": "swiftshader",
+      "args": [
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader"
+      ],
+      "actualContext": "webgl",
+      "errors": [],
+      "banners": [
+        "Phaser v4.2.1 (WebGL | Web Audio)"
+      ],
+      "pixels": [
+        {
+          "cell": 110,
+          "rgba": [
+            64,
+            64,
+            64,
+            255
+          ]
+        },
+        {
+          "cell": 0,
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ],
+      "screenshot_sha256": "a05761dfa3ec26cb8a346f8ae3af26ab4df243792112cff5dac51b2b11fd6f57"
+    },
+    {
+      "label": "canvas",
+      "args": [
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader"
+      ],
+      "actualContext": "2d",
+      "errors": [],
+      "banners": [
+        "Phaser v4.2.1 (Canvas | Web Audio)"
+      ],
+      "pixels": [
+        {
+          "cell": 110,
+          "rgba": [
+            64,
+            64,
+            64,
+            255
+          ]
+        },
+        {
+          "cell": 0,
+          "rgba": [
+            255,
+            255,
+            255,
+            255
+          ]
+        }
+      ],
+      "screenshot_sha256": "739ec656b3c31bf71f55652e72ebfdc558462badc3dcc9878268ea51d13aae9e"
+    }
+  ],
+  "webgl_static_capture_identical_to_before": true,
+  "source_sprite_sha256": {
+    "caution.png": "d303a195993c640f9524a86cc262223e261c9bf2bc718ebbc0e9cdd1ffd51f49",
+    "highlighter.png": "61a6798e4b17af416aba25af261ede8e7af1e0bab37dcf00c52434580a28bad5",
+    "hover.png": "4b938017d74b92b5f74c5a39036b1564bfa4ab00d16b56733d33a40175cbdfba",
+    "marker.png": "862a4746ca27a0a3e25cfab61a9bed94b2d27c9c0dd4b0aa5e208a8343949bbd",
+    "pointer.png": "bda6179bae6d9e213948e5e10f6f65fd267779b1fc50188e936262c961f09136",
+    "stone.png": "7bda65543e1fa51342f10924952ea34a89cc5856965c09c189b7070b1865135b",
+    "transform.png": "24b75a897b8032a4b737f3e1039a59e765b4154c1f18959e495f5228c33f0ffa"
+  },
+  "motion_measurements": [
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-01f89-stone-use-the-player-colour-chromium/black-placement-animation.json",
+      "engine": "chromium",
+      "mode": "webgl",
+      "measurement": {
+        "frames": 181,
+        "distinctFrames": 1,
+        "maximumGrey": 64,
+        "blackPixels": 278016,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-24a49--rebuild-and-reduced-motion-chromium/black-removal-animation.json",
+      "engine": "chromium",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 28,
+        "distinctFrames": 5,
+        "maximumGrey": 64,
+        "blackPixels": 8576,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-24a49--rebuild-and-reduced-motion-chromium/black-replay-animation.json",
+      "engine": "chromium",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 139,
+        "distinctFrames": 16,
+        "maximumGrey": 64,
+        "blackPixels": 140224,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-24a49--rebuild-and-reduced-motion-firefox/black-removal-animation.json",
+      "engine": "firefox",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 28,
+        "distinctFrames": 5,
+        "maximumGrey": 64,
+        "blackPixels": 8608,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-24a49--rebuild-and-reduced-motion-firefox/black-replay-animation.json",
+      "engine": "firefox",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 139,
+        "distinctFrames": 16,
+        "maximumGrey": 64,
+        "blackPixels": 140224,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-24a49--rebuild-and-reduced-motion-webkit/black-removal-animation.json",
+      "engine": "webkit",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 29,
+        "distinctFrames": 5,
+        "maximumGrey": 64,
+        "blackPixels": 10272,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-24a49--rebuild-and-reduced-motion-webkit/black-replay-animation.json",
+      "engine": "webkit",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 144,
+        "distinctFrames": 16,
+        "maximumGrey": 64,
+        "blackPixels": 145216,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-84ece--rebuild-and-reduced-motion-chromium/black-removal-animation.json",
+      "engine": "chromium",
+      "mode": "webgl",
+      "measurement": {
+        "frames": 28,
+        "distinctFrames": 5,
+        "maximumGrey": 64,
+        "blackPixels": 9888,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-84ece--rebuild-and-reduced-motion-chromium/black-replay-animation.json",
+      "engine": "chromium",
+      "mode": "webgl",
+      "measurement": {
+        "frames": 139,
+        "distinctFrames": 4,
+        "maximumGrey": 64,
+        "blackPixels": 141344,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-e659d-stone-use-the-player-colour-chromium/black-placement-animation.json",
+      "engine": "chromium",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 181,
+        "distinctFrames": 1,
+        "maximumGrey": 64,
+        "blackPixels": 278016,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-e659d-stone-use-the-player-colour-firefox/black-placement-animation.json",
+      "engine": "firefox",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 181,
+        "distinctFrames": 1,
+        "maximumGrey": 64,
+        "blackPixels": 278016,
+        "glError": 0
+      }
+    },
+    {
+      "file": "test-results/v061-fixes/colours-evidence/board_colours-board-colour-e659d-stone-use-the-player-colour-webkit/black-placement-animation.json",
+      "engine": "webkit",
+      "mode": "canvas",
+      "measurement": {
+        "frames": 188,
+        "distinctFrames": 1,
+        "maximumGrey": 64,
+        "blackPixels": 288768,
+        "glError": 0
+      }
+    }
+  ],
+  "manual_preview": {
+    "source_commit": "31096e46145aeb9170deefd3559f0c04f4fee4c4",
+    "renderer": "forced Canvas",
+    "public_demo": "Demo Player",
+    "logical_page_replays": 8,
+    "pixels": [
+      [
+        64,
+        64,
+        64,
+        255
+      ],
+      [
+        255,
+        255,
+        255,
+        255
+      ]
+    ],
+    "page_errors": [],
+    "spa_board_cleanup": true
+  },
+  "manual_demo_unchanged": true,
+  "manual_served_entries": {
+    "/profile?tab=public": {
+      "status": 200,
+      "sha256": "378095f8c7b23d703dde011473a6e4bedf1a4856c92f9b25331baa353e8a32ed"
+    },
+    "/player/?id=v061-demo-player": {
+      "status": 200,
+      "sha256": "378095f8c7b23d703dde011473a6e4bedf1a4856c92f9b25331baa353e8a32ed"
+    }
+  },
+  "raw_directory": "gomoku-web/test-results/v061-fixes",
+  "log_sha256": {
+    "fixture-typecheck-20261023.log": "5b86e9651bd003d64f42d1321e239007e088ec1000e0b2967492a980ac4d6cd9",
+    "fixture-full-20261023.log": "b77ec343940024671c558f69684a80f6c56380044b2eddf7393e9f5e0b35ca97",
+    "fixture-matrix-20261023.log": "739f702b23f6f37827ba8382f5aa2e6cd0f09bcff0f342bdcd363cd521094812",
+    "unit-final.log": "d89dfae6b0f2c1a611092ff3aabb7215a6febd2b8457e5697f45a7bcf94019bf",
+    "build-final.log": "82853e54140e7a91edd10b0e2beed876c173061987a8255144161e30c3817cf9",
+    "browser-final.log": "28f664546c2b24bfeeceef71a330e6ee7e11ca146952d112eb6f4d8b01d5fe47",
+    "colours-evidence.log": "cac4ff367cd59de22ce5208987fbbfa830dca0a9a5a02996a9630f7065e5bef4"
+  },
+  "boundaries": {
+    "phaser_version": "4.2.1",
+    "package_version": "0.5.5",
+    "source_sprites_palette_geometry_unchanged": true,
+    "backend_rules_indexes_core_dependencies_unchanged": true,
+    "user_browser_tabs_opened": 0,
+    "manual_demo_data_preserved": true,
+    "production_data_mutated": false,
+    "push_tag_release_production_deploy": false,
+    "carbon": "Offline on Tailscale; SSH timeout. Forwarder remains configured to retry; remote served parity unverified.",
+    "real_oauth_public_host_physical_and_human_accessibility": "Separate acceptance, not established here."
+  }
+}

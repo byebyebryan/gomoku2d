@@ -1,6 +1,6 @@
 {
-  "source_commit": "70e7f254b8aa9cd262bba5c9f07114db8a301600",
-  "scope": "Local emulator preview with accepted action icons and fixed public pagination. Reviewed on Starship; Carbon is offline on Tailscale at the final check, so current remote parity is unverified. The owned forwarder remains configured to retry.",
+  "source_commit": "31096e46145aeb9170deefd3559f0c04f4fee4c4",
+  "scope": "Local emulator preview with Canvas/WebGL colour remediation. Starship served bytes and forced-Canvas browser verified; all manual demo public documents unchanged. Carbon remains offline on Tailscale and SSH times out, so current Carbon reachability/parity is unverified.",
   "carbon": {
     "host": "carbon",
     "verified": false,
@@ -9,9 +9,9 @@
   },
   "starship": {
     "host": "starship",
-    "index_sha256": "0935e5d724cbaed6c9fa944e78e90433bdf7e93ea29479368d4a41c9f0ede4b3",
-    "entry_script": "/assets/index-BnZBEBs_.js",
-    "entry_sha256": "487f4b37a6719ba9338afa6c9db412f0ea5f0f071f9b4072cde29c65d67df015",
+    "index_sha256": "378095f8c7b23d703dde011473a6e4bedf1a4856c92f9b25331baa353e8a32ed",
+    "entry_script": "/assets/index-Bc-e3CR9.js",
+    "entry_sha256": "dac9da2c01ce4f8b3817e723789a99a7ab1e7ea3a3e5f6ff891f34ef98ff8621",
     "managed_services": [
       "active",
       "active",
@@ -21,7 +21,8 @@
     "profile_status": 200,
     "auth_ready": true,
     "public_demo_name": "Demo Player",
-    "tunnel_state": "Carbon offline; current remote reachability unverified"
+    "tunnel_state": "Carbon offline; current remote reachability unverified",
+    "manual_demo_unchanged": true
   },
   "profile_url": "http://127.0.0.1:8013/profile?tab=public",
   "demo_url": "http://127.0.0.1:8013/player/?id=v061-demo-player"

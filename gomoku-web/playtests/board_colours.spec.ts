@@ -1,9 +1,18 @@
-import { expect, test } from "@playwright/test";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { expect, test, type TestInfo } from "@playwright/test";
 import { expectBoardRenderer, expectCellColour, observeBlackAnimation, prepareBoardPixels } from "./helpers/board_pixels.js";
 
 const MOVES = [110, 0, 111, 1, 112, 2, 113, 3, 114];
 const BLACK = [64, 64, 64] as const;
 const WHITE = [255, 255, 255] as const;
+
+async function retainPixelEvidence(testInfo: TestInfo, name: string, result: unknown): Promise<void> {
+  const path = testInfo.outputPath(`${name}.json`);
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, `${JSON.stringify(result, null, 2)}\n`);
+  await testInfo.attach(name, { path, contentType: "application/json" });
+}
 
 function sharedLink(ply: number): string {
   const wire = { v: 1, r: "freestyle", m: Buffer.from(MOVES).toString("base64url"),
@@ -35,11 +44,12 @@ for (const mode of ["canvas", "webgl"] as const) {
       expect(animation.maximumGrey).toBeLessThanOrEqual(65);
       expect(animation.blackPixels).toBeGreaterThan(0);
       expect(animation.glError).toBe(0);
-      await testInfo.attach("black-replay-animation", { body: JSON.stringify(animation), contentType: "application/json" });
+      await retainPixelEvidence(testInfo, "black-replay-animation", animation);
       await page.getByRole("button", { name: "Previous move", exact: true }).click();
       await expect(page.getByTestId("replay-move-count")).toHaveText("Move 4 / 9");
       const removal = await observeBlackAnimation(canvas, 7, 7, 450);
       expect(removal.maximumGrey).toBeLessThanOrEqual(65);
+      await retainPixelEvidence(testInfo, "black-removal-animation", removal);
       await page.getByRole("button", { name: "Next move", exact: true }).click();
       await page.emulateMedia({ reducedMotion: "reduce" });
       await expectCellColour(canvas, 7, 7, BLACK);
@@ -91,7 +101,7 @@ for (const mode of ["canvas", "webgl"] as const) {
       expect(placement.maximumGrey).toBeLessThanOrEqual(65);
       expect(placement.blackPixels).toBeGreaterThan(0);
       expect(placement.glError).toBe(0);
-      await testInfo.attach("black-placement-animation", { body: JSON.stringify(placement), contentType: "application/json" });
+      await retainPixelEvidence(testInfo, "black-placement-animation", placement);
       await page.emulateMedia({ reducedMotion: "reduce" });
       await expectCellColour(canvas, 7, 7, BLACK);
     });

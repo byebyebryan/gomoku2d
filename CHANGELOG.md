@@ -33,12 +33,16 @@ their own section.
 
 - Add matching pixel icons for replay publication, account sign-in/out, deletion
   and synchronization, plus the selected power/quit glyph in the icon pack.
+- Preserve stone, pointer and tactical-overlay colours in Canvas and WebGL,
+  including animated frames and static resets, using cached coloured sheets.
 
 ### Repository
 
 - Add versioned replay/library contracts, additive Firestore rules, three-engine
   replay/public/cloud journeys and a local candidate evidence ledger. Multiplayer
   stays deferred; gameplay and analysis remain in the browser.
+- Give cloud fixtures collision-proof identities and check actual board colours
+  in forced Canvas and verified WebGL browser journeys.
 
 ## [0.5.5] - 2026-10-16
 

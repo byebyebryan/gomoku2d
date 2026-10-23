@@ -17,8 +17,9 @@ or production deployment is part of this checkpoint.
   or human assistive-technology acceptance.
 - The manual Carbon URL is forwarded to Starship's loopback demo preview and
   Auth/Firestore emulators. Test lanes use separate ports and disposable data.
-- Real Google OAuth, public-host/release acceptance, and the existing Canvas
-  stone-colour defect remain separate. No rendering/core changes are included.
+- Real Google OAuth and public-host/release acceptance remain separate. The
+  initial profile checkpoint included no rendering/core changes; the later
+  colour remediation below closes the Canvas finding without core changes.
 
 ## Overall review — October 23, 2026
 
@@ -29,7 +30,7 @@ reran the complete relevant web gates; it changes no application code.
 The [review receipt](overall_review.json) records the current results, findings,
 raw artifact locations and remaining boundaries.
 
-Two findings remain:
+The review found two issues, subsequently closed by the remediation below:
 
 1. **P1 — existing Canvas stone colours block release acceptance.**
    [BoardRenderer](../../../gomoku-web/src/board/board_renderer.ts) draws both
@@ -83,9 +84,71 @@ real OAuth/public-host round trip, and reviewed rules/index deployment gates.
 Physical-device and human assistive-technology acceptance are not established
 by this pass. No push, version change, tag or production deployment occurred.
 
-## Proposed remediation plan
+## Remediation completed — October 23, 2026
 
-Planning checkpoint after the overall review; implementation has not started.
+Both findings are closed in the local candidate. The explicitly invoked
+`luna-goal-loop` used Luna Max
+for the two bounded implementation slices and focused validation. The primary
+owned the contract, source review, integration, actual browser-pixel acceptance,
+local commits, preview refresh and final evidence.
+
+- `8bcaad0`: shared Node UUID fixture identities across continuity, redirect and
+  sharing scenarios; strict selectors and within-test account reuse remain.
+- `31096e4`: a scene-owned sprite resolver caches coloured source sheets and
+  animation variants in Phaser's per-game managers. All board tint-dependent
+  paths use actual coloured pixels in both renderers. Last-frame recolouring,
+  completion-event filtering, interruption and destroyed-sprite resets are
+  covered. Source PNGs, palette, geometry, base animation definitions, Phaser
+  4.2.1, schemas and dependencies are unchanged.
+
+The [remediation receipt](remediation.json) retains measured RGB values, motion
+reports, source/served identities, log hashes and the exact acceptance limits.
+
+| Remediation gate | Result |
+|---|---|
+| App/scripts/tools type checks and production build | Passed |
+| Focused board units | 63/63, 4 files |
+| Full web units | 493/493, 49 files |
+| Full ordinary browser lane | 219 passed, 6 explicit skips, zero failures |
+| Pixel/motion evidence follow-up | 12 passed, 6 explicit skips; 12 raw motion reports retained |
+| Full cloud lane after fixture fix | 42/42, default worker count |
+| Previously failing parallel repetition matrix | 45/45, five repetitions and three workers |
+| Production static/direct routes | 12/12; actual served bytes match the build |
+
+Forced Canvas is checked in Chromium, Firefox and WebKit. WebGL pixel
+qualification uses Chromium, including a separate explicit SwiftShader probe;
+the three WebGL-only cases are deliberately skipped in each of Firefox and
+WebKit. These six skips are visible in both browser receipts, not counted as
+passes or silently accepted fallbacks. Measured opaque faces are Black
+`[64,64,64,255]` and White `[255,255,255,255]`. The qualified WebGL static board
+capture is byte-identical before and after the fix. Browser assertions also
+cover replay focus, removal/rebuild, live placement, both pointer colours,
+reduced motion, resizing and coloured teaching/warning/winning overlays.
+
+The report-persistence follow-up changes only test output: successful motion
+JSON files survive the line reporter. The affected pixel journeys were rerun
+after that change; application code and assertions are unchanged. Rules/core
+were not changed or rerun; their preceding 49/49 rules/SDK baseline remains
+separate. No new full-cloud run is claimed for the renderer slice after the
+fixture gates; the full ordinary browser lane covers its integration.
+
+Raw artifacts remain under ignored `gomoku-web/test-results/v061-fixes/`,
+including the expected pre-fix Canvas failure, pre/post renderer captures, both
+cloud gates and final browser output. The primary inspected the refreshed
+manual Canvas replay and verified the public demo's root and four pages stayed
+byte-identical. Replay/Guide/Rules SPA board teardown produced no page errors.
+Starship serves `31096e4`; [preview identity](preview.json) is current. Carbon
+remains offline on Tailscale, so current Carbon access/parity is unverified.
+The temporary browser preview and disposable test emulators are stopped; the
+manual preview/emulators and retrying Carbon forwarder remain.
+
+The Canvas release blocker is resolved. Real OAuth/public-host acceptance,
+versioning, exact-head CI, production rules/index deployment and release still
+require their separate gates. No push, tag or production deployment occurred.
+
+## Remediation plan (completed)
+
+The following plan was agreed before implementation and completed above.
 Keep Phaser 4.2.1 and automatic renderer selection. Address the shared colour
 assumption in the board code, then prove the Canvas and WebGL paths explicitly.
 The work is local and leaves backend contracts and the accepted profile UI alone.

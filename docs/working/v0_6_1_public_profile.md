@@ -3,8 +3,9 @@
 Owner: Bryan. October 22, 2026. Baseline `d575d40` on local `main`.
 This is a local implementation and review checkpoint, with a Starship-hosted
 preview accessible from Carbon. Version publication, real OAuth, deployment,
-physical-device acceptance and the existing Canvas stone-colour finding are
-separate gates.
+physical-device acceptance are separate gates. The existing Canvas stone-colour
+finding was subsequently resolved in the
+[remediation checkpoint](v0_6_1_evidence/README.md#remediation-completed--october-23-2026).
 
 ## Accepted scope
 
@@ -157,5 +158,6 @@ actual commands/results, inspected captures, operation receipts and Carbon
 served-byte parity. Its automated gate is complete; public profile and replay
 functionality is ready for the next human pass. Further visual refinement
 and richer profile content remain later 0.6 work. Versioning, push, release,
-production rules/index deployment, real OAuth and the existing Canvas finding
-remain separate from this local checkpoint.
+production rules/index deployment and real OAuth remain separate from this local
+checkpoint. The subsequent [review remediation](v0_6_1_evidence/remediation.json)
+closes the Canvas finding and parallel test-fixture collisions.
