@@ -1,0 +1,67 @@
+{
+  "scope": "Draft source geometry, not app integration",
+  "icons": {
+    "publish": {
+      "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019",
+      "margins_ltrb": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "filled_pixels": 196,
+      "horizontal_symmetry": true,
+      "vertical_symmetry": true
+    },
+    "share": {
+      "sha256": "5bef75b55f7aed217e66664012737b7963d7b23e4e41badcd28627f4662b4f4f",
+      "margins_ltrb": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "filled_pixels": 160
+    },
+    "save": {
+      "sha256": "ec257dc16724b23cac8736462ab93c6e87fcb20d408f242b124f03a05bbffb38",
+      "margins_ltrb": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "filled_pixels": 233
+    },
+    "profile": {
+      "sha256": "d120b65d2f46d8362903f52b61a595f507e2cf03b7b5ee01ecffaf1e0cab73be",
+      "margins_ltrb": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "filled_pixels": 249
+    },
+    "circle": {
+      "sha256": "71b87dd626554b0cf0d51b413f3e068f68a1b58b415f849100c4c4a140c6f3d1",
+      "margins_ltrb": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "filled_pixels": 168
+    },
+    "home": {
+      "sha256": "ca5e95cf5ac1c890dde79b921d2dbc795fc09e4b9d2d69639b8c20ab7a619803",
+      "margins_ltrb": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "filled_pixels": 250
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "url": "http://127.0.0.1:8013/icon-review/publish/",
+  "carbon": {
+    "index.html": {
+      "status": 200,
+      "sha256": "68ab1a305f2e7ef9cbc6f602c40e2f5782271a53b93cd04ed398e880bea9dec7"
+    },
+    "publish.svg": {
+      "status": 200,
+      "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019"
+    },
+    "comparison.png": {
+      "status": 200,
+      "sha256": "9faf195c82b2ffe61dea2cc2608207495810dec437b0926ca9b8c1a78fac2f34"
+    }
+  },
+  "app_integration": false
+}

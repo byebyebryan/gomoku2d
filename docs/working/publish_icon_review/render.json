@@ -1,0 +1,62 @@
+{
+  "browser": "156.0.8078.4",
+  "raster": [
+    {
+      "icon": "Publish",
+      "scales": [
+        1,
+        2,
+        10
+      ],
+      "exact_pixels": true
+    },
+    {
+      "icon": "Share",
+      "scales": [
+        1,
+        2,
+        10
+      ],
+      "exact_pixels": true
+    },
+    {
+      "icon": "Save",
+      "scales": [
+        1,
+        2,
+        10
+      ],
+      "exact_pixels": true
+    },
+    {
+      "icon": "Profile",
+      "scales": [
+        1,
+        2,
+        10
+      ],
+      "exact_pixels": true
+    },
+    {
+      "icon": "Circle",
+      "scales": [
+        1,
+        2,
+        10
+      ],
+      "exact_pixels": true
+    },
+    {
+      "icon": "Home",
+      "scales": [
+        1,
+        2,
+        10
+      ],
+      "exact_pixels": true
+    }
+  ],
+  "preview_errors": [],
+  "mobile_width": 320,
+  "mobile_overflow": false
+}
