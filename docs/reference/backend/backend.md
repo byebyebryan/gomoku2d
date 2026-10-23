@@ -103,14 +103,19 @@ rules, and rules tests together.
 ## v0.6 candidate additions
 
 `public_profiles/{uid}` carries a separately confirmed name and four fixed catalog
-pages; it never exposes provider metadata or the private profile snapshot.
+pages, a bounded page-count manifest, and an optional explicitly published
+aggregate-statistics snapshot. Stats sharing defaults off and refreshes only
+on owner action, with a visible update date. It never exposes provider metadata
+or the private profile snapshot.
 `replay_libraries/{uid}` carries saved study copies and earlier preview
 continuations. New completed continuations use regular played history and totals,
 with optional origin metadata retained in the saved match. Fresh shared/public route entry initializes
 Auth without loading, promoting or syncing private profile/history/library data.
 Explicit Save can load/write the library; public visits load only public records.
 
-Disable atomically empties the catalog; re-enable starts empty. Strict revisions
+Private Reset preserves public identity, stats and publications. Disable
+atomically empties the catalog and removes stats; re-enable starts empty with
+stats sharing off. Strict revisions
 and generations reject stale writes. Delete Cloud first clears all six sharing
 records atomically, retaining empty barriers, then performs existing profile
 cleanup and signs out. Partial failure stays visible for retry. Copied portable

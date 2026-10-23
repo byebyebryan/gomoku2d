@@ -428,14 +428,18 @@ Saved study copies remain excluded even when their payload has origin metadata.
 Reset while signed in clears the account library and this device's account
 copies, together with the existing private profile/history/settings/analysis
 scope. Guest copies remain separate. Guest reset clears its guest library.
-Private reset leaves public identity/publications unchanged. Delete Cloud
+Private reset leaves public identity, explicitly shared statistics and
+publications unchanged. The public root may carry a four-page count manifest
+and a dated aggregate snapshot (matches, wins, losses, draws); both are separate
+from private history. Stats sharing defaults off and updates only by explicit
+owner action. Delete Cloud
 atomically clears public identity/pages and the private cloud library first,
 then performs existing private profile/history deletion and sign-out. Failures
 stay visible for retry; cleanup is not claimed complete after a partial failure.
 All local copies remain on-device after Delete Cloud, including account-scoped
 library copies. Those copies are marked pending and require explicit review/
 merge before uploading again. Six empty cloud markers retain revisions, with
-no name or game payload. Copied portable URLs cannot be recalled.
+no name, statistics or game payload. Copied portable URLs cannot be recalled.
 
 ## Migration Notes
 

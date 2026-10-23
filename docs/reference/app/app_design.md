@@ -280,9 +280,16 @@ Primary elements:
 - player name / local identity
 - optional linked cloud identity
 - cloud promotion/import status when signed in
-- summary stats strip
-- recent local matches
-- clear replay entry points from history
+- My games, Saved replays and Public profile tabs in the main record area
+- summary stats strip and replay entry points in My games
+- private saved study copies in Saved replays
+- explicit public name/visibility, optional dated stats snapshot and publication
+  management in Public profile (`/profile?tab=public`)
+
+The public player page shows the chosen name, optional matches/wins/losses/draws
+and win rate, and compact eight-row game pages. Statistics are off by default
+and published/refreshed explicitly from the complete My games summary; private
+history never loads on a public visit. See the [0.6.1 contract](../../working/v0_6_1_public_profile.md).
 
 Tone:
 

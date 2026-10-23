@@ -240,14 +240,16 @@ Logical document operations for a successful, uncontended attempt:
 
 | Action | Client document reads | Writes | Notes |
 |---|---:|---:|---|
-| Public identity + first catalog page | 2 | 0 | One further root-dependent rules read may be charged for the page |
-| Next public page | 1 | 0 | Root-dependent rules evaluation; revisiting cached pages costs no client read |
+| Public empty modern profile | 1 | 0 | Root manifest has no entries, so no page fetch |
+| Modern public game page | Root once + needed physical pages | 0 | Eight logical rows across storage holes; cached pages reused |
+| Legacy public profile without counts | 5 | 0 | Root + four bounded pages once; no migration write |
 | Open owner management | 5 | 0 | Identity and four pages, only on explicit open/reload |
 | Enable / disable | 5 | 5 | Atomic identity and four empty markers |
-| Rename enabled profile | 1 | 1 | Root only |
+| Rename enabled profile | 1 | 1 | Root only; preserves existing stats and exact timestamp |
+| Share / refresh / remove public stats | 1 | 1 | Explicit root transaction, independent of catalog pages |
 | Open publication preview | 1 | 0 | Deliberate owner root load |
-| Commit publication from preview | 7 | 1 | Fresh root + four pages + transaction root/page; retries add reads |
-| Unpublish from loaded management | 2 | 1 | Transaction root/page, preserving private copies |
+| Commit publication from preview | 7 | 2 | Fresh root + four pages + transaction root/page; first legacy manifest adds three reads |
+| Unpublish from loaded management | 2 | 2 | Transaction root/page plus atomic manifest update, preserving private copies |
 | Load account library | 1 | 0 | Missing library is not created by read |
 | Save / remove after load | 1 | 1 | Transaction compares observed revision |
 | First account save | 2 | 1 | Baseline load plus transaction |
@@ -257,7 +259,10 @@ Logical document operations for a successful, uncontended attempt:
 These are application document operations, not transport-request or billing
 measurements. Rules can charge dependent `get`/`exists`/`getAfter` reads, including
 on denied requests; retries cost more. Visibility batches check four pages and
-the root, so budget for those rule-dependent documents as well. Firebase's
+the root. A changed/initialised catalog manifest validates before/after states
+of all four pages, so budget for rule-dependent reads as well; unchanged
+manifests avoid that fan-out. The instrumented counts exclude these rule
+lookups. Firebase's
 [billing contract](https://firebase.google.com/docs/firestore/pricing#cloud_firestore_security_rules)
 and [free quota](https://firebase.google.com/docs/firestore/quotas#free_quota)
 were checked October 21, 2026; emulator results cannot prove a billing allowance.
@@ -269,7 +274,7 @@ names/UIDs. Size evidence and operation instrumentation live in the
 [v0.6 evidence](../../working/v0_6_evidence/README.md). JSON fixture sizes exclude
 Firestore document-name/field/index overhead and serialized network framing.
 Payload fields are exempted from automatic indexes. Six empty markers remain
-after cloud deletion, without names or replay payloads. The legacy profile-delete
+after cloud deletion, without names, statistics or replay payloads. The legacy profile-delete
 guard can add two dependent sharing-document reads to the prior deletion flow.
 
 Caps bound each account’s retained data. Public visits are still billable work,

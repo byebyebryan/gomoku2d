@@ -65,7 +65,7 @@ and rely on the UI to hide fields.
 | Firebase Auth | Account and provider identity | Existing authentication flow |
 | `profiles/{uid}` | Existing private settings, history, sync/reset state, and publication controls | Owner only |
 | Private replay library | Capped saved replay copies and save metadata | Owner only; guests use local storage |
-| `public_profiles/{uid}` | Public name, optional built-in avatar ID, version and timestamps | Anyone reads an enabled profile; owner writes |
+| `public_profiles/{uid}` | Public name, optional explicitly shared aggregate statistics, version and timestamps | Anyone reads an enabled profile; owner writes |
 | Public replay catalog | Selected portable payloads and small listing summaries | Public browsing scoped to one enabled profile; owner publishes/unpublishes |
 
 The public name is explicitly confirmed when enabling the profile. It can be
@@ -76,9 +76,12 @@ for guests and people without public profiles. Whether editing a public name
 should also update the future in-game name is a remaining UX choice; no silent
 two-way mirroring is implied.
 
-A public profile exposes selected publications, not private history, settings,
-provider details, or private win/loss statistics. Show no public win rate or
-rating in this slice.
+A public profile exposes selected publications without private history, settings
+or provider details. The [0.6.1 functional contract](v0_6_1_public_profile.md)
+supersedes the initial no-public-stats boundary: owners may explicitly share a
+dated aggregate snapshot, independently of profile visibility. This is off by
+default; refresh and removal are explicit. No public rating, avatar or bio is
+included in this pass.
 
 ## Portable Replay Record
 

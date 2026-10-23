@@ -62,6 +62,11 @@ M0–M5 and local M6 acceptance are complete; the [Luna execution record](../../
 and [evidence ledger](../../working/v0_6_evidence/README.md) own local acceptance.
 Versioning, push/CI, tagging, deployment and public acceptance remain separate.
 
+The next local checkpoint is the [0.6.1 functional public-profile pass](../../working/v0_6_1_public_profile.md): a full Profile tab, independently opt-in dated
+statistics snapshots, and compact eight-row game pages based on actual
+publications. Avatars, bios, thumbnails and richer statistics remain deferred;
+further presentation refinement can follow along the 0.6 line.
+
 The [implementation roadmap](../../working/v0_6_implementation_plan.md) sequences
 the work into reviewable milestones:
 

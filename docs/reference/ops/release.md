@@ -152,7 +152,12 @@ Compatibility and rollback:
   clients ignore the new Firestore families and local library key. They can view
   continuation matches but their export path does not include the new origin.
   Earlier preview library completions remain readable in the current My games UI.
-- An old client trying to delete a profile while public identity or a nonempty
+- The 0.6.1 public root adds optional `shared_stats` and
+  `catalog_page_counts` fields without changing schema 1. Released v0.5 clients
+  ignore this family. Earlier unreleased strict v0.6 readers reject extended
+  roots safely and must refresh/update. Name/catalog changes preserve raw stats
+  timestamps; reset, disable and deletion must use the reviewed lifecycle path.
+- An old client trying to delete a profile while public identity, shared stats or a nonempty
   library remains receives a rules denial. It must update/reload and use the
   current cleanup flow. Accounts without sharing data retain prior deletion.
   Rules may charge up to two additional dependent document reads for deletion.
