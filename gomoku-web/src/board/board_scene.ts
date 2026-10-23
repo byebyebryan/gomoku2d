@@ -14,6 +14,8 @@ import {
 } from "./constants";
 import { BoardRenderer } from "./board_renderer";
 import { ensureBoardAnimations, preloadBoardAssets, STONE_IDLE_ANIMS } from "./board_assets";
+import { BoardSpriteResolver } from "./board_sprite_resolver";
+import type { BoardSpriteFrame } from "./board_sprite_resolver";
 import { BoardInputController, pointerType } from "./board_input_controller";
 import { renderBoardOverlays } from "./board_overlay_renderer";
 import {
@@ -21,7 +23,6 @@ import {
   moveTouchCandidateFromPointerMove,
   pointerCueForCandidate,
   replayLastMoveFocusKey,
-  resetSpriteToFrame,
   shouldAnimatePlacedStone,
   shouldRestartPointerCycle,
   shouldSyncOverlaySprites,
@@ -39,10 +40,7 @@ import type {
   PointerCue,
 } from "./board_scene_logic";
 
-type SpriteFrameRef = {
-  frame: number;
-  texture: string;
-};
+type SpriteFrameRef = BoardSpriteFrame;
 
 type SequenceStep =
   | { kind: "animation"; key: string }
@@ -86,30 +84,28 @@ const FORBIDDEN_STEPS: readonly SequenceStep[] = [
   { kind: "animation", key: CAUTION_ANIMS.FORBIDDEN_IN.key },
 ] as const;
 
-function animationCompleteEvent(key: string): string {
-  return `${Phaser.Animations.Events.ANIMATION_COMPLETE_KEY}${key}`;
-}
-
 class RandomAnimationCycle {
   private readonly scene: Phaser.Scene;
+  private readonly spriteResolver: BoardSpriteResolver;
   private readonly anims: readonly { key: string }[];
   private readonly delayMax: number;
   private readonly delayMin: number;
   private readonly resetFrame: SpriteFrameRef | null;
   private active = false;
-  private animationCompleteEventName: string | null = null;
-  private animationCompleteHandler: AnimationCompleteHandler | null = null;
+  private animationCompleteDisposer: (() => void) | null = null;
   private sprite: Phaser.GameObjects.Sprite | null = null;
   private timer: Phaser.Time.TimerEvent | null = null;
 
   constructor(
     scene: Phaser.Scene,
+    spriteResolver: BoardSpriteResolver,
     anims: readonly { key: string }[],
     delayMin: number,
     delayMax: number,
     resetFrame: SpriteFrameRef | null,
   ) {
     this.scene = scene;
+    this.spriteResolver = spriteResolver;
     this.anims = anims;
     this.delayMin = delayMin;
     this.delayMax = delayMax;
@@ -134,17 +130,14 @@ class RandomAnimationCycle {
     }
 
     if (this.resetFrame !== null) {
-      resetSpriteToFrame(this.sprite, this.resetFrame);
+      this.spriteResolver.reset(this.sprite, this.resetFrame);
     }
     this.sprite = null;
   }
 
   private clearAnimationCompleteHandler(): void {
-    if (this.sprite && this.animationCompleteEventName && this.animationCompleteHandler) {
-      this.sprite.off(this.animationCompleteEventName, this.animationCompleteHandler);
-    }
-    this.animationCompleteEventName = null;
-    this.animationCompleteHandler = null;
+    this.animationCompleteDisposer?.();
+    this.animationCompleteDisposer = null;
   }
 
   private scheduleNext(): void {
@@ -160,39 +153,35 @@ class RandomAnimationCycle {
       }
 
       const anim = this.anims[Math.floor(Math.random() * this.anims.length)];
-      sprite.play(anim.key);
-      const completeEvent = animationCompleteEvent(anim.key);
-      const onComplete = () => {
-        this.animationCompleteEventName = null;
-        this.animationCompleteHandler = null;
+      this.spriteResolver.play(sprite, anim.key);
+      this.animationCompleteDisposer = this.spriteResolver.listenForComplete(sprite, anim.key, () => {
+        this.animationCompleteDisposer = null;
         if (!this.active || !this.sprite || !this.sprite.active || !this.sprite.scene) {
           return;
         }
 
         if (this.resetFrame !== null) {
-          resetSpriteToFrame(this.sprite, this.resetFrame);
+          this.spriteResolver.reset(this.sprite, this.resetFrame);
         }
         this.scheduleNext();
-      };
-      this.animationCompleteEventName = completeEvent;
-      this.animationCompleteHandler = onComplete;
-      sprite.once(completeEvent, onComplete);
+      });
     });
   }
 }
 
 class SequenceAnimationCycle {
   private readonly scene: Phaser.Scene;
+  private readonly spriteResolver: BoardSpriteResolver;
   private readonly steps: readonly SequenceStep[];
   private active = false;
-  private animationCompleteEventName: string | null = null;
-  private animationCompleteHandler: AnimationCompleteHandler | null = null;
+  private animationCompleteDisposer: (() => void) | null = null;
   private sprite: Phaser.GameObjects.Sprite | null = null;
   private stepIndex = 0;
   private timer: Phaser.Time.TimerEvent | null = null;
 
-  constructor(scene: Phaser.Scene, steps: readonly SequenceStep[]) {
+  constructor(scene: Phaser.Scene, spriteResolver: BoardSpriteResolver, steps: readonly SequenceStep[]) {
     this.scene = scene;
+    this.spriteResolver = spriteResolver;
     this.steps = steps;
   }
 
@@ -218,11 +207,8 @@ class SequenceAnimationCycle {
   }
 
   private clearAnimationCompleteHandler(): void {
-    if (this.sprite && this.animationCompleteEventName && this.animationCompleteHandler) {
-      this.sprite.off(this.animationCompleteEventName, this.animationCompleteHandler);
-    }
-    this.animationCompleteEventName = null;
-    this.animationCompleteHandler = null;
+    this.animationCompleteDisposer?.();
+    this.animationCompleteDisposer = null;
   }
 
   private runNextStep(): void {
@@ -235,7 +221,7 @@ class SequenceAnimationCycle {
     this.stepIndex = (this.stepIndex + 1) % this.steps.length;
 
     if (step.kind === "delay") {
-      resetSpriteToFrame(sprite, step.frame);
+      this.spriteResolver.reset(sprite, step.frame);
       const delay = step.min + Math.random() * (step.max - step.min);
       this.timer = this.scene.time.delayedCall(delay, () => {
         this.runNextStep();
@@ -245,14 +231,14 @@ class SequenceAnimationCycle {
 
     if (step.kind === "randomAnimation") {
       const key = step.keys[Math.floor(Math.random() * step.keys.length)];
-      sprite.play(key);
+      this.spriteResolver.play(sprite, key);
       this.onceAnimationComplete(sprite, key, () => {
         this.runNextStep();
       });
       return;
     }
 
-    sprite.play(step.key);
+    this.spriteResolver.play(sprite, step.key);
     this.onceAnimationComplete(sprite, step.key, () => {
       this.runNextStep();
     });
@@ -263,15 +249,10 @@ class SequenceAnimationCycle {
     key: string,
     onComplete: AnimationCompleteHandler,
   ): void {
-    const completeEvent = animationCompleteEvent(key);
-    const handler = () => {
-      this.animationCompleteEventName = null;
-      this.animationCompleteHandler = null;
+    this.animationCompleteDisposer = this.spriteResolver.listenForComplete(sprite, key, () => {
+      this.animationCompleteDisposer = null;
       onComplete();
-    };
-    this.animationCompleteEventName = completeEvent;
-    this.animationCompleteHandler = handler;
-    sprite.once(completeEvent, handler);
+    });
   }
 }
 
@@ -336,6 +317,7 @@ const DEFAULT_STATE: BoardSceneState = {
 };
 
 export class BoardScene extends Phaser.Scene {
+  private spriteResolver!: BoardSpriteResolver;
   private boardState: BoardSceneState = DEFAULT_STATE;
   private board: BoardRenderer | null = null;
   private boardLayer: Phaser.GameObjects.Container | null = null;
@@ -382,9 +364,10 @@ export class BoardScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.spriteResolver = new BoardSpriteResolver(this);
     ensureBoardAnimations(this);
-    this.stoneCycle = new RandomAnimationCycle(this, STONE_IDLE_ANIMS, 700, 2200, STONE_STATIC_FRAME);
-    this.replayStoneCycle = new SequenceAnimationCycle(this, REPLAY_LAST_MOVE_STEPS);
+    this.stoneCycle = new RandomAnimationCycle(this, this.spriteResolver, STONE_IDLE_ANIMS, 700, 2200, STONE_STATIC_FRAME);
+    this.replayStoneCycle = new SequenceAnimationCycle(this, this.spriteResolver, REPLAY_LAST_MOVE_STEPS);
     this.createSceneGraph();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.renderBoard, this);
     this.inputController = new BoardInputController(this.input, {
@@ -506,7 +489,15 @@ export class BoardScene extends Phaser.Scene {
     const originY = (height - boardHeight) / 2 + cellSize / 2;
 
     this.currentCellSize = cellSize;
-    this.board = new BoardRenderer(this, cellSize, originX, originY, boardSize, this.boardLayer);
+    this.board = new BoardRenderer(
+      this,
+      cellSize,
+      originX,
+      originY,
+      boardSize,
+      this.boardLayer,
+      this.spriteResolver,
+    );
     this.board.drawBoard();
     this.pointer = this.board.createPointer(this.pointerLayer);
     this.syncBoardState(undefined, false);
@@ -556,8 +547,8 @@ export class BoardScene extends Phaser.Scene {
         const isNewStone = previousCell === null;
 
         if (shouldAnimatePlacedStone(isNewStone, animateNewStones && !this.reducedMotion, this.boardState.status)) {
-          stone.play(TRANSFORM_ANIMS.FORM.key);
-          stone.once(animationCompleteEvent(TRANSFORM_ANIMS.FORM.key), () => {
+          this.spriteResolver.play(stone, TRANSFORM_ANIMS.FORM.key);
+          this.spriteResolver.listenForComplete(stone, TRANSFORM_ANIMS.FORM.key, () => {
             if (
               renderVersion !== this.renderVersion ||
               !stone.active ||
@@ -571,7 +562,7 @@ export class BoardScene extends Phaser.Scene {
             }
           });
         } else {
-          stone.setFrame(STONE_ANIMS.STATIC.frame);
+          this.spriteResolver.reset(stone, STONE_STATIC_FRAME);
         }
       }
     }
@@ -587,8 +578,8 @@ export class BoardScene extends Phaser.Scene {
         this.replayFocusedStoneKey = null;
       }
       if (stone?.active && stone.scene && !this.reducedMotion) {
-        stone.play(STONE_ANIMS.DESTROY.key);
-        stone.once(animationCompleteEvent(STONE_ANIMS.DESTROY.key), () => {
+        this.spriteResolver.play(stone, STONE_ANIMS.DESTROY.key);
+        this.spriteResolver.listenForComplete(stone, STONE_ANIMS.DESTROY.key, () => {
           stone.destroy();
         });
       } else {
@@ -607,8 +598,7 @@ export class BoardScene extends Phaser.Scene {
 
     const stone = this.stoneSprites.get(this.replayFocusedStoneKey);
     if (stone?.active && stone.scene) {
-      stone.stop();
-      resetSpriteToFrame(stone, STONE_STATIC_FRAME);
+      this.spriteResolver.reset(stone, STONE_STATIC_FRAME);
     }
     this.replayFocusedStoneKey = null;
   }
@@ -635,7 +625,7 @@ export class BoardScene extends Phaser.Scene {
     }
 
     this.stoneCycle?.stop();
-    stone.stop();
+    this.spriteResolver.reset(stone, STONE_STATIC_FRAME);
     this.replayStoneCycle?.start(stone);
     this.replayFocusedStoneKey = focusKey;
   }
@@ -651,9 +641,11 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    this.pointer
-      .setScale(this.currentCellSize / FRAME_SIZE)
-      .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE);
+    this.pointer.setScale(this.currentCellSize / FRAME_SIZE);
+    this.spriteResolver.setColor(
+      this.pointer,
+      this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE,
+    );
 
     if (!usesTouchCandidate(this.boardState.touchControlMode)) {
       this.clearTouchCandidate();
@@ -716,15 +708,19 @@ export class BoardScene extends Phaser.Scene {
     depth: number = BOARD_RENDER_DEPTHS.OVERLAY_SURFACE,
     texture: string = SPRITE.MARKER,
   ): Phaser.GameObjects.Sprite {
-    const sprite = this.add.sprite(x, y, texture, 0);
+    const sprite = this.spriteResolver.createSprite(x, y, texture, 0, tint);
     sprite.setScale(this.currentCellSize / FRAME_SIZE);
     sprite.setDepth(depth);
-    sprite.setTint(tint);
     if (this.reducedMotion) {
       const frames = this.anims.get(animKey)?.frames ?? [];
-      sprite.setFrame(texture === SPRITE.STONE ? STONE_ANIMS.STATIC.frame : frames[Math.floor(frames.length / 2)]?.textureFrame ?? 0);
+      this.spriteResolver.reset(sprite, {
+        frame: texture === SPRITE.STONE
+          ? STONE_ANIMS.STATIC.frame
+          : frames[Math.floor(frames.length / 2)]?.textureFrame ?? 0,
+        texture,
+      });
     } else {
-      sprite.play({ key: animKey, repeat: -1 });
+      this.spriteResolver.play(sprite, animKey, { repeat: -1 });
     }
     const layer = texture === SPRITE.HOVER || texture === SPRITE.STONE
       ? this.hoverLayer
@@ -734,18 +730,26 @@ export class BoardScene extends Phaser.Scene {
   }
 
   private createForbiddenSprite(x: number, y: number): Phaser.GameObjects.Sprite {
-    const sprite = this.add.sprite(x, y, SPRITE.CAUTION, CAUTION_ANIMS.FORBIDDEN_OUT.start);
+    const sprite = this.spriteResolver.createSprite(
+      x,
+      y,
+      SPRITE.CAUTION,
+      CAUTION_ANIMS.FORBIDDEN_OUT.start,
+      COLOR.FORBIDDEN,
+    );
     sprite.setScale(this.currentCellSize / FRAME_SIZE);
     sprite.setDepth(BOARD_RENDER_DEPTHS.OVERLAY_BLOCKED);
-    sprite.setTint(COLOR.FORBIDDEN);
     this.overlayLayer?.add(sprite);
 
     if (this.reducedMotion) {
-      sprite.setFrame(CAUTION_ANIMS.FORBIDDEN_WARNING.start + 3);
+      this.spriteResolver.reset(sprite, {
+        frame: CAUTION_ANIMS.FORBIDDEN_WARNING.start + 3,
+        texture: SPRITE.CAUTION,
+      });
       return sprite;
     }
 
-    const cycle = new SequenceAnimationCycle(this, FORBIDDEN_STEPS);
+    const cycle = new SequenceAnimationCycle(this, this.spriteResolver, FORBIDDEN_STEPS);
     cycle.start(sprite);
     this.forbiddenCycles.push(cycle);
     return sprite;
@@ -964,10 +968,13 @@ export class BoardScene extends Phaser.Scene {
       this.pointer.visible,
     );
 
+    this.spriteResolver.setColor(
+      this.pointer,
+      this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE,
+    );
     this.pointer
       .setPosition(point.x, point.y)
       .setScale(this.currentCellSize / FRAME_SIZE)
-      .setTint(this.boardState.currentPlayer === 1 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE)
       .setVisible(true);
     this.pointerCellKey = cellKey;
     if (usesTouchCandidate(this.boardState.touchControlMode)) {
@@ -976,7 +983,7 @@ export class BoardScene extends Phaser.Scene {
 
     if (!animateCycle || this.reducedMotion) {
       this.stopPointerCycle();
-      resetSpriteToFrame(this.pointer, POINTER_STATIC_FRAME);
+      this.spriteResolver.reset(this.pointer, POINTER_STATIC_FRAME);
       return;
     }
 
@@ -993,6 +1000,7 @@ export class BoardScene extends Phaser.Scene {
     this.stopPointerCycle();
     this.pointerCycle = new SequenceAnimationCycle(
       this,
+      this.spriteResolver,
       this.pointerStepsForCue(cue),
     );
     this.pointerCycle.start(this.pointer);
@@ -1028,7 +1036,7 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    this.pointer.stop();
+    this.spriteResolver.reset(this.pointer, POINTER_STATIC_FRAME);
     this.pointer.setVisible(false);
   }
 

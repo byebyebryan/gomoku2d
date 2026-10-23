@@ -1,5 +1,6 @@
-import * as Phaser from "phaser";
+import type * as Phaser from "phaser";
 import { BOARD_RENDER_DEPTHS, BOARD_SIZE, SPRITE, FRAME_SIZE, COLOR } from "./constants";
+import { BoardSpriteResolver } from "./board_sprite_resolver";
 
 export interface BoardBounds {
   left: number;
@@ -19,6 +20,7 @@ export class BoardRenderer {
   private originX: number;
   private originY: number;
   private parent: Phaser.GameObjects.Container | null;
+  private spriteResolver: BoardSpriteResolver;
 
   constructor(
     scene: Phaser.Scene,
@@ -27,6 +29,7 @@ export class BoardRenderer {
     originY: number,
     boardSize = BOARD_SIZE,
     parent?: Phaser.GameObjects.Container,
+    spriteResolver: BoardSpriteResolver = new BoardSpriteResolver(scene),
   ) {
     this.scene = scene;
     this.cellSize = cellSize;
@@ -34,6 +37,7 @@ export class BoardRenderer {
     this.originX = originX;
     this.originY = originY;
     this.parent = parent ?? null;
+    this.spriteResolver = spriteResolver;
   }
 
   private attach<T extends Phaser.GameObjects.GameObject>(
@@ -133,18 +137,22 @@ export class BoardRenderer {
     const { x, y } = this.cellToPixel(row, col);
     const scale = this.cellSize / FRAME_SIZE;
 
-    const stone = this.scene.add.sprite(x, y, SPRITE.STONE, 0);
+    const stone = this.spriteResolver.createSprite(
+      x,
+      y,
+      SPRITE.STONE,
+      0,
+      color === 0 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE,
+    );
     stone.setScale(scale);
     stone.setDepth(BOARD_RENDER_DEPTHS.STONE);
-
-    stone.setTint(color === 0 ? COLOR.STONE_BLACK : COLOR.STONE_WHITE);
 
     return this.attach(stone, parentOverride);
   }
 
   createPointer(parentOverride?: Phaser.GameObjects.Container): Phaser.GameObjects.Sprite {
     const scale = this.cellSize / FRAME_SIZE;
-    const pointer = this.scene.add.sprite(-100, -100, SPRITE.POINTER, 0);
+    const pointer = this.spriteResolver.createSprite(-100, -100, SPRITE.POINTER, 0, COLOR.STONE_WHITE);
     pointer.setScale(scale);
     pointer.setDepth(BOARD_RENDER_DEPTHS.POINTER);
     pointer.setVisible(false);

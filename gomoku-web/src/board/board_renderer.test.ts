@@ -1,16 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { BOARD_RENDER_DEPTHS } from "./constants";
+import { BOARD_RENDER_DEPTHS, COLOR, SPRITE } from "./constants";
 import { BoardRenderer } from "./board_renderer";
+import type { BoardSpriteResolver } from "./board_sprite_resolver";
 
 type MockGameObject = {
   depth: number | null;
   scale: number | null;
-  tint: number | null;
   visible: boolean | null;
   setDepth: (depth: number) => MockGameObject;
   setScale: (scale: number) => MockGameObject;
-  setTint: (tint: number) => MockGameObject;
   setVisible: (visible: boolean) => MockGameObject;
 };
 
@@ -32,7 +31,6 @@ function createMockGameObject(): MockGameObject {
   const gameObject: MockGameObject = {
     depth: null,
     scale: null,
-    tint: null,
     visible: null,
     setDepth(depth: number) {
       this.depth = depth;
@@ -42,10 +40,6 @@ function createMockGameObject(): MockGameObject {
       this.scale = scale;
       return this;
     },
-    setTint(tint: number) {
-      this.tint = tint;
-      return this;
-    },
     setVisible(visible: boolean) {
       this.visible = visible;
       return this;
@@ -53,6 +47,17 @@ function createMockGameObject(): MockGameObject {
   };
 
   return gameObject;
+}
+
+function createMockSpriteResolver() {
+  const creations: Array<{ color: number; frame: number; texture: string }> = [];
+  const resolver = {
+    createSprite(_x: number, _y: number, texture: string, frame: number, color: number) {
+      creations.push({ color, frame, texture });
+      return createMockGameObject();
+    },
+  } as unknown as BoardSpriteResolver;
+  return { creations, resolver };
 }
 
 describe("BoardRenderer depths", () => {
@@ -73,7 +78,8 @@ describe("BoardRenderer depths", () => {
         sprite: () => createMockGameObject(),
       },
     };
-    const renderer = new BoardRenderer(scene as never, 32, 0, 0);
+    const mock = createMockSpriteResolver();
+    const renderer = new BoardRenderer(scene as never, 32, 0, 0, 15, undefined, mock.resolver);
 
     const stone = renderer.placeStone(7, 7, 0) as unknown as MockGameObject;
     const pointer = renderer.createPointer() as unknown as MockGameObject;
@@ -82,6 +88,10 @@ describe("BoardRenderer depths", () => {
     expect(stone.depth).toBe(BOARD_RENDER_DEPTHS.STONE);
     expect(BOARD_RENDER_DEPTHS.BOARD).toBeLessThan(BOARD_RENDER_DEPTHS.POINTER);
     expect(BOARD_RENDER_DEPTHS.POINTER).toBeLessThan(BOARD_RENDER_DEPTHS.STONE);
+    expect(mock.creations).toEqual([
+      { color: COLOR.STONE_BLACK, frame: 0, texture: SPRITE.STONE },
+      { color: COLOR.STONE_WHITE, frame: 0, texture: SPRITE.POINTER },
+    ]);
   });
 
   it("can attach stones to a dedicated stone layer instead of the board layer", () => {
@@ -92,7 +102,16 @@ describe("BoardRenderer depths", () => {
     };
     const boardLayer = createMockContainer();
     const stoneLayer = createMockContainer();
-    const renderer = new BoardRenderer(scene as never, 32, 0, 0, 15, boardLayer as never);
+    const mock = createMockSpriteResolver();
+    const renderer = new BoardRenderer(
+      scene as never,
+      32,
+      0,
+      0,
+      15,
+      boardLayer as never,
+      mock.resolver,
+    );
 
     const stone = renderer.placeStone(7, 7, 0, stoneLayer as never) as unknown as MockGameObject;
 
