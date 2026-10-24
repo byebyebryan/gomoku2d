@@ -802,6 +802,7 @@ test("C17: public replay returns preserve logical page, scroll and originating c
   await page.getByRole("button", { name: "Next page", exact: true }).click();
   await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Shared player statistics" })).toHaveCount(0);
+  await captureSharingEvidence(page, testInfo, "public-statistics-off", "main");
   const trigger = page.getByRole("link", { name: "Replay Return game 15", exact: true });
   await trigger.scrollIntoViewIfNeeded();
   await trigger.focus();
@@ -849,4 +850,50 @@ test("C17: public replay returns preserve logical page, scroll and originating c
   await page.getByRole("button", { name: "Return to public profile", exact: true }).click();
   await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Return navigation player", exact: true })).toBeFocused();
+});
+
+test("C18: public empty and changed-catalog states recover with a usable clipboard fallback", async ({ page }, testInfo) => {
+  const uid = fixtureId("public-adverse-states");
+  const updatedAt = firestoreTimestamp("2026-10-23T00:00:00.000Z");
+  const root = {
+    schema_version: 1, uid, display_name: "Public state player", enabled: true,
+    generation: 1, revision: 1, updated_at: updatedAt,
+    shared_stats: null, catalog_page_counts: [1, 0, 0, 0],
+  };
+  await seedFirestoreDocument(`public_profiles/${uid}`, root);
+  await seedFirestoreDocument(`public_profiles/${uid}/pages/0`, {
+    schema_version: 1, generation: 1, revision: 1, updated_at: updatedAt, entries: [],
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true, value: { writeText: () => Promise.reject(new Error("Clipboard denied")) },
+    });
+  });
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto(`/player/?id=${uid}`);
+  await expect(page.getByText(/The public catalog changed/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Public state player", exact: true })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  await auditAccessibility(page, testInfo, "public-catalog-error");
+  await captureSharingEvidence(page, testInfo, "public-catalog-error", "main");
+  await seedFirestoreDocument(`public_profiles/${uid}`, { ...root, revision: 2, catalog_page_counts: [0, 0, 0, 0] });
+  await page.getByRole("button", { name: "Reload public profile", exact: true }).click();
+  await expect(page.getByText("No games have been published.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Shared player statistics" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Previous page", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Copy link to public profile", exact: true }).click();
+  const link = page.getByRole("textbox", { name: "Public profile link", exact: true });
+  await expect(link).toBeFocused();
+  expect(await link.evaluate((input: HTMLInputElement) => input.selectionEnd === input.value.length && input.selectionStart === 0)).toBe(true);
+  const copiedUrl = new URL(await link.inputValue());
+  expect([...copiedUrl.searchParams.entries()]).toEqual([["id", uid]]);
+  await expectNoHorizontalOverflow(page);
+  await auditAccessibility(page, testInfo, "public-empty-copy-fallback");
+  await captureSharingEvidence(page, testInfo, "public-empty-copy-fallback", "main");
+  await seedFirestoreDocument(`public_profiles/${uid}`, { ...root, enabled: false, generation: 2, revision: 3 });
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Public profile unavailable", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try again", exact: true })).toBeEnabled();
+  await expectNoHorizontalOverflow(page);
+  await captureSharingEvidence(page, testInfo, "public-unavailable", "main");
 });
