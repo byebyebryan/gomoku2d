@@ -60,7 +60,8 @@ columns: simple identity on the left, statistics above games on the right.
 Bryan accepted the subsequent public player card with shared-game count, link
 and record context. The [implementation checkpoint](v0_6_2_implementation.md)
 retains the original real-data UI checkpoint. The later
-[candidate handoff](v0_6_2_candidate.md) owns current local readiness.
+[candidate checkpoint](v0_6_2_candidate.md) retains local preparation;
+the [release record](../archive/v0_6_2_release.md) owns published results.
 
 The public-player and mobile slices are now implemented and technically checked.
 Their checkpoints and evidence ledgers own runtime results; the research table
@@ -264,9 +265,9 @@ automatic puzzles, broad skins and multiplayer remain outside the planned
 minimum. The [P2P research](../reference/backend/p2p_multiplayer.md) retains the
 later multiplayer direction and its deferral.
 
-Bryan authorized the 0.6.2 release loop on October 24. Complete exact-head CI,
-publication and deployed validation with unperformed human checks preserved.
-Then inventory/prototype the [0.6.3 developer site](v0_6_3_developer_site_plan.md).
+The [0.6.2 release](../archive/v0_6_2_release.md) is published, with exact-head
+CI/deployed results and unperformed human checks preserved. Next,
+inventory/prototype the [0.6.3 developer site](v0_6_3_developer_site_plan.md).
 Settle metadata/compatibility and the thumbnail prototype before 0.6.4 work.
 Validate changed areas instead of reopening unrelated completed audits. Push,
 backend deployment, tagging, served-byte verification and human acceptance

@@ -1,5 +1,9 @@
 # v0.6.2 release execution
 
+Executed October 24, 2026. The [release record](../archive/v0_6_2_release.md)
+and its evidence own actual results and retained acceptance limits. The plan
+below preserves the authorized gates.
+
 Owner: Bryan. Authorized October 24, 2026 with the Luna goal loop after the
 [developer-site direction](v0_6_3_developer_site_plan.md) was committed as
 `028de0c`. This authorization includes reviewed main pushes, the v0.6.2 tag,

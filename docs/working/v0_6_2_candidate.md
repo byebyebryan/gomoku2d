@@ -1,10 +1,11 @@
-# v0.6.2 local candidate
+# v0.6.2 candidate preparation (historical)
 
-Owner: Bryan. October 24, 2026. Local implementation and technical validation
-are complete; this candidate has not been pushed, tagged or published.
-Production remains v0.6.1. This is the single current handoff; the
-[implementation archive](../archive/v0_6_implementation.md) retains earlier
-design, review and mobile snapshots at their existing paths.
+Owner: Bryan. Historical October 24 candidate checkpoint, before publication.
+`v0.6.2` is now published; the [release record](../archive/v0_6_2_release.md)
+owns current source/deployment/acceptance status. The notes below retain the
+pre-release validation and publication boundary at that checkpoint. Earlier
+design/review/mobile snapshots remain indexed in the
+[implementation archive](../archive/v0_6_implementation.md).
 
 ## What is ready
 

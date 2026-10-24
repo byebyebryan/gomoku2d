@@ -7,24 +7,20 @@ historical context belongs in [`archive/`](archive/).
 
 ## Current Status
 
-`v0.6.1` is published with shareable replays, explicit saved copies, and opt-in
-public profiles, statistics and game catalogs. The
-[release record](archive/v0_6_1_release.md) owns deployment and automated
-production evidence, the pending real signed-in sharing check, and retained
-manual acceptance deferrals. [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
-identifies the published build; the [roadmap](reference/product/roadmap.md)
-tracks `0.6.2` UI/presentation, `0.6.3` developer-site/process presentation and
-`0.6.4` replay collections; curated learning follows later. The
-[developer-site plan](working/v0_6_3_developer_site_plan.md) records the agreed
-documentation split, design/assets and reusable review scope. The
-[0.6.2 candidate handoff](working/v0_6_2_candidate.md)
-owns the completed local implementation, validation, preview and open manual
-checks. It includes public-profile/mobile refinements, Guide sharing help,
-two account-free examples, inline enable confirmation and refreshed media.
-It has not been pushed, tagged or published. The
-[follow-up plan](working/v0_6_followup_plan.md) retains the research and future
-scope; the [implementation archive](archive/v0_6_implementation.md) indexes
-completed planning and evidence without moving their existing links.
+`v0.6.2` is published with public-profile/mobile refinements, replay return,
+Guide sharing help/two examples and inline profile-enable confirmation, on top
+of `v0.6.1` sharing. The [release record](archive/v0_6_2_release.md) owns source,
+CI, deployment and production evidence, the inherited pending real signed-in
+sharing check and retained human/device deferrals.
+[GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
+identifies the published build. The [roadmap](reference/product/roadmap.md)
+and [0.6.3 developer-site plan](working/v0_6_3_developer_site_plan.md) put
+design/assets and evolving process/review presentation next, followed by
+0.6.4 replay collections; curated learning follows later. The
+[follow-up research](working/v0_6_followup_plan.md) retains future scope, and
+the [implementation archive](archive/v0_6_implementation.md) indexes completed
+planning/evidence at their existing paths. The
+[candidate checkpoint](working/v0_6_2_candidate.md) is historical preparation evidence.
 The earlier [October closeout](archive/reconciliation_2026_10/README.md)
 retains the `0.5.x` reconciliation decisions and evidence.
 
@@ -57,8 +53,8 @@ Player-facing explanations live in the web app rather than a second
 documentation tree:
 
 - [Rules](https://gomoku2d.byebyebryan.com/rules/) — basic Gomoku and Renju rules
-- [Guide](https://gomoku2d.byebyebryan.com/guide/) — threats, combos and forced sequences;
-  `0.6.2` adds direct Replays & sharing and Examples sections (candidate only)
+- [Guide](https://gomoku2d.byebyebryan.com/guide/) — tactics, replay/sharing help
+  and account-free example replays
 - [Lab](https://gomoku2d.byebyebryan.com/lab/) — bot tournament and replay-analysis reports
 - [Visuals](https://gomoku2d.byebyebryan.com/visuals/) — visual guide and asset language
 - [Privacy](https://gomoku2d.byebyebryan.com/privacy/) and

@@ -4,28 +4,28 @@ This roadmap owns release sequencing and product scope. Current formats and
 behavior live in the reference contracts; completed work lives in
 [`release_history.md`](../../archive/release_history.md).
 
-## Current State: `v0.6.1` Published; Acceptance Follow-up Open
+## Current State: `v0.6.2` Published; Acceptance Follow-up Open
 
-`v0.6.1` was published on October 23, 2026 as the direct successor to
-`v0.5.5`. It adds portable replay links, private saved copies, continuations
-that join ordinary My games, and opt-in public profiles with dated statistics
-and paged game catalogs. Exact-source CI, backend preparation, publication,
-served-byte parity and production-safe automated acceptance are complete.
+`v0.6.2` was published on October 24, 2026 after `v0.6.1`. It refines public
+player/mobile presentation and replay return, adds Guide sharing help/two static
+examples and explicit enable confirmation, and refreshes documentation/media.
+Exact-source CI, publication, served-byte/backend parity and production-safe
+automated acceptance are recorded in the release evidence. No backend, schema,
+portable-format or dependency-graph change was required.
 
 The real signed-in profile/statistics/game-publication round trip remains
 pending. Physical-device/touch, human accessibility, two-device private-account
 and novice-feedback checks retain their recorded open or deferred status.
-The [release record](../../archive/v0_6_1_release.md) owns these boundaries;
+The [release record](../../archive/v0_6_2_release.md) owns these boundaries;
 planning the next releases does not close them.
 
-## Remaining `0.6` Sequence
+## `0.6` Sequence
 
 Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
 site and process presentation in 0.6.3, then replay collections in 0.6.4.
 Curated learning follows later, unnumbered for now.
-The `0.6.2` implementation and local candidate checks are complete;
-human acceptance and publication remain separate. `0.6.3` and `0.6.4` remain
-planned. No release dates are committed.
+`0.6.2` is published; remaining human checks stay explicit. `0.6.3` and `0.6.4`
+remain planned. No future release dates are committed.
 
 | Release | Focus | Player outcome |
 |---|---|---|
@@ -36,8 +36,9 @@ planned. No release dates are committed.
 
 The [follow-up plan](../../working/v0_6_followup_plan.md) records the review,
 first-party research, implementation implications, decision gates and release
-acceptance. The [candidate handoff](../../working/v0_6_2_candidate.md) owns
-the current 0.6.2 preview, technical evidence and publication boundaries.
+acceptance. The [release record](../../archive/v0_6_2_release.md) owns
+0.6.2 publication; the [candidate checkpoint](../../working/v0_6_2_candidate.md)
+retains earlier preparation evidence and preview context.
 Guide help, two validated bot-game examples (28/36 moves, opening at final/26),
 inline owner consent and focused README/profile/replay media are implemented.
 Earlier checkpoints are retained in the

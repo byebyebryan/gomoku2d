@@ -15,7 +15,8 @@ local 18-game Demo Player fixture, not a production player's account. Only
 keyboard focus was cleared; content/styles were not substituted for capture.
 Hashes and acceptance limits live in the
 [0.6.2 candidate](../working/v0_6_2_candidate.md) and its evidence. Publication
-is separate; the earlier [0.5.5 preparation record](../archive/v0_5_5_release_preparation.md)
+is recorded in the [0.6.2 release](../archive/v0_6_2_release.md); the earlier
+[0.5.5 preparation record](../archive/v0_5_5_release_preparation.md)
 retains the original media history.
 The October review keeps focused development screenshots in the
 [October reconciliation archive](../archive/reconciliation_2026_10/README.md).

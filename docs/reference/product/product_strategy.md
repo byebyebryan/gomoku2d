@@ -49,7 +49,7 @@ the player asks for durable or shared state.
 - Google sign-in restores existing account settings and merges eligible private
   history; new accounts initialize from the device, and later edits sync.
 - Signed-in private history is cloud-backed continuity, not public evidence.
-- Portable links require an explicit Share action and work without publication.
+- Share creates portable replay links independently of publication.
   Public-profile catalogs require a separate explicit Publish step.
 - The [deferred casual P2P research](../backend/p2p_multiplayer.md) favors backend
   signaling and browser-validated moves; its results would not be server-verified.

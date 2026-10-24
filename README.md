@@ -64,7 +64,7 @@ a possible escape still needs verification. It is not a full-game solution.
   public player profile.
 
 [Example replays](https://gomoku2d.byebyebryan.com/guide/#examples) and short
-sharing help are part of the prepared `0.6.2` candidate. Examples need no account.
+sharing help are available in Guide. Examples need no account.
 
 ![Open an example, inspect its ending and create a portable replay link.](docs/assets/readme-sharing.gif)
 
@@ -131,22 +131,22 @@ lists checks by area.
 
 ## Project Status
 
-`v0.6.1` is published as the direct successor to `v0.5.5`, adding shareable
-replays, saved continuations, opt-in public profiles and dated statistics. A
-real signed-in sharing round trip remains pending; see the
-[release record](docs/archive/v0_6_1_release.md) for evidence and open gates.
+`v0.6.2` is published, refining public profiles and mobile layouts, adding
+Guide examples/sharing help, and keeping profile enabling behind explicit
+confirmation. It builds on `v0.6.1` replay sharing, private saved copies and
+opt-in public profiles/statistics.
 
-The local `0.6.2` candidate refines public profiles and mobile layouts, adds
-Guide examples/sharing help, and keeps enabling a public profile behind explicit
-confirmation. The [candidate handoff](docs/working/v0_6_2_candidate.md) records
-its validation and remaining human checks. It has not been published.
+The [release record](docs/archive/v0_6_2_release.md) owns source, CI, deployment
+and production evidence. The inherited real signed-in sharing round trip
+remains pending; physical-device and human-accessibility limits remain recorded.
+Next is the [0.6.3 developer site and process presentation](docs/working/v0_6_3_developer_site_plan.md).
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
-[v0.6.1 changelog](CHANGELOG.md#061---2026-10-23) ·
+[v0.6.2 changelog](CHANGELOG.md#062---2026-10-24) ·
 [Roadmap](docs/reference/product/roadmap.md)
 
-Detailed candidate evidence and retained manual acceptance deferrals are in
-the [acceptance ledger](docs/working/v0_6_1_evidence/README.md).
+Detailed [release evidence](docs/archive/v0_6_2_release_evidence.json) retains
+the distinction between automated validation and human acceptance.
 
 ## Project References
 
