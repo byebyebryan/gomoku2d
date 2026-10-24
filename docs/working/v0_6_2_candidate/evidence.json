@@ -219,5 +219,30 @@
     "physical phone/touch/browser keyboard and human accessibility checks",
     "inherited real-account and two-device acceptance handoffs",
     "separately authorized push, exact-head hosted CI, tag/deploy, production served-byte and journey checks"
-  ]
+  ],
+  "local_release_preflight": {
+    "date_utc": "2026-10-24T17:25:34.594118+00:00",
+    "checked_clean_commit": "edb2a710839d7dbddd1ff82e7f655f57d20b8c1d",
+    "origin_main_after_fetch": "84f1c1ff59cdb0d9ee9f387d6b49e4bff67c03a9",
+    "application_version_scripts_match_capture": true,
+    "command": "scripts/release.sh --check 0.6.2",
+    "exit_code": 1,
+    "result": "Local main has unpushed commits; push main before releasing.",
+    "meaning": "Expected remote-parity guard for local-only candidate; not a full release-script pass. Guard left unchanged.",
+    "log": {
+      "path": "gomoku-web/test-results/v062-completion/release-check.log",
+      "sha256": "4c49ba1487c3200f4ea33851318535d7316f58e7695852f196c376c0aa4ed7b1"
+    },
+    "v0_6_2_tag": {
+      "local": false,
+      "remote": false
+    },
+    "latest_published_release": {
+      "publishedAt": "2026-10-23T22:07:57Z",
+      "tagName": "v0.6.1",
+      "targetCommitish": "main",
+      "url": "https://github.com/byebyebryan/gomoku2d/releases/tag/v0.6.1"
+    },
+    "remaining": "Authorize push, exact-head hosted CI, successful release check, tag/deployment and production acceptance."
+  }
 }

@@ -86,9 +86,12 @@ are not claimed. The inherited real signed-in sharing and two-device private
 account/reset handoffs remain open or explicitly deferred as recorded in the
 [v0.6.1 release](../archive/v0_6_1_release.md).
 
-The version/changelog and local candidate are prepared. The normal release
-script requires clean pushed main, so a local-only candidate cannot pass its
-remote-parity gate. After separately authorized push, require hosted CI on the
+The version/changelog and local candidate are prepared. On clean `edb2a71`,
+`scripts/release.sh --check 0.6.2` fetched origin and stopped with
+"Local main has unpushed commits; push main before releasing." This is the
+expected remote-parity guard, not a full release-script pass; it was left
+unchanged. Neither a local nor remote v0.6.2 tag exists, and GitHub's latest
+published release remains v0.6.1. After separately authorized push, require hosted CI on the
 exact release head, rerun `scripts/release.sh --check 0.6.2`, then follow the
 [release workflow](../reference/ops/release.md) for tag/deployment and production
 served-byte/journey verification. No extra backend/index migration is needed.
