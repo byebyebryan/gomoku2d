@@ -144,3 +144,7 @@ Next gate: Bryan's visual pass on the integrated developer area, then separately
 authorized 0.6.3 release preparation, exact-source CI and publication checks.
 The inherited real-account sharing/device handoff remains open in the 0.6.2
 release record. This local implementation does not close it.
+
+Final presentation review also puts the recorded Lab date and rule/budget context
+beside the primary heading. Full provenance remains available below; missing
+historical dates stay unavailable rather than inheriting the current date.

@@ -134,6 +134,20 @@ export function LabReportRoute() {
         <p className="dev-lead">
           Compare behavior under a recorded budget, then inspect the decisions.
         </p>
+        {view !== "analysis" && botState.status === "loaded" && (
+          <p className="dev-meta">
+            {botState.report.run.rules.variant === "renju" ? "Renju" : "Freestyle"} ·{" "}
+            {botState.report.board_size} × {botState.report.board_size} ·{" "}
+            {botState.report.run.games_per_pair} games per pair · Recorded{" "}
+            {botState.report.provenance?.generated_at_utc?.slice(0, 10) ?? "date unavailable"}
+          </p>
+        )}
+        {view === "analysis" && analysisState.status === "loaded" && (
+          <p className="dev-meta">
+            Bounded analysis · maximum depth {analysisState.report.model.max_depth} · Recorded{" "}
+            {analysisState.report.provenance?.generated_at_utc?.slice(0, 10) ?? "date unavailable"}
+          </p>
+        )}
       </header>
       <nav className="dev-views" aria-label="Lab views">
         {REPORT_VIEWS.map((option) => (
