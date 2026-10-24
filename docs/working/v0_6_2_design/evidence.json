@@ -1,0 +1,246 @@
+{
+  "status": "prototype-ready-for-human-review",
+  "date": "2026-10-23",
+  "baseline_commit": "069eb66",
+  "selected_layout": null,
+  "primary_recommendation": "A - Wide record",
+  "production_implementation": false,
+  "research_scope": "Source and recorded product captures plus first-party information architecture and accessibility references; competitor profile fetch returning 403 excluded as visual evidence.",
+  "publication": {
+    "report_id": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+    "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/",
+    "file_count": 16,
+    "byte_count": 245173,
+    "served_parity": "all files matched export from Starship",
+    "carbon_device_acceptance": false
+  },
+  "authoring_files": [
+    {
+      "path": "docs/working/v0_6_2_design/index.html",
+      "sha256": "f621fcfa083e87b24c1727f73e1b204315290b845d41478adb73afa3988ba5ea"
+    },
+    {
+      "path": "docs/working/v0_6_2_design/study.css",
+      "sha256": "47ac33e4131f07a83abb0f09fe5663829ab6182d30fd4cba4e2450c917ab21a2"
+    },
+    {
+      "path": "docs/working/v0_6_2_design/study.js",
+      "sha256": "34aa33cb7fe863ff47436a3802880c08e1bd5a64fd1b748ac512d2d9e38fc8d2"
+    },
+    {
+      "path": "docs/working/v0_6_2_design/prototype.html",
+      "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+    },
+    {
+      "path": "docs/working/v0_6_2_design/prototype.css",
+      "sha256": "6fb009e7d2eadac03acb137d3560df5a644a5432cf5c48ccd7d93e5904b67e20"
+    },
+    {
+      "path": "docs/working/v0_6_2_design/prototype.js",
+      "sha256": "8404edb77926ed2cf552b4ff82811b9662afe7239591618daac639923c4a63a1"
+    },
+    {
+      "path": "docs/working/v0_6_2_design/prepare_export.py",
+      "sha256": "443245b1773011229de7a00ba1d1f5d49307e0349a8b368aa328c0fa91f8ead8"
+    }
+  ],
+  "served_files": [
+    {
+      "path": "assets/fonts/LICENSE.txt",
+      "bytes": 7169,
+      "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+    },
+    {
+      "path": "assets/fonts/PixelOperator-Bold.ttf",
+      "bytes": 16984,
+      "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+    },
+    {
+      "path": "assets/fonts/PixelOperator.ttf",
+      "bytes": 17272,
+      "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+    },
+    {
+      "path": "assets/fonts/PixelOperator8-Bold.ttf",
+      "bytes": 18624,
+      "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+    },
+    {
+      "path": "assets/global.css",
+      "bytes": 6808,
+      "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+    },
+    {
+      "path": "assets/icons.json",
+      "bytes": 32037,
+      "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+    },
+    {
+      "path": "assets/reference-owner.png",
+      "bytes": 27952,
+      "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+    },
+    {
+      "path": "assets/reference-public.png",
+      "bytes": 13832,
+      "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+    },
+    {
+      "path": "assets/reference-replay.png",
+      "bytes": 17391,
+      "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+    },
+    {
+      "path": "assets/reference-settings.png",
+      "bytes": 28412,
+      "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+    },
+    {
+      "path": "index.html",
+      "bytes": 9214,
+      "sha256": "f621fcfa083e87b24c1727f73e1b204315290b845d41478adb73afa3988ba5ea"
+    },
+    {
+      "path": "prototype.css",
+      "bytes": 18861,
+      "sha256": "6fb009e7d2eadac03acb137d3560df5a644a5432cf5c48ccd7d93e5904b67e20"
+    },
+    {
+      "path": "prototype.html",
+      "bytes": 677,
+      "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+    },
+    {
+      "path": "prototype.js",
+      "bytes": 22383,
+      "sha256": "8404edb77926ed2cf552b4ff82811b9662afe7239591618daac639923c4a63a1"
+    },
+    {
+      "path": "study.css",
+      "bytes": 4269,
+      "sha256": "47ac33e4131f07a83abb0f09fe5663829ab6182d30fd4cba4e2450c917ab21a2"
+    },
+    {
+      "path": "study.js",
+      "bytes": 3288,
+      "sha256": "34aa33cb7fe863ff47436a3802880c08e1bd5a64fd1b748ac512d2d9e38fc8d2"
+    }
+  ],
+  "checks": {
+    "three_engine_pass": {
+      "checks_passed": 117,
+      "checks_total": 117,
+      "per_engine": {
+        "chromium": 51,
+        "firefox": 33,
+        "webkit": 33
+      },
+      "failed_checks": [],
+      "external_runtime_requests": [],
+      "initial_page_errors": [
+        {
+          "engine": "webkit",
+          "message": "ResizeObserver loop completed with undelivered notifications."
+        }
+      ],
+      "disposition": "WebKit report ResizeObserver warning fixed by observing width changes only and deferring layout writes; not hidden as a successful zero-error run."
+    },
+    "targeted_recheck": {
+      "checks_passed": 12,
+      "results": [
+        {
+          "engine": "chromium",
+          "kind": "report-resize-and-switch",
+          "width": 1280,
+          "pass": true
+        },
+        {
+          "engine": "chromium",
+          "kind": "report-resize-and-switch",
+          "width": 390,
+          "pass": true
+        },
+        {
+          "engine": "chromium",
+          "kind": "baseline-reconstruction",
+          "width": 1280,
+          "pass": true
+        },
+        {
+          "engine": "chromium",
+          "kind": "baseline-reconstruction",
+          "width": 390,
+          "pass": true
+        },
+        {
+          "engine": "chromium",
+          "kind": "baseline-reconstruction",
+          "width": 320,
+          "pass": true
+        },
+        {
+          "engine": "chromium",
+          "kind": "future-thumbnail-stress",
+          "layout": "a",
+          "pass": true
+        },
+        {
+          "engine": "chromium",
+          "kind": "future-thumbnail-stress",
+          "layout": "b",
+          "pass": true
+        },
+        {
+          "engine": "chromium",
+          "kind": "future-thumbnail-stress",
+          "layout": "c",
+          "pass": true
+        },
+        {
+          "engine": "firefox",
+          "kind": "report-resize-and-switch",
+          "width": 1280,
+          "pass": true
+        },
+        {
+          "engine": "firefox",
+          "kind": "report-resize-and-switch",
+          "width": 390,
+          "pass": true
+        },
+        {
+          "engine": "webkit",
+          "kind": "report-resize-and-switch",
+          "width": 1280,
+          "pass": true
+        },
+        {
+          "engine": "webkit",
+          "kind": "report-resize-and-switch",
+          "width": 390,
+          "pass": true
+        }
+      ],
+      "page_errors": []
+    },
+    "published_browser_check": {
+      "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/",
+      "reportControls": true,
+      "httpManualCopyFallback": true,
+      "standaloneNoticePreserved": true,
+      "errors": [],
+      "external": []
+    },
+    "raw_evidence_directory": "gomoku-web/test-results/v062-design/"
+  },
+  "boundaries": [
+    "Synthetic data and illustrative boards; no validated real-game records in the prototypes.",
+    "No application runtime, schema, dependency, rules or infrastructure change.",
+    "No production account or Firestore writes.",
+    "Manual preview and emulators preserved.",
+    "No user-browser tabs opened; headless contexts closed.",
+    "Human visual selection, physical touch and human accessibility remain pending.",
+    "Current layout is a source-based reconstruction, not a pixel-exact runtime capture.",
+    "A/B/C share one illustrative owner companion."
+  ]
+}

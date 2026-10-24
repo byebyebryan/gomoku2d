@@ -1,0 +1,71 @@
+@font-face{font-family:PixelOperator;src:url("assets/fonts/PixelOperator.ttf")}
+@font-face{font-family:PixelOperatorBold;src:url("assets/fonts/PixelOperator-Bold.ttf")}
+
+*{box-sizing:border-box}
+body{margin:0;background:#151617;color:#efefeb;font:18px/1.45 system-ui,sans-serif}
+button,select{font:inherit}
+a{color:#a5d3c6;text-underline-offset:4px}
+button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #fccb57;outline-offset:3px}
+.report{max-width:1424px;margin:auto;padding:46px 32px 70px}
+.intro{max-width:1000px}
+.kicker{font:16px PixelOperatorBold,monospace;letter-spacing:.15em;text-transform:uppercase;color:#fccb57;margin:0 0 14px}
+h1{font:clamp(32px,4.4vw,58px)/1.08 system-ui,sans-serif;letter-spacing:-.035em;margin:0 0 18px}
+h2{font-size:25px;line-height:1.2;letter-spacing:-.02em}
+h3{font-size:19px}
+p{margin:0 0 14px}
+.lead{font-size:21px;max-width:850px;color:#cfcec7}
+.scope,.quiet,.footnote{font-size:14px;color:#b7b8b2}
+.scope{padding-left:12px;border-left:2px solid #5f8b82}
+.finding-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin:34px 0 44px}
+.finding-grid article{border-top:1px solid #464845;padding-top:16px}
+.finding-grid h2{font-size:20px;margin:8px 0}
+.finding-grid p{color:#bfc0b9;font-size:16px}
+.number{font:20px PixelOperatorBold;color:#fccb57}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin:24px 0 18px}
+.section-head h2{margin:0}
+.text-action{font-size:15px}
+.option-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.option-buttons button{min-width:0;text-align:left;padding:15px 16px;background:#242726;border:1px solid #535650;color:#ecece6;cursor:pointer}
+.option-buttons strong,.option-buttons span{display:block}
+.option-buttons strong{font-size:16px}
+.option-buttons span{font-size:13px;color:#bdc0b7;margin-top:4px}
+.option-buttons button[aria-pressed=true]{border-color:#fccb57;background:#38372a}
+.controls{display:flex;gap:12px 16px;flex-wrap:wrap;padding:16px;background:#202321;border:1px solid #40453f}
+.controls label{display:grid;gap:5px;min-width:110px;font-size:13px;color:#c8cbbf}
+.controls select{max-width:100%;background:#121713;border:1px solid #596356;color:#f2f3e8;font-size:14px;padding:7px 22px 7px 9px;min-height:38px;border-radius:0}
+.option-description{min-height:48px;margin:14px 0;font-size:16px;color:#d0d2c7}
+.stage-outer{width:100%;min-width:0;background:#101110;border:1px solid #51564e;padding:12px;overflow:hidden}
+.stage{position:relative;margin:auto;overflow:hidden;background:#1e1e1e}
+iframe{display:block;border:0;transform-origin:top left;background:#1e1e1e}
+.footnote{margin-top:12px;max-width:1120px}
+.decision{margin:52px 0;border-top:1px solid #444940;padding-top:30px;max-width:1200px}
+.decision h2{font-size:30px;margin:0 0 16px}
+.decision>p{max-width:1000px}
+.tradeoffs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin:26px 0}
+.tradeoffs h3{color:#fccb57;margin:0 0 8px}
+.tradeoffs p{font-size:16px;color:#c4c7bb}
+.reference-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}
+figure{margin:0;min-width:0;display:grid;align-content:start;gap:10px;background:#1e1e1e;padding:14px;border:1px solid #444940}
+figure img{display:block;width:100%;height:auto;max-height:520px;object-fit:contain;object-position:top}
+figure img.mobile-reference{width:auto;max-width:100%;justify-self:center}
+figcaption{font-size:14px;color:#bfc3b6}
+.research{margin-top:42px;max-width:1100px;color:#c2c7b8;font-size:16px}
+.research li{margin:12px 0}
+.research code{color:#fccb57}
+ @media(max-width:720px){.report{padding:28px 14px 45px}
+.finding-grid,.tradeoffs{grid-template-columns:1fr;gap:12px}
+.finding-grid{margin:22px 0}
+.finding-grid p{margin-bottom:4px}
+.option-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}
+.option-buttons button{padding:12px}
+.controls{gap:10px;padding:12px}
+.controls label{flex:1 1 130px;min-width:0}
+.controls select{width:100%;font-size:13px}
+.stage-outer{padding:0}
+.reference-grid{grid-template-columns:1fr}
+.lead{font-size:18px}
+.option-description{min-height:0}
+.decision{margin-top:32px}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}
+}

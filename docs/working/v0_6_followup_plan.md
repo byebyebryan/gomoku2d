@@ -47,6 +47,11 @@ Research does not establish usage, hosting capacity or measured usability gains.
 
 ## `0.6.2`: public-profile design and a clear sharing journey
 
+The [public-profile design study](v0_6_2_design/README.md) explores three
+visitor compositions and a shared owner companion against the existing visual
+language. Its interactive report is ready for review; no layout has been
+selected or implemented in the product.
+
 ### Planned minimum
 
 1. Review visitor and owner screens together. Establish identity → optional

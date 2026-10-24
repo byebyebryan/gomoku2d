@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gomoku2D · 0.6.2 public-profile design study</title>
+  <link rel="stylesheet" href="study.css">
+  <script src="study.js" defer></script>
+</head>
+<body>
+  <main class="report">
+    <header class="intro">
+      <p class="kicker">Gomoku2D / 0.6.2 / design exploration</p>
+      <h1>A player page that belongs in the game.</h1>
+      <p class="lead">Three compositions, the same content, the existing visual language. Start with A, then compare B and C with one game and statistics hidden.</p>
+      <p class="scope">Prototype study · synthetic data · no account, cloud writes, or production changes. A direction is recommended, not adopted.</p>
+    </header>
+
+    <section class="finding-grid" aria-label="Design findings">
+      <article><span class="number">01</span><h2>The shell is missing</h2><p>The current page is an 820px card with its Home action at the bottom. Match, Replay and Profile establish a stronger header and visible navigation.</p></article>
+      <article><span class="number">02</span><h2>Games need priority</h2><p>Five statistic boxes and a large disclaimer sit before the game list. Divided rows and a quieter record make the games easier to reach.</p></article>
+      <article><span class="number">03</span><h2>Sparse is a real state</h2><p>A profile can have one game, no shared statistics, or no games at all. Its composition should work without avatars, a bio or invented statistics.</p></article>
+    </section>
+
+    <section aria-labelledby="options-title" class="explorer">
+      <div class="section-head"><h2 id="options-title">Compare the options</h2><a id="full-size" class="text-action" href="prototype.html?layout=a">Open full-size prototype ↗</a></div>
+      <div class="option-buttons" role="group" aria-label="Profile composition">
+        <button type="button" data-layout="a" aria-pressed="true"><strong>A · Wide record</strong><span>Recommended starting point</span></button>
+        <button type="button" data-layout="b" aria-pressed="false"><strong>B · Profile columns</strong><span>Closest to the private Profile screen</span></button>
+        <button type="button" data-layout="c" aria-pressed="false"><strong>C · Compact record</strong><span>One contained public surface</span></button>
+        <button type="button" data-layout="current" aria-pressed="false"><strong>Current structure</strong><span>Reconstructed with the same fixtures</span></button>
+      </div>
+      <div class="controls">
+        <label>Surface<select id="surface"><option value="visitor">Public visitor</option><option value="owner">Owner companion</option></select></label>
+        <label>Games / state<select id="scenario"><option value="full">32 games · four pages</option><option value="sparse">One game</option><option value="empty">No published games</option><option value="loading">Loading</option><option value="error">Connection error</option><option value="unavailable">Unavailable profile</option></select></label>
+        <label>Statistics<select id="stats"><option value="on">Shared</option><option value="off">Hidden</option></select></label>
+        <label>Labels<select id="labels"><option value="normal">Normal</option><option value="long">Long Unicode names / titles</option></select></label>
+        <label>Viewport<select id="viewport"><option value="desktop">Desktop · 1280</option><option value="mobile">Mobile · 390</option><option value="narrow">Narrow · 320</option></select></label>
+        <label>Text<select id="text"><option value="100">100%</option><option value="150">150%</option><option value="200">200%</option></select></label>
+        <label>Thumbnails<select id="thumbs"><option value="off">Off · 0.6.2 scope</option><option value="on">Sketch · 0.6.3 exploration</option></select></label>
+      </div>
+      <p id="option-description" class="option-description" role="status"></p>
+      <div class="stage-outer"><div id="stage" class="stage"><iframe id="prototype" title="Interactive public-profile prototype" src="prototype.html?layout=a&amp;embed=1"></iframe></div></div>
+      <p class="footnote">Replay demonstrates returning to the same list and page. Owner actions change in-memory fixtures only. Navigation buttons show their destination without leaving the study. The owner companion is shared across A/B/C. Thumbnail sketches are optional future work and are not a renderer implementation.</p>
+    </section>
+
+    <section class="decision" aria-labelledby="recommendation">
+      <p class="kicker">Recommendation for discussion</p>
+      <h2 id="recommendation">Start with A. Borrow B's continuity with Profile.</h2>
+      <p>A gives the player a proper app header, reduces repeated boxes, and keeps games prominent whether statistics are shared or hidden. B makes the relationship to My games most explicit, but its identity column can become an under-filled rail. C is restrained and easy to scan, though it retains more of the standalone-card character.</p>
+      <div class="tradeoffs">
+        <article><h3>A · Wide record</h3><p>Full-width name and navigation, a quiet shared record, then a divided game list. Best balance of sparse and full states.</p></article>
+        <article><h3>B · Profile columns</h3><p>Identity and record on the left, games on the right. Familiar app structure; less horizontal room for long game titles.</p></article>
+        <article><h3>C · Compact record</h3><p>Name, compact record and games inside one panel. More contained, with less use of a large desktop viewport.</p></article>
+      </div>
+      <p><strong>Choices to settle:</strong> composition A/B/C, shared-record density, disclosure placement, and whether the visitor should have a Copy link action. The content and manually refreshed statistics remain the same. Thumbnails are a later enhancement.</p>
+    </section>
+
+    <section aria-labelledby="references">
+      <div class="section-head"><h2 id="references">Compare with the existing app</h2><span class="quiet">Recorded references; not new production captures</span></div>
+      <div class="reference-grid">
+        <figure><img src="assets/reference-replay.png" alt="Existing Replay Analysis screen with a prominent title, navigation buttons, board and divided side panel" loading="lazy"><figcaption>Replay · 0.5.5 media: header, navigation, restrained chrome.</figcaption></figure>
+        <figure><img src="assets/reference-owner.png" alt="Existing 0.6.1 public-profile settings in General Settings-style rows" loading="lazy"><figcaption>0.6.1 owner controls: grouped labels and bounded actions.</figcaption></figure>
+        <figure><img class="mobile-reference" src="assets/reference-public.png" alt="Recorded 0.6.1 public page showing boxed statistics, disclosure and a game card" loading="lazy"><figcaption>0.6.1 visitor: the current separate-card composition.</figcaption></figure>
+        <figure><img class="mobile-reference" src="assets/reference-settings.png" alt="Existing mobile Settings screen with pixel controls, section dividers and top navigation" loading="lazy"><figcaption>Settings · October reference: buttons, labels, and mobile rhythm.</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="research" aria-labelledby="research-title">
+      <h2 id="research-title">Research and constraints</h2>
+      <ul>
+        <li>The strongest visual references are our own Profile, Settings, Replay and Rules surfaces. The study copies the current global stylesheet, actual PixelOperator fonts and existing 24px SVG icons into its export.</li>
+        <li><a href="https://support.chess.com/en/articles/13557248-how-do-i-use-game-collections">Chess.com Game Collections</a> keeps game curation near Analysis and makes visibility explicit. This supports clear reader/owner roles; it does not justify folders or a community catalog here.</li>
+        <li><a href="https://www.w3.org/WAI/WCAG22/Understanding/consistent-navigation">W3C consistent navigation</a> informs stable control placement. <a href="https://www.w3.org/WAI/WCAG22/Understanding/reflow.html">W3C reflow guidance</a> informs narrow/enlarged-text checks. Prototype checks are not human accessibility or device acceptance.</li>
+        <li>A live Lichess profile returned HTTP 403 during research, so it is not treated as an inspected visual reference. No competitor profile screenshot is implied.</li>
+        <li>No new public fields, schema changes, avatars, bios, ratings, game dates, featured games, background listeners or services. Existing snapshot date and all five current statistics remain visible when shared.</li>
+      </ul>
+      <p>Prepared October 23, 2026 from roadmap commit <code>069eb66</code>. The baseline is a source-based reconstruction using the same synthetic fixtures, not a screenshot of a real public account. The 38-game statistics snapshot is independent of the selected publication count.</p>
+      <p><a href="http://starship:8787/reports/#project=gomoku2d">Gomoku2D report catalog</a> · <a href="https://gomoku2d.byebyebryan.com/">Current public app</a></p>
+    </section>
+  </main>
+</body>
+</html>
