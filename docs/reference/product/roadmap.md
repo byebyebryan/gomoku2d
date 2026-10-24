@@ -81,9 +81,10 @@ selected layout; refreshed media follows the accepted UI.
   historical reviews as dated snapshots. Reuse static hosting without a backend.
 
 The [developer-site plan](../../working/v0_6_3_developer_site_plan.md) owns the
-accepted context and inventory/prototype gates. Framework, site/repository
-arrangement and publication details remain to be settled. This work is separate
-from the 0.6.2 release.
+accepted context and proposed page/source/implementation gates. Bryan selected
+expansion of the existing site/domain/repository and refinement of its established
+look, using React/Vite. Review the shared developer layout and public-page
+boundary before implementation. This work is separate from the 0.6.2 release.
 
 ### `0.6.4`: Replay Collection and Study Tools
 

@@ -8,7 +8,7 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
-| [0.6.3 developer-site plan](v0_6_3_developer_site_plan.md) | Bryan; accepted process/design/reference scope; source inventory and icon/review-gallery prototype follow the 0.6.2 release |
+| [0.6.3 developer-area brief](v0_6_3_developer_site_plan.md) | Bryan; existing hosting/look retained; review proposed page/source/public-boundary contracts before the visual study or implementation |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; revised sequence and retained research; replay metadata compatibility belongs to 0.6.4, curated learning later |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan
