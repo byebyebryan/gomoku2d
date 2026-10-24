@@ -9,7 +9,8 @@ belong in the [reference docs](../README.md#choose-a-path).
 | Note | Owner and next review |
 |---|---|
 | [0.6.2 candidate handoff](v0_6_2_candidate.md) | Bryan; local implementation and technical checks complete; application review and separately authorized publication follow |
-| [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; retained research and 0.6.3/0.6.4 scope; revisit replay metadata compatibility before 0.6.3 implementation |
+| [0.6.3 developer-site plan](v0_6_3_developer_site_plan.md) | Bryan; accepted process/design/reference scope; source inventory and icon/review-gallery prototype follow the 0.6.2 release |
+| [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; revised sequence and retained research; replay metadata compatibility belongs to 0.6.4, curated learning later |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan
 checkpoints are indexed in the [implementation archive](../archive/v0_6_implementation.md).

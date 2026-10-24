@@ -13,8 +13,11 @@ public profiles, statistics and game catalogs. The
 production evidence, the pending real signed-in sharing check, and retained
 manual acceptance deferrals. [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
 identifies the published build; the [roadmap](reference/product/roadmap.md)
-tracks `0.6.2` UI/presentation, `0.6.3` replay collection tools and `0.6.4`
-curated learning. The [0.6.2 candidate handoff](working/v0_6_2_candidate.md)
+tracks `0.6.2` UI/presentation, `0.6.3` developer-site/process presentation and
+`0.6.4` replay collections; curated learning follows later. The
+[developer-site plan](working/v0_6_3_developer_site_plan.md) records the agreed
+documentation split, design/assets and reusable review scope. The
+[0.6.2 candidate handoff](working/v0_6_2_candidate.md)
 owns the completed local implementation, validation, preview and open manual
 checks. It includes public-profile/mobile refinements, Guide sharing help,
 two account-free examples, inline enable confirmation and refreshed media.

@@ -49,7 +49,8 @@ the player asks for durable or shared state.
 - Google sign-in restores existing account settings and merges eligible private
   history; new accounts initialize from the device, and later edits sync.
 - Signed-in private history is cloud-backed continuity, not public evidence.
-- Public/shared replays require an explicit publish step.
+- Portable links require an explicit Share action and work without publication.
+  Public-profile catalogs require a separate explicit Publish step.
 - The [deferred casual P2P research](../backend/p2p_multiplayer.md) favors backend
   signaling and browser-validated moves; its results would not be server-verified.
   Keep backend work out of the per-move gameplay path if multiplayer is revisited.
@@ -80,6 +81,13 @@ Durable practices:
 - treat docs, tests, screenshots, reports, and release notes as part of the
   product, not cleanup after the fact;
 - prefer coherent releases over endless internal experiments.
+
+Make the evolving workflow inspectable. Detailed Markdown owns current
+contracts, agent/maintainer context and supporting evidence; a prepared developer
+site presents current design/assets, UI reviews and the research, implementation,
+validation and release process for humans. Improve these records and reusable
+review tools first, then develop retrospective stories from verified evidence.
+The [0.6.3 plan](../../working/v0_6_3_developer_site_plan.md) owns initial scope.
 
 ## Non-goals
 

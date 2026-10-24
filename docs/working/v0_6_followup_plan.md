@@ -1,4 +1,4 @@
-# v0.6.2–v0.6.4 follow-up plan
+# v0.6 follow-up research and revised sequence
 
 Owner: Bryan. Reviewed October 23, 2026 against local `main` at `84f1c1f`.
 The published `v0.6.1` source is `b1a67d3`; the intervening commit changes
@@ -7,6 +7,12 @@ collection improvements for `0.6.3`, and assigned the subsequent learning
 extension to `0.6.4`. The [roadmap](../reference/product/roadmap.md) owns that
 sequence. This plan records the research, proposed interaction details and
 decisions required before implementation; it does not change current contracts.
+
+**October 24 revision:** Bryan selected the
+[developer site and process presentation](v0_6_3_developer_site_plan.md) for
+0.6.3. Replay collections move to 0.6.4; curated learning follows later,
+currently unnumbered. The original research table retains its dated release
+references; the current headings and roadmap own revised sequencing.
 
 ## Review scope and evidence
 
@@ -107,7 +113,7 @@ The research table above remains a historical baseline.
 Compare compact rows with a thumbnail variant using the same empty/sparse/full
 data. Select composition, navigation hierarchy, statistics density, disclosure
 placement, owner preview actions and originating-profile return behavior with
-Bryan before implementation. The reusable thumbnail renderer ships in `0.6.3`
+Bryan before implementation. The reusable thumbnail renderer ships in `0.6.4`
 and does not block `0.6.2`. Select help placement and examples; validate full-game
 legality, safe labels and eligible opening plies.
 
@@ -125,7 +131,16 @@ work. Public profiles retain bounded root/page reads; list return introduces
 no polling. Help/media match accepted UI, current behavior and recorded capture
 source. No persistence schema change is required for this release.
 
-## `0.6.3`: useful replay collections
+## `0.6.3`: developer site and process presentation
+
+The [developer-site plan](v0_6_3_developer_site_plan.md) records the accepted
+scope: reconcile detailed Markdown and prepare human presentation of current
+design/assets, UI reviews and the evolving development/validation workflow.
+Start with the full icon inspector and reusable review gallery; inventory
+sources and settle navigation/delivery before site implementation. Journey
+articles remain later editorial work. This does not expand the 0.6.2 release.
+
+## `0.6.4`: useful replay collections
 
 ### Planned minimum
 
@@ -186,7 +201,7 @@ separate from these technical checks.
 Folders, multiple per-move annotations, public comments, arbitrary catalog
 reordering and featured games are outside the planned minimum.
 
-## `0.6.4`: curated learning through replays
+## Later: curated learning through replays
 
 ### Planned minimum
 
@@ -249,9 +264,10 @@ automatic puzzles, broad skins and multiplayer remain outside the planned
 minimum. The [P2P research](../reference/backend/p2p_multiplayer.md) retains the
 later multiplayer direction and its deferral.
 
-The next checkpoint is Bryan's review of the [0.6.2 candidate](v0_6_2_candidate.md),
-then separately authorized release publication. After that, settle 0.6.3's
-metadata/compatibility contract and thumbnail prototype before implementation.
+Bryan authorized the 0.6.2 release loop on October 24. Complete exact-head CI,
+publication and deployed validation with unperformed human checks preserved.
+Then inventory/prototype the [0.6.3 developer site](v0_6_3_developer_site_plan.md).
+Settle metadata/compatibility and the thumbnail prototype before 0.6.4 work.
 Validate changed areas instead of reopening unrelated completed audits. Push,
 backend deployment, tagging, served-byte verification and human acceptance
 remain separate gates. Preserve manual preview/emulators and their data; use

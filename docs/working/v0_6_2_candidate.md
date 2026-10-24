@@ -97,6 +97,6 @@ exact release head, rerun `scripts/release.sh --check 0.6.2`, then follow the
 served-byte/journey verification. No extra backend/index migration is needed.
 Do not record this local checkpoint as publication.
 
-Next feature scope remains 0.6.3: thumbnail prototype plus reviewed private
-metadata, version/old-client and conflict contracts. It is not part of this
-candidate.
+Bryan authorized release publication on October 24 after committing the revised
+roadmap. Next is [0.6.3 developer-site/process presentation](v0_6_3_developer_site_plan.md);
+replay collections/metadata move to 0.6.4. Neither expands this candidate.

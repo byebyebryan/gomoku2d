@@ -20,17 +20,19 @@ planning the next releases does not close them.
 
 ## Remaining `0.6` Sequence
 
-Bryan selected this sequence on October 23, 2026. `0.6.2` and `0.6.3` develop
-the shipped sharing experience; the small learning extension is assigned to
-`0.6.4`. The `0.6.2` implementation and local candidate checks are complete;
+Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
+site and process presentation in 0.6.3, then replay collections in 0.6.4.
+Curated learning follows later, unnumbered for now.
+The `0.6.2` implementation and local candidate checks are complete;
 human acceptance and publication remain separate. `0.6.3` and `0.6.4` remain
 planned. No release dates are committed.
 
 | Release | Focus | Player outcome |
 |---|---|---|
 | `0.6.2` | Public-profile design, sharing usability, documentation and presentation | Understand a player's page, open a game, and understand saving, sharing and publishing; demonstrate the app without signing in |
-| `0.6.3` | Replay collection and study tools | Recognize saved games visually, give them private context, and reopen a deliberately chosen moment |
-| `0.6.4` | Curated learning through replays | Read a short tactical prompt, inspect the example, and try another line against the existing bot |
+| `0.6.3` | Developer site, design/assets and process presentation | Inspect the current design system, compare assets/screens and understand the evolving development/validation workflow |
+| `0.6.4` | Replay collection and study tools | Recognize saved games visually, give them private context, and reopen a deliberately chosen moment |
+| Later | Curated learning through replays | Read a short tactical prompt, inspect the example, and try another line against the existing bot |
 
 The [follow-up plan](../../working/v0_6_followup_plan.md) records the review,
 first-party research, implementation implications, decision gates and release
@@ -59,11 +61,30 @@ Earlier checkpoints are retained in the
   shipped product. Archive completed planning material with links preserved.
 
 Compare compact thumbnail layouts during design, but ship the reusable
-thumbnail implementation in `0.6.3`. `0.6.2` does not require a sharing-data or
+thumbnail implementation in `0.6.4`. `0.6.2` does not require a sharing-data or
 portable-format change. Human visual approval precedes implementation of the
 selected layout; refreshed media follows the accepted UI.
 
-### `0.6.3`: Replay Collection and Study Tools
+### `0.6.3`: Developer Site and Development Process
+
+- Establish prepared human presentation alongside detailed agent/maintainer
+  Markdown. Reconcile current facts, duplication and reference/archive status.
+- Expand the design/asset reference with current tokens/components/states,
+  sprites and a full icon inspector with native sizes and enlarged pixel grids.
+- Organize existing UI comparison reports into a reusable review gallery with
+  source/capture conditions, findings and acceptance status.
+- Present the evolving research, implementation, review/fix and release process,
+  available validation and its limits. Record the process better before writing
+  retrospective journey stories.
+- Derive current references from canonical sources where practical and retain
+  historical reviews as dated snapshots. Reuse static hosting without a backend.
+
+The [developer-site plan](../../working/v0_6_3_developer_site_plan.md) owns the
+accepted context and inventory/prototype gates. Framework, site/repository
+arrangement and publication details remain to be settled. This work is separate
+from the 0.6.2 release.
+
+### `0.6.4`: Replay Collection and Study Tools
 
 - Add lightweight, static board thumbnails to public and private replay lists,
   derived from the existing replay payload and chosen opening move.
@@ -83,7 +104,7 @@ v1 links and fingerprints; no silent metadata loss during an old-client write
 or merge. Folders, multiple per-move annotations, public comments, arbitrary
 catalog reordering and featured games are outside the planned minimum.
 
-### `0.6.4`: Curated Learning Through Replays
+### Later: Curated Learning Through Replays
 
 - Build three to five short, authored scenarios around legal, complete games
   and selected nonterminal positions. Reuse the `0.6.2` example corpus where it
@@ -131,7 +152,7 @@ decisions. No connectivity success rate or player capacity is claimed.
 
 Automatic puzzle generation and personalized "save this game" challenges,
 richer statistics, avatars/bios, bot personalities, server-side bots and broader
-themes remain parked. The curated `0.6.4` lessons do not adopt these projects.
+themes remain parked. The later curated lessons do not adopt these projects.
 
 Native apps, chat/social feeds, global player/game discovery, SSR, monetization
 and ranked/esports features are outside this line. Cloud or sign-in must not
