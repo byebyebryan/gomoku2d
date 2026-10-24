@@ -258,6 +258,35 @@ a{color:inherit}
 .layout-split .simple-identity{gap:20px}
 .layout-split .simple-identity .copy-link{width:100%;min-width:0;font-size:var(--type-meta)}
 .layout-split .record-top{gap:10px}
+.layout-split .player-card .identity-core{min-width:0;display:grid;gap:20px}
+.layout-split .player-card .shared-count{border-top:1px solid var(--border);padding-top:18px}
+.layout-split .player-card .shared-count>div{display:flex;align-items:baseline;gap:12px;min-width:0}
+.layout-split .player-card .shared-count dt{order:2;font-size:var(--type-body);color:var(--text-muted);overflow-wrap:anywhere}
+.layout-split .player-card .shared-count dd{order:1;font:2.6rem/1 var(--font-display);color:var(--accent);overflow-wrap:anywhere}
+.identity-extra{min-width:0;border-top:1px solid var(--border);padding-top:18px}
+.identity-extra>summary{display:none}
+.identity-extra-content{min-width:0;display:grid;gap:18px}
+.profile-address-section{display:grid;gap:10px;min-width:0}
+.profile-address{font-size:var(--type-meta);line-height:1.3;color:var(--text-muted);overflow-wrap:anywhere}
+.layout-split .identity-extra-content .record-note{margin:0}
+.layout-split .identity-extra-content .record-note summary{width:100%;font-size:var(--type-meta);letter-spacing:.03em}
+.layout-split .identity-extra-content .record-note p{font-size:var(--type-meta)}
+.identity-extra>summary:focus-visible{outline:2px solid var(--info);outline-offset:3px}
+@media(max-width:720px){
+  .layout-split .simple-identity.player-card{display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch;align-items:stretch;gap:12px}
+  .layout-split .player-card .identity-core{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name copy" "count copy";gap:10px 16px;width:100%}
+  .player-card .identity-name{grid-area:name}
+  .layout-split .player-card .shared-count{grid-area:count;border:0;padding:0}
+  .layout-split .player-card .shared-count>div{gap:8px;flex-wrap:wrap}
+  .layout-split .player-card .shared-count dd{font-size:var(--type-body)}
+  .layout-split .player-card .shared-count dt{font-size:var(--type-meta)}
+  .layout-split .player-card .copy-link{grid-area:copy;align-self:center}
+  .identity-extra{padding-top:0}
+  .identity-extra>summary{display:flex;align-items:center;gap:8px;min-height:44px;font:var(--type-meta) var(--font-display);color:var(--text-muted);cursor:pointer}
+  .identity-extra>summary .uiIcon{width:24px;height:24px}
+  .identity-extra[open] .identity-extra-content{padding-top:12px}
+  .layout-split .identity-extra-content .record-note summary{width:fit-content}
+}
 .layout-split .stat{padding-left:10px}
 .layout-split .stat dd{font-size:1.8rem}
 @media(max-width:980px){

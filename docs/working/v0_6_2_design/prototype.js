@@ -5,6 +5,7 @@ const state = {
   surface: pick("surface", ["visitor", "owner"], "visitor"),
   scenario: pick("scenario", ["full", "sparse", "empty", "loading", "error", "unavailable"], "full"),
   stats: query.get("stats") !== "off", long: query.get("labels") === "long",
+  sidebar: query.get("sidebar") === "minimal" ? "minimal" : "card",
   thumbs: query.get("thumbs") === "on", text: pick("text", ["100", "150", "200"], "100"),
   page: 0, enabled: true, confirmDisable: false, confirmEnable: false, removed: new Set(), name: "Juniper"
 };
@@ -90,15 +91,24 @@ function catalog() {
 }
 function copyFooter() { return '<div class="public-footer">' + button("Copy profile link", "copy", "copy", "Neutral").replace('class="uiAction ', 'class="copy-link uiAction ') + "</div>"; }
 function utilities() { return '<footer class="public-utilities">' + note() + copyFooter() + "</footer>"; }
+function identityPanel(name) {
+  const copy = button("Copy link","copy","copy","Neutral",'aria-label="Copy profile link"').replace('class="uiAction ', 'class="copy-link uiAction ');
+  const identity = '<div class="identity-name"><p class="uiPageEyebrow">Player</p><h2 class="rail-name player-name" title="' + esc(name) + '">' + esc(name) + "</h2></div>";
+  if (state.sidebar === "minimal") return '<aside class="identity-rail simple-identity" aria-label="Public player identity">' + identity + copy + "</aside>";
+  const count = games().length;
+  const open = innerWidth > 720 ? " open" : "";
+  return '<aside class="identity-rail simple-identity player-card" aria-label="Public player identity"><div class="identity-core">' + identity +
+    '<dl class="shared-count"><div><dt>' + (count === 1 ? "Shared game" : "Shared games") + "</dt><dd>" + count + "</dd></div></dl>" + copy +
+    '</div><details class="identity-extra"' + open + '><summary>' + icon("profile") + '<span>Profile details</span></summary><div class="identity-extra-content"><section class="profile-address-section"><h3 class="section-label">Profile link</h3><p class="profile-address">gomoku2d.byebyebryan.com/player/?id=demo</p></section>' +
+    note() + "</div></details></aside>";
+}
 function visitor() {
   const name = playerName();
   if (["loading","error","unavailable"].includes(state.scenario) || !state.enabled) return statusView();
   if (state.layout === "current") return '<div class="baseline"><section class="baseline-card"><p class="uiPageEyebrow">Gomoku 2D · Public profile</p><h1>' + esc(name) + "</h1>" + record() +
     '<p class="date">Games selected for public sharing</p><p class="baseline-disclosure">Player names and game details are supplied by the publisher. These games are casual records and are not independently verified.</p>' + catalog() + '<button type="button" class="uiAction uiActionNeutral" data-action="nav-home">Home</button></section></div>';
   if (state.layout === "split") return '<div class="app layout-split">' + header("Public profile", "Gomoku2D · Player record", false) +
-    '<div class="columns"><aside class="identity-rail simple-identity" aria-label="Public player identity"><div><p class="uiPageEyebrow">Player</p><h2 class="rail-name player-name" title="' + esc(name) + '">' + esc(name) + '</h2></div>' +
-    button("Copy link","copy","copy","Neutral",'aria-label="Copy profile link"').replace('class="uiAction ', 'class="copy-link uiAction ') +
-    '</aside><div class="split-record">' + record() + catalog() + note() + "</div></div></div>";
+    '<div class="columns">' + identityPanel(name) + '<div class="split-record">' + record() + catalog() + (state.sidebar === "minimal" ? note() : "") + "</div></div></div>";
   if (state.layout === "b") return '<div class="app layout-b">' + header("Public profile", "Gomoku2D · Player record", false) +
     '<div class="columns"><aside class="identity-rail"><div><p class="uiPageEyebrow">Player</p><h2 class="rail-name player-name" title="' + esc(name) + '">' + esc(name) + '</h2></div>' +
     (state.stats ? '<div class="rail-section">' + record() + "</div>" : "") + button("Copy link","copy","copy","Neutral").replace('class="uiAction ', 'class="copy-link uiAction ') +

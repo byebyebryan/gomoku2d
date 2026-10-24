@@ -2,10 +2,13 @@
 
 Owner: Bryan. October 23, 2026. Source baseline: roadmap commit `069eb66`.
 Status: Bryan prefers A's record treatment with B's columns, statistics above
-games on the right, and a simple left side. The refined prototype is ready for
-visual review; no production implementation has begun.
+games on the right. After reviewing the minimal left side, he requested more
+substance there. The latest prototype compares a compact public player card
+with that earlier minimal panel; production implementation has not begun.
 
-**[Open the refined two-column comparison](http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/).**
+**[Open the player-card comparison](http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/).**
+The [earlier minimal two-column refinement](http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/)
+remains available.
 The [original A/B/C study](http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/)
 remains available unchanged.
 The [report catalog](http://starship:8787/reports/#project=gomoku2d) retains
@@ -35,6 +38,7 @@ A Lichess public profile returned HTTP 403 and was excluded as visual evidence.
 
 | Option | Composition | Tradeoff |
 |---|---|---|
+| Player card | Public name, shared-game count, profile link and record information on the left; record and games stay on the right | Latest exploration. Adds useful existing content to the left; a selector compares it with the minimal panel. |
 | Refined: Two columns | Name and Copy link on the left; shared-record strip above games in one right panel | Current direction from Bryan's feedback. Keeps identity simple and brings record and games together like private Profile. |
 | A: Wide record | Player-name app header; shared-record strip; full-width divided game list | Original starting recommendation. Keeps games prominent and collapses naturally when statistics are hidden. |
 | B: Profile columns | App header; identity/record rail; game list beside it | Closest to private Profile. The rail is less useful when little is public and reduces room for game titles. |
@@ -73,6 +77,19 @@ turning the study into a bounded production implementation plan. A compact
 player-shared/unverified label stays visible; fuller context remains behind
 About these records.
 
+The next refinement gives the left a public player-card role: name, number of
+shared games, the profile address/Copy link, and the existing record disclosure.
+Shared-game count comes from the already loaded catalog manifest, independently
+of the optional My games statistics. No extra field, whole-catalog summary
+query or backend operation is required. The full disclosure moves from the
+right panel into the player card.
+
+On mobile, name/count/copy remain visible while link and record information
+collapse under Profile details. The Left column selector compares this with
+the earlier minimal panel. The primary recommends this compact grouping while
+keeping the card's natural height; the richer card remains pending Bryan's
+visual review.
+
 This recommendation is not human visual acceptance. The study does not close
 the real-account sharing, physical touch or human accessibility handoffs.
 The [0.6.2–0.6.4 plan](../v0_6_followup_plan.md) retains the release boundaries.
@@ -94,7 +111,8 @@ Serve the export on an owned free port or publish it with the HTML report tool.
 Do not use unrelated port 8001 or the manual preview/emulator ports.
 
 The original publication is an immutable 16-file, 245,173-byte report. The
-refinement is a separate 16-file, 248,085-byte snapshot. Served files are checked
+two-column refinement is a separate 16-file, 248,085-byte snapshot; the latest
+player-card comparison contains 16 files and 252,113 bytes. Served files are checked
 against each prepared export from Starship. The shared report server was reused;
 this is not an app deployment. Carbon/device reachability and human review are
 not inferred from the Starship delivery check.
@@ -106,6 +124,8 @@ source/asset hashes, publication and checks. The
 [refinement receipt](refinement_evidence.json) records the subsequent two-column
 snapshot and its checks. Raw artifacts remain in ignored
 `gomoku-web/test-results/v062-design/` and `v062-design-refined/`.
+The [player-card receipt](player_card_evidence.json) records the latest
+comparison; its raw artifacts are in `v062-player-card/`.
 
 - Chromium inspection covered desktop/mobile A/B/C/current, sparse profiles,
   the owner companion, and 200% text with long labels. It exposed a nested

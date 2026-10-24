@@ -1,0 +1,110 @@
+{
+  "status": "player-card-prototype-ready-for-visual-review",
+  "baseline_commit": "c4e1351",
+  "feedback": "Left column needs more substance while keeping statistics on the right.",
+  "recommendation": "Compact public player card with name, existing shared-game count, link/copy action and existing record disclosure.",
+  "comparison_control": "Left column: Player card / Earlier minimal panel",
+  "production_implementation": false,
+  "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/",
+  "report_id": "9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8",
+  "served_files": [
+    {
+      "path": "assets/fonts/LICENSE.txt",
+      "bytes": 7169,
+      "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+    },
+    {
+      "path": "assets/fonts/PixelOperator-Bold.ttf",
+      "bytes": 16984,
+      "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+    },
+    {
+      "path": "assets/fonts/PixelOperator.ttf",
+      "bytes": 17272,
+      "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+    },
+    {
+      "path": "assets/fonts/PixelOperator8-Bold.ttf",
+      "bytes": 18624,
+      "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+    },
+    {
+      "path": "assets/global.css",
+      "bytes": 6808,
+      "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+    },
+    {
+      "path": "assets/icons.json",
+      "bytes": 32037,
+      "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+    },
+    {
+      "path": "assets/reference-owner.png",
+      "bytes": 27952,
+      "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+    },
+    {
+      "path": "assets/reference-public.png",
+      "bytes": 13832,
+      "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+    },
+    {
+      "path": "assets/reference-replay.png",
+      "bytes": 17391,
+      "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+    },
+    {
+      "path": "assets/reference-settings.png",
+      "bytes": 28412,
+      "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+    },
+    {
+      "path": "index.html",
+      "bytes": 10353,
+      "sha256": "948555a5477940af95b7358d763f5ccd5874d7804d598a1f04fb975fd769c8df"
+    },
+    {
+      "path": "prototype.css",
+      "bytes": 22573,
+      "sha256": "1d9b5b735a0837a128b13d81f0586c1aee3c529a0d775af564aec23f250e7f84"
+    },
+    {
+      "path": "prototype.html",
+      "bytes": 677,
+      "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+    },
+    {
+      "path": "prototype.js",
+      "bytes": 24028,
+      "sha256": "306efe18c587163dad7b2aed7fdf93c6ca028bad9d5ec9e6c9faee0b272ad6c5"
+    },
+    {
+      "path": "study.css",
+      "bytes": 4332,
+      "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295"
+    },
+    {
+      "path": "study.js",
+      "bytes": 3669,
+      "sha256": "1cd77c131ae3d24cd7e6bff897184a70721fe5dacde074c3243a4df2ab12cd8b"
+    }
+  ],
+  "file_count": 16,
+  "byte_count": 252113,
+  "checks": {
+    "three_engine_layout_navigation_and_comparison": 39,
+    "initial_page_errors": [],
+    "initial_external_requests": [],
+    "mobile_alignment_correction": "Grid track now stretches across the card after switching from the minimal flex layout.",
+    "targeted_three_engine_mobile_checks": 9,
+    "final_page_errors": [],
+    "mobile_details_expand": true
+  },
+  "raw_directory": "gomoku-web/test-results/v062-player-card/",
+  "limits": [
+    "Synthetic prototype data only.",
+    "No added public fields, automatic catalog summary query or cloud operation.",
+    "No production app, schema or manual preview change.",
+    "Actual-device acceptance and human visual selection remain separate."
+  ]
+}
