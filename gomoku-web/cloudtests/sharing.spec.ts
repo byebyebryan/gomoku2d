@@ -354,8 +354,8 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
     await auditAccessibility(visitor, testInfo, "public-visitor-profile");
     await expectNoHorizontalOverflow(visitor);
     await captureSharingEvidence(visitor, testInfo, "public-profile", "main");
-    const portableUrl = await visitor.getByRole("link", { name: "Replay", exact: true }).getAttribute("href");
-    expect(portableUrl).toMatch(/^\/replay\/shared\/#g2r1=/);
+    const portableUrl = await visitor.getByRole("link", { name: `Replay ${title}`, exact: true }).getAttribute("href");
+    expect(portableUrl).toMatch(/^\/replay\/shared\/\?fromUid=.+&fromPage=1#g2r1=/);
 
     const openPortableCopy = async () => {
       // A fresh page avoids attributing a delayed public-profile SDK request to
@@ -735,7 +735,7 @@ test("C16: sparse catalog pages, zero stats, last-page removal and legacy roots 
   await expect(page.getByRole("listitem")).toHaveCount(2);
   await expect(page.getByText("Storage 3 game 4", { exact: true })).toBeVisible();
   await expect(page.getByText("Storage 3 game 5", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Next page", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Next page", exact: true })).toBeDisabled();
   await expectNoHorizontalOverflow(page);
 
   // Model removal of the two entries on the last logical page. The UI must
@@ -748,17 +748,19 @@ test("C16: sparse catalog pages, zero stats, last-page removal and legacy roots 
     ...rootFields, revision: 2, catalog_page_counts: [5, 0, 8, 3],
   });
   await page.reload();
-  await expect(page.getByText("Page 1 of 2")).toBeVisible();
-  await page.getByRole("button", { name: "Next page", exact: true }).click();
+  // The page query survives reload; a removed last page clamps to the last
+  // remaining logical page rather than resetting the visitor to page one.
   await expect(page.getByText("Page 2 of 2")).toBeVisible();
   await expect(page.getByRole("listitem")).toHaveCount(8);
-  await expect(page.getByRole("button", { name: "Next page", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Next page", exact: true })).toBeDisabled();
 
   // A legacy root has no manifest. The same real SDK route derives counts
   // from its four bounded pages without requiring a migration write.
   const { catalog_page_counts: _counts, ...legacyFields } = rootFields;
   await seedFirestoreDocument(`public_profiles/${uid}`, { ...legacyFields, revision: 3 });
   await page.reload();
+  await expect(page.getByText("Page 2 of 2")).toBeVisible();
+  await page.getByRole("button", { name: "Previous page", exact: true }).click();
   await expect(page.getByText("Page 1 of 2")).toBeVisible();
   await expect(page.getByRole("listitem")).toHaveCount(8);
   await page.getByRole("button", { name: "Next page", exact: true }).click();
@@ -766,4 +768,85 @@ test("C16: sparse catalog pages, zero stats, last-page removal and legacy roots 
   await expect(page.getByRole("listitem")).toHaveCount(8);
   expect((await readFirestoreDocument(`public_profiles/${uid}`))?.catalog_page_counts).toBeUndefined();
   await expectNoHorizontalOverflow(page);
+});
+
+test("C17: public replay returns preserve logical page, scroll and originating control", async ({ page }, testInfo) => {
+  const uid = fixtureId("public-return");
+  const updatedAt = firestoreTimestamp("2026-10-23T00:00:00.000Z");
+  await seedFirestoreDocument(`public_profiles/${uid}`, {
+    schema_version: 1, uid, display_name: "Return navigation player", enabled: true,
+    generation: 1, revision: 1, updated_at: updatedAt,
+    shared_stats: null, catalog_page_counts: [8, 8, 0, 0],
+  });
+  for (const pageId of [0, 1]) {
+    const entries = Array.from({ length: 8 }, (_, index) => {
+      const number = pageId * 8 + index + 1;
+      const wire = {
+        v: 1, r: "freestyle", m: Buffer.from(WIN_MOVES).toString("base64url"),
+        b: { k: "h", n: `Player ${number}`, u: uid },
+        w: { k: "h", n: "Opponent" }, at: 4,
+      };
+      return {
+        fingerprint: Buffer.from(`return-${number}`).toString("base64url").padEnd(43, "x"),
+        payload: Buffer.from(JSON.stringify(wire)).toString("base64url"),
+        title: `Return game ${number}`, view_ply: 4,
+      };
+    });
+    await seedFirestoreDocument(`public_profiles/${uid}/pages/${pageId}`, {
+      schema_version: 1, generation: 1, revision: 1, updated_at: updatedAt, entries,
+    });
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/player/?id=${uid}`);
+  await expect(page.getByText("Page 1 of 2", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Next page", exact: true }).click();
+  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Shared player statistics" })).toHaveCount(0);
+  const trigger = page.getByRole("link", { name: "Replay Return game 15", exact: true });
+  await trigger.scrollIntoViewIfNeeded();
+  await trigger.focus();
+  const publicScrollTop = () => page.locator("main").evaluate((main) => (
+    main.scrollHeight > main.clientHeight + 1 ? main.scrollTop : document.scrollingElement?.scrollTop ?? 0
+  ));
+  const originalScroll = await publicScrollTop();
+  expect(originalScroll).toBeGreaterThan(100);
+  await trigger.click();
+  await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
+  expect(new URL(page.url()).searchParams.get("fromPage")).toBe("2");
+  await expectNoHorizontalOverflow(page);
+  await page.setViewportSize({ width: 320, height: 900 });
+  await expectNoHorizontalOverflow(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await captureSharingEvidence(page, testInfo, "public-origin-replay", "main");
+
+  await page.getByRole("button", { name: "Return to public profile", exact: true }).click();
+  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(trigger).toBeFocused();
+  expect(await publicScrollTop()).toBeCloseTo(originalScroll, 0);
+  await trigger.click();
+  await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(trigger).toBeFocused();
+  expect(await publicScrollTop()).toBeCloseTo(originalScroll, 0);
+  await expectNoHorizontalOverflow(page);
+
+  // Removing the originating entry leaves the same logical page available.
+  // A return must focus the public name rather than a stale or private control.
+  await trigger.click();
+  await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
+  const existingPage = await readFirestoreDocument(`public_profiles/${uid}/pages/1`);
+  const entries = existingPage!.entries as Array<{ title: string }>;
+  await seedFirestoreDocument(`public_profiles/${uid}/pages/1`, {
+    ...existingPage, updated_at: updatedAt, revision: 2,
+    entries: entries.filter((entry) => entry.title !== "Return game 15"),
+  });
+  await seedFirestoreDocument(`public_profiles/${uid}`, {
+    schema_version: 1, uid, display_name: "Return navigation player", enabled: true,
+    generation: 1, revision: 2, updated_at: updatedAt,
+    shared_stats: null, catalog_page_counts: [8, 7, 0, 0],
+  });
+  await page.getByRole("button", { name: "Return to public profile", exact: true }).click();
+  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Return navigation player", exact: true })).toBeFocused();
 });

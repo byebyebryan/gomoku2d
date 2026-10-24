@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { cloudAuthStore, type CloudAuthUser } from "../cloud/auth_store";
 import { createLocalSavedMatch, movesFromMoveCells } from "../match/saved_match";
@@ -110,6 +110,18 @@ function SwitchProfileButton() {
   return <button type="button" onClick={() => navigate("/player/?id=uid-2")}>Switch public player</button>;
 }
 
+function PublicPageHistoryControls() {
+  const navigate = useNavigate();
+  return <>
+    <button onClick={() => navigate(-1)}>Browser back</button>
+    <button onClick={() => navigate(1)}>Browser forward</button>
+  </>;
+}
+
+function PublicReturnStateProbe() {
+  return <output aria-label="Replay navigation state">{JSON.stringify(useLocation().state)}</output>;
+}
+
 function winningMatch() {
   const moves = movesFromMoveCells([110, 0, 111, 1, 112, 2, 113, 3, 114]);
   return createLocalSavedMatch({
@@ -131,6 +143,7 @@ afterEach(() => {
   cloudAuthStore.setState(initialAuthState);
   localProfileStore.setState(initialLocalState);
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
 });
 
 beforeEach(() => {
@@ -256,9 +269,12 @@ describe("public profile routes and controls", () => {
         <Routes><Route path="/player/" element={<PublicPlayerRoute />} /></Routes>
       </MemoryRouter>,
     );
-    expect(await screen.findByRole("heading", { name: "Public profile unavailable" })).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent("public catalog changed");
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText(/public catalog changed/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Public name" })).toBeInTheDocument();
+    expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(1);
+    sharing.loadPublicProfile.mockResolvedValue(publicProfile({ uid: "uid-1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reload public profile" }));
+    expect(await screen.findByText("No games have been published.")).toBeInTheDocument();
     expect(sharing.loadPublicProfile).toHaveBeenCalledTimes(2);
   });
 
@@ -320,7 +336,7 @@ describe("public profile routes and controls", () => {
     expect(await screen.findByRole("heading", { name: "Available player" })).toBeInTheDocument();
     expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(1);
     expect(sharing.loadCatalogPage).toHaveBeenLastCalledWith("uid-1", 0);
-    expect(screen.getAllByRole("link", { name: "Replay" })).toHaveLength(8);
+    expect(await screen.findAllByRole("link", { name: /^Replay Public game/ })).toHaveLength(8);
     expect(screen.getAllByText("Win", { exact: true })).toHaveLength(8);
     expect(screen.getAllByText("vs Normal Bot", { exact: true })).toHaveLength(8);
     expect(screen.getAllByText("Freestyle", { exact: true })).toHaveLength(8);
@@ -355,6 +371,105 @@ describe("public profile routes and controls", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     expect(screen.queryByText("private Firestore details")).not.toBeInTheDocument();
     expect(sharing.loadCatalogPage).not.toHaveBeenCalled();
+  });
+
+  it("keeps the shared-game total independent from the opted-in statistics snapshot", async () => {
+    sharing.loadPublicProfile.mockResolvedValue(publicProfile({
+      uid: "uid-1", catalogPageCounts: [1, 0, 0, 0],
+      sharedStats: { matches: 100, wins: 70, losses: 20, draws: 10, updatedAt: publishedStatsAt },
+    }));
+    sharing.loadCatalogPage.mockResolvedValue(page(0, [entry(1)], { uid: "uid-1" }));
+    render(<MemoryRouter initialEntries={["/player/?id=uid-1"]}>
+      <PublicPlayerRoute />
+    </MemoryRouter>);
+    expect(await screen.findByText("Public game 1")).toBeInTheDocument();
+    const identity = screen.getByRole("complementary", { name: "Public player details" });
+    expect(within(identity).getByText("Shared game").parentElement).toHaveTextContent("1");
+    expect(screen.getByText("Matches").parentElement).toHaveTextContent("100");
+    expect(screen.getByText("Win rate").parentElement).toHaveTextContent("70.0%");
+    expect(sharing.loadPublicProfile).toHaveBeenCalledTimes(1);
+    expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not repeat a failed initial page read before an explicit retry", async () => {
+    sharing.loadPublicProfile.mockResolvedValue(publicProfile({ uid: "uid-1", catalogPageCounts: [1, 0, 0, 0] }));
+    sharing.loadCatalogPage.mockRejectedValueOnce(new Error("Network unavailable"))
+      .mockResolvedValue(page(0, [entry(1, replayPayload("uid-1"))], { uid: "uid-1" }));
+    render(<MemoryRouter initialEntries={["/player/?id=uid-1"]}>
+      <PublicPlayerRoute />
+    </MemoryRouter>);
+    expect(await screen.findByRole("button", { name: "Retry page" })).toBeInTheDocument();
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 30)); });
+    expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("link", { name: /^Replay Public game/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry page" }));
+    expect(await screen.findByRole("link", { name: "Replay Public game 1" })).toBeInTheDocument();
+    expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(2);
+    expect(sharing.loadPublicProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a late page after Back and hides stale replay actions during page loads", async () => {
+    let resolveSecond!: (value: PublicCatalogPageSnapshot) => void;
+    const payload = replayPayload("uid-1");
+    sharing.loadPublicProfile.mockResolvedValue(publicProfile({ uid: "uid-1", catalogPageCounts: [8, 1, 0, 0] }));
+    sharing.loadCatalogPage.mockImplementation(async (uid: string, pageId: number) => pageId === 1
+      ? new Promise<PublicCatalogPageSnapshot>((resolve) => { resolveSecond = resolve; })
+      : page(0, Array.from({ length: 8 }, (_, i) => entry(i + 1, payload)), { uid }));
+    render(<MemoryRouter initialEntries={["/player/?id=uid-1"]}>
+      <PublicPageHistoryControls /><PublicPlayerRoute />
+    </MemoryRouter>);
+    expect(await screen.findByText("Page 1 of 2")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(await screen.findByText("Loading published games.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^Replay Public game/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Browser back" }));
+    expect(await screen.findByText("Page 1 of 2")).toBeInTheDocument();
+    await act(async () => { resolveSecond(page(1, [entry(9, payload)], { uid: "uid-1" })); });
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+    expect(screen.queryByText("Public game 9")).not.toBeInTheDocument();
+    expect(sharing.loadPublicProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens collapsed mobile details and selects the canonical URL when clipboard access is denied", async () => {
+    vi.stubGlobal("matchMedia", vi.fn(() => ({
+      matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+      addListener: vi.fn(), removeListener: vi.fn(),
+    })));
+    const writeText = vi.fn().mockRejectedValue(new Error("Clipboard denied"));
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    sharing.loadPublicProfile.mockResolvedValue(publicProfile({ uid: "uid-1" }));
+    render(<MemoryRouter initialEntries={["/player/?id=uid-1&page=2&return=private"]}>
+      <PublicPlayerRoute />
+    </MemoryRouter>);
+    await screen.findByRole("heading", { name: "Public name" });
+    expect(screen.getByText("Profile details").closest("details")).not.toHaveAttribute("open");
+    fireEvent.click(screen.getByRole("button", { name: "Copy link to public profile" }));
+    const input = await screen.findByRole("textbox", { name: "Public profile link" });
+    expect(input).toHaveFocus();
+    expect(input.closest("details")).toHaveAttribute("open");
+    const url = new URL((input as HTMLInputElement).value);
+    expect([...url.searchParams.entries()]).toEqual([["id", "uid-1"]]);
+    expect(input).toHaveProperty("selectionStart", 0);
+    expect(input).toHaveProperty("selectionEnd", (input as HTMLInputElement).value.length);
+    expect(writeText).toHaveBeenCalledWith(url.href);
+  });
+
+  it("captures the current scroll position when Replay is activated, after rendering", async () => {
+    sharing.loadPublicProfile.mockResolvedValue(publicProfile({ uid: "uid-1", catalogPageCounts: [1, 0, 0, 0] }));
+    sharing.loadCatalogPage.mockResolvedValue(page(0, [entry(1, replayPayload("uid-1"))], { uid: "uid-1" }));
+    render(<MemoryRouter initialEntries={["/player/?id=uid-1"]}>
+      <Routes>
+        <Route path="/player/" element={<PublicPlayerRoute />} />
+        <Route path="/replay/shared/" element={<PublicReturnStateProbe />} />
+      </Routes>
+    </MemoryRouter>);
+    const trigger = await screen.findByRole("link", { name: "Replay Public game 1" });
+    const main = screen.getByRole("main");
+    Object.defineProperties(main, { clientHeight: { value: 100 }, scrollHeight: { value: 1000 } });
+    main.scrollTop = 345;
+    fireEvent.click(trigger);
+    expect(await screen.findByLabelText("Replay navigation state")).toHaveTextContent('"scrollTop":345');
+    expect(screen.getByLabelText("Replay navigation state")).toHaveTextContent(entry(1).fingerprint);
   });
 
   it("keeps public profile opt-in behind the explicit confirmation", async () => {

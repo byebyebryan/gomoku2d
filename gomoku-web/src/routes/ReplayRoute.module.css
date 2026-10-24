@@ -30,6 +30,10 @@
   gap: 12px;
 }
 
+.returnActionCompact {
+  display: none;
+}
+
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(280px, 340px);
@@ -471,6 +475,28 @@
     flex: 1 1 0;
   }
 
+  .headerActionsWithReturn {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .headerActionsWithReturn .returnAction {
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+    padding-inline: 8px;
+  }
+
+  .returnActionFull {
+    display: none;
+  }
+
+  .headerActionsWithReturn .returnActionCompact {
+    display: inline-flex;
+    white-space: nowrap;
+    font-size: var(--type-meta);
+  }
+
   .playbackHeader {
     align-items: flex-start;
     flex-direction: column;
@@ -497,6 +523,14 @@
     gap: 12px;
   }
 
+  .headerWithReturn {
+    gap: 8px;
+  }
+
+  .headerWithReturn .title {
+    overflow-wrap: anywhere;
+  }
+
   .headerCopy :global(.uiPageEyebrow) {
     display: none;
   }
@@ -514,6 +548,10 @@
     width: auto;
   }
 
+  .headerActionsWithReturn {
+    grid-auto-columns: max-content 42px 42px;
+  }
+
   .headerActions :global(.uiAction) {
     width: 42px;
     min-height: 42px;
@@ -521,8 +559,26 @@
     padding: 0;
   }
 
+  .headerActionsWithReturn .returnAction {
+    width: auto;
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  .headerActionsWithReturn .returnActionFull {
+    display: none;
+  }
+
+  .headerActionsWithReturn .returnActionCompact {
+    display: inline-flex;
+  }
+
   .headerActions :global(.uiActionLabel) {
     display: none;
+  }
+
+  .headerActionsWithReturn .returnActionCompact:global(.uiActionLabel) {
+    display: inline-flex;
   }
 
   .headerActions :global(.uiIconDesktop) {

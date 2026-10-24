@@ -71,8 +71,10 @@ Current canonical surfaces:
 | `/` | Home / title screen |
 | `/match/local` | Local match against the current local bot preset |
 | `/replay/:matchId` | Saved match replay viewer |
+| `/replay/shared/` | Standalone portable replay, with an optional originating public-profile return |
 | `/settings` | Saved game, bot, hint, and touch-control settings |
 | `/profile` | Local/cloud identity, reset/delete actions, stats, and history |
+| `/player/?id=...` | Read-only public player identity, optional statistics snapshot and selected games |
 | `/rules/` | Basic Freestyle/Renju rules and legality examples |
 | `/guide/` | Play guide for threats, combos, forced corridors, and replay analysis |
 | `/lab/` | Published bot and replay-analysis report viewer |
@@ -80,8 +82,8 @@ Current canonical surfaces:
 | `/privacy/` | SPA Privacy page for the public app |
 | `/terms/` | SPA Terms page for the public app |
 
-Future dedicated cloud or online routes can be added later. They are not part
-of the default local-play contract unless they preserve one-click play.
+Future online routes must preserve the default local-play contract and
+one-click play.
 
 ## Persistent local model
 
@@ -286,10 +288,11 @@ Primary elements:
 - explicit public name/visibility, optional dated stats snapshot and publication
   management in Public profile (`/profile?tab=public`)
 
-The public player page shows the chosen name, optional matches/wins/losses/draws
-and win rate, and compact eight-row game pages. Statistics are off by default
-and published/refreshed explicitly from the complete My games summary; private
-history never loads on a public visit. See the [0.6.1 contract](../../working/v0_6_1_public_profile.md).
+Public-profile management and private record controls remain separate from
+the visitor surface below. Statistics are off by default and published/refreshed
+explicitly from the complete My games summary. The
+[0.6.1 contract](../../working/v0_6_1_public_profile.md) retains the functional
+and storage boundaries.
 
 Tone:
 
@@ -302,6 +305,33 @@ Rules:
 - no placeholder settings that do nothing
 - summary stays fixed and visible while history can scroll independently
 - recent matches should show only the metadata needed to open the right replay
+
+### Public player (`/player/?id=...`)
+
+The public visitor uses the same app header, buttons and record language as
+Profile. The left player card contains the public name, shared-game count,
+canonical profile URL/Copy link and record disclosure. It keeps its natural
+height. The right panel contains the optional dated matches/wins/losses/draws
+and win rate, followed by compact eight-row game pages.
+
+The public selection count comes from the existing catalog manifest or legacy
+fallback; it is independent of the optional My games snapshot. Public visits
+never initialize private history/library controllers. There is no additional
+summary query, automatic statistics refresh or background sharing listener.
+
+On narrow screens, name/count/copy stay visible while extra profile information
+starts collapsed. Hide the statistics section entirely when sharing is off.
+Keep complete accessible labels, visible focus and usable clipboard fallback.
+First/last-page navigation retains stable Previous/Next placement.
+
+Catalog replay links provide an originating-profile return. Logical page is
+URL-backed; scroll position and the originating Replay focus remain transient
+history state. Return targets are validated and constructed as internal public
+player paths. Standalone portable links remain independent, opening without a
+save/import or profile lookup. Disabled/changed profiles and stale pages retain
+honest unavailable/reload/clamping behavior. The
+[0.6.2 checkpoint](../../working/v0_6_2_implementation.md) records implementation
+and acceptance separately from publication.
 
 ### Bot controls
 
@@ -357,10 +387,10 @@ There is one persistent saved setup for casual local play.
 - Local Match can continue the current game or start a new game with the saved
   setup
 
-### Future shared/online extension
+### Shared and future online extension
 
-When shared replays or online flows arrive later, they should preserve the same
-screen roles:
+Shared replays preserve these screen roles; future online flows should do the
+same:
 
 - Home stays a title/start surface
 - Match stays a board-first HUD

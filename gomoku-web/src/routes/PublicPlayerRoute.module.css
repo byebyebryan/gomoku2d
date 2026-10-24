@@ -1,0 +1,781 @@
+.page {
+  box-sizing: border-box;
+  display: grid;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  align-content: start;
+  overflow: auto;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.shell {
+  display: grid;
+  width: min(100%, 1440px);
+  min-width: 0;
+  gap: 22px;
+  margin-inline: auto;
+}
+
+.header {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.headerCopy {
+  min-width: 0;
+}
+
+.headerCopy > :global(.uiPageEyebrow) {
+  margin: 0 0 5px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 5vw, 4.4rem);
+  line-height: 0.96;
+  overflow-wrap: anywhere;
+}
+
+.headerActions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+.headerActions :global(.uiAction) {
+  min-width: 0;
+  min-height: 44px;
+}
+
+.content {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.playerCard,
+.catalogPanel {
+  min-width: 0;
+  padding: 20px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+}
+
+.playerCard {
+  display: grid;
+  align-content: start;
+  gap: 20px;
+}
+
+.playerSummary {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+
+.identityName {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.identityName > :global(.uiPageEyebrow) {
+  margin: 0;
+}
+
+.playerName {
+  display: -webkit-box;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  line-height: 1;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.playerName:focus {
+  outline: none;
+}
+
+.playerName:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 4px;
+}
+
+.sharedCount {
+  min-width: 0;
+  margin: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.sharedCount > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.sharedCount dt {
+  order: 2;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  overflow-wrap: anywhere;
+}
+
+.sharedCount dd {
+  order: 1;
+  margin: 0;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.copyLink {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  font-size: var(--type-meta);
+}
+
+.linkMessage,
+.mutedText,
+.emptyState,
+.errorText {
+  margin: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.linkMessage {
+  color: var(--success);
+  font-size: var(--type-meta);
+}
+
+.mutedText,
+.emptyState {
+  color: var(--text-muted);
+}
+
+.profileDetails {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.profileDetails > summary {
+  display: none;
+}
+
+.profileDetailsContent {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+}
+
+.profileAddressSection {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.detailLabel {
+  margin: 0;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.profileAddress {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.profileAddress a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.copyFallback {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  font-size: var(--type-meta);
+}
+
+.recordNote {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.recordNote summary {
+  display: flex;
+  width: fit-content;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 2px solid var(--border-strong);
+  background: var(--surface-strong);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.recordNote summary::-webkit-details-marker {
+  display: none;
+}
+
+.recordNote summary :global(.uiIcon) {
+  width: 18px;
+  height: 18px;
+}
+
+.recordNote summary:focus-visible,
+.profileDetails > summary:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 3px;
+}
+
+.recordNote p {
+  max-width: 75ch;
+  margin: 0;
+  padding-top: 6px;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.catalogPanel {
+  container-type: inline-size;
+  display: grid;
+  align-content: start;
+  gap: 0;
+}
+
+.publicStats {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  padding-bottom: 24px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.recordHeader,
+.gamesHeader {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.sectionTitle {
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.publicStatsDate {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+}
+
+.publicStatsGrid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.publicStatsTile {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
+
+.publicStatsValue {
+  order: 1;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.publicStatsLabel {
+  order: 2;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  overflow-wrap: anywhere;
+}
+
+.matches .publicStatsValue,
+.draws .publicStatsValue {
+  color: var(--accent);
+}
+
+.wins .publicStatsValue {
+  color: var(--success);
+}
+
+.losses .publicStatsValue {
+  color: var(--danger);
+}
+
+.rate .publicStatsValue {
+  color: var(--text);
+}
+
+.gamesSection {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+
+.gamesHeading {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.recordSource {
+  margin: 0;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-size: var(--type-quiet);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gameCount {
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--type-meta);
+  white-space: nowrap;
+}
+
+.publicGameList {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.publicGame {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 70px minmax(0, 1fr) 92px 80px 132px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+.publicGameResult {
+  min-width: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1.18rem;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.publicGameResultWin {
+  color: var(--success);
+}
+
+.publicGameResultLoss {
+  color: var(--danger);
+}
+
+.publicGameResultDraw {
+  color: var(--accent);
+}
+
+.gameCopy {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.publicGameTitle {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.publicGameOpponent,
+.publicGameMeta {
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  overflow-wrap: anywhere;
+}
+
+.publicGame :global(.uiAction) {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  justify-content: center;
+  padding: 8px 12px;
+}
+
+.replayUnavailable {
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  overflow-wrap: anywhere;
+}
+
+.emptyState {
+  padding: 18px 0 16px;
+}
+
+.pagingControls {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding-top: 16px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+}
+
+.pagingControls :global(.uiAction) {
+  width: fit-content;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: var(--type-meta);
+}
+
+.previousPage {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.nextPage {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.pageIndicator {
+  grid-column: 2;
+  color: var(--text-muted);
+  font-size: var(--type-meta);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.pageError {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.errorText {
+  color: var(--danger-soft-text);
+}
+
+@container (max-width: 780px) {
+  .publicGame {
+    grid-template-columns: 62px minmax(0, 1fr) 116px;
+    grid-template-areas:
+      "result copy replay"
+      "result rule replay";
+    gap: 5px 12px;
+  }
+
+  .publicGameResult {
+    grid-area: result;
+  }
+
+  .gameCopy {
+    grid-area: copy;
+  }
+
+  .gameRule {
+    grid-area: rule;
+    padding-right: 80px;
+  }
+
+  .gameMoves {
+    grid-area: rule;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .publicGame :global(.uiAction),
+  .replayUnavailable {
+    grid-area: replay;
+  }
+}
+
+@container (max-width: 480px) {
+  .publicGame {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "copy result"
+      "rule rule"
+      "moves moves"
+      "replay replay";
+    gap: 9px 12px;
+  }
+
+  .publicGameResult {
+    align-self: start;
+  }
+
+  .gameRule {
+    padding-right: 0;
+  }
+
+  .gameMoves {
+    grid-area: moves;
+    justify-self: start;
+    text-align: left;
+  }
+
+  .publicGame :global(.uiAction),
+  .replayUnavailable {
+    width: 100%;
+  }
+}
+
+@media (max-width: 980px) {
+  .headerActions :global(.uiAction) {
+    width: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0;
+  }
+
+  .headerActions :global(.uiActionLabel) {
+    display: none;
+  }
+
+  .publicStatsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 14px;
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 12px;
+  }
+
+  .shell {
+    gap: 16px;
+  }
+
+  .header {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .headerTitle {
+    font-size: 2.15rem;
+    line-height: 1;
+  }
+
+  .headerActions {
+    gap: 6px;
+  }
+
+  .headerActions :global(.uiAction) {
+    width: 42px;
+    min-width: 42px;
+    min-height: 42px;
+  }
+
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .playerCard,
+  .catalogPanel {
+    padding: 16px;
+  }
+
+  .playerCard {
+    gap: 12px;
+  }
+
+  .playerSummary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name copy"
+      "count copy"
+      "message message";
+    align-items: center;
+    gap: 10px 16px;
+  }
+
+  .identityName {
+    grid-area: name;
+    gap: 5px;
+  }
+
+  .playerName {
+    font-size: 2rem;
+  }
+
+  .sharedCount {
+    grid-area: count;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .sharedCount > div {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sharedCount dd {
+    font-size: var(--type-body);
+  }
+
+  .sharedCount dt {
+    font-size: var(--type-meta);
+  }
+
+  .copyLink {
+    grid-area: copy;
+    align-self: center;
+    width: fit-content;
+  }
+
+  .linkMessage {
+    grid-area: message;
+  }
+
+  .profileDetails {
+    gap: 0;
+    padding-top: 0;
+  }
+
+  .profileDetails > summary {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: var(--type-meta);
+    list-style: none;
+  }
+
+  .profileDetails > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .profileDetails > summary :global(.uiIcon) {
+    width: 24px;
+    height: 24px;
+  }
+
+  .profileDetails[open] .profileDetailsContent {
+    padding-top: 12px;
+  }
+
+  .publicStats {
+    padding-bottom: 20px;
+    margin-bottom: 18px;
+  }
+
+  .publicStatsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 6rem), 1fr));
+    gap: 16px 8px;
+  }
+
+  .publicStatsTile {
+    padding-left: 9px;
+  }
+
+  .publicStatsValue {
+    font-size: 1.65rem;
+  }
+
+  .gamesHeader {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 380px) {
+  .page {
+    padding-inline: 10px;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .headerActions {
+    margin-left: auto;
+  }
+
+  .playerCard,
+  .catalogPanel {
+    padding: 14px;
+  }
+
+  .pagingControls {
+    gap: 4px;
+  }
+
+  .pagingControls :global(.uiAction) {
+    padding-inline: 8px;
+  }
+}

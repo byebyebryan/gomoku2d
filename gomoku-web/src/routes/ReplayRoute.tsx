@@ -31,6 +31,7 @@ import { portableReplayFromSavedMatch, validatePortableReplay } from "../replay/
 import { portableReplayFingerprint } from "../replay/portable_replay_codec";
 import { localMatchSessionStore } from "../game/local_match_session";
 import { botLabel } from "../core/bot_config";
+import { publicProfilePath, type PublicReplayReturn } from "./public_player_navigation";
 
 import styles from "./ReplayRoute.module.css";
 import {
@@ -43,7 +44,7 @@ import {
 const AUTOPLAY_DELAY_MS = 700;
 
 export function ReplayViewer({ match, localDisplayName, preserveNames = false, initialMoveIndex, source,
-  fingerprint, publishEligible, contextLabel }: {
+  fingerprint, publishEligible, contextLabel, publicReplayReturn }: {
   match: SavedMatchV2;
   localDisplayName: string;
   preserveNames?: boolean;
@@ -52,6 +53,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   fingerprint?: string;
   publishEligible?: boolean;
   contextLabel?: string;
+  publicReplayReturn?: PublicReplayReturn;
 }) {
   useDocumentTitle("Replay Analysis");
   const navigate = useNavigate();
@@ -161,15 +163,30 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
+      <header className={`${styles.header} ${publicReplayReturn ? styles.headerWithReturn : ""}`}>
         <div className={styles.headerCopy}>
           <p className="uiPageEyebrow">{contextLabel ?? (preserveNames ? "Shared replay" : "Saved match")}</p>
           <h1 className={styles.title}>Replay Analysis</h1>
         </div>
-        <div className={styles.headerActions}>
-          <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">
+        <div className={`${styles.headerActions} ${publicReplayReturn ? styles.headerActionsWithReturn : ""}`}>
+          {publicReplayReturn ? (
+            <button
+              aria-label="Return to public profile"
+              className={`uiAction uiActionSecondary ${styles.returnAction}`}
+              onClick={() => navigate(
+                publicProfilePath(publicReplayReturn.uid, publicReplayReturn.page - 1),
+                { state: { publicReplayReturn } },
+              )}
+              type="button"
+            >
+              <Icon className="uiIconDesktop" name="back" />
+              <span className={`uiActionLabel ${styles.returnActionFull}`}>Return to public profile</span>
+              <span className={`uiActionLabel ${styles.returnActionCompact}`} aria-hidden="true">Return</span>
+            </button>
+          ) : null}
+          <Link aria-label={publicReplayReturn ? "My profile" : "Profile"} className="uiAction uiActionSecondary" to="/profile">
             <Icon className="uiIconDesktop" name="profile" />
-            <span className="uiActionLabel">Profile</span>
+            <span className="uiActionLabel">{publicReplayReturn ? "My profile" : "Profile"}</span>
           </Link>
           <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
             <Icon className="uiIconDesktop" name="home" />
