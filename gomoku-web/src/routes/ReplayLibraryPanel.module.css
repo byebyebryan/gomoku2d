@@ -9,5 +9,14 @@
 .entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .entry small { color: var(--text-muted); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.compactActionLabel { display: none; }
 .conflict { border: 1px solid var(--border); display: grid; gap: 12px; padding: 12px; }
 @media (max-width: 720px) { .entry { grid-template-columns: minmax(0, 1fr); } .panel { padding: 12px 0; } }
+@media (max-width: 720px) {
+  .panel > .actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .panel > .actions :global(.uiAction) { width: 100%; min-width: 0; overflow-wrap: anywhere; }
+  .entry > .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .entry > .actions :global(.uiAction) { width: 100%; min-width: 0; padding-inline: 10px; font-size: var(--type-meta); }
+  .fullActionLabel { display: none; }
+  .compactActionLabel { display: inline; min-width: 0; overflow-wrap: anywhere; }
+}

@@ -77,8 +77,10 @@ function ReplayLibraryEntries() {
         return <li className={styles.entry} key={entry.fingerprint}>
           <div><p>{description}</p><small>{new Date(entry.saved_at).toLocaleString()}</small></div>
           <div className={styles.actions}>
-            <Link className="uiAction uiActionSecondary" to={`/replay/portable-${entry.fingerprint}`}><Icon name="replay" />Inspect replay</Link>
-            <button className="uiAction uiActionNeutral" type="button" onClick={async () => {
+            <Link aria-label="Inspect replay" className="uiAction uiActionSecondary" to={`/replay/portable-${entry.fingerprint}`}>
+              <Icon name="replay" /><span className={styles.fullActionLabel}>Inspect replay</span><span className={styles.compactActionLabel} aria-hidden="true">Inspect</span>
+            </Link>
+            <button aria-label="Remove replay" className="uiAction uiActionNeutral" type="button" onClick={async () => {
               setError("");
               try {
                 await replayLibraryStore.getState().removeReplay(owner, entry.fingerprint);
@@ -86,7 +88,7 @@ function ReplayLibraryEntries() {
                   await replayLibrarySync.sync(owner.slice(5));
                 }
               } catch (failure) { setError(failure instanceof Error ? failure.message : "Removal could not sync."); }
-            }}><Icon name="trash" />Remove replay</button>
+            }}><Icon name="trash" /><span className={styles.fullActionLabel}>Remove replay</span><span className={styles.compactActionLabel} aria-hidden="true">Remove</span></button>
           </div>
         </li>;
       })}

@@ -60,6 +60,15 @@
   gap: 12px;
 }
 
+.accountControls {
+  min-width: 0;
+}
+
+.accountControls > summary,
+.mobileCloudDetails {
+  display: none;
+}
+
 .resetTrigger {
   min-height: 42px;
   width: 100%;
@@ -717,6 +726,10 @@
     gap: 8px;
   }
 
+  .summaryGrid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 4rem), 1fr));
+  }
+
   .summaryTile {
     gap: 4px;
     padding-left: 8px;
@@ -838,4 +851,155 @@
 @media (max-width: 1220px) {
   .recordPanel, .recordContents { grid-template-rows: auto; }
   .sidePanel, .libraryContents { overflow: visible; }
+}
+
+@media (max-width: 720px), (max-width: 980px) and (max-height: 500px) {
+  .page {
+    padding: 10px 12px 12px;
+    gap: 10px;
+  }
+
+  .header {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .headerCopy :global(.uiPageEyebrow) {
+    display: none;
+  }
+
+  .title {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .headerActions {
+    width: auto;
+    margin-left: auto;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .headerActions :global(.uiAction) {
+    width: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0;
+  }
+
+  .headerActions :global(.uiActionLabel) {
+    display: none;
+  }
+
+  .headerActions :global(.uiIconDesktop) {
+    display: inline-flex;
+  }
+
+  .sidePanel {
+    gap: 8px;
+    padding-bottom: 10px;
+  }
+
+  .sidePanel :global(.uiDivider) {
+    display: none;
+  }
+
+  .identitySection {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-template-areas: "identity identity" "name auth";
+    gap: 8px;
+    padding: 0;
+  }
+
+  .identitySection .sectionHeader {
+    grid-area: identity;
+  }
+
+  .identitySection .field {
+    grid-area: name;
+    min-width: 0;
+  }
+
+  .identitySection .fieldLabel,
+  .identitySection .cloudCopy {
+    display: none;
+  }
+
+  .identitySection .cloudStatus {
+    display: contents;
+  }
+
+  .identitySection .cloudStatus :global(.uiAction) {
+    grid-area: auth;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  .identitySection .cloudStatus :global(.uiActionLabel) {
+    display: none;
+  }
+
+  .accountControls > summary {
+    display: flex;
+    width: fit-content;
+    min-height: 44px;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: var(--type-meta);
+    list-style: none;
+  }
+
+  .accountControls > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .accountControls > summary:focus-visible {
+    outline: 2px solid var(--info);
+    outline-offset: 3px;
+  }
+
+  .mobileCloudDetails {
+    display: grid;
+    gap: 6px;
+    padding: 8px 0;
+  }
+
+  .mobileCloudDetails .cloudText,
+  .mobileCloudDetails .cloudError {
+    display: block;
+  }
+
+  .resetSection {
+    padding: 8px 0;
+  }
+
+  .recordHeader {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .recordTabs {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .recordTabs :global(.uiAction) {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding: 8px 6px;
+    font-size: var(--type-meta);
+    line-height: 1.1;
+    letter-spacing: 0.04em;
+    overflow-wrap: anywhere;
+  }
 }

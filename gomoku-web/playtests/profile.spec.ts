@@ -342,3 +342,36 @@ test("public profile tab opens by deep link and supports three-tab keyboard navi
   }));
   expect(widths.document - widths.viewport).toBeLessThanOrEqual(2);
 });
+
+test("compact profile keeps account actions accessible across rotation and enlarged text", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/profile");
+  await expect(page.getByRole("textbox", { name: "Name", exact: true })).toBeVisible();
+  const controls = page.getByText("Profile controls", { exact: true });
+  const reset = page.getByRole("button", { name: "Reset Profile", exact: true });
+  await expect(reset).toHaveCount(0);
+  await controls.click();
+  await expect(reset).toBeVisible();
+  await reset.click();
+  await expect(page.getByRole("button", { name: "Cancel", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await controls.click();
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(controls).not.toBeVisible();
+  await expect(reset).toBeVisible();
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(controls).toBeVisible();
+  await expect(reset).toHaveCount(0);
+  for (const [width, height, fontSize] of [[320, 900, "100%"], [320, 900, "200%"], [667, 375, "100%"]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, fontSize);
+    await page.evaluate(() => document.fonts.ready);
+    const title = await page.getByRole("heading", { name: "Profile", exact: true }).boundingBox();
+    const play = await page.getByRole("link", { name: "Play", exact: true }).boundingBox();
+    const overlaps = title!.x < play!.x + play!.width && title!.x + title!.width > play!.x
+      && title!.y < play!.y + play!.height && title!.y + title!.height > play!.y;
+    expect(overlaps).toBe(false);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
+  }
+});

@@ -559,19 +559,22 @@ export function PublicPlayerRoute() {
                               {details.opponent ? `vs ${details.opponent}` : "Unavailable"}
                             </span>
                           </div>
-                          <span className={`${styles.publicGameMeta} ${styles.gameRule}`}>
-                            <span className="uiSrOnly">Rule: </span>
-                            {details.rule ?? "Unavailable"}
-                          </span>
-                          <span className={`${styles.publicGameMeta} ${styles.gameMoves}`}>
-                            <span className="uiSrOnly">Move count: </span>
-                            {details.moves === null ? "Unavailable" : `${details.moves} moves`}
-                          </span>
+                          <div className={styles.gameMetadata}>
+                            <span className={`${styles.publicGameMeta} ${styles.gameRule}`}>
+                              <span className="uiSrOnly">Rule: </span>
+                              {details.rule ?? "Unavailable"}
+                            </span>
+                            <span className={`${styles.publicGameMeta} ${styles.gameMoves}`}>
+                              <span className="uiSrOnly">Move count: </span>
+                              {details.moves === null ? "Unavailable" : `${details.moves} moves`}
+                            </span>
+                          </div>
                           {details.canReplay ? (
                             <Link
                               className="uiAction uiActionSecondary"
                               id={publicReplayControlId(entry.fingerprint)}
                               aria-label={`Replay ${entry.title}`}
+                              title={`Replay ${entry.title}`}
                               onClick={(event) => openPublicReplay(event, entry.fingerprint, entry.payload)}
                               to={publicReplayPath(entry.payload, origin)}
                             >

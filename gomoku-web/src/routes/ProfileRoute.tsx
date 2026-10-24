@@ -51,6 +51,11 @@ interface HistorySyncStatus {
 }
 
 const HISTORY_VISIBLE_BATCH_SIZE = 16;
+const COMPACT_PROFILE_QUERY = "(max-width: 720px), (max-width: 980px) and (max-height: 500px)";
+
+function compactProfile(): boolean {
+  return typeof window.matchMedia === "function" && window.matchMedia(COMPACT_PROFILE_QUERY).matches;
+}
 
 function historyOpponentLabel(
   match: SavedMatchV2,
@@ -260,6 +265,8 @@ export function ProfileRoute() {
   const [profileActionBusy, setProfileActionBusy] = useState(false);
   const [profileActionError, setProfileActionError] = useState<string | null>(null);
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_VISIBLE_BATCH_SIZE);
+  const [isCompact, setIsCompact] = useState(compactProfile);
+  const [accountOpen, setAccountOpen] = useState(() => !compactProfile());
   const {
     cloudAuth,
     cloudHistory,
@@ -273,6 +280,22 @@ export function ProfileRoute() {
     sourceHistory,
   } = useActiveHistory();
   const cloudPromotion = useStore(cloudPromotionStore, (state) => state);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia(COMPACT_PROFILE_QUERY);
+    const update = () => {
+      setIsCompact(query.matches);
+      setAccountOpen(!query.matches);
+    };
+    update();
+    if (typeof query.addEventListener === "function") {
+      query.addEventListener("change", update);
+      return () => query.removeEventListener("change", update);
+    }
+    query.addListener(update);
+    return () => query.removeListener(update);
+  }, []);
 
   useEffect(() => { setConfirmingProfileAction(null); setProfileActionError(null); }, [cloudAuth.user?.uid]);
 
@@ -312,6 +335,9 @@ export function ProfileRoute() {
   const cloudTitle = cloudTitleText({
     authStatus: cloudAuth.status,
   });
+  useEffect(() => {
+    if (cloudError || profileActionError) setAccountOpen(true);
+  }, [cloudError, profileActionError]);
   const historyStatus = historySyncStatus({
     authStatus: cloudAuth.status,
     hasCloudHistoryLoaded: Boolean(cloudUserCache?.loadedAt),
@@ -531,6 +557,7 @@ export function ProfileRoute() {
             <label className={styles.field}>
               <span className={styles.fieldLabel}>Name</span>
               <input
+                aria-label="Name"
                 className="uiInput"
                 onChange={(event) => {
                   localProfileStore.getState().renameDisplayName(event.target.value);
@@ -548,6 +575,7 @@ export function ProfileRoute() {
               </div>
               {cloudAuth.status === "signed_in" ? (
                 <button
+                  aria-label="Sign out"
                   className="uiAction uiActionNeutral"
                   disabled={profileActionBusy}
                   onClick={() => {
@@ -559,6 +587,7 @@ export function ProfileRoute() {
                 </button>
               ) : (
                 <button
+                  aria-label={cloudAuth.status === "loading" ? "Checking" : "Sign in"}
                   className="uiAction uiActionSecondary"
                   disabled={!cloudAuth.isConfigured || cloudAuth.status === "loading"}
                   onClick={() => {
@@ -577,64 +606,73 @@ export function ProfileRoute() {
 
           <div className="uiDivider" />
 
-          <section className={`${styles.sideSection} ${styles.resetSection}`}>
-            {profileActionError ? <p role="alert">{profileActionError}</p> : null}
-            {confirmingProfileAction ? (
-              <div className={styles.resetConfirm}>
-                <p className={styles.resetConfirmText}>{confirmationText}</p>
-                <div className={styles.resetConfirmActions}>
-                  <div className={styles.resetConfirmPrimaryActions}>
-                    <button
-                      className="uiAction uiActionDanger"
-                      disabled={profileActionDisabled}
-                      onClick={() => {
-                        void confirmProfileAction();
-                      }}
-                      type="button"
-                    >
-                      <Icon name={confirmingProfileAction === "delete" ? "trash" : "reset"} />
-                      <span className="uiActionLabel">{confirmationButtonText}</span>
-                    </button>
-                    <button
-                      className="uiAction uiActionNeutral"
-                      disabled={profileActionBusy}
-                      onClick={() => {
-                        setConfirmingProfileAction(null);
-                      }}
-                      type="button"
-                    >
-                      <span className="uiActionLabel">Cancel</span>
-                    </button>
+          <details key={isCompact ? "compact" : "wide"} className={styles.accountControls} open={!isCompact || accountOpen}
+            onToggle={(event) => { if (isCompact) setAccountOpen(event.currentTarget.open); }}>
+            <summary><Icon name="settings" /><span>Profile controls</span></summary>
+            {isCompact && <div className={styles.mobileCloudDetails}>
+              <p className={styles.cloudTitle}>{cloudTitle}</p>
+              <p className={styles.cloudText}>{cloudText}</p>
+              {cloudError ? <p className={styles.cloudError} role="alert">{cloudError}</p> : null}
+            </div>}
+            <section className={`${styles.sideSection} ${styles.resetSection}`}>
+              {profileActionError ? <p role="alert">{profileActionError}</p> : null}
+              {confirmingProfileAction ? (
+                <div className={styles.resetConfirm}>
+                  <p className={styles.resetConfirmText}>{confirmationText}</p>
+                  <div className={styles.resetConfirmActions}>
+                    <div className={styles.resetConfirmPrimaryActions}>
+                      <button
+                        className="uiAction uiActionDanger"
+                        disabled={profileActionDisabled}
+                        onClick={() => {
+                          void confirmProfileAction();
+                        }}
+                        type="button"
+                      >
+                        <Icon name={confirmingProfileAction === "delete" ? "trash" : "reset"} />
+                        <span className="uiActionLabel">{confirmationButtonText}</span>
+                      </button>
+                      <button
+                        className="uiAction uiActionNeutral"
+                        disabled={profileActionBusy}
+                        onClick={() => {
+                          setConfirmingProfileAction(null);
+                        }}
+                        type="button"
+                      >
+                        <span className="uiActionLabel">Cancel</span>
+                      </button>
+                    </div>
+                    {signedIn && confirmingProfileAction === "reset" ? (
+                      <button
+                        className="uiAction uiActionNeutral"
+                        disabled={profileActionBusy}
+                        onClick={() => {
+                          setConfirmingProfileAction("delete");
+                        }}
+                        type="button"
+                      >
+                        <Icon name="trash" /><span className="uiActionLabel">Delete Cloud</span>
+                      </button>
+                    ) : null}
                   </div>
-                  {signedIn && confirmingProfileAction === "reset" ? (
-                    <button
-                      className="uiAction uiActionNeutral"
-                      disabled={profileActionBusy}
-                      onClick={() => {
-                        setConfirmingProfileAction("delete");
-                      }}
-                      type="button"
-                    >
-                      <Icon name="trash" /><span className="uiActionLabel">Delete Cloud</span>
-                    </button>
-                  ) : null}
                 </div>
-              </div>
-            ) : (
-              <button
-                className={`uiAction uiActionNeutral ${styles.resetTrigger}`}
-                disabled={profileActionDisabled}
-                onClick={() => {
-                  setProfileActionError(null);
-                  setConfirmingProfileAction("reset");
-                }}
-                type="button"
-              >
-                <Icon className="uiIconDesktop" name="reset" />
-                <span className="uiActionLabel">Reset Profile</span>
-              </button>
-            )}
-          </section>
+              ) : (
+                <button
+                  className={`uiAction uiActionNeutral ${styles.resetTrigger}`}
+                  disabled={profileActionDisabled}
+                  onClick={() => {
+                    setProfileActionError(null);
+                    setConfirmingProfileAction("reset");
+                  }}
+                  type="button"
+                >
+                  <Icon className="uiIconDesktop" name="reset" />
+                  <span className="uiActionLabel">Reset Profile</span>
+                </button>
+              )}
+            </section>
+          </details>
         </aside>
 
         <section className={styles.recordPanel}>
@@ -646,7 +684,7 @@ export function ProfileRoute() {
                   className={`uiAction ${activeTab === tab ? 'uiActionSecondary' : 'uiActionNeutral'}`}
                   onClick={() => selectTab(tab)} onKeyDown={handleTabKeyDown}>{label}</button>)}
             </div>
-            {historyStatus ? (
+            {historyStatus && activeTab === "games" ? (
               <p className={historyStatusClassName} aria-live="polite">{historyStatus.label}</p>
             ) : null}
           </div>

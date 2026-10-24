@@ -457,6 +457,10 @@
   overflow-wrap: anywhere;
 }
 
+.gameMetadata {
+  display: contents;
+}
+
 .publicGame :global(.uiAction) {
   width: 100%;
   min-width: 0;
@@ -559,30 +563,60 @@
 
 @container (max-width: 480px) {
   .publicGame {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 3.3rem minmax(0, 1fr) 48px;
     grid-template-areas:
-      "copy result"
-      "rule rule"
-      "moves moves"
-      "replay replay";
-    gap: 9px 12px;
+      "result copy replay"
+      "result metadata replay";
+    gap: 5px 8px;
   }
 
   .publicGameResult {
     align-self: start;
+    font-size: var(--type-meta);
+    letter-spacing: 0.04em;
+  }
+
+  .publicGameOpponent {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .gameMetadata {
+    display: flex;
+    grid-area: metadata;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 4px 12px;
   }
 
   .gameRule {
+    grid-area: auto;
     padding-right: 0;
   }
 
   .gameMoves {
-    grid-area: moves;
+    grid-area: auto;
     justify-self: start;
     text-align: left;
   }
 
-  .publicGame :global(.uiAction),
+  .publicGame :global(.uiAction) {
+    width: 48px;
+    min-height: 48px;
+    padding: 0;
+  }
+
+  .publicGame :global(.uiActionLabel) {
+    display: none;
+  }
+
+  .publicGame :global(.uiIcon) {
+    width: 20px;
+    height: 20px;
+  }
+
   .replayUnavailable {
     width: 100%;
   }
