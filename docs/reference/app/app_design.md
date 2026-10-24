@@ -301,9 +301,11 @@ and storage boundaries.
 
 On mobile, keep name/status and sign-in/out visible, with secondary account and
 reset controls under Profile controls. Desktop keeps those controls expanded.
-The three record tabs share one row; statistics reflow with enlarged text. My
-games sync status belongs to My games. Saved entries use compact paired Inspect
-and Remove actions while retaining complete accessible names.
+The three record tabs share one row in compact layouts; desktop tabs can wrap
+with enlarged text. My games uses compact rows in portrait and short landscape,
+keeping account and Inspect actions within the viewport. Statistics reflow with
+enlarged text. My games sync status belongs to My games. Saved entries use compact
+paired Inspect and Remove actions while retaining complete accessible names.
 
 Tone:
 
@@ -336,6 +338,8 @@ Keep complete accessible labels, visible focus and usable clipboard fallback.
 First/last-page navigation retains stable Previous/Next placement.
 Compact game rows follow the existing mobile My games treatment: result,
 title/opponent, rule/move metadata and a 48px Replay icon action.
+At enlarged text sizes, the header can move navigation to its own row, and
+visible Replay labels wrap within their action column instead of overflowing.
 
 Catalog replay links provide an originating-profile return. Logical page is
 URL-backed; scroll position and the originating Replay focus remain transient

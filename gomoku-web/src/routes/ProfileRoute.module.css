@@ -208,6 +208,8 @@
     148px;
   --history-mid-offset: 8px;
   display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto auto minmax(0, 1fr);
   padding: 16px;
   overflow: hidden;
@@ -215,6 +217,7 @@
 
 .recordHeader {
   display: flex;
+  min-width: 0;
   align-items: baseline;
   gap: 12px;
 }
@@ -604,7 +607,11 @@
   }
 }
 
-@media (max-width: 720px) and (orientation: portrait) {
+@media (max-width: 720px) and (orientation: portrait), (max-width: 980px) and (max-height: 500px) {
+  .historyHead {
+    display: none;
+  }
+
   .page {
     min-height: 100dvh;
     align-content: start;
@@ -844,9 +851,15 @@
 }
 
 .recordPanel { grid-template-rows: auto minmax(0, 1fr); }
-.recordContents { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; }
+.recordContents {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
+}
 .libraryContents { min-height: 0; overflow: auto; }
-.recordTabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.recordTabs { display: flex; min-width: 0; max-width: 100%; flex-wrap: wrap; gap: 8px; }
 .sidePanel { overflow: auto; }
 @media (max-width: 1220px) {
   .recordPanel, .recordContents { grid-template-rows: auto; }

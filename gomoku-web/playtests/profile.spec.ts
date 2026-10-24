@@ -346,7 +346,34 @@ test("public profile tab opens by deep link and supports three-tab keyboard navi
 test("compact profile keeps account actions accessible across rotation and enlarged text", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/profile");
+  await seedLocalSavedMatch(page, {
+    displayName: "Guest",
+    id: "compact-profile-landscape-history",
+    moves: [
+      { col: 5, row: 7 },
+      { col: 0, row: 0 },
+      { col: 6, row: 7 },
+      { col: 1, row: 0 },
+      { col: 7, row: 7 },
+      { col: 2, row: 0 },
+      { col: 8, row: 7 },
+      { col: 3, row: 0 },
+      { col: 9, row: 7 },
+    ],
+    preferredVariant: "freestyle",
+    savedAt: "2026-10-24T12:00:00.000Z",
+    status: "black_won",
+    variant: "freestyle",
+  });
+  await page.reload();
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toBeVisible();
+  const authAction = page.locator(
+    'button[aria-label="Sign in"], button[aria-label="Sign out"], button[aria-label="Checking"]',
+  );
+  const inspect = page.getByRole("button", { name: "Inspect", exact: true });
+  await expect(authAction).toBeVisible();
+  await expect(inspect).toBeVisible();
+  await expect(page.locator("ol > li").first()).toContainText("Normal Bot");
   const controls = page.getByText("Profile controls", { exact: true });
   const reset = page.getByRole("button", { name: "Reset Profile", exact: true });
   await expect(reset).toHaveCount(0);
@@ -363,7 +390,16 @@ test("compact profile keeps account actions accessible across rotation and enlar
   await page.setViewportSize({ width: 844, height: 390 });
   await expect(controls).toBeVisible();
   await expect(reset).toHaveCount(0);
-  for (const [width, height, fontSize] of [[320, 900, "100%"], [320, 900, "200%"], [667, 375, "100%"]] as const) {
+  for (const [width, height, fontSize] of [
+    [320, 900, "100%"], [320, 900, "200%"],
+    [390, 844, "100%"], [390, 844, "200%"],
+    [560, 320, "100%"], [560, 320, "200%"],
+    [667, 375, "100%"], [667, 375, "200%"],
+    [720, 390, "100%"], [720, 390, "200%"],
+    [721, 390, "100%"], [721, 390, "200%"],
+    [844, 390, "100%"], [844, 390, "200%"],
+    [980, 500, "100%"], [980, 500, "200%"],
+  ] as const) {
     await page.setViewportSize({ width, height });
     await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, fontSize);
     await page.evaluate(() => document.fonts.ready);
@@ -373,5 +409,84 @@ test("compact profile keeps account actions accessible across rotation and enlar
       && title!.y < play!.y + play!.height && title!.y + title!.height > play!.y;
     expect(overlaps).toBe(false);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
+
+    await expect(page.getByRole("textbox", { name: "Name", exact: true })).toBeVisible();
+    await expect(authAction).toBeVisible();
+    await expect(page.locator("ol > li").first()).toContainText("Normal Bot");
+    for (const label of ["My games", "Saved replays", "Public profile"] as const) {
+      await expect(page.getByRole("tab", { name: label, exact: true })).toBeVisible();
+    }
+
+    const metrics = await page.evaluate(() => {
+      const main = document.querySelector("main") as HTMLElement | null;
+      const layout = main?.querySelector('[class*="layout"]') as HTMLElement | null;
+      const historyBody = main?.querySelector('[class*="historyBody"]') as HTMLElement | null;
+      const historyItem = historyBody?.querySelector("ol > li") as HTMLElement | null;
+      const tabs = main?.querySelector('[role="tablist"]') as HTMLElement | null;
+      const auth = main?.querySelector(
+        'button[aria-label="Sign in"], button[aria-label="Sign out"], button[aria-label="Checking"]',
+      ) as HTMLElement | null;
+      const inspect = main?.querySelector('button[aria-label="Inspect"]') as HTMLElement | null;
+      const name = main?.querySelector('input[aria-label="Name"]') as HTMLElement | null;
+      if (!main || !layout || !historyBody || !historyItem || !tabs || !auth || !inspect || !name) return null;
+      const mainRect = main.getBoundingClientRect();
+      const bounds = [name, auth, inspect, ...Array.from(tabs.querySelectorAll('[role="tab"]')), historyItem]
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return { left: rect.left, right: rect.right };
+        });
+      return {
+        bounds,
+        historyBodyClientWidth: historyBody.clientWidth,
+        historyBodyScrollWidth: historyBody.scrollWidth,
+        historyItemClientWidth: historyItem.clientWidth,
+        historyItemScrollWidth: historyItem.scrollWidth,
+        layoutClientWidth: layout.clientWidth,
+        layoutScrollWidth: layout.scrollWidth,
+        mainClientWidth: main.clientWidth,
+        mainLeft: mainRect.left,
+        mainRight: mainRect.right,
+        mainScrollWidth: main.scrollWidth,
+        tabClientWidth: tabs.clientWidth,
+        tabScrollWidth: tabs.scrollWidth,
+      };
+    });
+    expect(metrics).not.toBeNull();
+    expect(metrics!.mainScrollWidth - metrics!.mainClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.layoutScrollWidth - metrics!.layoutClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.historyBodyScrollWidth - metrics!.historyBodyClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.historyItemScrollWidth - metrics!.historyItemClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.tabScrollWidth - metrics!.tabClientWidth).toBeLessThanOrEqual(1);
+    for (const bounds of metrics!.bounds) {
+      expect(bounds.left).toBeGreaterThanOrEqual(metrics!.mainLeft - 1);
+      expect(bounds.right).toBeLessThanOrEqual(metrics!.mainRight + 1);
+    }
+  }
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  await page.evaluate(() => document.fonts.ready);
+  const desktopTabs = await page.evaluate(() => {
+    const main = document.querySelector("main") as HTMLElement | null;
+    const panel = main?.querySelector('[class*="recordPanel"]') as HTMLElement | null;
+    const tablist = main?.querySelector('[role="tablist"]') as HTMLElement | null;
+    if (!main || !panel || !tablist) return null;
+    return {
+      bounds: Array.from(tablist.querySelectorAll('[role="tab"]')).map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { left: rect.left, right: rect.right };
+      }),
+      mainClientWidth: main.clientWidth,
+      mainScrollWidth: main.scrollWidth,
+      panelRight: panel.getBoundingClientRect().right,
+      tabClientWidth: tablist.clientWidth,
+      tabScrollWidth: tablist.scrollWidth,
+    };
+  });
+  expect(desktopTabs).not.toBeNull();
+  expect(desktopTabs!.mainScrollWidth - desktopTabs!.mainClientWidth).toBeLessThanOrEqual(1);
+  expect(desktopTabs!.tabScrollWidth - desktopTabs!.tabClientWidth).toBeLessThanOrEqual(1);
+  for (const bounds of desktopTabs!.bounds) {
+    expect(bounds.right).toBeLessThanOrEqual(desktopTabs!.panelRight + 1);
   }
 });

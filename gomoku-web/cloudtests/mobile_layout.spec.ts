@@ -55,7 +55,67 @@ test("M01: mobile record, account, saved and sharing surfaces remain reachable",
   await expect.poll(async () => (await readProfile(uid))?.match_history?.replay_matches?.some((match: { id: string }) => match.id === matchId)).toBe(true);
   await makeProfileEligible(uid);
   await page.reload();
-  await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
+  const signOut = page.getByRole("button", { name: "Sign out", exact: true });
+  const displayName = page.getByRole("textbox", { name: "Name", exact: true });
+  const inspect = page.getByRole("button", { name: "Inspect", exact: true }).first();
+  await expect(signOut).toBeVisible();
+  await expect(displayName).toBeVisible();
+  await expect(inspect).toBeVisible();
+  for (const fontSize of ["100%", "200%"] as const) {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, fontSize);
+    await page.evaluate(() => document.fonts.ready);
+    await expect(signOut).toBeVisible();
+    await expect(displayName).toBeVisible();
+    await expect(inspect).toBeVisible();
+    const tabLabels = ["My games", "Saved replays", "Public profile"] as const;
+    for (const label of tabLabels) await expect(page.getByRole("tab", { name: label, exact: true })).toBeVisible();
+
+    const metrics = await page.evaluate(() => {
+      const main = document.querySelector("main") as HTMLElement | null;
+      const layout = main?.querySelector('[class*="layout"]') as HTMLElement | null;
+      const historyBody = main?.querySelector('[class*="historyBody"]') as HTMLElement | null;
+      const historyItem = historyBody?.querySelector("ol > li") as HTMLElement | null;
+      const tablist = main?.querySelector('[role="tablist"]') as HTMLElement | null;
+      const name = main?.querySelector('input[aria-label="Name"]') as HTMLElement | null;
+      const auth = main?.querySelector('button[aria-label="Sign out"]') as HTMLElement | null;
+      const inspect = main?.querySelector('button[aria-label="Inspect"]') as HTMLElement | null;
+      if (!main || !layout || !historyBody || !historyItem || !tablist || !name || !auth || !inspect) return null;
+      const mainRect = main.getBoundingClientRect();
+      const bounds = [name, auth, inspect, ...Array.from(tablist.querySelectorAll('[role="tab"]'))]
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return { left: rect.left, right: rect.right };
+        });
+      return {
+        bounds,
+        historyBodyClientWidth: historyBody.clientWidth,
+        historyBodyScrollWidth: historyBody.scrollWidth,
+        historyItemClientWidth: historyItem.clientWidth,
+        historyItemScrollWidth: historyItem.scrollWidth,
+        layoutClientWidth: layout.clientWidth,
+        layoutScrollWidth: layout.scrollWidth,
+        mainClientWidth: main.clientWidth,
+        mainLeft: mainRect.left,
+        mainRight: mainRect.right,
+        mainScrollWidth: main.scrollWidth,
+        tabClientWidth: tablist.clientWidth,
+        tabScrollWidth: tablist.scrollWidth,
+      };
+    });
+    expect(metrics).not.toBeNull();
+    expect(metrics!.mainScrollWidth - metrics!.mainClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.layoutScrollWidth - metrics!.layoutClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.historyBodyScrollWidth - metrics!.historyBodyClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.historyItemScrollWidth - metrics!.historyItemClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.tabScrollWidth - metrics!.tabClientWidth).toBeLessThanOrEqual(1);
+    for (const bounds of metrics!.bounds) {
+      expect(bounds.left).toBeGreaterThanOrEqual(metrics!.mainLeft - 1);
+      expect(bounds.right).toBeLessThanOrEqual(metrics!.mainRight + 1);
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => { document.documentElement.style.fontSize = "100%"; });
   await page.getByRole("tab", { name: "Public profile", exact: true }).click();
   await page.getByLabel("Choose your public name", { exact: true }).fill("Mobile Player");
   await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
@@ -114,4 +174,61 @@ test("M01: mobile record, account, saved and sharing surfaces remain reachable",
   await page.goto(`/player/?id=${uid}`);
   await expect(page.getByText("A mobile example", { exact: true })).toBeVisible();
   await capture(page, info, "public-player-320");
+  for (const [width, height, fontSize] of [
+    [320, 900, "100%"], [320, 900, "200%"],
+    [390, 844, "100%"], [390, 844, "200%"],
+    [560, 320, "100%"], [560, 320, "200%"],
+    [667, 375, "100%"], [667, 375, "200%"],
+    [720, 390, "100%"], [720, 390, "200%"],
+    [721, 390, "100%"], [721, 390, "200%"],
+    [844, 390, "100%"], [844, 390, "200%"],
+    [980, 500, "100%"], [980, 500, "200%"],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, fontSize);
+    await page.evaluate(() => document.fonts.ready);
+    const navigation = page.getByRole("navigation", { name: "Main navigation", exact: true });
+    const actions = ["Play", "My profile", "Home"] as const;
+    for (const label of actions) await expect(navigation.getByRole("link", { name: label, exact: true })).toBeVisible();
+
+    const metrics = await page.evaluate(() => {
+      const main = document.querySelector("main") as HTMLElement | null;
+      const shell = main?.querySelector('[class*="shell"]') as HTMLElement | null;
+      const header = main?.querySelector("header") as HTMLElement | null;
+      const navigation = main?.querySelector('nav[aria-label="Main navigation"]') as HTMLElement | null;
+      if (!main || !shell || !header || !navigation) return null;
+      const mainRect = main.getBoundingClientRect();
+      const bounds = Array.from(navigation.querySelectorAll("a")).map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { bottom: rect.bottom, left: rect.left, right: rect.right };
+      });
+      return {
+        bounds,
+        documentClientWidth: document.documentElement.clientWidth,
+        documentScrollWidth: document.documentElement.scrollWidth,
+        headerClientWidth: header.clientWidth,
+        headerScrollWidth: header.scrollWidth,
+        mainClientWidth: main.clientWidth,
+        mainLeft: mainRect.left,
+        mainRight: mainRect.right,
+        mainScrollWidth: main.scrollWidth,
+        navigationClientWidth: navigation.clientWidth,
+        navigationScrollWidth: navigation.scrollWidth,
+        shellClientWidth: shell.clientWidth,
+        shellScrollWidth: shell.scrollWidth,
+        viewportHeight: window.innerHeight,
+      };
+    });
+    expect(metrics).not.toBeNull();
+    expect(metrics!.documentScrollWidth - metrics!.documentClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.mainScrollWidth - metrics!.mainClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.shellScrollWidth - metrics!.shellClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.headerScrollWidth - metrics!.headerClientWidth).toBeLessThanOrEqual(1);
+    expect(metrics!.navigationScrollWidth - metrics!.navigationClientWidth).toBeLessThanOrEqual(1);
+    for (const bounds of metrics!.bounds) {
+      expect(bounds.left).toBeGreaterThanOrEqual(metrics!.mainLeft - 1);
+      expect(bounds.right).toBeLessThanOrEqual(metrics!.mainRight + 1);
+      expect(bounds.bottom).toBeLessThanOrEqual(metrics!.viewportHeight + 1);
+    }
+  }
 });
