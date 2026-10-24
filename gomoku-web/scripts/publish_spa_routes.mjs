@@ -1,10 +1,10 @@
 import { copyFile, mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { readReviewCatalog } from "./review_catalog.mjs";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const distRoot = join(root, "dist");
+const distRoot = resolve(root, process.argv[2] ?? "dist");
 const indexPath = join(distRoot, "index.html");
 
 const staticRoutes = [

@@ -19,10 +19,19 @@ The reference has three sections:
 
 - Style: palette, button roles, type roles, and visual principles
 - Sprites: board-space spritesheets, static poses, animation loops, and z-order
-- Icons: DOM shell icon inventory from the icon manifest
+- Icons: all canonical icons, native 1×/2× samples, integer pixel grid, margins,
+  bounded comparison, light/dark surfaces and exact source SVGs
 
 ## Folders
 
 - [sprites](./sprites/): runtime board spritesheets and animation inventory
 - [icons](./icons/): DOM shell icon source sheet, manifest, and exported SVGs
 - [fonts](./fonts/): PixelOperator source fonts and license
+
+The shared developer frame links these references to Lab, curated reviews and
+Process. Visuals accepts `view=style|icons|sprites`; icon/animation selections are
+URL driven. Palette values are read from runtime CSS; the publisher derives the
+exported manifest values from those tokens. SVG/font/PNG source bytes remain
+unchanged. Sprite previews use the board's pure RGB multiplication operation and
+check animation ranges against runtime constants. See the
+[developer-area contract](../../docs/reference/app/developer_area.md).

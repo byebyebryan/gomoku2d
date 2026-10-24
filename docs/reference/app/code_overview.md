@@ -26,7 +26,8 @@ threat, bot, or replay-analysis semantics.
 
 | Area | Files | Contract |
 |---|---|---|
-| App shell | `src/main.tsx`, `src/app/App.tsx`, `src/app/global.css` | Router, global CSS tokens, and top-level app lifecycle |
+| App shell | `src/main.tsx`, `src/app/App.tsx`, `src/app/PlayerApp.tsx`, `src/app/global.css` | Lazy developer/player selection, player lifecycle and global tokens |
+| Developer references | `src/developer/*`, `src/routes/AssetPreviewRoute.tsx` | Public frame, prepared Process/Overview, canonical inspectors and typed curated reviews; no private or engine initialization |
 | Routes | `src/routes/*Route.tsx` | Product screens: Home, Match, Replay, Profile, Settings |
 | Board component | `src/components/Board/Board.tsx` | React wrapper around the Phaser board scene |
 | Board renderer | `src/board/*` | Phaser scene, sprites, overlays, input mapping, and animation timing |
@@ -40,10 +41,13 @@ threat, bot, or replay-analysis semantics.
 | Lab reports | `src/routes/LabReportRoute.tsx`, `src/routes/AnalysisReportRoute.tsx`, `src/routes/lab-report/*` | Report loading/tabs, tournament drilldowns, analysis rows, proof boards, and help/provenance |
 | Bot worker | `src/core/bot_runner.ts`, `src/core/bot_worker.ts`, `src/core/bot_protocol.ts` | Async bot move requests with cancellation and worker restart safety |
 | Wasm bridge | `src/core/wasm_bridge.ts` | Typed JSON parsing boundary over `gomoku-wasm` exports |
-| Static publishing | `scripts/publish_reports.mjs`, `scripts/publish_visual_design_assets.mjs`, `scripts/publish_spa_routes.mjs` | Copies curated data/assets and SPA entries into `dist/` during build |
+| Static publishing | `scripts/publish_reports.mjs`, `scripts/publish_visual_design_assets.mjs`, `scripts/publish_reviews.mjs`, `scripts/publish_spa_routes.mjs` | Copies curated data/assets and SPA entries into `dist/` during build |
 | Playwright journeys | `playtests/*.spec.ts` | Browser-level acceptance for play, layout, replay, reports, recovery, and no-config paths |
 | Cloud acceptance | `cloudtests/*`, `scripts/run_cloud_acceptance.mjs` | Isolated emulated Auth/Firestore application journeys and two-client races |
 | Opt-in profiling | `perftests/*`, `scripts/profile_workloads.mjs` | Frozen/current-core-validated workloads, production worker timing, cache and lifecycle evidence |
+
+Developer route/lifecycle, query state, review media and reusable export contracts
+are maintained in [Developer area](developer_area.md).
 
 ## Wasm Boundary
 

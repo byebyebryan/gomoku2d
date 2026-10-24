@@ -34,6 +34,15 @@ sharing demo, private library, public publishing, and release checks.
 [Execution and evidence](working/v0_6_execution.md) retain the local acceptance
 history. Multiplayer research is retained as deferred work.
 
+The 0.6.3 source now implements a shared developer area. Its
+[contract](reference/app/developer_area.md) owns route, source and review-record
+semantics; the [execution record](working/v0_6_3_execution.md) owns local
+validation. This does not change the published-release statement above.
+
+Markdown is detailed agent/maintainer context. The developer area prepares
+selected design references, inspectors, review comparisons and process explanations
+for human reading; it does not automatically publish this tree.
+
 ## Choose A Path
 
 | Area | Start with | Continue with |
@@ -41,6 +50,7 @@ history. Multiplayer research is retained as deferred work.
 | Product direction | [`Product Strategy`](reference/product/product_strategy.md) | [`Roadmap`](reference/product/roadmap.md) |
 | Browser app | [`Web Code Overview`](reference/app/code_overview.md) | [`Architecture`](reference/app/architecture.md), [`App Design`](reference/app/app_design.md), [`UI Design`](reference/app/ui_design.md) |
 | Cloud continuity | [`Backend`](reference/backend/backend.md) | [`Data Model`](reference/backend/data_model.md), [`Infra`](reference/ops/backend_infra.md), [`Cost`](reference/ops/backend_cost.md) |
+| Developer presentation and review workflow | [`Developer area`](reference/app/developer_area.md) | [`Capture procedure`](working/ui_screenshot_review.md), [`Execution`](working/v0_6_3_execution.md) |
 | Board visuals | [`Game Visual`](reference/app/game_visual.md) | [`Asset Sources`](../gomoku-web/assets/README.md) |
 | Rust rules, bots, and analyzer | [`Bot Lab Code Overview`](reference/lab/code_overview.md) | [`Search Bot`](reference/lab/search_bot.md), [`Game Analysis`](reference/lab/game_analysis.md) |
 | Tactical model | [`Tactical Shapes`](reference/lab/tactical_shapes.md) | [`Lethal Threats`](reference/lab/lethal_threats.md), [`Corridor Search`](reference/lab/corridor_search.md) |

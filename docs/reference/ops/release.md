@@ -179,3 +179,19 @@ The signed-in public-sharing round trip remains pending separately from
 emulator and desktop-engine automation. Historical physical-device/touch,
 human screen-reader/zoom, two-device private account/reset, and novice-feedback
 deferrals remain in force.
+
+## Developer-area publication
+
+Version 0.6.3 uses the same package, domain and tag-based Pages artifact. No new
+backend, schema, account permission, deployment target or credentials are needed.
+`publish_reviews.mjs` validates curated records/media; `publish_spa_routes.mjs`
+adds direct-entry HTML for developer sections and selected review IDs. Existing
+`/lab/`, `/visuals/`, raw SVG/font/sprite and report JSON URLs stay available.
+
+Before publication, run the public-boundary/browser/emulator checks documented
+in [Testing](testing.md), verify frozen media/source parity and exercise direct
+entry/reload/history and exported comparisons. After authorized deployment,
+verify the exact deployed artifact and public developer routes as well as the
+player regression. A standalone report export does not publish the web app or
+replace the normal exact-source release gate. The implementation execution
+record is local evidence; release records own publication facts.

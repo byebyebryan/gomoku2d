@@ -254,10 +254,10 @@ from public publication.
 |---|---|---|
 | A: plan review, locally committed | Review page/source/public-boundary contracts and content roster | Agreed scope, with unresolved visual choices named. No application implementation yet. |
 | B: visual study, accepted | Overview, icon inspector and Lab compositions plus one review-case adaptation; real content and narrow/enlarged layouts | Bryan reviews the shared look, density and hierarchy before production implementation. |
-| C: public shell/navigation | Public boundary, shared frame, URLs and recovery | Direct/reload/history/keyboard paths work, no private-account effects, game/shared replay behavior preserved. |
-| D: assets/design and Lab | Full source-backed inspectors and refined report presentation | Asset/token/frame/tint parity, report meanings/data/links preserved, responsive controls usable. |
-| E: reviews and Process | Curated records/viewer, initial cases/baseline, process copy and affected Markdown | A new review uses reusable capture/export/render procedures; provenance and acceptance stay accurate. |
-| F: overall review/release | Inspect the whole area and run proportional/final release gates | Actual validation and agreed visual pass; remaining human/account checks explicit. Publication separately authorized. |
+| C: public shell/navigation, implemented | Public boundary, shared frame, URLs and recovery | Direct/reload/history/keyboard paths work, no private-account effects, game/shared replay behavior preserved. |
+| D: assets/design and Lab, implemented | Full source-backed inspectors and refined report presentation | Asset/token/frame/tint parity, report meanings/data/links preserved, responsive controls usable. |
+| E: reviews and Process, implemented | Curated records/viewer, initial cases/baseline, process copy and affected Markdown | A new review uses reusable capture/export/render procedures; provenance and acceptance stay accurate. |
+| F: local review complete; visual/release pending | Inspect the whole area and run proportional/final release gates | Actual validation and agreed visual pass; remaining human/account checks explicit. Publication separately authorized. |
 
 Check data/media/route contracts, native icon geometry/raster and sprite tint/frame
 parity. Exercise Chromium/Firefox/WebKit, 320px/portrait/short-landscape/desktop,

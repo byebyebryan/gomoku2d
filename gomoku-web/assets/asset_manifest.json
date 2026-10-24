@@ -40,7 +40,7 @@
           {
             "name": "--text-muted",
             "label": "Muted text",
-            "value": "#a6a6a0",
+            "value": "#b5b5ae",
             "role": "Secondary notes and metadata"
           }
         ]
@@ -69,7 +69,7 @@
           {
             "name": "--danger",
             "label": "Red",
-            "value": "#e04747",
+            "value": "#ef5c5c",
             "role": "Danger, loss, and critical warnings"
           }
         ]

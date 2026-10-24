@@ -28,10 +28,10 @@ Current components, one repo:
 - **Firebase Auth + Firestore** are the deployed backend today: optional Google
   sign-in, owner-scoped profile documents, private settings/history sync, and
   hardened rules.
-- **`gomoku-api` / Cloud Run** is future scope for features that need server
-  trust: online move authority, username reservation, public verification, or
-  server-only compute. It should start as `gomoku-bot-lab/gomoku-api/` if that
-  phase lands, then split only when deploy cadence or ownership justifies it.
+- A separate trusted backend is deferred. Public profiles and replay catalogs
+  already use bounded Firestore contracts; multiplayer research prefers a small
+  matchmaking/signaling boundary with peer-to-peer moves. That research is not
+  an active server-authority implementation plan.
 
 ## Frontend stack
 
@@ -41,7 +41,8 @@ Current components, one repo:
 - **Vite** — dev server and bundler.
 - **React Router** — URL-driven screens for the current app (`/`,
   `/match/local`, `/replay/:matchId`, `/settings`, `/profile`, `/rules/`,
-  `/guide/`, `/lab/`, `/visuals/`, `/privacy/`, `/terms/`), with future
+  `/guide/`, `/lab/`, `/visuals/`, `/dev/`, `/dev/process/`, `/dev/reviews/`,
+  curated review case URLs, `/replay/shared/`, `/player/`, `/privacy/`, `/terms/`), with future
   cloud/online routes added later.
 - **Zustand** — client state (current view, draft moves, UI toggles).
 - **Firebase SDK directly** — sign-in, explicit profile reads and checkpoint writes for
@@ -87,6 +88,17 @@ deliberately distinctive, and the tokens are documented in
 [`ui_design.md`](ui_design.md).
 A utility framework would add machinery and fight the retro/chunky visual
 direction. Decided after the first screen builds landed.
+
+## Public developer boundary
+
+`App.tsx` has no eager player/cloud imports. Developer references load a separate
+lazy tree and own their frame/scrolling. `PlayerApp.tsx` retains existing game and
+authentication-aware public-player/shared-replay behavior. A fresh developer
+visit must not read/create local player state, initialize Firebase Auth, or load
+Phaser/Wasm. Navigation out of the player unsubscribes controllers without
+clearing singleton stores or cancelling pending promises; returning re-evaluates
+normal synchronization. See [Developer area](developer_area.md) for route, source,
+media and export contracts.
 
 ## The DOM/Phaser boundary
 

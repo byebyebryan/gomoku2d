@@ -150,3 +150,28 @@ Before committing test changes, do a test hygiene pass:
 - Remove `temporary scaffold` tests.
 - Keep slow integration tests only when they protect behavior that cannot be
   covered by a smaller unit/scenario test.
+
+## Developer-area validation
+
+The public developer tree must not initialize Auth/private state or Phaser/Wasm,
+including with a persisted sign-in. `playtests/developer.spec.ts` checks direct
+entry, module/network/storage isolation, query/history, comparisons, source
+sprites, keyboard, recovery and desktop/narrow/landscape/enlarged text.
+`cloudtests/developer.spec.ts` checks cached emulator sign-in and a held private
+write across navigation. Run these in all three engines after shared-shell work.
+
+The ordinary build and cloud harness publish the same allowlisted static
+assets/reports/review records and direct-entry route inventory. Review exporters
+use the same typed record and React viewer as the site. Validate delivered media
+hashes and controls under the real export prefix; a successful build is not
+browser or human acceptance. [Developer area](../app/developer_area.md) and the
+[capture procedure](../../working/ui_screenshot_review.md) own these contracts.
+
+Game/core-independent content iteration needs relevant type, data/media, build
+and browser checks; it does not need a new Rust tournament or renderer redesign.
+Root player/developer lifecycle changes still need the ordinary game browser
+lane and emulator continuity/race coverage. Keep current automated results,
+production publication and physical/real-account acceptance separate.
+
+Concurrent secondary Playwright commands must use distinct `--output`
+directories; each CLI run owns and cleans its output directory, including traces.

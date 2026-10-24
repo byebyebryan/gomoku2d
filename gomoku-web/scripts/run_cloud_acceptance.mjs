@@ -70,6 +70,9 @@ try {
     VITE_FIREBASE_FIRESTORE_EMULATOR_PORT: String(cloudTestPorts.firestore), GOMOKU_BASE_PATH: "/",
   };
   await completed(start(["node_modules/vite/bin/vite.js", "build", "--outDir", buildDir, "--logLevel", "error"], { env }));
+  for(const script of ["publish_visual_design_assets.mjs","publish_reports.mjs","publish_reviews.mjs","publish_spa_routes.mjs"]) {
+    await completed(start([`scripts/${script}`,buildDir]));
+  }
   await mkdir(logDir, { recursive: true });
   const config = JSON.parse(await readFile(resolve(root, "../firebase.acceptance.json"), "utf8"));
   config.firestore.rules = resolve(root, "..", config.firestore.rules);

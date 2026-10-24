@@ -8,7 +8,7 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
-| [0.6.3 developer-area brief](v0_6_3_developer_site_plan.md) | Bryan; plan locally committed; [interactive visual study](v0_6_3_design/README.md) ready for visual review before application implementation |
+| [0.6.3 developer-area brief](v0_6_3_developer_site_plan.md) | Bryan; visual study accepted; [implementation/execution](v0_6_3_execution.md) owns local integration, evidence and remaining release/manual checks |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; revised sequence and retained research; replay metadata compatibility belongs to 0.6.4, curated learning later |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan

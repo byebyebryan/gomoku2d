@@ -309,6 +309,7 @@ function SearchTimeSplit({
   return (
     <span
       className={`${styles.metricSearch} ${styles.searchTimeSplit}`}
+      role="img"
       aria-label={`Search time ${formatNumber(averageSearchNs(standing) / 1_000_000)} ms vs slowest ${formatNumber(maxSearchAvgNs / 1_000_000)} ms. Split: ${label}`}
     >
       <span className={styles.searchTimeScale}>
@@ -571,6 +572,7 @@ function FinishedBoard({
                     className={`${styles.proofStone} ${
                       marker.stone === "black" ? styles.proofStoneBlack : styles.proofStoneWhite
                     }`}
+                    role="img"
                     aria-label={`${marker.stone} move ${marker.sequence} at ${cellNotation(cell, boardSize)}`}
                   >
                     {marker.sequence}

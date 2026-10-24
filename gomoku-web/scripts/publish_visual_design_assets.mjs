@@ -1,10 +1,10 @@
-import { copyFile, mkdir, readdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const sourceRoot = join(root, "assets");
-const distAssetRoot = join(root, "dist", "assets");
+const distAssetRoot = join(resolve(root, process.argv[2] ?? "dist"), "assets");
 
 /**
  * @param {string} sourcePath
@@ -43,3 +43,10 @@ await copyFolderFiles("icons", [".md", ".json", ".png", ".svg"]);
 await copyFolderFiles("fonts", [".md", ".ttf", ".txt"]);
 
 console.log("Published visual design asset source files to dist/assets/.");
+
+// Roles are editorial; published palette values follow runtime CSS tokens.
+const css=await readFile(join(root,"src/app/global.css"),"utf8");
+const tokens=Object.fromEntries([...css.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map(match=>[match[1],match[2].trim()]));
+const manifest=JSON.parse(await readFile(join(sourceRoot,"asset_manifest.json"),"utf8"));
+for(const group of manifest.guide.palette)for(const token of group.tokens){if(!tokens[token.name])throw new Error(`Missing runtime token ${token.name}`);token.value=tokens[token.name];}
+await writeFile(join(distAssetRoot,"asset_manifest.json"),JSON.stringify(manifest,null,2)+"\n");

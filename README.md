@@ -14,6 +14,10 @@ analysis, and practice from earlier positions.
 [Visuals](https://gomoku2d.byebyebryan.com/visuals/) ·
 [Docs](docs/README.md)
 
+Developer-area source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).
+Its 0.6.3 implementation is local until the next authorized release; the public
+site remains on the release identified below.
+
 [![CI](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml)
 
 ![Gomoku2D gameplay with tactical hints, bot response, and a terminal winning frame](docs/assets/readme-gameplay.gif)

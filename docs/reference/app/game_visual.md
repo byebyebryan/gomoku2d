@@ -15,6 +15,10 @@ assets should read in play.
 For local visual inspection, run the web app and open `/visuals/`. The Visual
 Design reference includes the board-space sprite inventory, static poses,
 animation loops, and z-order cases from `gomoku-web/assets/asset_manifest.json`.
+Use `?view=sprites` for selection, stepping and named tints. The preview reuses
+RGB multiplication and alpha preservation from the board resolver, but is a
+Canvas inspector rather than a Phaser runtime. Renderer acceptance remains the
+separate Canvas/WebGL browser lane.
 
 ## Goal
 

@@ -165,8 +165,8 @@ high-contrast semantic accents.
 Current source tokens in `src/app/global.css`:
 
 - dark shell: `--bg: #1e1e1e`, `--surface: #2a2a2a`, `--surface-muted: #232323`
-- text: `--text: #f5f5f5`, `--text-muted: #a6a6a0`
-- accents: gold `#fccb57`, green `#30a860`, teal `#5f8b82`, red `#e04747`
+- text: `--text: #f5f5f5`, `--text-muted: #b5b5ae`
+- accents: gold `#fccb57`, green `#30a860`, teal `#5f8b82`, red `#ef5c5c`
 - colored-control ink: `#121212`; neutral dark surfaces retain light text
 
 The four colored fills use dark labels for at least 4.5:1 text contrast; do not
@@ -386,3 +386,16 @@ If the board assets change later:
 - do not chase every board-theme variation inside the DOM shell
 
 The shell should feel like the cabinet; the board theme is the cartridge.
+
+## Developer references
+
+The shared developer frame follows the existing pixel type, semantic colours and
+controls with normal-flow wrapping navigation and readable prose measures. Its
+styles are scoped; player screen layouts remain separate. Native icon inspection
+uses exact canonical SVGs, grid/axes and actual legacy margins. Sprite inspectors
+use source ranges and RGB tint multiplication, not luminance filters.
+
+[Developer area](developer_area.md) owns current page/query/review semantics.
+[UI screenshot review](../../working/ui_screenshot_review.md) owns capture and
+export procedure. Historical comparisons preserve their source and acceptance
+identity; they do not become the current screen baseline by being re-presented.

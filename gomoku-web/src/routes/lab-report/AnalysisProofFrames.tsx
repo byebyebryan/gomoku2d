@@ -78,7 +78,7 @@ export function ProofFrames({ entry }: { entry: AnalysisEntry }) {
 
 function ProofLegend() {
   return (
-    <div className={proofStyles.proofLegend} aria-label="Proof marker legend">
+    <div className={proofStyles.proofLegend} role="group" aria-label="Proof marker legend">
       <div className={proofStyles.proofLegendRow}>
         <LegendRole className={proofStyles.legendWinning} label="immediate win" />
         <LegendRole className={proofStyles.legendThreat} label="immediate threat" />
@@ -126,7 +126,7 @@ function ProofFrameArticle({
   title: string;
 }) {
   return (
-    <article className={`${proofStyles.frame} ${proofStyles.analysisFrame}`} data-ply={frame.ply}>
+    <article className={`${proofStyles.frame} ${proofStyles.analysisFrame}`} data-ply={frame.ply} tabIndex={0} aria-label={`Proof frame before move ${frame.ply}`}>
       <ProofBoard
         boardSize={boardSize}
         extraActual={extraActual}
@@ -243,6 +243,7 @@ function ProofBoard({
                     className={`${styles.proofStone} ${
                       stone === "black" ? styles.proofStoneBlack : styles.proofStoneWhite
                     }`}
+                    role="img"
                     aria-label={`${stone} stone at ${cellNotation(cell, boardSize)}`}
                   />
                 ) : null}
@@ -253,6 +254,7 @@ function ProofBoard({
                         ? proofStyles.proofActualStoneBlack
                         : proofStyles.proofActualStoneWhite
                     }`}
+                    role="img"
                     aria-label={`${actualSide} actual move at ${cellNotation(cell, boardSize)}`}
                   />
                 ) : null}

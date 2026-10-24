@@ -52,17 +52,17 @@ vi.mock("../routes/SettingsRoute", () => ({
 
 vi.mock("../routes/LabReportRoute", () => ({
   LabReportRoute: () => (
-    <main>
+    <section>
       <h1>Lab Report</h1>
-    </main>
+    </section>
   ),
 }));
 
 vi.mock("../routes/AssetPreviewRoute", () => ({
   AssetPreviewRoute: () => (
-    <main>
+    <section>
       <h1>Visuals</h1>
-    </main>
+    </section>
   ),
 }));
 

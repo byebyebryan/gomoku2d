@@ -22,7 +22,7 @@ The app design is about four things:
 The app remains local-first by default:
 
 - landing on the site should feel instant
-- the first meaningful interaction creates a local profile
+- entering the player shell initializes a local profile; developer references do not
 - no sign-in should be required for the core play loop
 
 ## Core design rules
@@ -77,10 +77,17 @@ Current canonical surfaces:
 | `/player/?id=...` | Read-only public player identity, optional statistics snapshot and selected games |
 | `/rules/` | Basic Freestyle/Renju rules and legality examples |
 | `/guide/` | Tactics, replay/sharing help and two account-free replay examples; direct section links |
-| `/lab/` | Published bot and replay-analysis report viewer |
+| `/dev/` | Public developer overview, separate from player/account lifecycle |
+| `/dev/process/` | Prepared architecture, development and validation process |
+| `/dev/reviews/` and curated case URLs | Dated comparisons, findings and screen references |
+| `/lab/` | Public bot/report viewer; recorded data and DOM proof boards |
 | `/visuals/` | Visual design reference for sprites, icons, UI tokens, and examples |
 | `/privacy/` | SPA Privacy page for the public app |
 | `/terms/` | SPA Terms page for the public app |
+
+The developer frame and inspectors follow the [developer-area contract](developer_area.md).
+Shared replay/public player retain their existing auth-aware boundary; developer
+references do not initialize Auth, private state or the game engine.
 
 Future online routes must preserve the default local-play contract and
 one-click play.
@@ -89,7 +96,7 @@ one-click play.
 
 The local-first model should stay simple and visible in the UI:
 
-- a local profile is created on first meaningful interaction
+- the player shell ensures a local profile; fresh developer references leave it untouched
 - current rule, bot config, touch control, and hint preferences are persisted
 - finished local matches are persisted locally
 - replay reads from saved local match history

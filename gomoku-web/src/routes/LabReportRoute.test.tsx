@@ -197,10 +197,32 @@ describe("LabReportRoute", () => {
 
     await waitFor(() => expect(reportLoaders.analysis).toHaveBeenCalledOnce());
     expect(await screen.findByText("search-d3+pattern")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Analysis" })).toHaveAttribute(
-      "aria-current",
-      "page",
+    expect(screen.getByRole("link", { name: "Analysis" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("retains an in-flight report when switching away and back", async () => {
+    let resolveReport!: (report: PublishedBotReport) => void;
+    reportLoaders.bot.mockReturnValueOnce(
+      new Promise<PublishedBotReport>((resolve) => {
+        resolveReport = resolve;
+      }),
     );
+    renderRoute();
+    expect(await screen.findByText("Fetching the published data.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Analysis" }));
+    expect(await screen.findByText("search-d3+pattern")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Ranking" }));
+    resolveReport(botReport());
+    expect(await screen.findByText("search-d3")).toBeInTheDocument();
+    expect(reportLoaders.bot).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a supplied match when navigating from Search to Analysis", async () => {
+    renderRoute("/lab/?tab=search&match=match-1");
+    const link = screen.getByRole("link", { name: "Analysis" });
+    expect(link).toHaveAttribute("href", "/lab/?tab=analysis&match=match-1");
+    fireEvent.click(link);
+    expect(await screen.findByText("Search details")).toBeInTheDocument();
   });
 
   it("shows report loading failures", async () => {
@@ -210,7 +232,9 @@ describe("LabReportRoute", () => {
 
     expect(await screen.findByText("report unavailable")).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole("heading", { name: "Report unavailable", level: 2 })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Report unavailable", level: 2 }),
+    ).toBeInTheDocument();
   });
 
   it("opens a deep-linked analysis match", async () => {

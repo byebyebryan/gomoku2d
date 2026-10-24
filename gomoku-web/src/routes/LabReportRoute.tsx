@@ -2,14 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { useDocumentTitle } from "../app/useDocumentTitle";
-import {
-  loadPublishedBotReport,
-  type PublishedBotReport,
-} from "../reports/bot_report";
-import {
-  loadAnalysisReport,
-  type PublishedAnalysisReport,
-} from "../reports/analysis_report";
+import { loadPublishedBotReport, type PublishedBotReport } from "../reports/bot_report";
+import { loadAnalysisReport, type PublishedAnalysisReport } from "../reports/analysis_report";
 import { AnalysisReportContent } from "./AnalysisReportRoute";
 import { BotReportPanel } from "./lab-report/BotReportPanel";
 import {
@@ -41,14 +35,20 @@ export function LabReportRoute() {
 
   const [searchParams] = useSearchParams();
   const view = parseReportView(searchParams.get("tab"));
-  const analysisMatchPath = view === "analysis" ? searchParams.get("match") : null;
+  const matchPath = searchParams.get("match");
+  const analysisMatchPath = view === "analysis" ? matchPath : null;
   const [analysisState, setAnalysisState] = useState<LoadState<PublishedAnalysisReport>>({
     status: "idle",
   });
   const [botState, setBotState] = useState<LoadState<PublishedBotReport>>({ status: "idle" });
 
-  const mounted=useRef(true);
-  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   useEffect(() => {
     if (view === "analysis" || botState.status !== "idle") {
       return;
@@ -103,7 +103,10 @@ export function LabReportRoute() {
     } else {
       content = (
         <>
-          <AnalysisReportContent report={analysisState.report} initialMatchPath={analysisMatchPath} />
+          <AnalysisReportContent
+            report={analysisState.report}
+            initialMatchPath={analysisMatchPath}
+          />
           <AnalysisHowToReadSection />
           <AnalysisProvenanceSection report={analysisState.report} />
         </>
@@ -123,12 +126,42 @@ export function LabReportRoute() {
     );
   }
 
-  return <div className={styles.developerReport}>
-    <header className="dev-heading"><p className="dev-eyebrow">Experiments & analysis</p><h1>Inside the bot lab</h1><p className="dev-lead">Compare behavior under a recorded budget, then inspect the decisions.</p></header>
-    <nav className="dev-views" aria-label="Lab views">{REPORT_VIEWS.map(option=><Link key={option.id} to={option.id==="ranking"?"/lab/":`/lab/?tab=${option.id}${option.id==="analysis"&&analysisMatchPath?`&match=${encodeURIComponent(analysisMatchPath)}`:""}`} aria-current={view===option.id?"page":undefined} id={`lab-report-tab-${option.id}`}>{option.label}</Link>)}</nav>
-    <p className={styles.reportNote}>Published reference runs describe their recorded engine revisions. Current engine behavior can differ; see Provenance for dates and settings.</p>
-    {botState.status==="loaded"&&botState.report.provenance?.git_dirty?<p className={styles.warning}>Development run: generated from a dirty git worktree.</p>:null}
-    {content}
-  </div>;
+  return (
+    <div className={styles.developerReport}>
+      <header className="dev-heading">
+        <p className="dev-eyebrow">Experiments & analysis</p>
+        <h1>Inside the bot lab</h1>
+        <p className="dev-lead">
+          Compare behavior under a recorded budget, then inspect the decisions.
+        </p>
+      </header>
+      <nav className="dev-views" aria-label="Lab views">
+        {REPORT_VIEWS.map((option) => (
+          <Link
+            key={option.id}
+            to={
+              option.id === "ranking"
+                ? "/lab/"
+                : `/lab/?tab=${option.id}${option.id === "analysis" && matchPath ? `&match=${encodeURIComponent(matchPath)}` : ""}`
+            }
+            aria-current={view === option.id ? "page" : undefined}
+            id={`lab-report-tab-${option.id}`}
+          >
+            {option.label}
+          </Link>
+        ))}
+      </nav>
+      <p className={styles.reportNote}>
+        Published reference runs describe their recorded engine revisions. Current engine behavior
+        can differ; see Provenance for dates and settings.
+      </p>
+      {botState.status === "loaded" && botState.report.provenance?.git_dirty ? (
+        <p className={styles.warning}>Development run: generated from a dirty git worktree.</p>
+      ) : null}
+      {content}
+    </div>
+  );
 }
-function parseReportView(value:string|null):ReportView{return value==="search"||value==="analysis"?value:"ranking";}
+function parseReportView(value: string | null): ReportView {
+  return value === "search" || value === "analysis" ? value : "ranking";
+}

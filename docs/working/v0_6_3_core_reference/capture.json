@@ -1,0 +1,269 @@
+{
+  "source": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+  "applicationTree": "fcfe58b5924011ec78e053f64e8ea5a594e7563d",
+  "version": "v0.6.2",
+  "captured_at": "2026-10-24T23:16:11.102Z",
+  "browser": "156.0.8078.4",
+  "browserName": "chromium",
+  "deviceScaleFactor": 1,
+  "emulator_project": "demo-gomoku2d-acceptance",
+  "port_offset": 1000,
+  "fixtures": {
+    "moves": [
+      112,
+      0,
+      113,
+      15,
+      114,
+      30,
+      115,
+      1,
+      116
+    ],
+    "uid": "core-reference-public-fixture",
+    "display_name": "Reference Player"
+  },
+  "captures": [
+    {
+      "file": "home-desktop.png",
+      "sha256": "7552659f108e36ee833de57c04dbff94613182778b6f98484712a9fc94bccb45",
+      "width": 1280,
+      "height": 900,
+      "font": "100%",
+      "screen": "home",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "match-desktop.png",
+      "sha256": "ef04f82fe8f856c3317d8da090413100952f53a22e1828d9796a4ac703ee411d",
+      "width": 1280,
+      "height": 900,
+      "font": "100%",
+      "screen": "match",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "replay-desktop.png",
+      "sha256": "27b7b165a529b62cf942ce635918e61396574d325758f92b370bb0917a090173",
+      "width": 1280,
+      "height": 900,
+      "font": "100%",
+      "screen": "replay",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "settings-desktop.png",
+      "sha256": "926e65b93fb752d8074ac0aeb4023d647d9614a8a2a4bdca07892953c01e9c60",
+      "width": 1280,
+      "height": 900,
+      "font": "100%",
+      "screen": "settings",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "profile-desktop.png",
+      "sha256": "6988b52888a5948bac06601c11c8367ef69a426eb470984bcd0e65ff3b479c51",
+      "width": 1280,
+      "height": 900,
+      "font": "100%",
+      "screen": "profile",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "public-player-desktop.png",
+      "sha256": "25d61f95c1c8c891726231f5446485aedc30b9007dc18f3e437622f936af56db",
+      "width": 1280,
+      "height": 900,
+      "font": "100%",
+      "screen": "public-player",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "home-portrait.png",
+      "sha256": "13dbcc15a7d8c12e9a882175728471a696c38b14c0528bf28da15ce219e44778",
+      "width": 390,
+      "height": 844,
+      "font": "100%",
+      "screen": "home",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "match-portrait.png",
+      "sha256": "f0b3d4f7f99033923178a9a87c9e693377fd6523f7cf5655672324b954bb912b",
+      "width": 390,
+      "height": 844,
+      "font": "100%",
+      "screen": "match",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "replay-portrait.png",
+      "sha256": "a13a1cda4c027eeec99bd6cdc97b235e8a322a9f7e3eac7da5e701bb1711f666",
+      "width": 390,
+      "height": 844,
+      "font": "100%",
+      "screen": "replay",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "settings-portrait.png",
+      "sha256": "a606e0392b3d707b3dc0bf810f5b61a0ac675935697414ad83cc4268805dec33",
+      "width": 390,
+      "height": 844,
+      "font": "100%",
+      "screen": "settings",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "profile-portrait.png",
+      "sha256": "1cf1da5e71156c0652dcb343c0cdd0bc94d9738b58077c0924582cf30b498144",
+      "width": 390,
+      "height": 844,
+      "font": "100%",
+      "screen": "profile",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "public-player-portrait.png",
+      "sha256": "af4bf1318247f879c765cba6963777f0bf2d5a5c491e8ed9d4d20a4d091c6de4",
+      "width": 390,
+      "height": 844,
+      "font": "100%",
+      "screen": "public-player",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "home-landscape.png",
+      "sha256": "bfd4eab8bade3f3194fc7fe2ea1543ba6598e832569fe9d4a81e43abf48d0834",
+      "width": 844,
+      "height": 390,
+      "font": "100%",
+      "screen": "home",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "match-landscape.png",
+      "sha256": "6566c9737bf373fca5ecd82e23d3925b1b64e887db1ec86216cd2ff6005b7d66",
+      "width": 844,
+      "height": 390,
+      "font": "100%",
+      "screen": "match",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "replay-landscape.png",
+      "sha256": "6e05c56e60d6d5c7c79e21485f5e1c6d46202388fb8b6f9d732a4ac60fad9199",
+      "width": 844,
+      "height": 390,
+      "font": "100%",
+      "screen": "replay",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "settings-landscape.png",
+      "sha256": "cbb027cfa703f94fa9750d50c2504792939ac348782bd36e71d324fc1e679a0a",
+      "width": 844,
+      "height": 390,
+      "font": "100%",
+      "screen": "settings",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "profile-landscape.png",
+      "sha256": "4c719a4d5487635f5b28ba2f7df46565f54c62c512ba72e49baa5db66e03fe70",
+      "width": 844,
+      "height": 390,
+      "font": "100%",
+      "screen": "profile",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "public-player-landscape.png",
+      "sha256": "48d1829ff9cc4792a8d7535c05c11e114b13ee0e322bac9fca5e7c9565046cc6",
+      "width": 844,
+      "height": 390,
+      "font": "100%",
+      "screen": "public-player",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "home-enlarged.png",
+      "sha256": "967fcedb19a186fd7231c0f7edafe247f28656feeb999e27a4bf53a97fd8af5b",
+      "width": 320,
+      "height": 800,
+      "font": "200%",
+      "screen": "home",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "match-enlarged.png",
+      "sha256": "6dd0870dae5f457a282917e795080c69b167035da8707e66eb53074b7743caba",
+      "width": 320,
+      "height": 800,
+      "font": "200%",
+      "screen": "match",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "replay-enlarged.png",
+      "sha256": "422381644793832cd75487e54da27060bbefd218faa8ce8a31d5702e99c7ea00",
+      "width": 320,
+      "height": 800,
+      "font": "200%",
+      "screen": "replay",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "settings-enlarged.png",
+      "sha256": "82968bb774855b3c9ef6b0d73fe1351c274e2ce1e2e2c4ccfd8956687ba8c77f",
+      "width": 320,
+      "height": 800,
+      "font": "200%",
+      "screen": "settings",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "profile-enlarged.png",
+      "sha256": "5d954385f128df91a64c00ac8da2df55ce1e33ae551815d197e6a39e714b8efd",
+      "width": 320,
+      "height": 800,
+      "font": "200%",
+      "screen": "profile",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    },
+    {
+      "file": "public-player-enlarged.png",
+      "sha256": "c96e33f96415a9b011f97211390ab609f1e86a72320c2a610c6a173a845a895f",
+      "width": 320,
+      "height": 800,
+      "font": "200%",
+      "screen": "public-player",
+      "browser": "chromium",
+      "conditions": "Fresh guest browser, deterministic local/public emulator fixtures, reduced motion, viewport capture; no real accounts"
+    }
+  ],
+  "renderer_note": "Phaser AUTO preference; actual per-capture renderer was not observed. These are layout references, not renderer pixel qualification."
+}
