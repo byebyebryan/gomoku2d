@@ -1,0 +1,690 @@
+{
+  "date_utc": "2026-10-24T03:59:29.128384+00:00",
+  "baseline": "895ea8a",
+  "fix_commit": "c0cf856",
+  "scope": "v0.6.2 public-profile checkpoint; local review only",
+  "findings": [
+    {
+      "priority": "P2",
+      "issue": "Revisiting a replay-origin profile history entry after pagination loses scroll/focus.",
+      "fixed": true
+    },
+    {
+      "priority": "P2",
+      "issue": "Returning after a viewport change focuses a Replay control outside the viewport.",
+      "fixed": true
+    }
+  ],
+  "sources": [
+    {
+      "path": "gomoku-web/src/routes/PublicPlayerRoute.tsx",
+      "sha256": "040ff5010ecf81cc4e572e81d84532324d968641bc374b9b6cb009133d93dc03"
+    },
+    {
+      "path": "gomoku-web/src/routes/PublicSharing.test.tsx",
+      "sha256": "74826721c36f02817e7591f876d6b42d872a789abd648e1e40e49f226ffb0cac"
+    },
+    {
+      "path": "gomoku-web/cloudtests/sharing.spec.ts",
+      "sha256": "44667723dd5f5cf46ad2ea5f7ae6b568c70c43644ace73ddfabfef5436d161ab"
+    }
+  ],
+  "checks": {
+    "unit": {
+      "files": 50,
+      "passed": 504,
+      "log": "unit.log"
+    },
+    "typecheck": "typecheck.log",
+    "build": "build.log",
+    "manual_build": "manual-build.log",
+    "cloud": {
+      "distinct_cases": 18,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "case_labels": [
+        "C10",
+        "C11",
+        "C15",
+        "C16",
+        "C17",
+        "C18"
+      ],
+      "initial_passed": 17,
+      "initial_total": 18,
+      "initial_log": "cloud.log",
+      "correction": "Allow one CSS pixel for native nearest-edge scroll rounding; Firefox observed a 0.28px boundary difference.",
+      "navigation_rerun_passed": 3,
+      "navigation_rerun_total": 3,
+      "navigation_rerun_log": "cloud-navigation-final.log",
+      "emulator_port_offset": 1000
+    },
+    "manual_preview_probe_before": [
+      {
+        "engine": "chromium",
+        "check": "return-after-resize",
+        "box": {
+          "x": 30,
+          "y": 1368.390625,
+          "width": 330,
+          "height": 44
+        },
+        "fullyInViewport": false
+      },
+      {
+        "engine": "chromium",
+        "check": "paging-then-history-back",
+        "active": null,
+        "expected": "Replay Demo game 15"
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 720,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 721,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 980,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 981,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 1024,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 500,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 600,
+        "height": 375,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "runtime-errors",
+        "errors": []
+      },
+      {
+        "engine": "firefox",
+        "check": "return-after-resize",
+        "box": {
+          "x": 30,
+          "y": 1493,
+          "width": 330,
+          "height": 44
+        },
+        "fullyInViewport": false
+      },
+      {
+        "engine": "firefox",
+        "check": "paging-then-history-back",
+        "active": null,
+        "expected": "Replay Demo game 15"
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 720,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 721,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 980,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 981,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 1024,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 500,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 600,
+        "height": 375,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "runtime-errors",
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "check": "return-after-resize",
+        "box": {
+          "x": 30,
+          "y": 1400.34375,
+          "width": 330,
+          "height": 44
+        },
+        "fullyInViewport": false
+      },
+      {
+        "engine": "webkit",
+        "check": "paging-then-history-back",
+        "active": null,
+        "expected": "Replay Demo game 15"
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 720,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 721,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 980,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 981,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 1024,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 500,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 600,
+        "height": 375,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "runtime-errors",
+        "errors": []
+      }
+    ],
+    "manual_preview_probe_after": [
+      {
+        "engine": "chromium",
+        "check": "return-after-resize",
+        "box": {
+          "x": 30,
+          "y": 800.390625,
+          "width": 330,
+          "height": 44
+        },
+        "fullyInViewport": true
+      },
+      {
+        "engine": "chromium",
+        "check": "paging-then-history-back",
+        "active": "Replay Demo game 15",
+        "expected": "Replay Demo game 15"
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 720,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 721,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 980,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 981,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 1024,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 500,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "breakpoint",
+        "width": 600,
+        "height": 375,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "chromium",
+        "check": "runtime-errors",
+        "errors": []
+      },
+      {
+        "engine": "firefox",
+        "check": "return-after-resize",
+        "box": {
+          "x": 30,
+          "y": 800,
+          "width": 330,
+          "height": 44
+        },
+        "fullyInViewport": true
+      },
+      {
+        "engine": "firefox",
+        "check": "paging-then-history-back",
+        "active": "Replay Demo game 15",
+        "expected": "Replay Demo game 15"
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 720,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 721,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 980,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 981,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 1024,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 500,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "breakpoint",
+        "width": 600,
+        "height": 375,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "firefox",
+        "check": "runtime-errors",
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "check": "return-after-resize",
+        "box": {
+          "x": 30,
+          "y": 800.34375,
+          "width": 330,
+          "height": 44
+        },
+        "fullyInViewport": true
+      },
+      {
+        "engine": "webkit",
+        "check": "paging-then-history-back",
+        "active": "Replay Demo game 15",
+        "expected": "Replay Demo game 15"
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 720,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 721,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 980,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 981,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 1024,
+        "height": 900,
+        "scale": 200,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 900,
+        "height": 500,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "breakpoint",
+        "width": 600,
+        "height": 375,
+        "scale": 100,
+        "overflow": false,
+        "metadataOverlap": false
+      },
+      {
+        "engine": "webkit",
+        "check": "runtime-errors",
+        "errors": []
+      }
+    ]
+  },
+  "preview": {
+    "url": "http://127.0.0.1:8013/",
+    "matched_build_files": 145,
+    "index_sha256": "b3c447bdc8091d95508ceefff63da3ecba7cde9ad59631e78763e45f3ad9db7f",
+    "entry": "/assets/index-DdU7tpOe.js",
+    "entry_sha256": "5f733594ec1b97c2fb3c187e14122d53987207ed5c0155427e5af0eea064235a",
+    "manual_public_documents_unchanged": [
+      {
+        "suffix": "",
+        "sha256": "943c3fa080b1d10dbc15bdf29bb025e7c8ec76b2164142407b88727bebf4f138"
+      },
+      {
+        "suffix": "/pages/0",
+        "sha256": "152f3b6642336bbbbb645434ea9b2f8a9b5e7b0c1ab93d613273a26815b4758c"
+      },
+      {
+        "suffix": "/pages/1",
+        "sha256": "89ec46049aee17800579b3d61783cdbbf51ab9d1a3e91302a9e7a8c9dbaa4663"
+      },
+      {
+        "suffix": "/pages/2",
+        "sha256": "758064e229fa77255844816bdb66b71acd98405832a28a5376a785e96039b9c0"
+      },
+      {
+        "suffix": "/pages/3",
+        "sha256": "a70eef06f36c8b2294f2a2058be24d86bc38703caf545c9a536e88c33fac8f22"
+      }
+    ]
+  },
+  "carbon": {
+    "index_sha256": "b3c447bdc8091d95508ceefff63da3ecba7cde9ad59631e78763e45f3ad9db7f",
+    "entry": "/assets/index-DdU7tpOe.js",
+    "entry_sha256": "5f733594ec1b97c2fb3c187e14122d53987207ed5c0155427e5af0eea064235a",
+    "auth_http_status": 200,
+    "public_name": "Demo Player"
+  },
+  "captures": [
+    {
+      "path": "return-after-resize-after.png",
+      "sha256": "8841ef06777d0d648f1621b821bd7a8fe217fb2885660f2c5ee570868fbf3bde"
+    },
+    {
+      "path": "return-after-resize-before.png",
+      "sha256": "55f84123e156ad54ecf3cda916a6fe1b4890ac3c67526488d33277e35ff5cf56"
+    }
+  ],
+  "raw_artifacts": "gomoku-web/test-results/v062-review",
+  "prior_manual_build_backup": "gomoku-web/test-results/v062-review/backup-dist-cloud-895ea8a",
+  "manual_data_preserved": true,
+  "no_push_or_production_publication": true,
+  "remaining": [
+    "Bryan application visual acceptance",
+    "physical phone/touch and human accessibility acceptance",
+    "earlier real-account sharing handoff",
+    "remaining 0.6.2 owner/help/examples/documentation/media work"
+  ]
+}

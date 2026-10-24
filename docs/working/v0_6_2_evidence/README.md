@@ -6,6 +6,10 @@ coverage `50ebe23`, narrow identity refinement `152674c`. The
 remaining manual/release boundaries. [evidence.json](evidence.json) records
 source/capture hashes, browser results and served-build identity.
 
+The [subsequent implementation review](../v0_6_2_review/README.md) records two
+additional navigation fixes and the latest preview identity. This ledger and
+its captures retain the original implementation snapshot.
+
 ## Inspect the application
 
 On Carbon, through the existing tunnel:

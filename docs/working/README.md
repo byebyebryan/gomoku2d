@@ -10,6 +10,7 @@ belong in the [reference docs](../README.md#choose-a-path).
 |---|---|
 | [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; profile technical checkpoint complete; application visual review and remaining owner/help/examples/media work follow |
 | [0.6.2 public-profile implementation](v0_6_2_implementation.md) | Bryan; implemented and technically checked; emulator preview ready for application visual review |
+| [0.6.2 implementation review](v0_6_2_review/README.md) | Bryan; two history/resize findings fixed; latest source/preview validation, application visual acceptance follows |
 | [0.6.2 public-profile design study](v0_6_2_design/README.md) | Bryan; accepted player-card direction plus retained alternatives; application preview review follows implementation |
 
 ## Published v0.6.1 Handoff

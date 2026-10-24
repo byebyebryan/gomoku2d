@@ -80,6 +80,12 @@ are not automatically closed by this UI checkpoint.
 
 ## Results
 
+The subsequent [thorough implementation review](v0_6_2_review/README.md) found
+and fixed two further history/resize restoration issues in `c0cf856`. It
+records the latest source and preview, 504 passing units, the selected cloud
+reruns and 33 additional three-engine checks. The results below retain the
+original implementation snapshot.
+
 The accepted player card is implemented with existing data and controls.
 The record strip, divided eight-row lists, stable pager and responsive identity
 replace the old centered card. Public replay returns retain page, activation-time
