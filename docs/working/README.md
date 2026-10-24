@@ -8,8 +8,8 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
-| [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; reviewed sequence and research; next checkpoint is the 0.6.2 visitor/owner UI design before implementation |
-| [0.6.2 public-profile implementation](v0_6_2_implementation.md) | Bryan; accepted player-card layout; implementation and technical acceptance in progress |
+| [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; profile technical checkpoint complete; application visual review and remaining owner/help/examples/media work follow |
+| [0.6.2 public-profile implementation](v0_6_2_implementation.md) | Bryan; implemented and technically checked; emulator preview ready for application visual review |
 | [0.6.2 public-profile design study](v0_6_2_design/README.md) | Bryan; accepted player-card direction plus retained alternatives; application preview review follows implementation |
 
 ## Published v0.6.1 Handoff

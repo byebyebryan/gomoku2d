@@ -1,7 +1,8 @@
 # v0.6.2 public-profile implementation checkpoint
 
 Owner: Bryan. Started October 23, 2026 from `03765d3`.
-Status: implementation in progress; publication is separate.
+Status: public-profile technical checkpoint complete; Bryan's application
+visual review and the remaining 0.6.2 work follow. Publication is separate.
 
 ## Accepted design and scope
 
@@ -49,9 +50,9 @@ disabled/changed data honestly; do not restore another UID's view state.
 
 ## Work and verification
 
-Luna Max owns the cohesive visitor UI, narrow shared-viewer return integration,
-and focused unit/component/browser scenario changes. The primary owns product
-decisions, integration review, final checks, evidence, local commits and preview.
+Luna Max implemented the visitor UI, shared-viewer return integration and
+navigation helper tests. The primary owned component/browser regressions,
+integration corrections, final checks, evidence, local commits and preview.
 Owner settings retain their existing behavior and styling.
 
 Use the repository's proportional testing gate:
@@ -79,6 +80,46 @@ are not automatically closed by this UI checkpoint.
 
 ## Results
 
-Implementation, validation and preview receipts will be recorded here after the
-integrated candidate is accepted by the primary. Human review of the real-data
-preview follows that technical checkpoint.
+The accepted player card is implemented with existing data and controls.
+The record strip, divided eight-row lists, stable pager and responsive identity
+replace the old centered card. Public replay returns retain page, activation-time
+scroll and trigger focus; missing entries fall back to the public name. Root
+and page errors have explicit recovery. Clipboard denial opens and selects a
+canonical URL after the mobile details section is visible.
+
+Review corrected automatic retries after an initial page failure, stale-root
+reload recovery, late page responses, scroll captured before rather than at
+activation, portrait document scrolling, narrow metadata overlap, accessible
+button naming and return-header overflow. At 320px Copy uses the established
+icon-button treatment to leave room for the public name.
+
+- Full web typecheck and **503 unit tests in 50 files** passed.
+- **93** regular Chromium/Firefox/WebKit checks passed for smoke, private
+  Profile, shared replay, saving/continuing and hostile/large replay labels.
+- The six selected cloud journeys **C10/C11/C15/C16/C17/C18** passed in all
+  three engines across the recorded runs. They cover private-read isolation,
+  publication lifecycle, Unicode/reflow, sparse/legacy pages, explicit and
+  native replay return, removed entries, changed manifests, empty/unavailable
+  profiles and clipboard fallback. The final focused reruns validate corrections;
+  this is not a claim that the earlier exploratory runs all passed.
+- Production and emulator-configured builds completed, including static assets
+  and direct-route entries. No dependency, schema, rules, service or index changed.
+- The real manual preview passed **15** additional layout/desktop-return checks
+  across three engines at 1440px, 390px, 320px and 640px with 200% root text.
+  Source captures were inspected; automated axe checks remain bounded evidence,
+  not human accessibility or physical-device acceptance.
+- Preview bytes and Carbon's forwarded HTTP endpoints were verified. The
+  existing demo root and four page documents retain their original hashes.
+  Old build files are backed up and older hashed chunks remain served.
+
+The [evidence ledger](v0_6_2_evidence/README.md) records sources, captures,
+commands, preview identity and recovery boundaries. On Carbon open
+**[Demo Player](http://127.0.0.1:8013/player/?id=v061-demo-player)** through the
+existing tunnel. This is an emulator-backed local preview; production remains
+the published 0.6.1.
+
+Bryan's next pass is the real layout, mobile density, profile details and replay
+return. Broader owner/action clarity, player help, static examples, documentation
+consolidation and release media remain in the follow-up plan. Existing real-account,
+phone/touch and human accessibility handoffs stay open. No push, tag or production
+deployment occurred.

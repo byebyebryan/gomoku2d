@@ -1,0 +1,295 @@
+{
+  "generated_at": "2026-10-24T03:37:43.437535+00:00",
+  "baseline": "03765d3",
+  "runtime_commit": "152674c",
+  "implementation_commit": "865988d",
+  "additional_browser_tests_commit": "50ebe23",
+  "branch": "main",
+  "publication": "local preview only; no push, tag or production deployment",
+  "source_files": [
+    {
+      "path": "gomoku-web/src/routes/PublicPlayerRoute.tsx",
+      "sha256": "a7880265dad40a2f689e3c460f4b7e090fbdb59cb476a2dcac163dac8d79814f"
+    },
+    {
+      "path": "gomoku-web/src/routes/PublicPlayerRoute.module.css",
+      "sha256": "a676a935e1862783c8f81302c65e027944eaec2f78b4632266f336336eb93863"
+    },
+    {
+      "path": "gomoku-web/src/routes/public_player_navigation.ts",
+      "sha256": "171c06b9bdd3cb3348d5fb55665be90e2aaa8c662f80c914e1882ba0cdf9cbc1"
+    },
+    {
+      "path": "gomoku-web/src/routes/public_player_navigation.test.ts",
+      "sha256": "905b039ae98f79befcf0660327a90f13a07f626e9f9abc4f9dae7df933444dc8"
+    },
+    {
+      "path": "gomoku-web/src/routes/PublicSharing.test.tsx",
+      "sha256": "1251f4f8910f21f048fd2612a770914a6a363a9a3897077eb94b2d7a53413456"
+    },
+    {
+      "path": "gomoku-web/src/routes/ReplayRoute.tsx",
+      "sha256": "176b85fd03f6a776b44580dae4e1949b14c93c8ba114324203eb3ac325d234a3"
+    },
+    {
+      "path": "gomoku-web/src/routes/ReplayRoute.module.css",
+      "sha256": "a4c87cd866bdc623efce20aa9b2edaf6ddfbb3f9a5a9a4bcff99b0ca4344af92"
+    },
+    {
+      "path": "gomoku-web/src/routes/SharedReplayRoute.tsx",
+      "sha256": "ea85837076c7a531a18a2f50382c01f84a7875b283a46065a41516701c912331"
+    },
+    {
+      "path": "gomoku-web/cloudtests/sharing.spec.ts",
+      "sha256": "fd95c9f5145f6579799764b421dbdf10582709f5236a78c8030c2b4801d2b042"
+    }
+  ],
+  "validation": {
+    "unit": {
+      "files": 50,
+      "passed": 503,
+      "log": "unit-accepted.log"
+    },
+    "typecheck": "typecheck-final.log",
+    "production_build": "production-final.log",
+    "manual_build": "manual-build-accepted.log",
+    "ordinary_browser": {
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "passed": 93,
+      "log": "browser.log"
+    },
+    "cloud": {
+      "distinct_journeys": [
+        "C10",
+        "C11",
+        "C15",
+        "C16",
+        "C17",
+        "C18"
+      ],
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "distinct_passing_cases": 18,
+      "log_mapping": {
+        "C10/C15/C16": "cloud-final.log (these cases passed; other cases in this exploratory run failed and were corrected)",
+        "C11": "cloud-return.log",
+        "C17": "cloud-adverse-accepted.log",
+        "C18": "cloud-final-states.log"
+      },
+      "port_offset": 1000,
+      "notes": "Raw runs are retained separately; repeated passes are not counted as additional distinct cases."
+    },
+    "preview_visual_checks": [
+      {
+        "engine": "chromium",
+        "name": "desktop",
+        "width": 1440,
+        "documentWidth": 1440,
+        "mainWidth": 1440,
+        "mainScrollWidth": 1440
+      },
+      {
+        "engine": "chromium",
+        "name": "portrait",
+        "width": 390,
+        "documentWidth": 390,
+        "mainWidth": 390,
+        "mainScrollWidth": 390
+      },
+      {
+        "engine": "chromium",
+        "name": "narrow",
+        "width": 320,
+        "documentWidth": 320,
+        "mainWidth": 320,
+        "mainScrollWidth": 320
+      },
+      {
+        "engine": "chromium",
+        "name": "enlarged",
+        "width": 640,
+        "documentWidth": 640,
+        "mainWidth": 640,
+        "mainScrollWidth": 640
+      },
+      {
+        "engine": "chromium",
+        "name": "desktop-return",
+        "originalScroll": 372,
+        "restoredScroll": 372,
+        "errors": []
+      },
+      {
+        "engine": "firefox",
+        "name": "desktop",
+        "width": 1440,
+        "documentWidth": 1440,
+        "mainWidth": 1440,
+        "mainScrollWidth": 1440
+      },
+      {
+        "engine": "firefox",
+        "name": "portrait",
+        "width": 390,
+        "documentWidth": 390,
+        "mainWidth": 390,
+        "mainScrollWidth": 390
+      },
+      {
+        "engine": "firefox",
+        "name": "narrow",
+        "width": 320,
+        "documentWidth": 320,
+        "mainWidth": 320,
+        "mainScrollWidth": 320
+      },
+      {
+        "engine": "firefox",
+        "name": "enlarged",
+        "width": 640,
+        "documentWidth": 640,
+        "mainWidth": 640,
+        "mainScrollWidth": 640
+      },
+      {
+        "engine": "firefox",
+        "name": "desktop-return",
+        "originalScroll": 379,
+        "restoredScroll": 379,
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "name": "desktop",
+        "width": 1440,
+        "documentWidth": 1440,
+        "mainWidth": 1440,
+        "mainScrollWidth": 1440
+      },
+      {
+        "engine": "webkit",
+        "name": "portrait",
+        "width": 390,
+        "documentWidth": 390,
+        "mainWidth": 390,
+        "mainScrollWidth": 390
+      },
+      {
+        "engine": "webkit",
+        "name": "narrow",
+        "width": 320,
+        "documentWidth": 320,
+        "mainWidth": 320,
+        "mainScrollWidth": 320
+      },
+      {
+        "engine": "webkit",
+        "name": "enlarged",
+        "width": 640,
+        "documentWidth": 640,
+        "mainWidth": 640,
+        "mainScrollWidth": 640
+      },
+      {
+        "engine": "webkit",
+        "name": "desktop-return",
+        "originalScroll": 372,
+        "restoredScroll": 372,
+        "errors": []
+      }
+    ]
+  },
+  "preview": {
+    "url": "http://127.0.0.1:8013/",
+    "matched_build_files": 145,
+    "index_sha256": "10d7d18aa5d93f372d90922c1865a2b882f2b0d82f6bacf6d5478e341baf7711",
+    "entry": "/assets/index-CA3rbwfI.js",
+    "entry_sha256": "0c9a50967d4e691ea1169fb17fd082abe1998e6efdc51f7d86ab44381f4b1599",
+    "manual_public_documents_unchanged": [
+      {
+        "suffix": "",
+        "sha256": "943c3fa080b1d10dbc15bdf29bb025e7c8ec76b2164142407b88727bebf4f138"
+      },
+      {
+        "suffix": "/pages/0",
+        "sha256": "152f3b6642336bbbbb645434ea9b2f8a9b5e7b0c1ab93d613273a26815b4758c"
+      },
+      {
+        "suffix": "/pages/1",
+        "sha256": "89ec46049aee17800579b3d61783cdbbf51ab9d1a3e91302a9e7a8c9dbaa4663"
+      },
+      {
+        "suffix": "/pages/2",
+        "sha256": "758064e229fa77255844816bdb66b71acd98405832a28a5376a785e96039b9c0"
+      },
+      {
+        "suffix": "/pages/3",
+        "sha256": "a70eef06f36c8b2294f2a2058be24d86bc38703caf545c9a536e88c33fac8f22"
+      }
+    ]
+  },
+  "carbon": {
+    "index_sha256": "10d7d18aa5d93f372d90922c1865a2b882f2b0d82f6bacf6d5478e341baf7711",
+    "entry": "/assets/index-CA3rbwfI.js",
+    "entry_sha256": "0c9a50967d4e691ea1169fb17fd082abe1998e6efdc51f7d86ab44381f4b1599",
+    "auth_http_status": 200,
+    "public_name": "Demo Player"
+  },
+  "captures": [
+    {
+      "path": "desktop.png",
+      "bytes": 40670,
+      "sha256": "25280f4a4860f44f9c2ed4ea5bf6769623ee0a26d4e720df3325de1edb3127da"
+    },
+    {
+      "path": "enlarged.png",
+      "bytes": 16933,
+      "sha256": "4ec0198d92b93a5e2db37e077639a4f94e1425604cbc9a79f5e78e9ee0368a15"
+    },
+    {
+      "path": "narrow.png",
+      "bytes": 15229,
+      "sha256": "d3ac98d7796640afdc95032185f6358e72c756323e37ce9980b98e4aba073431"
+    },
+    {
+      "path": "portrait.png",
+      "bytes": 16992,
+      "sha256": "67ac24dc780c4e8c9745c968e6f717eeee8286fb295df695bd7de2b5e4f43761"
+    },
+    {
+      "path": "public-catalog-error.png",
+      "bytes": 11477,
+      "sha256": "59e0f22d10943213222bd5917d195fc5928b87a2a3d2085759b30c58938bf114"
+    },
+    {
+      "path": "public-empty-copy-fallback.png",
+      "bytes": 13168,
+      "sha256": "62e371b856a93233382ee3a8fb44b57a13163ea3cb827cfc5594cafb2968f8b3"
+    }
+  ],
+  "preserved": {
+    "manual_demo_documents": 5,
+    "manual_services": [
+      "gomoku2d-v06-preview.service",
+      "gomoku2d-v06-emulators.service",
+      "gomoku2d-v06-carbon-tunnel.service"
+    ],
+    "backup": "gomoku-web/test-results/v062-implementation/backup/dist-cloud-03765d3",
+    "port_8001": "not used or changed",
+    "browser_tabs": "none opened"
+  },
+  "remaining": [
+    "Bryan application visual acceptance",
+    "physical phone and touch acceptance",
+    "human accessibility checks",
+    "earlier real-account sharing handoff",
+    "broader 0.6.2 owner/help/examples/documentation/media work"
+  ]
+}

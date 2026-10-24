@@ -56,6 +56,12 @@ and record context. The [implementation checkpoint](v0_6_2_implementation.md)
 tracks the real-data UI, technical acceptance and preview; broader 0.6.2 help,
 examples and media remain separately sequenced.
 
+The public-player slice is now implemented and technically checked. Its
+checkpoint and evidence ledger own current runtime results; the research table
+above describes the original 0.6.1 baseline. Next is Bryan's application visual
+pass and the remaining owner/action-clarity, help, example and media decisions.
+This does not mark the full 0.6.2 release complete.
+
 ### Planned minimum
 
 1. Review visitor and owner screens together. Establish identity → optional
