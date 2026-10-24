@@ -771,6 +771,16 @@
     padding: 14px;
   }
 
+  .copyLink {
+    width: 42px;
+    min-height: 42px;
+    padding: 0;
+  }
+
+  .copyLink :global(.uiActionLabel) {
+    display: none;
+  }
+
   .pagingControls {
     gap: 4px;
   }
