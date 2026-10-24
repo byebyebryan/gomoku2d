@@ -4,6 +4,9 @@ October 23, 2026. Reviewed local `895ea8a` against the accepted player-card
 design and sharing contracts. Both confirmed findings are fixed in `c0cf856`.
 This is the public-profile checkpoint review, not the full 0.6.2 release gate.
 
+The subsequent [mobile layout pass](../v0_6_2_mobile/README.md) owns the newer
+visual preview; this review retains its original navigation evidence.
+
 ## Findings
 
 | Priority | Reproduction and impact | Resolution |

@@ -243,6 +243,11 @@ On portrait mobile, verbose analysis status copy may be suppressed in the first
 viewport so the player cards, board, timeline, transport, and branch action stay
 in the primary flow.
 
+On short landscape screens, keep the board beside a scrollable control pane so
+transport remains visible without scrolling past the board. Compact names and
+metadata retain their full accessible labels. Sharing/publishing still swaps the
+control pane and restores the originating action when closed.
+
 #### B. Transport controls
 
 Transport is the main secondary UI on the page.
@@ -294,6 +299,12 @@ explicitly from the complete My games summary. The
 [0.6.1 contract](../../working/v0_6_1_public_profile.md) retains the functional
 and storage boundaries.
 
+On mobile, keep name/status and sign-in/out visible, with secondary account and
+reset controls under Profile controls. Desktop keeps those controls expanded.
+The three record tabs share one row; statistics reflow with enlarged text. My
+games sync status belongs to My games. Saved entries use compact paired Inspect
+and Remove actions while retaining complete accessible names.
+
 Tone:
 
 - think `player record`, not `settings`
@@ -323,6 +334,8 @@ On narrow screens, name/count/copy stay visible while extra profile information
 starts collapsed. Hide the statistics section entirely when sharing is off.
 Keep complete accessible labels, visible focus and usable clipboard fallback.
 First/last-page navigation retains stable Previous/Next placement.
+Compact game rows follow the existing mobile My games treatment: result,
+title/opponent, rule/move metadata and a 48px Replay icon action.
 
 Catalog replay links provide an originating-profile return. Logical page is
 URL-backed; scroll position and the originating Replay focus remain transient

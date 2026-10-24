@@ -80,6 +80,10 @@ are not automatically closed by this UI checkpoint.
 
 ## Results
 
+The later [mobile layout pass](v0_6_2_mobile/README.md) owns the current visual
+preview for Profile, saved/public lists and short-landscape Replay. It retains
+a before/after gallery and separates emulated checks from Bryan's phone review.
+
 The subsequent [thorough implementation review](v0_6_2_review/README.md) found
 and fixed two further history/resize restoration issues in `c0cf856`. It
 records the latest source and preview, 504 passing units, the selected cloud

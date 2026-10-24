@@ -47,6 +47,11 @@ visible navigation on one row and teaching diagrams stack before becoming too
 small. Other layouts retain their existing direction. Broader comparison mocks
 were not adopted; see the [review closeout](../../archive/reconciliation_2026_10/README.md).
 
+The later [0.6.2 mobile implementation pass](../../working/v0_6_2_mobile/README.md)
+refines Profile controls/tabs, saved/public rows and short-landscape Replay using
+the same visual language. Its gallery and technical checks support the pending
+human visual/phone review; they do not change the earlier closeout's scope.
+
 The current release assumption is:
 
 - settings/profile/product controls are part of the main app surface;

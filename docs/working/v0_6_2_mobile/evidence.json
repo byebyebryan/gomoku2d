@@ -1,0 +1,315 @@
+{
+  "generated_at": "2026-10-24T05:49:17.206479+00:00",
+  "baseline": "ce5335d",
+  "runtime_commit": "754ed62",
+  "scope": "0.6.1 sharing/profile mobile flows plus the 0.6.2 public player; local preview only",
+  "sources": [
+    {
+      "path": "gomoku-web/src/routes/ProfileRoute.tsx",
+      "sha256": "0a4496542c8ef74fd81db1d005f850684e26107c0ec14caa374edfab9a829bff"
+    },
+    {
+      "path": "gomoku-web/src/routes/ProfileRoute.module.css",
+      "sha256": "0f064c56bacb711c676c7569d275f48280affc37bb583fa375c49486053d22e2"
+    },
+    {
+      "path": "gomoku-web/src/routes/PublicPlayerRoute.tsx",
+      "sha256": "2e51630a7131f229b3ea545b31e56ae695ce8b1eda2caec74771a75c26b8c205"
+    },
+    {
+      "path": "gomoku-web/src/routes/PublicPlayerRoute.module.css",
+      "sha256": "25292e308b7ea54304135a948372153068c286e904b8f8f79e932fdb2b26ceca"
+    },
+    {
+      "path": "gomoku-web/src/routes/ReplayLibraryPanel.tsx",
+      "sha256": "9f8fc7bfdd6417a8997740b7b3e2c8f521cea5e5e2fe4277d5fe95dd8c4404c8"
+    },
+    {
+      "path": "gomoku-web/src/routes/ReplayLibraryPanel.module.css",
+      "sha256": "3aa650a6b7eb90a28c59414160f2ea9e0a1bdfb1a2d947d486e8d70980761d29"
+    },
+    {
+      "path": "gomoku-web/src/routes/ReplayRoute.module.css",
+      "sha256": "f2483f69e14d84e88ae51af8098a271dd27d1b03236514a1c11bc3614fae63a7"
+    },
+    {
+      "path": "gomoku-web/cloudtests/mobile_layout.spec.ts",
+      "sha256": "75ab8621912f183e7bbe0a7c2c79947a8b3c26977e5493f9fb8ce82de18bbc4d"
+    },
+    {
+      "path": "gomoku-web/playtests/profile.spec.ts",
+      "sha256": "f79960df20680c91ad405102a25490b31f2f5fbebab1531b8542512cd6b39ebf"
+    }
+  ],
+  "checks": {
+    "typecheck": "typecheck-final.log",
+    "units": {
+      "passed": 504,
+      "files": 50,
+      "log": "unit-accepted.log"
+    },
+    "build": "build-final.log",
+    "manual_build": "manual-build.log",
+    "ordinary_browser": {
+      "distinct_passed": 96,
+      "initial_passed": 93,
+      "initial_total": 96,
+      "initial_log": "browser.log",
+      "final_compact_profile_passed": 3,
+      "final_compact_profile_log": "profile-final.log",
+      "corrections": [
+        "Native details mode transition could retain a closed desktop control group.",
+        "Four-column My games statistics could overflow at 200% text on 320px."
+      ]
+    },
+    "cloud": {
+      "distinct_passed": 27,
+      "labels": [
+        "M01",
+        "C10",
+        "C11",
+        "C12",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18"
+      ],
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "log": "cloud-regression.log",
+      "final_mobile_passed": 3,
+      "final_mobile_log": "mobile-accepted.log",
+      "port_offset": 1000,
+      "notes": "Mobile auth driver follows the browser touch/coarse-pointer environment. Chromium exercised redirect; other emulation modes can use popup. Auth policy was not changed."
+    }
+  },
+  "gallery": {
+    "publication": {
+      "report_id": "104645db902f603145c3045b8ad9ee107fbee1c921ece6f86753f0a23a536142",
+      "title": "Gomoku2D 0.6.2 \u2014 mobile layout before and after",
+      "project": "gomoku2d",
+      "entrypoint": "index.html",
+      "created_at": "2026-10-24T05:45:46.736527+00:00",
+      "state": "published",
+      "schema": 1,
+      "publication": "created",
+      "origin": "starship",
+      "snapshot_path": "/home/bryan/.local/share/codex-plus/reports/public/104645db902f603145c3045b8ad9ee107fbee1c921ece6f86753f0a23a536142",
+      "file_count": 15,
+      "byte_count": 222495,
+      "url": "http://starship:8787/reports/104645db902f603145c3045b8ad9ee107fbee1c921ece6f86753f0a23a536142/",
+      "catalog": {
+        "state": "updated"
+      },
+      "delivery": {
+        "checked_at": "2026-10-24T05:45:47.122386+00:00",
+        "checked_from": "starship",
+        "state": "verified",
+        "http_status": 200,
+        "bytes": 10266,
+        "verified_url": "http://starship:8787/reports/104645db902f603145c3045b8ad9ee107fbee1c921ece6f86753f0a23a536142/"
+      },
+      "catalog_url": "http://starship:8787/reports/",
+      "project_url": "http://starship:8787/reports/#project=gomoku2d",
+      "server": {
+        "state": "running",
+        "session": "codex-report-server",
+        "session_id": "$11",
+        "pid": 1970925,
+        "url": "http://starship:8787/reports/",
+        "version": "0.1.0-preview.7",
+        "reused": true
+      }
+    },
+    "delivery": {
+      "matched_files": 15,
+      "files": [
+        {
+          "path": "fonts/LICENSE.txt",
+          "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+        },
+        {
+          "path": "fonts/PixelOperator-Bold.ttf",
+          "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+        },
+        {
+          "path": "fonts/PixelOperator.ttf",
+          "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+        },
+        {
+          "path": "index.html",
+          "sha256": "1a2159ee4a62df77cb651571853bf22318f437a731f97c72dd937b29c02d7a83"
+        },
+        {
+          "path": "landscape-after.png",
+          "sha256": "1f207fb23413411c0726af63bf6eb5a7551808f852dcf3917e4b551fa5d269b2"
+        },
+        {
+          "path": "landscape-before.png",
+          "sha256": "dee32a28da67da23572eac0a43db55b523efd2dd4dcd9118618c4774b525e7a8"
+        },
+        {
+          "path": "owner-public.png",
+          "sha256": "8486b9ceb55c0cea9ca6ad94d417c275f4b324b70bc94afc55de2562bac458e5"
+        },
+        {
+          "path": "profile-after.png",
+          "sha256": "2bc721ea56daaf982beaa71337c9d83352ff2e82bcc6d973eb9bf86f493260c9"
+        },
+        {
+          "path": "profile-before.png",
+          "sha256": "3f1862cb920f210d6576124713fa78ed8a789c828cb32d25e8c16eb0a6fce89e"
+        },
+        {
+          "path": "public-after.png",
+          "sha256": "f7101c8c7e369cddad36390270dfa6da33f8e02e8ade455888f3c505245b0a56"
+        },
+        {
+          "path": "public-before.png",
+          "sha256": "67ac24dc780c4e8c9745c968e6f717eeee8286fb295df695bd7de2b5e4f43761"
+        },
+        {
+          "path": "publish.png",
+          "sha256": "75ca71a797daf11b41fb6e60ef3ab6f915facdee2632605c0f8721ac45c63a31"
+        },
+        {
+          "path": "saved-after.png",
+          "sha256": "d6dc4047ea88cea9a55824bf94740e9de46dc39e40b1164837047c56f91ec560"
+        },
+        {
+          "path": "saved-before.png",
+          "sha256": "38419bf192a50ec31a64335b75ecb143b724bb5f5bee8ecb95dc9673b3c0f587"
+        },
+        {
+          "path": "share.png",
+          "sha256": "bcbc136adce3dedc397aabc46baa29b1d945a7c17970e4c86c65259fe60901e0"
+        }
+      ]
+    },
+    "browser_check": {
+      "case_switches": 4,
+      "full_height_toggle": true,
+      "widths": [
+        1280,
+        390
+      ],
+      "page_errors": []
+    }
+  },
+  "preview": {
+    "url": "http://127.0.0.1:8013/",
+    "matched_build_files": 145,
+    "index_sha256": "c635fb24f1d5dd375007aa9ad8b696c05c98ce037928a28baf16f702c11acff5",
+    "entry": "/assets/index-Br8oG8Rs.js",
+    "entry_sha256": "fe452e84dca2be55e1fd7d73dc43607823953a49c1a0b29d70418948f18cc62f",
+    "manual_public_documents_unchanged": [
+      {
+        "suffix": "",
+        "sha256": "943c3fa080b1d10dbc15bdf29bb025e7c8ec76b2164142407b88727bebf4f138"
+      },
+      {
+        "suffix": "/pages/0",
+        "sha256": "152f3b6642336bbbbb645434ea9b2f8a9b5e7b0c1ab93d613273a26815b4758c"
+      },
+      {
+        "suffix": "/pages/1",
+        "sha256": "89ec46049aee17800579b3d61783cdbbf51ab9d1a3e91302a9e7a8c9dbaa4663"
+      },
+      {
+        "suffix": "/pages/2",
+        "sha256": "758064e229fa77255844816bdb66b71acd98405832a28a5376a785e96039b9c0"
+      },
+      {
+        "suffix": "/pages/3",
+        "sha256": "a70eef06f36c8b2294f2a2058be24d86bc38703caf545c9a536e88c33fac8f22"
+      }
+    ]
+  },
+  "carbon": {
+    "index_sha256": "c635fb24f1d5dd375007aa9ad8b696c05c98ce037928a28baf16f702c11acff5",
+    "entry": "/assets/index-Br8oG8Rs.js",
+    "entry_sha256": "fe452e84dca2be55e1fd7d73dc43607823953a49c1a0b29d70418948f18cc62f",
+    "auth_status": 200,
+    "gallery_sha256": "1a2159ee4a62df77cb651571853bf22318f437a731f97c72dd937b29c02d7a83"
+  },
+  "captures": [
+    {
+      "path": "landscape-after.png",
+      "bytes": 9054,
+      "sha256": "1f207fb23413411c0726af63bf6eb5a7551808f852dcf3917e4b551fa5d269b2"
+    },
+    {
+      "path": "landscape-before.png",
+      "bytes": 5805,
+      "sha256": "dee32a28da67da23572eac0a43db55b523efd2dd4dcd9118618c4774b525e7a8"
+    },
+    {
+      "path": "owner-public.png",
+      "bytes": 31403,
+      "sha256": "8486b9ceb55c0cea9ca6ad94d417c275f4b324b70bc94afc55de2562bac458e5"
+    },
+    {
+      "path": "profile-after.png",
+      "bytes": 11449,
+      "sha256": "2bc721ea56daaf982beaa71337c9d83352ff2e82bcc6d973eb9bf86f493260c9"
+    },
+    {
+      "path": "profile-before.png",
+      "bytes": 14122,
+      "sha256": "3f1862cb920f210d6576124713fa78ed8a789c828cb32d25e8c16eb0a6fce89e"
+    },
+    {
+      "path": "public-after.png",
+      "bytes": 17909,
+      "sha256": "f7101c8c7e369cddad36390270dfa6da33f8e02e8ade455888f3c505245b0a56"
+    },
+    {
+      "path": "public-before.png",
+      "bytes": 16992,
+      "sha256": "67ac24dc780c4e8c9745c968e6f717eeee8286fb295df695bd7de2b5e4f43761"
+    },
+    {
+      "path": "publish.png",
+      "bytes": 15968,
+      "sha256": "75ca71a797daf11b41fb6e60ef3ab6f915facdee2632605c0f8721ac45c63a31"
+    },
+    {
+      "path": "saved-after.png",
+      "bytes": 13906,
+      "sha256": "d6dc4047ea88cea9a55824bf94740e9de46dc39e40b1164837047c56f91ec560"
+    },
+    {
+      "path": "saved-before.png",
+      "bytes": 15310,
+      "sha256": "38419bf192a50ec31a64335b75ecb143b724bb5f5bee8ecb95dc9673b3c0f587"
+    },
+    {
+      "path": "share.png",
+      "bytes": 18886,
+      "sha256": "bcbc136adce3dedc397aabc46baa29b1d945a7c17970e4c86c65259fe60901e0"
+    }
+  ],
+  "raw_artifacts": "gomoku-web/test-results/v062-mobile",
+  "backup": "gomoku-web/test-results/v062-mobile/backup-dist-cloud-ce5335d",
+  "tabs_top_at_390": {
+    "before": 332.515625,
+    "after": 220
+  },
+  "capture_notes": [
+    "Profile guest and landscape game comparisons use matching content.",
+    "Public player comparisons use the unchanged Demo Player root and pages.",
+    "Saved replay comparison uses equivalent synthetic sessions and differing timestamps; before already includes the first compact Profile iteration.",
+    "Share/publish/owner captures are synthetic isolated-emulator fixtures."
+  ],
+  "remaining": [
+    "Bryan visual acceptance",
+    "Physical phone, keyboard and browser-chrome checks",
+    "Earlier real-account sharing handoff",
+    "Remaining 0.6.2 help/examples/documentation consolidation/release media"
+  ],
+  "publication_boundary": "No app push, tag or production deployment. Static gallery published through the existing report server."
+}

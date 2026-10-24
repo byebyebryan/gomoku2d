@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gomoku2D · Mobile layout pass</title>
+  <style>
+    @font-face{font-family:Pixel;src:url(fonts/PixelOperator.ttf)}
+    @font-face{font-family:PixelBold;src:url(fonts/PixelOperator-Bold.ttf)}
+    *{box-sizing:border-box}body{margin:0;background:#1e1e1e;color:#f5f5f5;font:20px/1.3 Pixel,monospace}main{max-width:1260px;margin:auto;padding:24px}
+    h1,h2,h3,button{font-family:PixelBold,monospace}h1{font-size:44px;line-height:1;margin:8px 0 16px}h2{font-size:28px;margin:0 0 8px}h3{font-size:22px;margin:0}
+    p{margin:8px 0}a{color:#fccb57;text-underline-offset:3px}.eyebrow{color:#fccb57;text-transform:uppercase;letter-spacing:.12em;font-size:16px}.muted{color:#b5b5ae}.lead{max-width:860px}
+    nav,.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}button{min-height:44px;padding:8px 14px;border:2px solid #706c66;background:#323232;color:#f5f5f5;font-size:18px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;overflow-wrap:anywhere}
+    button[aria-pressed=true]{background:#5f8b82;border-color:#4a6f68;color:#121212}button:focus-visible,a:focus-visible{outline:3px solid #fccb57;outline-offset:3px}
+    .comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.comparison article,.flow{min-width:0;padding:16px;border:2px solid #575756;background:#2a2a2a}
+    .capture{width:min(100%,390px);height:650px;margin:12px auto 0;overflow:auto;border:1px solid #706c66;background:#1e1e1e;scrollbar-color:#706c66 #232323}.capture img{display:block;width:100%;height:auto}.landscape .capture{width:100%;height:auto;max-height:430px}.whole .capture{height:auto;max-height:none;overflow:visible}
+    .comparison article:first-child h3{color:#b5b5ae}.comparison article:last-child h3{color:#30a860}.note{min-height:52px;max-width:900px}.flow-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.flow-grid .capture{height:600px}
+    .section{margin-top:32px;padding-top:24px;border-top:1px solid #575756}footer{margin-top:32px;color:#b5b5ae;font-size:17px}.small{font-size:17px}summary{cursor:pointer;min-height:44px;padding:10px 0;color:#fccb57}
+    @media(max-width:760px){main{padding:16px}h1{font-size:34px}.comparison,.flow-grid{grid-template-columns:minmax(0,1fr)}.comparison article,.flow{padding:12px}.capture{max-height:650px}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Gomoku2D · 0.6.2 working preview</p>
+    <h1>Mobile layout pass</h1>
+    <p class="lead">A closer pass over the 0.6.1 sharing/profile flows and the new public player page. These are captures of the application, with the existing fonts, icons and controls.</p>
+    <p class="muted">Local implementation <code>754ed62</code>. Production remains 0.6.1. Device emulation and browser tests are complete; your visual and physical-phone review is next.</p>
+    <p><a href="http://127.0.0.1:8013/profile">Interactive preview on Carbon</a> · <a href="http://starship:8787/reports/#project=gomoku2d">Project reports</a></p>
+  </header>
+  <nav aria-label="Compare mobile surfaces">
+    <button type="button" data-case="profile" aria-pressed="true">Profile</button>
+    <button type="button" data-case="saved" aria-pressed="false">Saved replays</button>
+    <button type="button" data-case="public" aria-pressed="false">Public player</button>
+    <button type="button" data-case="landscape" aria-pressed="false">Landscape replay</button>
+  </nav>
+  <h2 id="case-title">Records first</h2>
+  <p class="note" id="case-note">Name and sign-in/out remain visible. Secondary controls expand when needed, and the three record tabs share one row.</p>
+  <div class="toolbar">
+    <button type="button" id="whole" aria-pressed="false">Show full captures</button>
+    <button type="button" id="sync" aria-pressed="true">Scroll together</button>
+  </div>
+  <section class="comparison" aria-labelledby="case-title">
+    <article><h3>Before</h3><p class="muted small" id="before-caption">390 × 844 · start of this pass</p><div class="capture" tabindex="0" aria-label="Before capture, scroll to inspect"><img id="before-image" src="profile-before.png" alt="Mobile Profile before refinement"></div></article>
+    <article><h3>After</h3><p class="muted small" id="after-caption">390 × 844 · current preview</p><div class="capture" tabindex="0" aria-label="After capture, scroll to inspect"><img id="after-image" src="profile-after.png" alt="Mobile Profile after refinement"></div></article>
+  </section>
+  <p class="muted small">Scroll inside the captures, or show them at full height. Buttons inside an image are part of the capture; use the interactive preview to operate the app.</p>
+  <section class="section">
+    <h2>Share, publish and public settings</h2>
+    <p>These established flows were checked on narrow screens too. Share and Publish keep the sidebar swap, Back action, selected move and clipboard fallback. Public statistics remain independently opt-in.</p>
+    <div class="flow-grid">
+      <article class="flow"><h3>Share replay</h3><div class="capture" tabindex="0" aria-label="Share replay capture"><img src="share.png" alt="Mobile Share replay controls at 390 pixels"></div></article>
+      <article class="flow"><h3>Publish replay</h3><div class="capture" tabindex="0" aria-label="Publish replay capture"><img src="publish.png" alt="Mobile Publish replay controls at 390 pixels"></div></article>
+      <article class="flow"><h3>Public settings</h3><div class="capture" tabindex="0" aria-label="Public profile settings capture"><img src="owner-public.png" alt="Mobile owner public-profile settings"></div></article>
+    </div>
+  </section>
+  <section class="section">
+    <h2>Your next pass</h2>
+    <p>Review the density of the three tabs and compact public-game rows; expand Profile controls; inspect a saved replay; try Share and Publish; rotate Replay to landscape. On a real phone, also check text entry, browser chrome, scrolling and the sign-in round trip.</p>
+    <details><summary>Capture and validation context</summary>
+      <p class="muted small">Profile and landscape comparisons use matching guest/game content. Public player uses the preserved 18-game Demo Player record. Saved-replay captures show equivalent synthetic records from separate isolated sessions; timestamps differ, and its Before capture already includes the first compact Profile iteration. Other owner captures use synthetic accounts in a separate emulator.</p>
+      <p class="muted small">No rules, storage schema, dependencies or infrastructure changed. Tests cover three browser engines, but do not certify a particular physical phone, virtual keyboard or assistive technology. The earlier real-account sharing handoff remains open.</p>
+    </details>
+  </section>
+  <footer><a href="http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/">Earlier public-profile design study</a> · Bundled PixelOperator fonts retain their <a href="fonts/LICENSE.txt">license</a>.</footer>
+</main>
+<script>
+  const cases={
+    profile:{title:'Records first',note:'Name and sign-in/out remain visible. Secondary controls expand when needed, and the three record tabs share one row.',before:'profile-before.png',after:'profile-after.png',caption:'390 × 844'},
+    saved:{title:'Compact library actions',note:'Consistent full-width library controls above the list; Inspect and Remove share one compact row. The My games sync badge stays with My games.',before:'saved-before.png',after:'saved-after.png',caption:'390 × 844 · synthetic sessions'},
+    public:{title:'More games, less repeated chrome',note:'Public rows use the existing mobile My games pattern: result, title/opponent, compact rule/move metadata and a 48px Replay icon. Full accessible names remain available.',before:'public-before.png',after:'public-after.png',caption:'390 × 844 · same 18-game public record'},
+    landscape:{title:'Board and transport together',note:'The earlier stacked layout put transport controls below the screen. Short landscape now keeps the board beside a scrollable control pane. Tested at 667px and 844px widths.',before:'landscape-before.png',after:'landscape-after.png',caption:'844 × 390 · same game and move'}
+  };
+  const comparison=document.querySelector('.comparison');
+  const panes=[...comparison.querySelectorAll('.capture')];
+  for(const button of document.querySelectorAll('[data-case]'))button.addEventListener('click',()=>{
+    const key=button.dataset.case,c=cases[key];
+    for(const other of document.querySelectorAll('[data-case]'))other.setAttribute('aria-pressed',String(other===button));
+    document.querySelector('#case-title').textContent=c.title;document.querySelector('#case-note').textContent=c.note;
+    document.querySelector('#before-image').src=c.before;document.querySelector('#after-image').src=c.after;
+    document.querySelector('#before-image').alt=c.title+' before refinement';document.querySelector('#after-image').alt=c.title+' after refinement';
+    document.querySelector('#before-caption').textContent=c.caption+' · before';document.querySelector('#after-caption').textContent=c.caption+' · after';
+    comparison.classList.toggle('landscape',key==='landscape');for(const pane of panes)pane.scrollTop=0;
+  });
+  document.querySelector('#whole').addEventListener('click',event=>{
+    const active=event.currentTarget.getAttribute('aria-pressed')!=='true';event.currentTarget.setAttribute('aria-pressed',String(active));comparison.classList.toggle('whole',active);
+  });
+  document.querySelector('#sync').addEventListener('click',event=>event.currentTarget.setAttribute('aria-pressed',String(event.currentTarget.getAttribute('aria-pressed')!=='true')));
+  let syncing=false;
+  for(const pane of panes)pane.addEventListener('scroll',()=>{
+    if(syncing||document.querySelector('#sync').getAttribute('aria-pressed')!=='true')return;
+    syncing=true;const other=panes.find(p=>p!==pane),maximum=pane.scrollHeight-pane.clientHeight;
+    other.scrollTop=maximum>0?(pane.scrollTop/maximum)*(other.scrollHeight-other.clientHeight):0;
+    requestAnimationFrame(()=>{syncing=false;});
+  });
+</script>
+</body>
+</html>
