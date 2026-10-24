@@ -8,9 +8,20 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
-| [v0.6 public profiles and shareable replays](v0_6_profiles_and_replays.md) | Bryan; design rationale; implemented contracts are linked from the execution record |
-| [v0.6 implementation roadmap](v0_6_implementation_plan.md) | Bryan; M0-M5 implemented; track local acceptance and separate release gates |
-| [v0.6 execution record](v0_6_execution.md) | Bryan; implementation decisions, local validation and release boundaries |
+| [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; reviewed sequence and research; next checkpoint is the 0.6.2 visitor/owner UI design before implementation |
+
+## Published v0.6.1 Handoff
+
+The [release record](../archive/v0_6_1_release.md) owns publication and the open
+real-account sharing check. The [release plan](v0_6_1_release_plan.md) and
+[acceptance ledger](v0_6_1_evidence/README.md) retain the executed sequence and
+manual handoff. The [original design](v0_6_profiles_and_replays.md),
+[implementation plan](v0_6_implementation_plan.md),
+[execution record](v0_6_execution.md) and
+[functional profile pass](v0_6_1_public_profile.md) retain completed design and
+implementation context. They are not the active plan for the remaining line;
+reconcile/archive them with preserved links during the `0.6.2` documentation
+pass.
 
 ## Completed Follow-up
 
@@ -30,5 +41,6 @@ completed review.
 
 Bryan owns these design and maintenance decisions. The maintenance notes do not
 reopen the completed [October reconciliation](../archive/reconciliation_2026_10/README.md),
-which records the retained UI and deferred manual acceptance. The v0.6 draft
-tracks the separate next feature direction.
+which records the retained UI and deferred manual acceptance. The
+[roadmap](../reference/product/roadmap.md) and follow-up plan track the remaining
+`0.6.2`–`0.6.4` direction.

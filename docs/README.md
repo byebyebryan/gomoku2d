@@ -13,7 +13,10 @@ public profiles, statistics and game catalogs. The
 production evidence, the pending real signed-in sharing check, and retained
 manual acceptance deferrals. [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
 identifies the published build; the [roadmap](reference/product/roadmap.md)
-tracks what follows. The earlier [October closeout](archive/reconciliation_2026_10/README.md)
+tracks `0.6.2` UI/presentation, `0.6.3` replay collection tools and `0.6.4`
+curated learning. The [follow-up plan](working/v0_6_followup_plan.md) records
+the research, scope and design/acceptance gates; implementation has not begun.
+The earlier [October closeout](archive/reconciliation_2026_10/README.md)
 retains the `0.5.x` reconciliation decisions and evidence.
 
 The v0.6 sharing work shipped in `v0.6.1`. Its

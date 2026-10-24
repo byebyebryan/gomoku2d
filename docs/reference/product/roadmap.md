@@ -1,160 +1,144 @@
 # Roadmap
 
-This roadmap tracks current sequencing. Completed phase detail lives in
-[`release_history.md`](../../archive/release_history.md); this file should stay
-short enough to answer "what is next and why?"
+This roadmap owns release sequencing and product scope. Current formats and
+behavior live in the reference contracts; completed work lives in
+[`release_history.md`](../../archive/release_history.md).
 
 ## Current State: `v0.6.1` Published; Acceptance Follow-up Open
 
 `v0.6.1` was published on October 23, 2026 as the direct successor to
-`v0.5.5`, adding shareable replays, saved continuations, opt-in public profiles
-and dated statistics. The real signed-in profile/statistics/game-publication
-round trip remains pending; see the
-[release record](../../archive/v0_6_1_release.md) for the verified deployment
-and open acceptance items.
+`v0.5.5`. It adds portable replay links, private saved copies, continuations
+that join ordinary My games, and opt-in public profiles with dated statistics
+and paged game catalogs. Exact-source CI, backend preparation, publication,
+served-byte parity and production-safe automated acceptance are complete.
 
-### Earlier `0.5.x` review closeout
+The real signed-in profile/statistics/game-publication round trip remains
+pending. Physical-device/touch, human accessibility, two-device private-account
+and novice-feedback checks retain their recorded open or deferred status.
+The [release record](../../archive/v0_6_1_release.md) owns these boundaries;
+planning the next releases does not close them.
 
-`v0.5.4` marked the July public-release reconciliation checkpoint. The product
-carries a complete local loop across play, configurable bots and hints, saved
-history, Replay Analysis, and the public Lab,
-Rules, Guide, and Visuals surfaces. The repository has current ownership maps,
-bounded tests, clean release operations, and archived historical context.
+## Remaining `0.6` Sequence
 
-The closeout did not hide another bot-research or redesign phase. Curated report
-data and analyzer semantics remain unchanged; the work clarified ownership,
-fixed demonstrated resilience gaps, and validated the shipped product on
-desktop and mobile.
+Bryan selected this sequence on October 23, 2026. `0.6.2` and `0.6.3` develop
+the shipped sharing experience; the small learning extension is assigned to
+`0.6.4`. These are planned releases, with detailed design and implementation
+still ahead. No release dates are committed.
 
-The October post-pause review reopened `0.5.x` and is now complete on `main`.
-It repaired cloud/session and persistence failures, rule and payload boundaries,
-analyzer-confidence presentation, bot recovery, keyboard access, accessibility,
-worker ownership, and route recovery. The systematic code review completed
-targeted history and lifecycle cleanup while retaining the main architecture.
-
-Bryan chose to keep the existing UI and copy. Only the Rules/Guide mobile layout
-refinement was selected from the visual study; broader mocks are not an accepted
-backlog. The [October closeout](../../archive/reconciliation_2026_10/README.md)
-links the decisions, code review, measurements, and verified runtime baseline.
-
-Manual account/device/accessibility/human checks remain explicitly deferred at
-Bryan's request. These deferrals do not hold the review or next design checkpoint
-open and are not recorded as passes. The prepared `0.5.5` patch packages the
-completed review and refreshed media. Its [release record](../../archive/v0_5_5_release_preparation.md)
-keeps tagging/deployment separate from preparation; see
-[GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest) for the
-currently published build.
-
-The bounded [unattended follow-up](../../archive/reconciliation_2026_10/v0_5_unattended_evidence.md)
-is also complete: two-client Auth/Firestore application acceptance in all three
-engines, a repaired no-op sync cooldown, and broader production Wasm performance,
-active cancellation and recovery evidence. Exact implementation CI and all 45
-fresh-state race repetitions passed. The chosen UI, closed Renju review, and
-existing manual acceptance deferrals remain in force. Return to release
-packaging and the next design checkpoint; no further review phase is implied.
-
-Historical execution and findings:
-
-- [October review and closeout](../../archive/reconciliation_2026_10/README.md)
-- [`v0.5.4 Reconciliation Closeout Plan`](../../archive/v0_5_4_reconciliation_plan.md)
-- [`v0.5.4 Reconciliation Findings`](../../archive/v0_5_4_findings.md)
-- [`v0.5 Public Release Plan`](../../archive/v0_5_public_release_plan.md)
-
-## `v0.6.1` Release: Public Profiles and Shareable Replays
-
-The v0.6 sharing and public-profile work, together with the v0.6.1 functional
-profile and presentation pass, shipped as a direct successor to `v0.5.5`; there
-was no intermediate `v0.6.0` release. The [design draft](../../working/v0_6_profiles_and_replays.md)
-maps the private/public profile split, portable replay links, explicit saving
-and publishing, replay continuations, public-page flows, and cost/lifecycle
-boundaries. Detailed technical bounds are fixed in the portable/sharing
-reference contracts. M0–M5 and local M6 acceptance are complete; the
-[Luna execution record](../../working/v0_6_execution.md) and
-[evidence ledger](../../working/v0_6_evidence/README.md) record local acceptance.
-
-Exact-source CI, backend preparation, tag workflows, served-byte parity and
-production-safe automated browser acceptance are complete. The real signed-in
-profile/statistics/game-publication round trip and existing physical-device,
-human accessibility, two-device account/reset and novice-feedback checks
-remain open or deferred as recorded in the
-[release record](../../archive/v0_6_1_release.md). The
-[v0.6.1 release plan](../../working/v0_6_1_release_plan.md) and local
-[evidence ledger](../../working/v0_6_1_evidence/README.md) preserve the release
-sequence and candidate evidence.
-
-The [0.6.1 functional public-profile pass](../../working/v0_6_1_public_profile.md)
-implements a full Profile tab, independently opt-in dated statistics snapshots,
-and compact eight-row game pages based on actual publications. Its
-[local acceptance ledger](../../working/v0_6_1_evidence/README.md) records
-validation and the Carbon preview. Avatars, bios, thumbnails and richer
-statistics remain deferred.
-
-The [implementation roadmap](../../working/v0_6_implementation_plan.md) sequences
-the work into reviewable milestones:
-
-| Order | Milestone | Checkpoint |
+| Release | Focus | Player outcome |
 |---|---|---|
-| M0 | Settle bounded contracts and scope decisions | Portable format first; persistence choices before their writers |
-| M1 | Portable replay core | Legal round trips, explicit versions, size/input limits |
-| M2 | Sharing and standalone guest viewer | Open a chosen moment without sign-in, import, or replay/profile database work |
-| M3 | Local saved library and replay continuations | Study copies stay separate; completed continuations join normal My games and statistics with their origin retained |
-| M4 | Public profile and explicit publication | Full publish/unpublish/disable lifecycle with rules and cost evidence |
-| M5 | Private account-library sync | Bounded sync, account isolation, offline deletion/conflict recovery |
-| M6 | Release acceptance and rollout | Solo demo, compatibility, browser/cloud checks, and deployment verification |
+| `0.6.2` | Public-profile design, sharing usability, documentation and presentation | Understand a player's page, open a game, and understand saving, sharing and publishing; demonstrate the app without signing in |
+| `0.6.3` | Replay collection and study tools | Recognize saved games visually, give them private context, and reopen a deliberately chosen moment |
+| `0.6.4` | Curated learning through replays | Read a short tactical prompt, inspect the example, and try another line against the existing bot |
 
-The initial guest sharing demo arrives at M2. M4 and M5 share the replay/library
-foundation, but public profiles do not require private-library cloud sync.
-The authorized goal accepts own-game publication and signed-in library sync;
-the execution record tracks technical decisions and acceptance evidence.
+The [follow-up plan](../../working/v0_6_followup_plan.md) records the review,
+first-party research, implementation implications, decision gates and release
+acceptance. The first checkpoint is a reviewed `0.6.2` design covering visitor
+and owner screens together, with empty, sparse and full profiles on desktop
+and mobile.
 
-Multiplayer is deferred from v0.6 as of October 21. Its implementation and UX
-effort, uncertain usage, and difficulty demonstrating it with another player
-make it a weaker immediate fit for this demo/experiment. Preserve the chosen
-visual language and existing screen roles through the new sharing flows.
+### `0.6.2`: Design, Usability and Presentation
 
-## Deferred Multiplayer Research
+- Refine public-profile hierarchy: identity, optional statistics, then games.
+  Keep sparse profiles intentional and game lists easy to scan.
+- Bring owner controls, My games and Saved replays into a consistent visual
+  language. Preserve the accepted board-first replay and full-sidebar sharing
+  patterns; this is a focused pass rather than a replacement app shell.
+- Clarify Share replay, Save replay and Publish replay through placement,
+  concise copy and feedback. Preserve public-list position when returning from
+  a replay and keep Previous/Next controls in stable positions.
+- Review loading, signed-out, empty, unavailable, offline and error states,
+  keyboard/focus behavior, enlarged text and actual touch use.
+- Add concise player help and two or three static, account-free example
+  replays. Keep tactical teaching in Guide and make the new help easy to find.
+- Refresh release-facing media and reconcile current documentation with the
+  shipped product. Archive completed planning material with links preserved.
 
-The [P2P research](../backend/p2p_multiplayer.md) preserves the preferred backend
-direction if multiplayer is revisited: direct WebRTC gameplay, validation in
-both Rust/Wasm clients, and a small backend role for finding/joining peers and
-signaling. Optimize for minimal backend usage as gameplay volume grows; ordinary
-moves should produce no server or database operations. Nothing is implemented
-or deployed.
+Compare compact thumbnail layouts during design, but ship the reusable
+thumbnail implementation in `0.6.3`. `0.6.2` does not require a sharing-data or
+portable-format change. Human visual approval precedes implementation of the
+selected layout; refreshed media follows the accepted UI.
 
-An initial PoC would accept direct-connection failures on some networks. TURN
-and database move relaying remain separate decisions. An established game should
-remain playable without signaling while its peer connection remains usable.
-P2P results would be casual history, not server-verified records.
+### `0.6.3`: Replay Collection and Study Tools
 
-UI/UX questions to resume with the feature:
+- Add lightweight, static board thumbnails to public and private replay lists,
+  derived from the existing replay payload and chosen opening move.
+- Add a private title, one short private note and one explicitly saved opening
+  move per saved replay. Keep these separate from game identity and player
+  attribution. Scrubbing alone does not save or sync anything.
+- Let owners explicitly edit an existing publication's title and opening move
+  without removing and republishing it. Public titles remain independent of
+  private notes and titles.
+- Preserve guest/account ownership, explicit saves, offline recovery and
+  reviewable conflicts. Keep the existing 32-publication and 64-saved-replay
+  bounds unless a separately reviewed need changes them.
 
-- entry, invitation, waiting, joining, and rules/colors/readiness;
-- clear player turns, move acknowledgement, and connection status;
-- connection failure, reconnect, leaving, and interrupted sessions;
-- completion, rematch, replay, and optional private history continuity;
-- identity requirements and the treatment of hints, undo, and other assists.
+Before writing metadata, settle bounded fields, local/cloud schema evolution,
+older-client behavior, conflicts and reset/delete semantics. Preserve portable
+v1 links and fingerprints; no silent metadata loss during an old-client write
+or merge. Folders, multiple per-move annotations, public comments, arbitrary
+catalog reordering and featured games are outside the planned minimum.
 
-Future multiplayer acceptance should cover a complete two-player game on
-supported network paths, honest failure/recovery states, and measured signaling
-usage. Specific criteria follow its UI/UX and protocol design; no player capacity
-or connectivity success rate is claimed yet. Ranked/trusted match authority and
-wider discovery are outside the preferred PoC.
+### `0.6.4`: Curated Learning Through Replays
 
-## Parking Lot
+- Build three to five short, authored scenarios around legal, complete games
+  and selected nonterminal positions. Reuse the `0.6.2` example corpus where it
+  fits; teach threats, forcing sequences and alternatives through Guide.
+- Offer a clear prompt, inspection/analysis, Play From Here and a return/retry
+  path to the original example. Use the existing bot and replay controls.
+- Keep scenarios and explanations as static, versioned content. Opening an
+  example does not import it or publish progress. Completed continuations join
+  ordinary My games and statistics under the existing rules.
+- Distinguish authored explanation, bounded analysis and the actual outcome
+  against the selected bot. A different legal line is not automatically wrong.
 
-These are plausible but should not quietly enter the current line:
+Review the corpus and lesson interaction before implementation. This release
+does not introduce automatic puzzle generation, a correctness-grading engine,
+arbitrary starting-board sharing, a lesson editor or cloud progress tracking.
 
-- puzzle generation from analyzed games;
-- "save this game" challenges from losing replay positions;
-- bot personalities beyond current Easy/Normal/Hard controls;
-- stronger server-side bot endpoint if browser-side wasm becomes too slow;
-- broader theme/skin work after the public story is stable.
+## Constraints Across the Line
 
-## Non-goals For Now
+- Preserve local-first guest play, the existing pixel fonts/icons/controls and
+  board-first Match/Replay layouts. Public statistics stay independently opt-in
+  and explicitly refreshed; no ratings or server-verified results are implied.
+- Reuse static hosting, browser computation and bounded explicit cloud actions.
+  Add no service, image storage, per-move request, polling or persistent sharing
+  listener. Thumbnails and examples require no additional Firestore documents.
+- Private notes and collection metadata never enter public profiles or portable
+  links automatically. Opening a replay remains separate from saving it.
+- Run checks appropriate to each change, with desktop/mobile and adverse-state
+  visual review. Keep local validation, manual acceptance and publication as
+  separate gates; SDK operation counts are not a free-tier capacity guarantee.
 
-- native mobile apps;
-- chat/social feeds;
-- SSR/server-rendered app shell;
-- monetization;
-- ranked/esports scope before basic online play is valuable;
-- forcing cloud or online into the default local flow.
+## Deferred Multiplayer
+
+Multiplayer remains outside the planned `0.6.2`–`0.6.4` work because of its UX
+and implementation effort, uncertain use and need for a second demo player.
+The [P2P research](../backend/p2p_multiplayer.md) preserves the preferred casual
+PoC: direct WebRTC moves, validation in both Rust/Wasm clients and a small
+backend role for joining peers and signaling. Nothing is implemented.
+
+Reopen it when there is a concrete two-player use case and demo/acceptance path.
+Design connection failure, reconnect, leaving and rematch before implementation;
+TURN, relaying, matchmaking discovery and trusted rankings remain separate
+decisions. No connectivity success rate or player capacity is claimed.
+
+## Parking Lot and Non-goals
+
+Automatic puzzle generation and personalized "save this game" challenges,
+richer statistics, avatars/bios, bot personalities, server-side bots and broader
+themes remain parked. The curated `0.6.4` lessons do not adopt these projects.
+
+Native apps, chat/social feeds, global player/game discovery, SSR, monetization
+and ranked/esports features are outside this line. Cloud or sign-in must not
+become a prerequisite for the core play and learning loop.
+
+## Completed Context
+
+The [release history](../../archive/release_history.md) and
+[October closeout](../../archive/reconciliation_2026_10/README.md) retain the
+`0.5.x` work and visual decisions. The
+[`0.6.1` release record](../../archive/v0_6_1_release.md),
+[original implementation plan](../../working/v0_6_implementation_plan.md) and
+[execution record](../../working/v0_6_execution.md) retain the sharing rollout.
+Completed reviews and rejected visual studies are not an additional backlog.
