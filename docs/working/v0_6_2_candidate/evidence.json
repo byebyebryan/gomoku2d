@@ -1,0 +1,223 @@
+{
+  "date_utc": "2026-10-24T17:25:03.416883+00:00",
+  "status": "local candidate; not pushed, tagged or published",
+  "version": "0.6.2",
+  "implementation_commit": "6d8e5a4dde7fdfb11b60a021c9f9b9be9df9eed2",
+  "application_and_capture_commit": "bbc652f31fc4a211a85d1e60f61905617136f5a6",
+  "application_source_trees": {
+    "gomoku-web/src": "fcfe58b5924011ec78e053f64e8ea5a594e7563d",
+    "gomoku-web/playtests": "6899120640bf92beecf187dc6aab76986f656f25",
+    "gomoku-web/cloudtests": "5a3e73aa9fa09e34a463dba355d489c96e45852c"
+  },
+  "source_note": "Application, ordinary tests and cloud tests match the 508-unit validated implementation. Only version/capture tooling/docs changed later. Final browser/cloud/build checks use version 0.6.2.",
+  "checks": {
+    "typecheck": "pass",
+    "units": {
+      "passed": 508,
+      "files": 51
+    },
+    "ordinary_three_engines": {
+      "passed": 231,
+      "skipped": 6,
+      "failed": 0,
+      "skip_reason": "WebGL qualification intentionally Chromium-only; Firefox/WebKit forced Canvas cases pass"
+    },
+    "cloud_three_engines": {
+      "passed": 33,
+      "failed": 0,
+      "selection": "C10-C19 and M01",
+      "port_offset": 1000
+    },
+    "npm_production_vulnerabilities": 0,
+    "rust_vulnerabilities": 0,
+    "rust_warnings": 0,
+    "production_build": "pass",
+    "manual_emulator_build": "pass",
+    "local_version_lock_changelog": "pass",
+    "changed_markdown": {
+      "files": 14,
+      "relative_links": 184,
+      "missing_targets": 0
+    },
+    "invariants": "No Rust, backend, rules/indexes/config, report data, dependency graph, storage schema, portable format or bounded limits changed."
+  },
+  "logs": [
+    {
+      "path": "gomoku-web/test-results/v062-completion/unit-content.log",
+      "sha256": "ced021b1f3f223699bf0fde75396855cd9a196197d90e2c3cfb83148f475d5e9",
+      "bytes": 297
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/typecheck-final.log",
+      "sha256": "04964269a569a25c3fd6ba893425ebc56ce091e919a6656ec414da2dfbc910d1",
+      "bytes": 338
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/browser-candidate.log",
+      "sha256": "15b643b193dd9eee406ccc8d8a772a080d49efd5260b1114477ab0be22e1106f",
+      "bytes": 544
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/cloud-candidate.log",
+      "sha256": "7d327fc68a8587fc30e2259b5e53c09082c58a429ec9ae693400b7c84bdb173a",
+      "bytes": 286
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/build-candidate.log",
+      "sha256": "acdddabc6b0ed7bfc4aa8735f389bdea2b8129f1960e0b9f32f34cd396299a1a",
+      "bytes": 5677
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/manual-build.log",
+      "sha256": "0d49f6dcafb53f308176ba940102da55956b3ef9a141b12af271f8325695755d",
+      "bytes": 5677
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/npm-audit.json",
+      "sha256": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35",
+      "bytes": 366
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/cargo-audit.json",
+      "sha256": "fb9d90d8e124c41ff66f33d5bf912f19bd3d9a91f630c1f3c9d0d3ee5cd77ee7",
+      "bytes": 375
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/media/capture.json",
+      "sha256": "ecd8cf146dea54d559a9c31d0c13358148a3b7e0f6e30c5275e342429df29e95",
+      "bytes": 865
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/media-frames-final.log",
+      "sha256": "74acd5030b8414b82584f551cd2c344c15d2e2ca3701d755cafd369b24781930",
+      "bytes": 170
+    },
+    {
+      "path": "gomoku-web/test-results/v062-completion/media-encode-final.log",
+      "sha256": "b2a532ab52d948d76801dfa100346bb036de5723b7408d3417e5f1796361522f",
+      "bytes": 56
+    }
+  ],
+  "preview": {
+    "base": "http://127.0.0.1:8013",
+    "matched_files": 147,
+    "index_sha256": "c9331d4093746574687de637a3568cb827d874ce6850e6c7cb7a8302795df1fe",
+    "manifest": {
+      "path": "gomoku-web/test-results/v062-completion/preview.json",
+      "sha256": "17aaea70b76499b2071d9e2dc611f184917609597341d500d20e37f212f939aa",
+      "bytes": 21596
+    },
+    "manual_demo_fields": [
+      {
+        "suffix": "",
+        "fields_sha256": "98d1a4882eeb507c707adf7da7057c6761860e350c735366611fa7642210f093"
+      },
+      {
+        "suffix": "/pages/0",
+        "fields_sha256": "0c9db4c39c50cb87cb96e966592c1a7ddcfc5e29f0d292284fda90fdd7e66d9a"
+      },
+      {
+        "suffix": "/pages/1",
+        "fields_sha256": "ef6779516085d8fcdadb328978805fac00b1f893ffcd93972fd4219c2e6d9d59"
+      },
+      {
+        "suffix": "/pages/2",
+        "fields_sha256": "38375f79387b08d53c06e96bab8893dc24dd74618c94edbd4a2a7eecf739c973"
+      },
+      {
+        "suffix": "/pages/3",
+        "fields_sha256": "8cb12ecf2a70d7cecb635647cd832379c63de6953f97280c47bed198df48dcb0"
+      }
+    ],
+    "recovery_note": "Firestore creation/update metadata regenerated at recovery; actual application fields match current recovery baseline and earlier application snapshot.",
+    "services": {
+      "gomoku2d-v06-preview.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "MainPID": "25022"
+      },
+      "gomoku2d-v06-emulators.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "MainPID": "25021"
+      }
+    },
+    "ports_listening": {
+      "8001": false,
+      "8013": true,
+      "8014": false,
+      "18081": true,
+      "19099": true,
+      "9013": false,
+      "19081": false,
+      "20099": false
+    }
+  },
+  "media": {
+    "capture": {
+      "version": "0.6.2",
+      "sourceCommit": "bbc652f31fc4a211a85d1e60f61905617136f5a6",
+      "applicationInputsClean": true,
+      "base": "http://127.0.0.1:8013",
+      "profileId": "v061-demo-player",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "gifWidth": 960,
+      "fps": 5,
+      "sharingFrames": 30,
+      "analysisFrames": 27,
+      "encoded": true,
+      "examplePath": "/replay/shared/#g2r1=eyJ2IjoxLCJyIjoiZnJlZXN0eWxlIiwibSI6ImNINWdqbENBUURCQmNtUl9mVzVlcnA2QmdwQ2ZqWkZqVkhGVm13IiwiYiI6eyJrIjoiYiIsIm4iOiJFYXN5IEJvdCIsImUiOiJzZWFyY2hfYm90IiwidiI6MSwiY3YiOjEsImMiOnsibW9kZSI6InByZXNldCIsInByZXNldCI6ImVhc3kiLCJ2ZXJzaW9uIjoxfX0sInciOnsiayI6ImIiLCJuIjoiTm9ybWFsIEJvdCIsImUiOiJzZWFyY2hfYm90IiwidiI6MSwiY3YiOjEsImMiOnsibW9kZSI6InByZXNldCIsInByZXNldCI6Im5vcm1hbCIsInZlcnNpb24iOjF9fX0",
+      "source": "Existing app UI; only focus was cleared, no content or style substitution."
+    },
+    "assets": [
+      {
+        "path": "docs/assets/readme-sharing.gif",
+        "sha256": "825fbbad92bf6e81eb01569c2e13de96e09bcfe81dd69133917cdfd660b54438",
+        "bytes": 170163,
+        "width": 960,
+        "height": 600,
+        "duration": "6.000000",
+        "nb_frames": "30"
+      },
+      {
+        "path": "docs/assets/readme-analysis.gif",
+        "sha256": "094546bc30e9f14af5806c40328d957a58b696ca9b5df6c1c09a9f823116ca66",
+        "bytes": 132538,
+        "width": 960,
+        "height": 600,
+        "duration": "5.400000",
+        "nb_frames": "27"
+      },
+      {
+        "path": "docs/assets/readme-replay-analysis.png",
+        "sha256": "d2d05bcedc178854ccc38bd877f999c4b07fba51ba40429e060ff46705a1aec9",
+        "bytes": 21785,
+        "width": 1280,
+        "height": 800
+      },
+      {
+        "path": "docs/assets/readme-public-profile.png",
+        "sha256": "1435d8390050b41425254551357dfe65470d8c3cadae23db35b4f2f8872f6679",
+        "bytes": 33293,
+        "width": 1280,
+        "height": 800
+      }
+    ],
+    "review": "Primary inspected PNGs and representative GIF frames; no UI content/style substitutions. User visual acceptance separate."
+  },
+  "preserved": [
+    "manual preview/emulator services and demo fields",
+    "unrelated port 8001 never started or terminated by this loop; currently no listener",
+    "old hashed preview chunks",
+    "no user-browser tabs opened"
+  ],
+  "open": [
+    "Bryan final new help/examples/confirmation/media visual review",
+    "physical phone/touch/browser keyboard and human accessibility checks",
+    "inherited real-account and two-device acceptance handoffs",
+    "separately authorized push, exact-head hosted CI, tag/deploy, production served-byte and journey checks"
+  ]
+}

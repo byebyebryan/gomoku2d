@@ -36,6 +36,7 @@ threat, bot, or replay-analysis semantics.
 | Saved matches | `src/match/saved_match.ts` | Compact persisted replay/history schema |
 | Shared history | `src/match/match_history.ts` | Local/cloud summary validation, retention, archive statistics and identity projection without Firebase |
 | Replay UI | `src/replay/*`, `src/routes/ReplayRoute.tsx` | Replay reconstruction, timeline, analysis overlays, cache, and worker runner |
+| Replay examples/help | `src/replay/replay_examples.ts`, `src/routes/GuideRoute.tsx` | Two provenance-backed portable bot games, Guide section navigation, and local/private/public action help; reuses the shared viewer |
 | Lab reports | `src/routes/LabReportRoute.tsx`, `src/routes/AnalysisReportRoute.tsx`, `src/routes/lab-report/*` | Report loading/tabs, tournament drilldowns, analysis rows, proof boards, and help/provenance |
 | Bot worker | `src/core/bot_runner.ts`, `src/core/bot_worker.ts`, `src/core/bot_protocol.ts` | Async bot move requests with cancellation and worker restart safety |
 | Wasm bridge | `src/core/wasm_bridge.ts` | Typed JSON parsing boundary over `gomoku-wasm` exports |
@@ -121,6 +122,12 @@ Important boundaries:
 
 The static analysis report is not loaded by the Replay page. The report is a
 published lab artifact; the Replay page runs the same analyzer in wasm.
+
+The [example corpus](replay_examples.md) copies only two complete move sequences
+and small content metadata from that report. It preserves bot participants,
+uses the ordinary portable codec/viewer and adds no cloud or played-history
+side effects on open. Chosen example plies are link viewing state, not saved
+library metadata.
 
 ## Board Rendering
 

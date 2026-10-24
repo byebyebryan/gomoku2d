@@ -32,6 +32,10 @@ Changing the displayed ply does not change canonical identity. All moves after
 a terminal result remain invalid. Cropped or synthetic Guide diagrams are not
 eligible substitutes for these complete games.
 
+The chosen view ply belongs to the shared link. A saved study copy retains the
+existing ordinary opening behavior; a persistently saved opening moment is
+part of the later 0.6.3 metadata work.
+
 Opening an example is ephemeral. Save explicitly keeps a private study copy;
 Share exports a standalone portable link; an imported example cannot be
 published as a game the viewer played. Play From Here uses the selected bot

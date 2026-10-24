@@ -76,7 +76,7 @@ Current canonical surfaces:
 | `/profile` | Local/cloud identity, reset/delete actions, stats, and history |
 | `/player/?id=...` | Read-only public player identity, optional statistics snapshot and selected games |
 | `/rules/` | Basic Freestyle/Renju rules and legality examples |
-| `/guide/` | Play guide for threats, combos, forced corridors, and replay analysis |
+| `/guide/` | Tactics, replay/sharing help and two account-free replay examples; direct section links |
 | `/lab/` | Published bot and replay-analysis report viewer |
 | `/visuals/` | Visual design reference for sprites, icons, UI tokens, and examples |
 | `/privacy/` | SPA Privacy page for the public app |
@@ -299,6 +299,11 @@ explicitly from the complete My games summary. The
 [0.6.1 contract](../../working/v0_6_1_public_profile.md) retains the functional
 and storage boundaries.
 
+Enabling a public profile uses an inline confirmation with the selected name.
+Opening or canceling confirmation performs no write; editing the name or
+switching account clears it. It follows the existing disable/reset interaction
+language and does not opt into statistics automatically.
+
 On mobile, keep name/status and sign-in/out visible, with secondary account and
 reset controls under Profile controls. Desktop keeps those controls expanded.
 The three record tabs share one row in compact layouts; desktop tabs can wrap
@@ -349,6 +354,24 @@ save/import or profile lookup. Disabled/changed profiles and stale pages retain
 honest unavailable/reload/clamping behavior. The
 [0.6.2 checkpoint](../../working/v0_6_2_implementation.md) records implementation
 and acceptance separately from publication.
+
+### Guide (`/guide/`)
+
+Retain the tactical diagrams and analysis vocabulary. The local section
+navigation reaches Tactics, Replays & sharing and Example replays without
+scrolling through every diagram. Direct section links and repeated activation
+scroll/focus their headings in the app's actual scroll surface.
+
+Replays & sharing uses compact action rows for Share, Save, Publish and Play
+From Here. Secondary local/private/public and snapshot/copy scope notes stay
+under a disclosure. Keep this explanation out of the replay sidebars.
+
+The two [example replays](replay_examples.md) are static complete bot games with
+truthful participant presets, no user UIDs and no automatic persistence. They
+open in the existing portable viewer at the finished board or selected eligible
+move. Home's Examples link provides direct guest discovery. Save/Share and
+continuation retain their normal actions and guards; no lesson/editor or new
+backend is implied.
 
 ### Bot controls
 

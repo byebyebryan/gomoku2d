@@ -14,12 +14,14 @@ production evidence, the pending real signed-in sharing check, and retained
 manual acceptance deferrals. [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
 identifies the published build; the [roadmap](reference/product/roadmap.md)
 tracks `0.6.2` UI/presentation, `0.6.3` replay collection tools and `0.6.4`
-curated learning. The [follow-up plan](working/v0_6_followup_plan.md) records
-the research, scope and design/acceptance gates. The public-profile and mobile
-refinements are implemented and technically checked; the
-[0.6.2 completion plan](working/v0_6_2_completion_plan.md) scopes the remaining
-help, examples, owner consistency and presentation work. Full 0.6.2 publication
-remains separate.
+curated learning. The [0.6.2 candidate handoff](working/v0_6_2_candidate.md)
+owns the completed local implementation, validation, preview and open manual
+checks. It includes public-profile/mobile refinements, Guide sharing help,
+two account-free examples, inline enable confirmation and refreshed media.
+It has not been pushed, tagged or published. The
+[follow-up plan](working/v0_6_followup_plan.md) retains the research and future
+scope; the [implementation archive](archive/v0_6_implementation.md) indexes
+completed planning and evidence without moving their existing links.
 The earlier [October closeout](archive/reconciliation_2026_10/README.md)
 retains the `0.5.x` reconciliation decisions and evidence.
 
@@ -52,7 +54,8 @@ Player-facing explanations live in the web app rather than a second
 documentation tree:
 
 - [Rules](https://gomoku2d.byebyebryan.com/rules/) — basic Gomoku and Renju rules
-- [Guide](https://gomoku2d.byebyebryan.com/guide/) — threats, combos, and forced sequences
+- [Guide](https://gomoku2d.byebyebryan.com/guide/) — threats, combos and forced sequences;
+  `0.6.2` adds direct Replays & sharing and Examples sections (candidate only)
 - [Lab](https://gomoku2d.byebyebryan.com/lab/) — bot tournament and replay-analysis reports
 - [Visuals](https://gomoku2d.byebyebryan.com/visuals/) — visual guide and asset language
 - [Privacy](https://gomoku2d.byebyebryan.com/privacy/) and

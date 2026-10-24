@@ -18,8 +18,8 @@ analysis, and practice from earlier positions.
 
 ![Gomoku2D gameplay with tactical hints, bot response, and a terminal winning frame](docs/assets/readme-gameplay.gif)
 
-These captures show the prepared `0.5.5` build; see [media provenance](docs/assets/README.md)
-and [Project status](#project-status).
+Capture versions and sources are recorded in [media provenance](docs/assets/README.md).
+See [Project status](#project-status) for publication status.
 
 ## Play
 
@@ -54,6 +54,21 @@ Analysis is bounded: a confirmed escape clears the modeled forcing corridor;
 a possible escape still needs verification. It is not a full-game solution.
 
 ![Replay Analysis walks backward through the last escape, setup corridor, and lethal onset.](docs/assets/readme-analysis.gif)
+
+## Keep And Share
+
+- Send a complete replay as a link, opening at a chosen move.
+- Keep private study copies in Saved replays; completed continuations remain
+  ordinary My games.
+- Publish selected own games and an optional dated statistics snapshot on a
+  public player profile.
+
+[Example replays](https://gomoku2d.byebyebryan.com/guide/#examples) and short
+sharing help are part of the prepared `0.6.2` candidate. Examples need no account.
+
+![Open an example, inspect its ending and create a portable replay link.](docs/assets/readme-sharing.gif)
+
+![Public player profile with an optional statistics snapshot and paged games.](docs/assets/readme-public-profile.png)
 
 ## Inspect The System
 
@@ -120,6 +135,11 @@ lists checks by area.
 replays, saved continuations, opt-in public profiles and dated statistics. A
 real signed-in sharing round trip remains pending; see the
 [release record](docs/archive/v0_6_1_release.md) for evidence and open gates.
+
+The local `0.6.2` candidate refines public profiles and mobile layouts, adds
+Guide examples/sharing help, and keeps enabling a public profile behind explicit
+confirmation. The [candidate handoff](docs/working/v0_6_2_candidate.md) records
+its validation and remaining human checks. It has not been published.
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
 [v0.6.1 changelog](CHANGELOG.md#061---2026-10-23) ·

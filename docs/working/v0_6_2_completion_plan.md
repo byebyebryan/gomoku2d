@@ -1,10 +1,10 @@
 # v0.6.2 completion plan
 
 Owner: Bryan. Drafted October 24, 2026 against local `54848dc`.
-Status: implementation authorized by Bryan's October 24 goal-loop request.
-Proceed with the recommended Guide section and inline enable confirmation;
-freeze the two candidate games after current-core validation. Publication remains
-separate from this local implementation/candidate checkpoint.
+Status: local implementation and candidate preparation complete, October 24.
+The [candidate handoff](v0_6_2_candidate.md) owns current readiness and evidence.
+The plan below retains the authorized scope and acceptance boundaries;
+publication and remaining human checks are separate.
 
 The [follow-up plan](v0_6_followup_plan.md) owns the broader research and
 0.6.2–0.6.4 sequence. The public-player layout, replay return and mobile fixes
@@ -144,6 +144,18 @@ explicit base URL; never take unrelated port 8001.
 Local implementation/docs commits should follow cohesive checkpoints. Keep
 application work separate from tag/deployment actions. The goal loop authorizes
 local implementation and candidate preparation, not push or publication.
+
+### Checkpoint disposition, October 24
+
+A and B are implemented in `6d8e5a4`: Guide action help and direct navigation,
+two full legal bot games with frozen provenance/opening plies, existing guest
+viewer/save/share/continuation paths, and explicit inline owner enable consent.
+C has automated desktop/mobile/enlarged-text coverage, reviewed application
+captures and reconciled docs/media; Bryan's final visual and physical-device
+acceptance remains separate. Local D has version/changelog 0.6.2, refreshed
+media at `bbc652f`, production/manual builds, three-engine browser/cloud
+coverage and zero-finding production npm/Rust audits. The release script still
+requires pushed main; exact-head hosted CI/tag/deployment are not local passes.
 
 ## Acceptance and release gates
 

@@ -18,6 +18,8 @@ facts, and replay analysis.
   while retaining their inherited-move provenance.
 - Opt-in public player profiles with explicitly shared dated statistics and a
   paged catalog of games the player chose to publish.
+- Guide help for replay actions and two static bot-generated examples in the
+  existing shared viewer, without sign-in or a new backend.
 - Configurable bot presets and advanced web-safe bot controls.
 - Freestyle/Renju play, Renju forbidden-move hints, tactical hints, and mobile
   touch placement.
@@ -141,6 +143,17 @@ npm run playtest:engines   # full Chromium, Firefox and WebKit journeys
 npm run profile:browser    # opt-in production browser cost/resource samples
 npm run media:readme       # regenerate README/showcase media from preview
 ```
+
+For only the profile/sharing/replay assets, use the reviewed local demo and an
+explicitly owned loopback preview:
+
+```sh
+GOMOKU_MEDIA_BASE_URL=http://127.0.0.1:8013 GOMOKU_MEDIA_PUBLIC_PROFILE_ID=v061-demo-player npm run media:sharing
+```
+
+This command captures existing UI; it does not seed or modify cloud records.
+See [media provenance](../docs/assets/README.md) and the
+[example corpus contract](../docs/reference/app/replay_examples.md).
 
 The `postbuild` step publishes visual assets, curated lab reports, SPA route
 entries, and `404.html`. Production builds expect these report artifacts:

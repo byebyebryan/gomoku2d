@@ -22,8 +22,9 @@ planning the next releases does not close them.
 
 Bryan selected this sequence on October 23, 2026. `0.6.2` and `0.6.3` develop
 the shipped sharing experience; the small learning extension is assigned to
-`0.6.4`. These releases remain in progress/planning; the public-profile and mobile
-slices of 0.6.2 are implemented and technically checked. No release dates are committed.
+`0.6.4`. The `0.6.2` implementation and local candidate checks are complete;
+human acceptance and publication remain separate. `0.6.3` and `0.6.4` remain
+planned. No release dates are committed.
 
 | Release | Focus | Player outcome |
 |---|---|---|
@@ -33,13 +34,12 @@ slices of 0.6.2 are implemented and technically checked. No release dates are co
 
 The [follow-up plan](../../working/v0_6_followup_plan.md) records the review,
 first-party research, implementation implications, decision gates and release
-acceptance. The accepted public player-card design now has a
-[local implementation checkpoint](../../working/v0_6_2_implementation.md).
-Owner/action clarity, player help, examples, documentation and media remain
-before the full 0.6.2 release. The
-[completion plan](../../working/v0_6_2_completion_plan.md) sequences the authorized
-Guide help/examples, inline owner confirmation and local candidate checkpoints.
-Candidate games/opening plies are frozen after current-core validation.
+acceptance. The [candidate handoff](../../working/v0_6_2_candidate.md) owns
+the current 0.6.2 preview, technical evidence and publication boundaries.
+Guide help, two validated bot-game examples (28/36 moves, opening at final/26),
+inline owner consent and focused README/profile/replay media are implemented.
+Earlier checkpoints are retained in the
+[implementation archive](../../archive/v0_6_implementation.md).
 
 ### `0.6.2`: Design, Usability and Presentation
 
@@ -53,7 +53,7 @@ Candidate games/opening plies are frozen after current-core validation.
   a replay and keep Previous/Next controls in stable positions.
 - Review loading, signed-out, empty, unavailable, offline and error states,
   keyboard/focus behavior, enlarged text and actual touch use.
-- Add concise player help and two or three static, account-free example
+- Add concise player help and two static, account-free example
   replays. Keep tactical teaching in Guide and make the new help easy to find.
 - Refresh release-facing media and reconcile current documentation with the
   shipped product. Archive completed planning material with links preserved.

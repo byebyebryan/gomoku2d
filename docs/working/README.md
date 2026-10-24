@@ -8,12 +8,13 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
-| [0.6.2 completion plan](v0_6_2_completion_plan.md) | Bryan; goal loop active for Guide help/examples, inline enable confirmation and local presentation/release candidate |
-| [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; sequence/research retained; profile/mobile technical checkpoint complete, remaining work scoped by the completion draft |
-| [0.6.2 public-profile implementation](v0_6_2_implementation.md) | Bryan; implemented and technically checked; emulator preview ready for application visual review |
-| [0.6.2 implementation review](v0_6_2_review/README.md) | Bryan; two history/resize findings fixed; latest source/preview validation, application visual acceptance follows |
-| [0.6.2 mobile layout pass](v0_6_2_mobile/README.md) | Bryan; initial visual pass broadly positive; landscape/enlarged-text review fixes validated; preview updated, physical-phone review remains |
-| [0.6.2 public-profile design study](v0_6_2_design/README.md) | Bryan; accepted player-card direction plus retained alternatives; application preview review follows implementation |
+| [0.6.2 candidate handoff](v0_6_2_candidate.md) | Bryan; local implementation and technical checks complete; application review and separately authorized publication follow |
+| [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; retained research and 0.6.3/0.6.4 scope; revisit replay metadata compatibility before 0.6.3 implementation |
+
+Completed 0.6.2 design, implementation, review, mobile and completion-plan
+checkpoints are indexed in the [implementation archive](../archive/v0_6_implementation.md).
+Their paths and original evidence remain intact; they are snapshots, not
+competing active plans.
 
 ## Published v0.6.1 Handoff
 
@@ -25,8 +26,8 @@ manual handoff. The [original design](v0_6_profiles_and_replays.md),
 [execution record](v0_6_execution.md) and
 [functional profile pass](v0_6_1_public_profile.md) retain completed design and
 implementation context. They are not the active plan for the remaining line;
-reconcile/archive them with preserved links during the `0.6.2` documentation
-pass.
+see the [implementation archive](../archive/v0_6_implementation.md) for the
+completed-note index. Their existing paths and release evidence are preserved.
 
 ## Completed Follow-up
 

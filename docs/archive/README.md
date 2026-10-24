@@ -18,6 +18,11 @@ records the later integration matrix, sync repair and fixed desktop workloads.
 
 ## Release Records
 
+The [v0.6 implementation index](v0_6_implementation.md) groups completed
+sharing and 0.6.2 design/implementation checkpoints. The active
+[0.6.2 candidate handoff](../working/v0_6_2_candidate.md) owns current readiness;
+0.6.2 is not published.
+
 The [0.6.1 release record](v0_6_1_release.md) captures the first sharing
 publication, exact source and deployment identities, rules/index rollout,
 automated production acceptance and pending real signed-in sharing check.

@@ -53,16 +53,18 @@ language. Bryan's preferred refinement combines A's record treatment with B's
 columns: simple identity on the left, statistics above games on the right.
 Bryan accepted the subsequent public player card with shared-game count, link
 and record context. The [implementation checkpoint](v0_6_2_implementation.md)
-tracks the real-data UI, technical acceptance and preview; broader 0.6.2 help,
-examples and media remain separately sequenced.
+retains the original real-data UI checkpoint. The later
+[candidate handoff](v0_6_2_candidate.md) owns current local readiness.
 
 The public-player and mobile slices are now implemented and technically checked.
 Their checkpoints and evidence ledgers own runtime results; the research table
 above describes the original 0.6.1 baseline. Bryan's initial mobile visual pass
-was broadly positive, with subsequent review findings fixed. The draft
-[completion plan](v0_6_2_completion_plan.md) scopes the remaining owner/action
-clarity, help, examples, documentation/media and release checkpoints. Human
-device/account acceptance remains separate. The full 0.6.2 release is not complete.
+was broadly positive, with subsequent review findings fixed. The
+[completion plan](v0_6_2_completion_plan.md) is now executed locally: Guide help,
+two static validated examples, inline enable confirmation, docs and media are
+complete. Its three-engine technical results are recorded in the candidate
+handoff. Human device/account acceptance and publication remain separate.
+The research table above remains a historical baseline.
 
 ### Planned minimum
 
@@ -247,10 +249,10 @@ automatic puzzles, broad skins and multiplayer remain outside the planned
 minimum. The [P2P research](../reference/backend/p2p_multiplayer.md) retains the
 later multiplayer direction and its deferral.
 
-The next proposed checkpoint is the remaining `0.6.2` help/example and owner
-journey in the [completion draft](v0_6_2_completion_plan.md), followed by its
-documentation/media closeout. Validate changed areas instead of reopening
-unrelated completed audits. Commit, push, backend
-deployment, tagging, served-byte verification and human acceptance remain
-separate gates. Preserve manual preview/emulators and their data; use isolated
-test ports and keep routine captures out of the user's browser tabs.
+The next checkpoint is Bryan's review of the [0.6.2 candidate](v0_6_2_candidate.md),
+then separately authorized release publication. After that, settle 0.6.3's
+metadata/compatibility contract and thumbnail prototype before implementation.
+Validate changed areas instead of reopening unrelated completed audits. Push,
+backend deployment, tagging, served-byte verification and human acceptance
+remain separate gates. Preserve manual preview/emulators and their data; use
+isolated test ports and keep routine captures out of the user's browser tabs.
