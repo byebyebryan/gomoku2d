@@ -1,0 +1,207 @@
+{
+  "generated_at": "2026-10-24T07:54:21.805413+00:00",
+  "baseline": "902af1d",
+  "implementation_commit": "9c4c3bb",
+  "scope": "Landscape Profile overflow and enlarged-text public navigation, with adjacent tab and Replay-label reflow.",
+  "contributions": {
+    "luna": "CSS and existing browser scenario extensions; follow-up corrections.",
+    "primary": "Contract, independent review/diagnostics, validation, preview preservation/update, evidence and local commits."
+  },
+  "sources": [
+    {
+      "path": "gomoku-web/src/routes/ProfileRoute.module.css",
+      "sha256": "74f60173f64411709d0409f99370cebc4e74c445921496d779ce182e36e41182"
+    },
+    {
+      "path": "gomoku-web/src/routes/PublicPlayerRoute.module.css",
+      "sha256": "b8078b735a59c4808a67256b1631afa7f73d12a93e988d340f411a5e8e039ba3"
+    },
+    {
+      "path": "gomoku-web/playtests/profile.spec.ts",
+      "sha256": "098a1f7858001e1d45768b909320e86a2be5b33ae4d6b593f3ab34f0655dbb20"
+    },
+    {
+      "path": "gomoku-web/cloudtests/mobile_layout.spec.ts",
+      "sha256": "b4924faad0c81e4feff9012f8446fe795cbe0a49bba66188af399c63db77cda3"
+    },
+    {
+      "path": "docs/reference/app/app_design.md",
+      "sha256": "2b8188a722963adf33066c7f34c5b5ef46766c973faea394648bb350bc19b031"
+    }
+  ],
+  "checks": {
+    "baseline_regression": {
+      "expected_failed": 3,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "log": "regression-before.log"
+    },
+    "typecheck": "typecheck.log",
+    "unit": {
+      "passed": 504,
+      "files": 50,
+      "log": "unit.log"
+    },
+    "production_build": "build-complete.log",
+    "manual_build": "manual-build-complete.log",
+    "ordinary_browser": {
+      "passed": 48,
+      "log": "browser-accepted.log",
+      "note": "Profile/shared/saved replay cases; final visitor-header polish then checked by final cloud and independent matrix."
+    },
+    "cloud": {
+      "passed": 9,
+      "labels": [
+        "M01",
+        "C17",
+        "C18"
+      ],
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "log": "cloud-complete.log",
+      "port_offset": 1000
+    },
+    "viewport_matrix": {
+      "passed": 198,
+      "failed": 0,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "surfaces": [
+        "empty-games",
+        "public-player",
+        "saved-game"
+      ],
+      "viewports": [
+        [
+          320,
+          900
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          560,
+          320
+        ],
+        [
+          667,
+          375
+        ],
+        [
+          720,
+          390
+        ],
+        [
+          721,
+          390
+        ],
+        [
+          844,
+          390
+        ],
+        [
+          932,
+          430
+        ],
+        [
+          980,
+          500
+        ],
+        [
+          981,
+          500
+        ],
+        [
+          1280,
+          900
+        ]
+      ],
+      "font_percent": [
+        100,
+        200
+      ],
+      "receipt": "acceptance-after.json"
+    },
+    "unchanged_runtime_backend_and_dependencies": {
+      "src/routes/ProfileRoute.tsx": "0a4496542c8ef74fd81db1d005f850684e26107c0ec14caa374edfab9a829bff",
+      "src/routes/PublicPlayerRoute.tsx": "2e51630a7131f229b3ea545b31e56ae695ce8b1eda2caec74771a75c26b8c205",
+      "src/routes/ReplayRoute.tsx": "176b85fd03f6a776b44580dae4e1949b14c93c8ba114324203eb3ac325d234a3",
+      "../firestore.rules": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+      "../firestore.indexes.json": "fba74ee1b1bebd39a499ea97d64ffa97a6a8cb3e9ad25ad3a2716127ab4cbac0",
+      "package-lock.json": "7eeff88d021df00e05cad3851c12ec538013ace683ced9f8c657ef9ab8c31e44",
+      "package.json": "59296dff2fa2567c79cf8fa8f9b0886f50878b147515cb30106f5c37aebea9bf"
+    }
+  },
+  "preview": {
+    "url": "http://127.0.0.1:8013/",
+    "matched_build_files": 145,
+    "index_sha256": "899ce1c99740cdcf9e0f5e1796a4b1fe2262fc7957a1531897766b1a1c3ae7f3",
+    "entry": "/assets/index-QKLbiBTV.js",
+    "entry_sha256": "98745939fd8b18f063da4df4576bf2b79c1a8e2ea762ff2cf173eb48e65f4a7f",
+    "manual_public_documents_unchanged": [
+      {
+        "suffix": "",
+        "sha256": "943c3fa080b1d10dbc15bdf29bb025e7c8ec76b2164142407b88727bebf4f138"
+      },
+      {
+        "suffix": "/pages/0",
+        "sha256": "152f3b6642336bbbbb645434ea9b2f8a9b5e7b0c1ab93d613273a26815b4758c"
+      },
+      {
+        "suffix": "/pages/1",
+        "sha256": "89ec46049aee17800579b3d61783cdbbf51ab9d1a3e91302a9e7a8c9dbaa4663"
+      },
+      {
+        "suffix": "/pages/2",
+        "sha256": "758064e229fa77255844816bdb66b71acd98405832a28a5376a785e96039b9c0"
+      },
+      {
+        "suffix": "/pages/3",
+        "sha256": "a70eef06f36c8b2294f2a2058be24d86bc38703caf545c9a536e88c33fac8f22"
+      }
+    ]
+  },
+  "carbon": {
+    "index_sha256": "899ce1c99740cdcf9e0f5e1796a4b1fe2262fc7957a1531897766b1a1c3ae7f3",
+    "entry": "/assets/index-QKLbiBTV.js",
+    "entry_sha256": "98745939fd8b18f063da4df4576bf2b79c1a8e2ea762ff2cf173eb48e65f4a7f",
+    "auth_status": 200
+  },
+  "manual_services": {
+    "gomoku2d-v06-preview.service": 412018,
+    "gomoku2d-v06-emulators.service": 412007,
+    "gomoku2d-v06-carbon-tunnel.service": 2185378
+  },
+  "owned_test_ports_listening_after_cleanup": {
+    "8014": false,
+    "9013": false,
+    "20099": false,
+    "19081": false
+  },
+  "captures": [
+    {
+      "path": "review/profile-landscape.png",
+      "sha256": "0c54f338b5977837baaeb8e0da32bc3bddb6066c2e37905edbfaaf702b2e2c1a"
+    },
+    {
+      "path": "review/public-enlarged-text.png",
+      "sha256": "c22bead1c5acb68dbc2b9f91bef2977dcaf975248889acb9a33daf25d45fbb58"
+    }
+  ],
+  "raw_artifacts": "gomoku-web/test-results/v062-mobile-review",
+  "pre_fix_preview_backup": "gomoku-web/test-results/v062-mobile-review/backup-dist-cloud-902af1d",
+  "remaining": [
+    "Physical phone and real-account acceptance; broader 0.6.2 help/examples/documentation/media remain separately sequenced."
+  ],
+  "publication_boundary": "Local commits and manual preview only; no push, tag or production deployment. Original gallery remains an immutable first-pass snapshot."
+}

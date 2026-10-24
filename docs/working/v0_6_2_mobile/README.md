@@ -6,6 +6,9 @@ not received his manual review. This checkpoint covers those sharing/profile
 flows and the new 0.6.2 public player. It does not mark human visual acceptance
 or the full 0.6.2 release complete.
 
+The subsequent [review fixes](#review-fixes-october-24) are implemented in
+`9c4c3bb`. The original gallery below remains a snapshot of the first mobile pass.
+
 **[Open the before/after mobile gallery](http://starship:8787/reports/104645db902f603145c3045b8ad9ee107fbee1c921ece6f86753f0a23a536142/).**
 The gallery also includes Share, Publish and owner-public-settings captures.
 It is a static report on the existing server; the application is separate.
@@ -94,3 +97,43 @@ Human visual/phone/touch/accessibility acceptance and the earlier real-account
 sharing handoff remain open. Remaining 0.6.2 help, examples, documentation
 consolidation and release media stay separately sequenced. Production remains
 0.6.1; this pass performs no application push, tag or production deployment.
+
+## Review fixes, October 24
+
+After Bryan's initial visual pass, review found two missed layout cases:
+the desktop history grid widened Profile in phone landscape, pushing account
+actions out of view; enlarged text pushed public-player navigation offscreen.
+
+Short-landscape My games now uses the compact rows and suppresses desktop table
+headings. Explicit column constraints keep the record panel and tabs inside
+their available width, including enlarged desktop text. The visitor header
+reserves navigation space and wraps the title/navigation into separate rows
+when needed. Visible Replay labels can wrap inside intermediate-width rows.
+The established narrow Replay icon action and full accessible names remain.
+
+Luna implemented the CSS and extended the existing Profile and M01 scenarios;
+the primary reviewed, diagnosed remaining constraints, validated, updated the
+preview and committed. The new ordinary regression failed on the old preview
+in all three engines. Intermediate checks caught the remaining table heading,
+implicit column and Replay-label constraints before final acceptance.
+
+- Typecheck, **504 unit tests / 50 files**, and production/manual builds passed.
+- **48 ordinary browser cases** passed across Chromium, Firefox and WebKit.
+  The final visitor-header polish then passed **9 cloud cases** (M01/C17/C18,
+  three engines), covering signed-in geometry, sharing, public return/recovery
+  and clipboard fallback.
+- Independent checks passed **198/198** combinations: empty and populated My
+  games plus the preserved public visitor, 11 viewport sizes, normal/200% text,
+  three engines. Assertions include containing scrollers and action bounds.
+- All **145 final manual-build files** match served bytes. Carbon index/entry
+  hashes match Starship; Auth is reachable. All five demo documents retain
+  their original hashes, and all three manual services retain their PIDs.
+
+Current captures: [Profile landscape](review/profile-landscape.png) and
+[Public profile at 200% text](review/public-enlarged-text.png).
+[review_fixes.json](review_fixes.json) records source/capture hashes, checks and
+preview identity. Raw diagnostics, intermediate failures and the pre-fix preview
+backup remain under ignored `gomoku-web/test-results/v062-mobile-review/`.
+Every cloud harness used port offset 1000. The owned temporary browser preview
+was stopped; no user-browser tabs were opened. Human physical-phone/real-account
+acceptance remains separate. No application push, tag or production deployment.
