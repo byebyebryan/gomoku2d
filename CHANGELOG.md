@@ -12,6 +12,31 @@ their own section.
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-10-24
+
+**Theme: make profiles and shared replays easy to explore.**
+
+### Web
+
+- Give public profiles a two-column player card and record/catalog layout,
+  compact game rows, dated optional statistics and consistent recovery states.
+- Return from a public replay to its originating page, scroll position and
+  focused game, including browser history and changes in screen layout.
+- Refine mobile Profile controls, record tabs and saved/public replay actions;
+  keep the board beside replay controls in short landscape layouts. Reflow
+  controls and navigation with enlarged text.
+- Add concise Guide help for sharing, saving, publishing and continuations,
+  with two account-free, bot-generated example games in the existing viewer.
+- Replace the public-profile enable checkbox with an explicit inline
+  confirmation that resets on name/account changes and preserves default-off
+  statistics and existing publication safeguards.
+
+### Repository
+
+- Record example provenance and current-core legality checks, expand
+  three-engine journey/reflow coverage, and refresh focused profile/sharing
+  media and current documentation. No backend, schema or replay-format change.
+
 ## [0.6.1] - 2026-10-23
 
 **Theme: share games and public player profiles.**
@@ -1303,7 +1328,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.5...v0.6.1
 [0.5.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.3...v0.5.4
