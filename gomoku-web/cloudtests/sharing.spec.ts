@@ -206,8 +206,8 @@ test("C10: fresh signed-in shared/public route variants do no private Firestore 
   expect(baseline).not.toBeNull();
   await openPublicProfile(page);
   await page.getByLabel("Choose your public name", { exact: true }).fill("Network-isolated public player");
-  await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm enable", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
 
   // Seed after sign-in so the source page's already-running cloud session never
@@ -282,8 +282,8 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
 
   await openPublicProfile(page);
   await page.getByLabel("Choose your public name", { exact: true }).fill(publicName);
-  await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm enable", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
 
   const publicStatsToggle = page.getByRole("group", { name: "Share My games statistics publicly", exact: true }).getByRole("button", { name: "On", exact: true });
@@ -391,8 +391,8 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
     await visitor.reload();
     await expect(visitor.getByRole("heading", { name: "Public profile unavailable", exact: true })).toBeVisible();
 
-    await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
     await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
+    await page.getByRole("button", { name: "Confirm enable", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
     await visitor.goto(`/player/?id=${encodeURIComponent(uid)}`);
     await expect(visitor.getByRole("heading", { name: publicName, exact: true })).toBeVisible();
@@ -523,8 +523,8 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
 
   await openPublicProfile(page);
   await page.getByLabel("Choose your public name", { exact: true }).fill(publicName);
-  await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm enable", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
 
   const publicStatsToggle = page.getByRole("group", { name: "Share My games statistics publicly", exact: true }).getByRole("button", { name: "On", exact: true });
@@ -624,8 +624,8 @@ test("C15: maximum Unicode public fields remain editable and reflow for owners a
   const chosenName = page.getByRole("textbox", { name: "Choose your public name", exact: true });
   await chosenName.fill(unicodeName);
   await expect(chosenName).toHaveValue(unicodeName);
-  await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm enable", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Public profile enabled with an empty catalog" })).toBeVisible();
   await page.getByRole("textbox", { name: "Public name", exact: true }).fill(publicName);
   await page.getByRole("textbox", { name: "Public name", exact: true }).press("End");

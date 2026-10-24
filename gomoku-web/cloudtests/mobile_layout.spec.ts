@@ -118,8 +118,8 @@ test("M01: mobile record, account, saved and sharing surfaces remain reachable",
   await page.evaluate(() => { document.documentElement.style.fontSize = "100%"; });
   await page.getByRole("tab", { name: "Public profile", exact: true }).click();
   await page.getByLabel("Choose your public name", { exact: true }).fill("Mobile Player");
-  await page.getByRole("checkbox", { name: /I want to enable this public profile/ }).check();
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm enable", exact: true }).click();
   await expect(page.getByRole("button", { name: "Save public name", exact: true })).toBeVisible();
   await page.getByRole("group", { name: "Share My games statistics publicly", exact: true }).getByRole("button", { name: "On", exact: true }).click();
   await expect(page.getByRole("button", { name: "Update public stats", exact: true })).toBeVisible();

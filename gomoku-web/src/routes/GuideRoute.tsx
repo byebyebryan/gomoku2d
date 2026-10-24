@@ -1,9 +1,12 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import type { BoardOverlay, BoardViewModel } from "../board/board_model";
 import { Board } from "../components/Board/Board";
 import type { CellStone } from "../game/types";
+import { exampleReplayPath, REPLAY_EXAMPLES } from "../replay/replay_examples";
+import { Icon } from "../ui/Icon";
 
 import styles from "./GuideRoute.module.css";
 
@@ -158,6 +161,13 @@ const GUIDE_SEQUENCE_REPLY_2_MOVES: GuidePoint[] = [
 
 export function GuideRoute() {
   useDocumentTitle("Guide");
+  const { hash, key } = useLocation();
+  useEffect(() => {
+    if (!["#tactics", "#replays", "#examples"].includes(hash)) return;
+    const target = document.getElementById(hash.slice(1));
+    target?.scrollIntoView({ block: "start" });
+    target?.focus({ preventScroll: true });
+  }, [hash, key]);
 
   return (
     <main className={styles.page}>
@@ -182,11 +192,17 @@ export function GuideRoute() {
           </div>
         </header>
 
+        <nav className={styles.sectionNav} aria-label="Guide sections">
+          <Link className="uiAction uiActionNeutral" to="/guide/#tactics"><Icon name="help" /><span className="uiActionLabel">Tactics</span></Link>
+          <Link className="uiAction uiActionNeutral" to="/guide/#replays"><Icon name="share" /><span className="uiActionLabel">Replays &amp; sharing</span></Link>
+          <Link className="uiAction uiActionSecondary" to="/guide/#examples"><Icon name="replay" /><span className="uiActionLabel">Examples</span></Link>
+        </nav>
+
         <div className={styles.content}>
           <section className={`${styles.panel} ${styles.mistakePanel}`}>
             <div className={styles.sectionIntro}>
               <p className="uiSectionLabel">Avoid mistakes</p>
-              <h2>Respond to threats.</h2>
+              <h2 className={styles.sectionAnchor} id="tactics" tabIndex={-1}>Respond to threats.</h2>
               <p>
                 When a threat appears, win now, block it, or answer with something
                 stronger.
@@ -364,6 +380,50 @@ export function GuideRoute() {
                 </p>
               </div>
             </div>
+          </section>
+
+          <section className={`${styles.panel} ${styles.sharingPanel}`} aria-labelledby="replays">
+            <div className={styles.sectionIntro}>
+              <p className="uiSectionLabel">Keep and share</p>
+              <h2 className={styles.sectionAnchor} id="replays" tabIndex={-1}>Replays &amp; sharing</h2>
+            </div>
+            <dl className={styles.actionGuide}>
+              <div><dt><Icon name="share" />Share replay</dt><dd>Create a game link. Review the names and optional profile links before copying. Anyone with the link can replay it.</dd></div>
+              <div><dt><Icon name="save" />Save replay</dt><dd>Keep a private study copy in Saved replays. Saving does not add the original game to your played-game totals.</dd></div>
+              <div><dt><Icon name="publish" />Publish replay</dt><dd>Add an eligible game you played to your public profile. Sign in and enable your public profile first.</dd></div>
+              <div><dt><Icon name="plus" />Play From Here</dt><dd>Start a new game from an earlier position against your selected bot. When finished, it appears in My games like any other game.</dd></div>
+            </dl>
+            <details className={styles.sharingDetails}>
+              <summary><Icon name="help" /><span>What stays private?</span></summary>
+              <dl className={styles.stateGuide}>
+                <div><dt>My games</dt><dd>Games you played, including completed continuations.</dd></div>
+                <div><dt>Saved replays</dt><dd>Private copies you deliberately kept. Local copies stay in this browser; a signed-in library can sync when connected.</dd></div>
+                <div><dt>Public profile</dt><dd>Only the games you publish and the statistics you choose to share. The shared record is a dated My games snapshot, refreshed explicitly.</dd></div>
+              </dl>
+              <p>Opening a replay does not save or publish it. Removing a public listing does not remove portable links or copies other people already hold.</p>
+            </details>
+          </section>
+
+          <section className={`${styles.panel} ${styles.examplesPanel}`} aria-labelledby="examples">
+            <div className={styles.sectionIntro}>
+              <p className="uiSectionLabel">Try it without signing in</p>
+              <h2 className={styles.sectionAnchor} id="examples" tabIndex={-1}>Example replays</h2>
+              <p>Two bot-generated games. Nothing is saved when you open one.</p>
+            </div>
+            <ul className={styles.replayExamples} aria-label="Example replays">
+              {REPLAY_EXAMPLES.map((example) => (
+                <li className={styles.replayExample} key={example.id}>
+                  <div className={styles.exampleCopy}>
+                    <h3>{example.title}</h3>
+                    <p>{example.description}</p>
+                    <span className={styles.exampleMeta}>Freestyle · {example.replay.moves.length} moves · {example.replay.viewPly === undefined ? "Final board" : `From move ${example.replay.viewPly}`}</span>
+                  </div>
+                  <Link aria-label={`Open ${example.title}`} className="uiAction uiActionSecondary" to={exampleReplayPath(example)}>
+                    <Icon name="replay" /><span className="uiActionLabel">Open replay</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         </div>
       </div>

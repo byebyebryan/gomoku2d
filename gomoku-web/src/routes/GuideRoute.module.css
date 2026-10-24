@@ -20,6 +20,8 @@
 
 .headerRow {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   align-items: start;
   justify-content: space-between;
   gap: 22px;
@@ -35,6 +37,9 @@
 
 .links {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-end;
@@ -226,6 +231,54 @@
   image-rendering: pixelated;
 }
 
+.sectionNav {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sectionNav :global(.uiAction) {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  font-size: var(--type-meta);
+}
+
+.sectionNav :global(.uiActionLabel) { overflow-wrap: anywhere; }
+.sectionAnchor { scroll-margin-top: 12px; }
+.sectionAnchor:focus { outline: none; }
+.sectionAnchor:focus-visible { outline: 2px solid var(--info); outline-offset: 5px; }
+.sharingPanel { background: var(--surface); }
+.examplesPanel { background: var(--surface); }
+.actionGuide, .stateGuide { display: grid; min-width: 0; margin: 0; }
+.actionGuide > div, .stateGuide > div {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(160px, 0.65fr) minmax(0, 1.8fr);
+  gap: 10px 24px;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.actionGuide > div:first-child, .stateGuide > div:first-child { padding-top: 0; }
+.actionGuide > div:last-child, .stateGuide > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.actionGuide dt { display: flex; align-items: center; gap: 8px; }
+.actionGuide dt, .stateGuide dt { font-family: var(--font-display); font-size: var(--type-body); }
+.actionGuide dd, .stateGuide dd { min-width: 0; margin: 0; color: var(--text-muted); font-size: var(--type-body); line-height: 1.24; overflow-wrap: anywhere; }
+.sharingDetails { min-width: 0; border-top: 1px solid var(--border); padding-top: 12px; }
+.sharingDetails > summary { display: flex; width: fit-content; max-width: 100%; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font-family: var(--font-display); list-style: none; }
+.sharingDetails > summary::-webkit-details-marker { display: none; }
+.sharingDetails .stateGuide { margin-block: 14px; }
+.sharingDetails > p { font-size: var(--type-meta); }
+.replayExamples { display: grid; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.replayExample { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 20px; padding-block: 16px; border-bottom: 1px solid var(--border); }
+.replayExample:first-child { padding-top: 0; }
+.replayExample:last-child { border-bottom: 0; padding-bottom: 0; }
+.exampleCopy { display: grid; min-width: 0; gap: 6px; overflow-wrap: anywhere; }
+.exampleCopy h3 { margin: 0; font-family: var(--font-display); font-size: var(--type-value); line-height: 1.15; }
+.exampleMeta { color: var(--text-soft); font-size: var(--type-meta); }
+.replayExample :global(.uiAction) { min-width: 0; max-width: 100%; }
+
 @media (max-width: 960px) {
   .doubleFrameGrid,
   .quadFrameGrid,
@@ -266,7 +319,7 @@
   }
 
   .links {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 6px;
   }
 
@@ -311,4 +364,10 @@
   .frame .diagram {
     justify-self: center;
   }
+
+  .sectionNav :global(.uiAction) { padding-inline: 10px; }
+  .actionGuide > div, .stateGuide > div { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .replayExample { grid-template-columns: minmax(0, 1fr) 48px; gap: 12px; }
+  .replayExample :global(.uiAction) { width: 48px; min-width: 48px; min-height: 48px; padding: 0; }
+  .replayExample :global(.uiActionLabel) { display: none; }
 }

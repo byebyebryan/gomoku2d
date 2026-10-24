@@ -509,11 +509,21 @@ describe("public profile routes and controls", () => {
     expect(screen.queryByText(signedInUser.displayName)).not.toBeInTheDocument();
     expect(sharing.setPublicProfile).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /I want to enable this public profile/ }));
     fireEvent.click(screen.getByRole("button", { name: "Enable public profile" }));
+    expect(screen.getByRole("group", { name: "Enable public profile confirmation" })).toHaveTextContent("Local suggested name");
+    expect(screen.getByRole("button", { name: "Confirm enable" })).toHaveFocus();
+    expect(sharing.setPublicProfile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel enable" }));
+    expect(screen.getByRole("button", { name: "Enable public profile" })).toHaveFocus();
+    expect(sharing.setPublicProfile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Enable public profile" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Choose your public name" }), { target: { value: "Revised public name" } });
+    expect(screen.queryByRole("button", { name: "Confirm enable" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Enable public profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm enable" }));
     await waitFor(() => expect(sharing.setPublicProfile).toHaveBeenCalledWith(
       signedInUser.uid,
-      "Local suggested name",
+      "Revised public name",
       true,
       null,
     ));
@@ -561,6 +571,24 @@ describe("public profile routes and controls", () => {
     fireEvent.click(visibility.getByRole("button", { name: "Off" }));
     await waitFor(() => expect(sharing.setPublicProfileStats).toHaveBeenNthCalledWith(3, signedInUser.uid, null, 6));
     expect(await screen.findByRole("status")).toHaveTextContent("Public statistics removed");
+  });
+
+  it("keeps failed enable confirmation retryable and clears it when the account changes", async () => {
+    sharing.loadCatalogPage.mockResolvedValue(null);
+    sharing.setPublicProfile.mockRejectedValueOnce(new Error("Connection interrupted"));
+    renderManager();
+    const enable = await screen.findByRole("button", { name: "Enable public profile" });
+    fireEvent.click(enable);
+    fireEvent.click(screen.getByRole("button", { name: "Confirm enable" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Connection interrupted");
+    expect(screen.getByRole("button", { name: "Confirm enable" })).toBeEnabled();
+    expect(sharing.setPublicProfile).toHaveBeenCalledTimes(1);
+    act(() => setSignedIn("other-owner"));
+    await waitFor(() => expect(sharing.loadPublicProfile).toHaveBeenCalledWith("other-owner"));
+    expect(await screen.findByRole("button", { name: "Enable public profile" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirm enable" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(sharing.setPublicProfile).toHaveBeenCalledTimes(1);
   });
 
   it("ignores a delayed statistics save after the owner switches account", async () => {
@@ -647,10 +675,10 @@ describe("public profile routes and controls", () => {
       5,
     ));
     expect(await screen.findByRole("status")).toHaveTextContent("Public profile disabled");
-    expect(screen.getByRole("checkbox", { name: /I want to enable this public profile/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enable public profile" })).toBeInTheDocument();
     expect(sharing.loadPublicProfile).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole("checkbox", { name: /I want to enable this public profile/ }));
     fireEvent.click(screen.getByRole("button", { name: "Enable public profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm enable" }));
     await waitFor(() => expect(sharing.setPublicProfile).toHaveBeenNthCalledWith(
       2,
       signedInUser.uid,

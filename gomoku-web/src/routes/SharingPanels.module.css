@@ -338,19 +338,6 @@
   overflow-wrap: anywhere;
 }
 
-.confirmRow {
-  display: flex;
-  min-width: 0;
-  align-items: flex-start;
-  gap: 10px;
-  line-height: 1.45;
-}
-
-.confirmRow input {
-  flex: 0 0 auto;
-  margin-top: 4px;
-}
-
 .publicationRow {
   grid-template-columns: minmax(0, 1fr) auto;
 }
@@ -373,6 +360,8 @@
 .confirmPanel p {
   margin: 0;
 }
+
+.enableConfirm { border-color: var(--info-border); }
 
 @media (max-width: 620px) {
   .page {

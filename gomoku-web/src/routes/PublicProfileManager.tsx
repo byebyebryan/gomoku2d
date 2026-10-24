@@ -98,6 +98,9 @@ export function PublicProfileManager({
   const [confirmDisable, setConfirmDisable] = useState(false);
   const [linkMessage, setLinkMessage] = useState("");
   const linkRef = useRef<HTMLInputElement>(null);
+  const enableTriggerRef = useRef<HTMLButtonElement>(null);
+  const enableConfirmRef = useRef<HTMLButtonElement>(null);
+  const returnEnableFocusRef = useRef(false);
   const latestUidRef = useRef<string | null>(uid);
   latestUidRef.current = uid;
   const requestRef = useRef(0);
@@ -145,6 +148,7 @@ export function PublicProfileManager({
 
   useEffect(() => {
     requestRef.current += 1;
+    returnEnableFocusRef.current = false;
     setSnapshot(null);
     setLoading(false);
     setPendingAction(null);
@@ -158,6 +162,14 @@ export function PublicProfileManager({
   }, [uid]);
 
   useEffect(() => () => { requestRef.current += 1; }, []);
+
+  useEffect(() => {
+    if (confirmEnable) enableConfirmRef.current?.focus();
+    else if (returnEnableFocusRef.current) {
+      returnEnableFocusRef.current = false;
+      enableTriggerRef.current?.focus();
+    }
+  }, [confirmEnable]);
 
   const visibleSnapshot = snapshot?.uid === uid ? snapshot : null;
   const profile = visibleSnapshot?.profile ?? null;
@@ -187,7 +199,7 @@ export function PublicProfileManager({
   };
 
   const enableProfile = async () => {
-    if (!uid || !markersValid || !confirmEnable || profile?.enabled) return;
+    if (!uid || !markersValid || !confirmEnable || profile?.enabled || pendingAction !== null) return;
     const request = ++requestRef.current;
     setPendingAction("enable");
     setError(null);
@@ -368,14 +380,24 @@ export function PublicProfileManager({
                     <p className={styles.settingHint}>Starts empty. Publish games individually; statistics stay off until you opt in.</p>
                   </div>
                   <div className={styles.settingControls}>
-                    <label className={styles.confirmRow}>
-                      <input type="checkbox" checked={confirmEnable} onChange={(event) => setConfirmEnable(event.target.checked)} />
-                      <span>I want to enable this public profile with the name shown above.</span>
-                    </label>
-                    <button className="uiAction uiActionPrimary" type="button"
-                      disabled={!confirmEnable || pendingAction !== null} onClick={() => void enableProfile()}>
-                      <Icon name="profile" />{pendingAction === "enable" ? "Enabling public profile" : "Enable public profile"}
-                    </button>
+                    {!confirmEnable ? (
+                      <button ref={enableTriggerRef} className="uiAction uiActionPrimary" type="button"
+                        disabled={pendingAction !== null || !draftName.trim()} onClick={() => { setError(null); setNotice(null); setConfirmEnable(true); }}>
+                        <Icon name="profile" />Enable public profile
+                      </button>
+                    ) : (
+                      <div className={`${styles.confirmPanel} ${styles.enableConfirm}`} role="group" aria-label="Enable public profile confirmation">
+                        <p>Make <strong>{draftName.trim()}</strong> public? Games and statistics stay private until you choose to share them.</p>
+                        <div className={styles.managerActions}>
+                          <button ref={enableConfirmRef} className="uiAction uiActionPrimary" type="button" disabled={pendingAction !== null}
+                            onClick={() => void enableProfile()}>
+                            <Icon name="profile" />{pendingAction === "enable" ? "Enabling public profile" : "Confirm enable"}
+                          </button>
+                          <button aria-label="Cancel enable" className="uiAction uiActionNeutral" type="button" disabled={pendingAction !== null}
+                            onClick={() => { returnEnableFocusRef.current = true; setConfirmEnable(false); }}>Cancel</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>}
               </section>
