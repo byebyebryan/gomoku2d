@@ -824,6 +824,17 @@ test("C17: public replay returns preserve logical page, scroll and originating c
   await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
   await expect(trigger).toBeFocused();
   expect(await publicScrollTop()).toBeCloseTo(originalScroll, 0);
+  await page.getByRole("button", { name: "Previous page", exact: true }).click();
+  await expect(page.getByText("Page 1 of 2", { exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(trigger).toBeFocused();
+  expect(await publicScrollTop()).toBeCloseTo(originalScroll, 0);
+  await page.goForward();
+  await expect(page.getByText("Page 1 of 2", { exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(trigger).toBeFocused();
   await trigger.click();
   await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
   await page.goBack();
@@ -850,6 +861,20 @@ test("C17: public replay returns preserve logical page, scroll and originating c
   await page.getByRole("button", { name: "Return to public profile", exact: true }).click();
   await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Return navigation player", exact: true })).toBeFocused();
+
+  // Return after changing the board viewport must retain a visible control,
+  // even though the public list no longer has its original pixel geometry.
+  await page.setViewportSize({ width: 1440, height: 700 });
+  const remainingTrigger = page.getByRole("link", { name: "Replay Return game 16", exact: true });
+  await remainingTrigger.click();
+  await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Return to public profile", exact: true }).click();
+  await expect(remainingTrigger).toBeFocused();
+  const restoredBox = await remainingTrigger.boundingBox();
+  // Native nearest-edge scrolling can round a fractional CSS pixel.
+  expect(restoredBox!.y).toBeGreaterThanOrEqual(-1);
+  expect(restoredBox!.y + restoredBox!.height).toBeLessThanOrEqual(845);
 });
 
 test("C18: public empty and changed-catalog states recover with a usable clipboard fallback", async ({ page }, testInfo) => {

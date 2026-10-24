@@ -472,6 +472,31 @@ describe("public profile routes and controls", () => {
     expect(screen.getByLabelText("Replay navigation state")).toHaveTextContent(entry(1).fingerprint);
   });
 
+  it("restores a replay-origin history entry after paging away within the same profile", async () => {
+    const payload = replayPayload("uid-1");
+    sharing.loadPublicProfile.mockResolvedValue(publicProfile({ uid: "uid-1", catalogPageCounts: [8, 1, 0, 0] }));
+    sharing.loadCatalogPage.mockImplementation(async (uid: string, pageId: number) => page(
+      pageId as 0 | 1,
+      pageId === 0 ? Array.from({ length: 8 }, (_, i) => entry(i + 1, payload)) : [entry(9, payload)],
+      { uid },
+    ));
+    render(<MemoryRouter initialEntries={[{
+      pathname: "/player/", search: "?id=uid-1&page=2",
+      state: { publicReplayReturn: { uid: "uid-1", page: 2, scrollTop: 123, focusFingerprint: entry(9).fingerprint } },
+    }]}>
+      <PublicPageHistoryControls /><PublicPlayerRoute />
+    </MemoryRouter>);
+    expect(await screen.findByText("Page 2 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Replay Public game 9" })).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "Previous page" }));
+    expect(await screen.findByText("Page 1 of 2")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Browser back" }));
+    expect(await screen.findByText("Page 2 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Replay Public game 9" })).toHaveFocus();
+    expect(sharing.loadPublicProfile).toHaveBeenCalledTimes(1);
+    expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps public profile opt-in behind the explicit confirmation", async () => {
     sharing.loadCatalogPage.mockResolvedValue(null);
     sharing.setPublicProfile.mockResolvedValue(publicProfile({ uid: signedInUser.uid, displayName: "Local suggested name", revision: 1 }));

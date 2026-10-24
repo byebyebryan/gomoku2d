@@ -120,7 +120,7 @@ export function PublicPlayerRoute() {
   const pageRequestRef = useRef(0);
   const pageRef = useRef<HTMLElement>(null);
   const linkRef = useRef<HTMLInputElement>(null);
-  const restoredLocationKeyRef = useRef<string | null>(null);
+  const restorationRef = useRef({ key: location.key, done: false });
   const copyFallbackPendingRef = useRef(false);
   const locationRef = useRef(location);
   locationRef.current = location;
@@ -349,11 +349,15 @@ export function PublicPlayerRoute() {
 
   const returnOrigin = publicReplayReturnFromState(location.state);
   useLayoutEffect(() => {
-    if (restoredLocationKeyRef.current === location.key
-      || !returnOrigin || returnOrigin.uid !== uid || !visibleView) return;
+    if (restorationRef.current.key !== location.key) {
+      restorationRef.current = { key: location.key, done: false };
+    }
+    if (restorationRef.current.done || !returnOrigin || returnOrigin.uid !== uid || !visibleView) return;
     if (visibleView.status === "loading" || (visibleView.status === "ready" && visibleView.pageLoading)) return;
+    if (visibleView.status === "ready" && visibleView.counts
+      && visibleView.pageIndex !== requestedLogicalPage(location.search, visibleView.counts)) return;
 
-    restoredLocationKeyRef.current = location.key;
+    restorationRef.current.done = true;
     const title = document.getElementById("public-player-title");
     const scroller = profileScrollElement(pageRef.current);
     if (visibleView.status === "ready" && visibleView.pageIndex + 1 === returnOrigin.page) {
@@ -362,6 +366,9 @@ export function PublicPlayerRoute() {
         : null;
       if (scroller) scroller.scrollTop = trigger ? returnOrigin.scrollTop : 0;
       (trigger instanceof HTMLElement ? trigger : title)?.focus({ preventScroll: true });
+      // A different viewport or collapsed details can move the row away from
+      // its saved pixel offset. Keep the restored keyboard target visible.
+      trigger?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     } else {
       if (scroller) scroller.scrollTop = 0;
       title?.focus({ preventScroll: true });
