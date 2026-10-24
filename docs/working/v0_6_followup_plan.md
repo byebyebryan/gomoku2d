@@ -49,8 +49,10 @@ Research does not establish usage, hosting capacity or measured usability gains.
 
 The [public-profile design study](v0_6_2_design/README.md) explores three
 visitor compositions and a shared owner companion against the existing visual
-language. Its interactive report is ready for review; no layout has been
-selected or implemented in the product.
+language. Bryan's preferred refinement combines A's record treatment with B's
+columns: simple identity on the left, statistics above games on the right.
+The updated prototype is ready for visual review; production implementation
+has not begun.
 
 ### Planned minimum
 

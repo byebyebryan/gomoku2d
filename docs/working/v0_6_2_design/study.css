@@ -25,6 +25,7 @@ p{margin:0 0 14px}
 .section-head h2{margin:0}
 .text-action{font-size:15px}
 .option-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.option-buttons{grid-template-columns:repeat(5,minmax(0,1fr))}
 .option-buttons button{min-width:0;text-align:left;padding:15px 16px;background:#242726;border:1px solid #535650;color:#ecece6;cursor:pointer}
 .option-buttons strong,.option-buttons span{display:block}
 .option-buttons strong{font-size:16px}

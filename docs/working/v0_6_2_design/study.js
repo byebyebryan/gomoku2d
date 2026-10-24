@@ -1,7 +1,8 @@
 const params = new URLSearchParams(location.search);
-const state = { layout: params.get("layout") || "a", surface: "visitor", scenario: "full", stats: "on", labels: "normal", viewport: "desktop", text: "100", thumbs: "off" };
+const state = { layout: ["split","a","b","c","current"].includes(params.get("layout")) ? params.get("layout") : "split", surface: "visitor", scenario: "full", stats: "on", labels: "normal", viewport: "desktop", text: "100", thumbs: "off" };
 const controls = ["surface", "scenario", "stats", "labels", "viewport", "text", "thumbs"];
 const descriptions = {
+  split: "Refined · Two columns — a simple name/link panel on the left; A's shared record above the game list on the right. Both follow the existing Profile shell.",
   a: "A · Wide record — the player's name and familiar app navigation lead; a restrained record strip sits above a full-width game list.",
   b: "B · Profile columns — the private Profile screen's identity/record rail becomes a public reader view, with published games beside it.",
   c: "C · Compact record — a single contained panel brings name, record and games together; navigation stays visible above it.",
@@ -21,7 +22,7 @@ function syncControls() {
   for (const key of controls) document.getElementById(key).value = state[key];
   for (const button of document.querySelectorAll("[data-layout]")) button.setAttribute("aria-pressed", String(button.dataset.layout === state.layout));
   document.getElementById("option-description").textContent = state.surface === "owner"
-    ? "Shared owner companion — General Settings-style rows inside the existing Profile shell. Visitor A/B/C layouts remain alternative public views. Actions are in-memory demonstrations."
+    ? "Shared owner companion — General Settings-style rows inside the existing Profile shell. Visitor layouts remain alternative public views. Actions are in-memory demonstrations."
     : descriptions[state.layout];
 }
 function update() {

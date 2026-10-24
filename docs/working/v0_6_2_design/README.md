@@ -1,10 +1,13 @@
 # 0.6.2 public-profile design study
 
 Owner: Bryan. October 23, 2026. Source baseline: roadmap commit `069eb66`.
-Status: research/prototypes ready for visual review; no layout adopted and no
-production implementation begun.
+Status: Bryan prefers A's record treatment with B's columns, statistics above
+games on the right, and a simple left side. The refined prototype is ready for
+visual review; no production implementation has begun.
 
-**[Open the interactive comparison](http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/).**
+**[Open the refined two-column comparison](http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/).**
+The [original A/B/C study](http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/)
+remains available unchanged.
 The [report catalog](http://starship:8787/reports/#project=gomoku2d) retains
 earlier project reports. Earlier visual studies are historical, not an adopted
 backlog for this pass.
@@ -32,7 +35,8 @@ A Lichess public profile returned HTTP 403 and was excluded as visual evidence.
 
 | Option | Composition | Tradeoff |
 |---|---|---|
-| A: Wide record | Player-name app header; shared-record strip; full-width divided game list | Recommended starting point. Keeps games prominent and collapses naturally when statistics are hidden. |
+| Refined: Two columns | Name and Copy link on the left; shared-record strip above games in one right panel | Current direction from Bryan's feedback. Keeps identity simple and brings record and games together like private Profile. |
+| A: Wide record | Player-name app header; shared-record strip; full-width divided game list | Original starting recommendation. Keeps games prominent and collapses naturally when statistics are hidden. |
 | B: Profile columns | App header; identity/record rail; game list beside it | Closest to private Profile. The rail is less useful when little is public and reduces room for game titles. |
 | C: Compact record | Visible app navigation above one panel containing identity, record and games | Contained and restrained, but retains more of the standalone-card character. |
 
@@ -57,11 +61,17 @@ default. No avatars, bios, extra statistics, ratings or played dates are added.
 
 ## Recommendation and decisions still open
 
-Start from **A**, retaining B's continuity with the private record screen.
-Settle composition, record density, disclosure placement and the visitor Copy
-link action with Bryan before turning the study into a bounded implementation
-plan. A compact player-shared/unverified label stays visible; fuller context
-is behind About these records rather than a large warning block above games.
+Bryan proposed keeping A's record/list treatment with B's two-column structure,
+moving statistics to the top of the right side and leaving the left simple.
+The refinement uses an app header, a short name/Copy link panel, and one right
+panel for the dated shared record and published games. The left panel does not
+stretch to fill the list's height. Hidden statistics collapse away.
+
+On mobile, identity becomes a compact name/copy row above the right-side
+content. Review column width, record density and this mobile composition before
+turning the study into a bounded production implementation plan. A compact
+player-shared/unverified label stays visible; fuller context remains behind
+About these records.
 
 This recommendation is not human visual acceptance. The study does not close
 the real-account sharing, physical touch or human accessibility handoffs.
@@ -83,16 +93,19 @@ change those source assets, the app entrypoints or the existing manual preview.
 Serve the export on an owned free port or publish it with the HTML report tool.
 Do not use unrelated port 8001 or the manual preview/emulator ports.
 
-Publication is an immutable 16-file, 245,173-byte report. All 16 served files
-matched the prepared export byte-for-byte from Starship. The shared report
-server was reused; this is not an app deployment. Carbon/device reachability
-and human review are not inferred from the Starship delivery check.
+The original publication is an immutable 16-file, 245,173-byte report. The
+refinement is a separate 16-file, 248,085-byte snapshot. Served files are checked
+against each prepared export from Starship. The shared report server was reused;
+this is not an app deployment. Carbon/device reachability and human review are
+not inferred from the Starship delivery check.
 
 ## Prototype validation
 
-The [evidence receipt](evidence.json) records the source/asset hashes, published
-identity and checks. Raw screenshots and scripts remain in ignored
-`gomoku-web/test-results/v062-design/`.
+The [initial evidence receipt](evidence.json) preserves the first study's
+source/asset hashes, publication and checks. The
+[refinement receipt](refinement_evidence.json) records the subsequent two-column
+snapshot and its checks. Raw artifacts remain in ignored
+`gomoku-web/test-results/v062-design/` and `v062-design-refined/`.
 
 - Chromium inspection covered desktop/mobile A/B/C/current, sparse profiles,
   the owner companion, and 200% text with long labels. It exposed a nested

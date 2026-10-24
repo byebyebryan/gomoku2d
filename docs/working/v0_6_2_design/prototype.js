@@ -1,7 +1,7 @@
 const query = new URLSearchParams(location.search);
 const pick = (key, choices, fallback) => choices.includes(query.get(key)) ? query.get(key) : fallback;
 const state = {
-  layout: pick("layout", ["a", "b", "c", "current"], "a"),
+  layout: pick("layout", ["split", "a", "b", "c", "current"], "split"),
   surface: pick("surface", ["visitor", "owner"], "visitor"),
   scenario: pick("scenario", ["full", "sparse", "empty", "loading", "error", "unavailable"], "full"),
   stats: query.get("stats") !== "off", long: query.get("labels") === "long",
@@ -95,6 +95,10 @@ function visitor() {
   if (["loading","error","unavailable"].includes(state.scenario) || !state.enabled) return statusView();
   if (state.layout === "current") return '<div class="baseline"><section class="baseline-card"><p class="uiPageEyebrow">Gomoku 2D · Public profile</p><h1>' + esc(name) + "</h1>" + record() +
     '<p class="date">Games selected for public sharing</p><p class="baseline-disclosure">Player names and game details are supplied by the publisher. These games are casual records and are not independently verified.</p>' + catalog() + '<button type="button" class="uiAction uiActionNeutral" data-action="nav-home">Home</button></section></div>';
+  if (state.layout === "split") return '<div class="app layout-split">' + header("Public profile", "Gomoku2D · Player record", false) +
+    '<div class="columns"><aside class="identity-rail simple-identity" aria-label="Public player identity"><div><p class="uiPageEyebrow">Player</p><h2 class="rail-name player-name" title="' + esc(name) + '">' + esc(name) + '</h2></div>' +
+    button("Copy link","copy","copy","Neutral",'aria-label="Copy profile link"').replace('class="uiAction ', 'class="copy-link uiAction ') +
+    '</aside><div class="split-record">' + record() + catalog() + note() + "</div></div></div>";
   if (state.layout === "b") return '<div class="app layout-b">' + header("Public profile", "Gomoku2D · Player record", false) +
     '<div class="columns"><aside class="identity-rail"><div><p class="uiPageEyebrow">Player</p><h2 class="rail-name player-name" title="' + esc(name) + '">' + esc(name) + '</h2></div>' +
     (state.stats ? '<div class="rail-section">' + record() + "</div>" : "") + button("Copy link","copy","copy","Neutral").replace('class="uiAction ', 'class="copy-link uiAction ') +

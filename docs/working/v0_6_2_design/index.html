@@ -11,9 +11,9 @@
   <main class="report">
     <header class="intro">
       <p class="kicker">Gomoku2D / 0.6.2 / design exploration</p>
-      <h1>A player page that belongs in the game.</h1>
-      <p class="lead">Three compositions, the same content, the existing visual language. Start with A, then compare B and C with one game and statistics hidden.</p>
-      <p class="scope">Prototype study · synthetic data · no account, cloud writes, or production changes. A direction is recommended, not adopted.</p>
+      <h1>A's record. B's columns. A simpler left side.</h1>
+      <p class="lead">The refined direction keeps identity and Copy link on the left, with shared statistics above the games on the right. Compare it with the original A/B/C options using the same data.</p>
+      <p class="scope">Prototype refinement from Bryan's feedback · synthetic data · no account, cloud writes, or production changes. Final visual acceptance is pending.</p>
     </header>
 
     <section class="finding-grid" aria-label="Design findings">
@@ -23,9 +23,10 @@
     </section>
 
     <section aria-labelledby="options-title" class="explorer">
-      <div class="section-head"><h2 id="options-title">Compare the options</h2><a id="full-size" class="text-action" href="prototype.html?layout=a">Open full-size prototype ↗</a></div>
+      <div class="section-head"><h2 id="options-title">Review the refined composition</h2><a id="full-size" class="text-action" href="prototype.html?layout=split">Open full-size prototype ↗</a></div>
       <div class="option-buttons" role="group" aria-label="Profile composition">
-        <button type="button" data-layout="a" aria-pressed="true"><strong>A · Wide record</strong><span>Recommended starting point</span></button>
+        <button type="button" data-layout="split" aria-pressed="true"><strong>Refined · Two columns</strong><span>Simple left / record and games right</span></button>
+        <button type="button" data-layout="a" aria-pressed="false"><strong>A · Wide record</strong><span>Original full-width option</span></button>
         <button type="button" data-layout="b" aria-pressed="false"><strong>B · Profile columns</strong><span>Closest to the private Profile screen</span></button>
         <button type="button" data-layout="c" aria-pressed="false"><strong>C · Compact record</strong><span>One contained public surface</span></button>
         <button type="button" data-layout="current" aria-pressed="false"><strong>Current structure</strong><span>Reconstructed with the same fixtures</span></button>
@@ -40,20 +41,22 @@
         <label>Thumbnails<select id="thumbs"><option value="off">Off · 0.6.2 scope</option><option value="on">Sketch · 0.6.3 exploration</option></select></label>
       </div>
       <p id="option-description" class="option-description" role="status"></p>
-      <div class="stage-outer"><div id="stage" class="stage"><iframe id="prototype" title="Interactive public-profile prototype" src="prototype.html?layout=a&amp;embed=1"></iframe></div></div>
-      <p class="footnote">Replay demonstrates returning to the same list and page. Owner actions change in-memory fixtures only. Navigation buttons show their destination without leaving the study. The owner companion is shared across A/B/C. Thumbnail sketches are optional future work and are not a renderer implementation.</p>
+      <div class="stage-outer"><div id="stage" class="stage"><iframe id="prototype" title="Interactive public-profile prototype" src="prototype.html?layout=split&amp;embed=1"></iframe></div></div>
+      <p class="footnote">Replay demonstrates returning to the same list and page. Owner actions change in-memory fixtures only. Navigation buttons show their destination without leaving the study. The owner companion is shared across all options. Thumbnail sketches are optional future work and are not a renderer implementation.</p>
     </section>
 
     <section class="decision" aria-labelledby="recommendation">
-      <p class="kicker">Recommendation for discussion</p>
-      <h2 id="recommendation">Start with A. Borrow B's continuity with Profile.</h2>
-      <p>A gives the player a proper app header, reduces repeated boxes, and keeps games prominent whether statistics are shared or hidden. B makes the relationship to My games most explicit, but its identity column can become an under-filled rail. C is restrained and easy to scan, though it retains more of the standalone-card character.</p>
+      <p class="kicker">Refinement from Bryan's feedback</p>
+      <h2 id="recommendation">Keep the left about the player. Put the record with the games.</h2>
+      <p>The two columns now follow the existing Profile screen. The left panel holds the public name and Copy link. The right panel starts with A's compact shared record, followed by the published game list. Hidden statistics collapse away; the left panel stays short instead of stretching to match the games.</p>
+      <p>On mobile, identity becomes a compact row above the record and games. This keeps useful content near the top while preserving all five existing statistics when shared. No avatar, bio, extra metric or placeholder content is needed.</p>
       <div class="tradeoffs">
         <article><h3>A · Wide record</h3><p>Full-width name and navigation, a quiet shared record, then a divided game list. Best balance of sparse and full states.</p></article>
         <article><h3>B · Profile columns</h3><p>Identity and record on the left, games on the right. Familiar app structure; less horizontal room for long game titles.</p></article>
         <article><h3>C · Compact record</h3><p>Name, compact record and games inside one panel. More contained, with less use of a large desktop viewport.</p></article>
       </div>
-      <p><strong>Choices to settle:</strong> composition A/B/C, shared-record density, disclosure placement, and whether the visitor should have a Copy link action. The content and manually refreshed statistics remain the same. Thumbnails are a later enhancement.</p>
+      <p><strong>Refinements still to review:</strong> left-column width, record density and the compact identity row on mobile. The content and manually refreshed statistics remain the same. Thumbnails are a later enhancement.</p>
+      <p><a href="http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/">Original A/B/C study</a> · retained as an immutable earlier comparison.</p>
     </section>
 
     <section aria-labelledby="references">
@@ -75,7 +78,7 @@
         <li>A live Lichess profile returned HTTP 403 during research, so it is not treated as an inspected visual reference. No competitor profile screenshot is implied.</li>
         <li>No new public fields, schema changes, avatars, bios, ratings, game dates, featured games, background listeners or services. Existing snapshot date and all five current statistics remain visible when shared.</li>
       </ul>
-      <p>Prepared October 23, 2026 from roadmap commit <code>069eb66</code>. The baseline is a source-based reconstruction using the same synthetic fixtures, not a screenshot of a real public account. The 38-game statistics snapshot is independent of the selected publication count.</p>
+      <p>Refined October 23, 2026 from design-study commit <code>a90cd2a</code>. The baseline is a source-based reconstruction using the same synthetic fixtures, not a screenshot of a real public account. The 38-game statistics snapshot is independent of the selected publication count.</p>
       <p><a href="http://starship:8787/reports/#project=gomoku2d">Gomoku2D report catalog</a> · <a href="https://gomoku2d.byebyebryan.com/">Current public app</a></p>
     </section>
   </main>
