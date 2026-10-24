@@ -22,8 +22,8 @@ planning the next releases does not close them.
 
 Bryan selected this sequence on October 23, 2026. `0.6.2` and `0.6.3` develop
 the shipped sharing experience; the small learning extension is assigned to
-`0.6.4`. These releases remain in progress/planning; the public-profile slice
-of 0.6.2 is implemented and technically checked. No release dates are committed.
+`0.6.4`. These releases remain in progress/planning; the public-profile and mobile
+slices of 0.6.2 are implemented and technically checked. No release dates are committed.
 
 | Release | Focus | Player outcome |
 |---|---|---|
@@ -35,8 +35,11 @@ The [follow-up plan](../../working/v0_6_followup_plan.md) records the review,
 first-party research, implementation implications, decision gates and release
 acceptance. The accepted public player-card design now has a
 [local implementation checkpoint](../../working/v0_6_2_implementation.md).
-Bryan's application visual review follows; owner/action clarity, player help,
-examples, documentation and media remain before the full 0.6.2 release.
+Owner/action clarity, player help, examples, documentation and media remain
+before the full 0.6.2 release. The
+[completion plan](../../working/v0_6_2_completion_plan.md) sequences the authorized
+Guide help/examples, inline owner confirmation and local candidate checkpoints.
+Candidate games/opening plies are frozen after current-core validation.
 
 ### `0.6.2`: Design, Usability and Presentation
 

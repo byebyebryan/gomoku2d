@@ -8,7 +8,8 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
-| [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; profile technical checkpoint complete; application visual review and remaining owner/help/examples/media work follow |
+| [0.6.2 completion plan](v0_6_2_completion_plan.md) | Bryan; goal loop active for Guide help/examples, inline enable confirmation and local presentation/release candidate |
+| [v0.6.2–v0.6.4 follow-up plan](v0_6_followup_plan.md) | Bryan; sequence/research retained; profile/mobile technical checkpoint complete, remaining work scoped by the completion draft |
 | [0.6.2 public-profile implementation](v0_6_2_implementation.md) | Bryan; implemented and technically checked; emulator preview ready for application visual review |
 | [0.6.2 implementation review](v0_6_2_review/README.md) | Bryan; two history/resize findings fixed; latest source/preview validation, application visual acceptance follows |
 | [0.6.2 mobile layout pass](v0_6_2_mobile/README.md) | Bryan; initial visual pass broadly positive; landscape/enlarged-text review fixes validated; preview updated, physical-phone review remains |

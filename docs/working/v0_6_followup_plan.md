@@ -56,11 +56,13 @@ and record context. The [implementation checkpoint](v0_6_2_implementation.md)
 tracks the real-data UI, technical acceptance and preview; broader 0.6.2 help,
 examples and media remain separately sequenced.
 
-The public-player slice is now implemented and technically checked. Its
-checkpoint and evidence ledger own current runtime results; the research table
-above describes the original 0.6.1 baseline. Next is Bryan's application visual
-pass and the remaining owner/action-clarity, help, example and media decisions.
-This does not mark the full 0.6.2 release complete.
+The public-player and mobile slices are now implemented and technically checked.
+Their checkpoints and evidence ledgers own runtime results; the research table
+above describes the original 0.6.1 baseline. Bryan's initial mobile visual pass
+was broadly positive, with subsequent review findings fixed. The draft
+[completion plan](v0_6_2_completion_plan.md) scopes the remaining owner/action
+clarity, help, examples, documentation/media and release checkpoints. Human
+device/account acceptance remains separate. The full 0.6.2 release is not complete.
 
 ### Planned minimum
 
@@ -245,9 +247,10 @@ automatic puzzles, broad skins and multiplayer remain outside the planned
 minimum. The [P2P research](../reference/backend/p2p_multiplayer.md) retains the
 later multiplayer direction and its deferral.
 
-The immediate checkpoint is `0.6.2` composition/interaction review, then a
-bounded implementation plan for the accepted design. Validate changed areas
-instead of reopening unrelated completed audits. Commit, push, backend
+The next proposed checkpoint is the remaining `0.6.2` help/example and owner
+journey in the [completion draft](v0_6_2_completion_plan.md), followed by its
+documentation/media closeout. Validate changed areas instead of reopening
+unrelated completed audits. Commit, push, backend
 deployment, tagging, served-byte verification and human acceptance remain
 separate gates. Preserve manual preview/emulators and their data; use isolated
 test ports and keep routine captures out of the user's browser tabs.
