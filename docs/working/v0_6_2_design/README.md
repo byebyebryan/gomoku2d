@@ -3,8 +3,9 @@
 Owner: Bryan. October 23, 2026. Source baseline: roadmap commit `069eb66`.
 Status: Bryan prefers A's record treatment with B's columns, statistics above
 games on the right. After reviewing the minimal left side, he requested more
-substance there. The latest prototype compares a compact public player card
-with that earlier minimal panel; production implementation has not begun.
+substance there. He accepted the compact public player card and requested
+implementation. The [implementation checkpoint](../v0_6_2_implementation.md)
+tracks the real-data UI and validation; the reports retain the design history.
 
 **[Open the player-card comparison](http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/).**
 The [earlier minimal two-column refinement](http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/)
@@ -87,8 +88,8 @@ right panel into the player card.
 On mobile, name/count/copy remain visible while link and record information
 collapse under Profile details. The Left column selector compares this with
 the earlier minimal panel. The primary recommends this compact grouping while
-keeping the card's natural height; the richer card remains pending Bryan's
-visual review.
+keeping the card's natural height. Bryan accepted this direction before the
+implementation loop; human review of the resulting application remains separate.
 
 This recommendation is not human visual acceptance. The study does not close
 the real-account sharing, physical touch or human accessibility handoffs.

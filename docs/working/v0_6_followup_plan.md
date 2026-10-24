@@ -51,8 +51,10 @@ The [public-profile design study](v0_6_2_design/README.md) explores three
 visitor compositions and a shared owner companion against the existing visual
 language. Bryan's preferred refinement combines A's record treatment with B's
 columns: simple identity on the left, statistics above games on the right.
-The updated prototype is ready for visual review; production implementation
-has not begun.
+Bryan accepted the subsequent public player card with shared-game count, link
+and record context. The [implementation checkpoint](v0_6_2_implementation.md)
+tracks the real-data UI, technical acceptance and preview; broader 0.6.2 help,
+examples and media remain separately sequenced.
 
 ### Planned minimum
 
