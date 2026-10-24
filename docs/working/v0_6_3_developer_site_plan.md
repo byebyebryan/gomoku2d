@@ -10,6 +10,11 @@ and B as locally committed, reviewable work. Production application changes in
 C onward remain behind the visual acceptance gate; no push or deployment is
 part of this checkpoint.
 
+The [standalone visual study](v0_6_3_design/README.md) now makes the proposed
+shared frame and representative pages reviewable. Its technical checks and
+delivery are recorded separately from Bryan's pending visual acceptance.
+Application checkpoints C onward have not started.
+
 ## 1. Agreed direction
 
 Expand the existing GitHub Pages site at `gomoku2d.byebyebryan.com`, in this
@@ -248,8 +253,8 @@ from public publication.
 
 | Checkpoint | Work | Exit gate |
 |---|---|---|
-| A: plan review, current | Review page/source/public-boundary contracts and content roster | Agreed scope, with unresolved visual choices named. No application implementation yet. |
-| B: visual study | Overview, icon inspector and Lab compositions plus one review-case adaptation; real content and narrow/enlarged layouts | Bryan reviews the shared look, density and hierarchy before production implementation. |
+| A: plan review, locally committed | Review page/source/public-boundary contracts and content roster | Agreed scope, with unresolved visual choices named. No application implementation yet. |
+| B: visual study, awaiting Bryan | Overview, icon inspector and Lab compositions plus one review-case adaptation; real content and narrow/enlarged layouts | Bryan reviews the shared look, density and hierarchy before production implementation. |
 | C: public shell/navigation | Public boundary, shared frame, URLs and recovery | Direct/reload/history/keyboard paths work, no private-account effects, game/shared replay behavior preserved. |
 | D: assets/design and Lab | Full source-backed inspectors and refined report presentation | Asset/token/frame/tint parity, report meanings/data/links preserved, responsive controls usable. |
 | E: reviews and Process | Curated records/viewer, initial cases/baseline, process copy and affected Markdown | A new review uses reusable capture/export/render procedures; provenance and acceptance stay accurate. |

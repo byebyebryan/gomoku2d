@@ -1,0 +1,1621 @@
+{
+  "checked_at": "2026-10-24T22:35:07.866550+00:00",
+  "scope": "Standalone visual study; not application integration, release or human visual acceptance",
+  "base_source": "935fa3b",
+  "published_evidence_source": "4052d94",
+  "source_manifest_sha256": "9e13a3586bbc4e8b88a1d35c984e8d0df8967e2366cc4a71fd1969db48d58087",
+  "browser_driver_sha256": "8b3fd3af90869551c11393d51e6124fae0f2e4fc49d73b84a94c502779138c8d",
+  "browser_environment": "Existing Playwright package, cached engines and mcr.microsoft.com/playwright:v1.59.1-noble; headless, deviceScaleFactor 1",
+  "publication": {
+    "report_id": "3a2d77f9d8145ae00cf9b67c865e0f406f79f2f6764de2fc3a37ed6301772ada",
+    "title": "Gomoku2D 0.6.3 \u2014 developer area design study",
+    "project": "gomoku2d",
+    "created_at": "2026-10-24T22:32:15.252611+00:00",
+    "file_count": 62,
+    "byte_count": 422251,
+    "url": "http://starship:8787/reports/3a2d77f9d8145ae00cf9b67c865e0f406f79f2f6764de2fc3a37ed6301772ada/",
+    "project_url": "http://starship:8787/reports/#project=gomoku2d"
+  },
+  "delivery": {
+    "checked_at": "2026-10-24T22:32:37.249322+00:00",
+    "local": {
+      "host": "starship",
+      "base": "http://starship:8787/reports/3a2d77f9d8145ae00cf9b67c865e0f406f79f2f6764de2fc3a37ed6301772ada/",
+      "files": 62,
+      "all_sha256_match": true
+    },
+    "carbon": {
+      "host": "carbon",
+      "base": "http://starship:8787/reports/3a2d77f9d8145ae00cf9b67c865e0f406f79f2f6764de2fc3a37ed6301772ada/",
+      "files": 62,
+      "all_sha256_match": true
+    }
+  },
+  "published_browser": {
+    "base": "http://100.84.31.64:8787/reports/3a2d77f9d8145ae00cf9b67c865e0f406f79f2f6764de2fc3a37ed6301772ada/",
+    "results": [
+      {
+        "engine": "chromium",
+        "passed": true,
+        "checks": [
+          "41 canonical icons",
+          "selection, comparison and limit feedback",
+          "direct state, Back/Forward and reload",
+          "filter, empty state, input focus",
+          "1x/2x/10x canonical raster masks, zero mismatched or antialiased pixels",
+          "8 real Lab rows, expansion, stages and recorded proof prefix",
+          "dated review media, full-size and case navigation",
+          "source sprite frame, black tint and reduced motion",
+          "64 responsive/enlarged-text combinations",
+          "keyboard skip destination"
+        ],
+        "layouts": [
+          {
+            "section": "overview",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          }
+        ],
+        "raster": [
+          {
+            "scale": 1,
+            "width": 24,
+            "height": 25,
+            "mismatch": 0,
+            "offset": [
+              0,
+              1
+            ],
+            "colours": [
+              "30,30,30,255",
+              "245,245,245,255"
+            ]
+          },
+          {
+            "scale": 2,
+            "width": 48,
+            "height": 49,
+            "mismatch": 0,
+            "offset": [
+              0,
+              1
+            ],
+            "colours": [
+              "30,30,30,255",
+              "245,245,245,255"
+            ]
+          },
+          {
+            "scale": 10,
+            "width": 240,
+            "height": 241,
+            "mismatch": 0,
+            "offset": [
+              0,
+              1
+            ],
+            "colours": [
+              "87,87,86,255",
+              "30,30,30,255",
+              "245,245,245,255"
+            ]
+          }
+        ],
+        "errors": [],
+        "outside": []
+      },
+      {
+        "engine": "firefox",
+        "passed": true,
+        "checks": [
+          "41 canonical icons",
+          "selection, comparison and limit feedback",
+          "direct state, Back/Forward and reload",
+          "filter, empty state, input focus",
+          "1x/2x/10x canonical raster masks, zero mismatched or antialiased pixels",
+          "8 real Lab rows, expansion, stages and recorded proof prefix",
+          "dated review media, full-size and case navigation",
+          "source sprite frame, black tint and reduced motion",
+          "64 responsive/enlarged-text combinations",
+          "keyboard skip destination"
+        ],
+        "layouts": [
+          {
+            "section": "overview",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          }
+        ],
+        "raster": [
+          {
+            "scale": 1,
+            "width": 24,
+            "height": 25,
+            "mismatch": 0,
+            "offset": [
+              0,
+              1
+            ],
+            "colours": [
+              "30,30,30,255",
+              "245,245,245,255"
+            ]
+          },
+          {
+            "scale": 2,
+            "width": 48,
+            "height": 49,
+            "mismatch": 0,
+            "offset": [
+              0,
+              1
+            ],
+            "colours": [
+              "30,30,30,255",
+              "245,245,245,255"
+            ]
+          },
+          {
+            "scale": 10,
+            "width": 240,
+            "height": 241,
+            "mismatch": 0,
+            "offset": [
+              0,
+              1
+            ],
+            "colours": [
+              "87,87,86,255",
+              "30,30,30,255",
+              "245,245,245,255"
+            ]
+          }
+        ],
+        "errors": [],
+        "outside": []
+      },
+      {
+        "engine": "webkit",
+        "passed": true,
+        "checks": [
+          "41 canonical icons",
+          "selection, comparison and limit feedback",
+          "direct state, Back/Forward and reload",
+          "filter, empty state, input focus",
+          "1x/2x/10x canonical raster masks, zero mismatched or antialiased pixels",
+          "8 real Lab rows, expansion, stages and recorded proof prefix",
+          "dated review media, full-size and case navigation",
+          "source sprite frame, black tint and reduced motion",
+          "64 responsive/enlarged-text combinations",
+          "keyboard skip destination"
+        ],
+        "layouts": [
+          {
+            "section": "overview",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 1280,
+            "height": 900,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 1280,
+            "height": 900,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 320,
+            "height": 800,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 320,
+            "height": 800,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 844,
+            "height": 390,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "overview",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "process",
+            "width": 844,
+            "height": 390,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 390,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 390,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 320,
+            "height": 844,
+            "enlarged": false,
+            "overflow": 0
+          },
+          {
+            "section": "icons?compare=share,save,publish,home",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=style",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "icons?view=sprites",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=search",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "lab?tab=analysis",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          },
+          {
+            "section": "reviews?case=public&full=1",
+            "width": 320,
+            "height": 844,
+            "enlarged": true,
+            "overflow": 0
+          }
+        ],
+        "raster": [
+          {
+            "scale": 1,
+            "width": 24,
+            "height": 25,
+            "mismatch": 0,
+            "offset": [
+              0,
+              0
+            ],
+            "colours": [
+              "30,30,30,255",
+              "245,245,245,255"
+            ]
+          },
+          {
+            "scale": 2,
+            "width": 48,
+            "height": 49,
+            "mismatch": 0,
+            "offset": [
+              0,
+              0
+            ],
+            "colours": [
+              "30,30,30,255",
+              "245,245,245,255"
+            ]
+          },
+          {
+            "scale": 10,
+            "width": 240,
+            "height": 241,
+            "mismatch": 0,
+            "offset": [
+              0,
+              0
+            ],
+            "colours": [
+              "30,30,30,255",
+              "245,245,245,255",
+              "87,87,86,255"
+            ]
+          }
+        ],
+        "errors": [],
+        "outside": []
+      }
+    ]
+  },
+  "initial_findings": [
+    {
+      "kind": "study layout",
+      "finding": "WebKit 320px / 200% long-word overflow (3px) and finding label narrower than its content",
+      "resolution": "Paragraph long-word wrapping; intrinsic mobile status-column size"
+    },
+    {
+      "kind": "test driver",
+      "finding": "Skip-link check started after a section navigation had intentionally focused its heading",
+      "resolution": "Start keyboard entry from a fresh document"
+    },
+    {
+      "kind": "test driver",
+      "finding": "Capture visibility did not ensure its image had decoded on the published host",
+      "resolution": "Await image decoding before natural-dimension assertion"
+    },
+    {
+      "kind": "source links",
+      "finding": "Local-only planning commit would not resolve in GitHub evidence links",
+      "resolution": "Pin public source links to origin/main and assert linked-file byte parity during build"
+    }
+  ],
+  "preserved": {
+    "application_runtime": "No edits; application tree unchanged from origin/main",
+    "source_reports_assets": "No edits; read-only source inputs",
+    "manual_preview": "8013 PID 25022 retained",
+    "manual_auth": "19099 PID 25021 retained",
+    "manual_firestore": "18081 PID 25133 retained",
+    "report_host": "Existing shared report server reused; leave running",
+    "browser_tabs": "No user-browser tabs opened; every owned headless browser closed in finally",
+    "carbon_forwarding": "Starship gomoku2d-v06-carbon-tunnel.service remains active; later SSH probe to Carbon timed out after the successful 62-file Carbon HTTP verification"
+  },
+  "remaining": [
+    "Bryan visual review of shared frame, density, hierarchy and tools",
+    "Production checkpoints C onward",
+    "Physical-device and assistive-technology acceptance not performed"
+  ],
+  "cleanup": {
+    "owned_loopback_server": "Stopped 127.0.0.1:46861 after final checks",
+    "shared_report_server": "Left running at 8787",
+    "manual_services": "Preview, emulator and Carbon tunnel units remain active",
+    "port_8001": "Untouched"
+  }
+}
