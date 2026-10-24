@@ -75,8 +75,9 @@ try {
   await sharing.hold(12);
   const sharingFrames = await sharing.finish();
 
-  await page.goto(new URL(examplePath, base).href);
-  await page.getByRole("grid", { name: "Gomoku board" }).waitFor();
+  await page.getByRole("button", { name: "Back to replay", exact: true }).click();
+  await page.getByRole("button", { name: "Next turn", exact: true }).click();
+  await page.getByTestId("replay-move-count").filter({ hasText: "Move 28 / 28" }).waitFor();
   await page.getByTestId("replay-analysis-status").filter({ hasText: /./ }).waitFor();
   await settle(page);
   await page.screenshot({ path: resolve(output, "readme-replay-analysis.png"), animations: "disabled" });
