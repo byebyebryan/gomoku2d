@@ -53,14 +53,14 @@ test("published static report routes render their current artifacts", async ({ p
 
   await page.goto("/lab/");
   await expect(page).toHaveTitle("Lab Report | Gomoku2D");
-  await expect(page.getByRole("heading", { name: "Lab Report" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Ranking" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Search" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Analysis" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Inside the bot lab" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ranking", exact:true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Search", exact:true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Analysis", exact:true })).toBeVisible();
   const resultsSection = page.locator("section", { hasText: "Results" });
   await resultsSection.locator("summary").first().click();
   await expect(resultsSection.locator("details details summary").first()).toBeVisible();
-  const reportScroller = page.locator("main").first();
+  const reportScroller = page.locator(".dev-page");
   await expect
     .poll(async () =>
       reportScroller.evaluate((node) => node.scrollHeight > node.clientHeight)
@@ -76,7 +76,7 @@ test("published static report routes render their current artifacts", async ({ p
     node.scrollTop = 0;
   });
 
-  await page.getByRole("tab", { name: "Analysis" }).click();
+  await page.getByRole("link", { name: "Analysis", exact:true }).click();
   await expect(page).toHaveURL(/\/lab\/\?tab=analysis$/);
   await expect(page.getByText("Easy").first()).toBeVisible();
   await expect(page.locator("[data-proof-board='analysis']")).toHaveCount(0);
@@ -95,24 +95,25 @@ test("published visual design route renders manifest-driven assets", async ({ pa
   expect(manifest.status()).toBe(200);
 
   await page.goto("/visuals/");
-  await expect(page).toHaveTitle("Visuals | Gomoku2D");
-  await expect(page.getByRole("heading", { level: 1, name: "Visuals" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Style" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Sprites" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Icons" })).toBeVisible();
+  await expect(page).toHaveTitle("Design & assets | Gomoku2D");
+  await expect(page.getByRole("heading", { level: 1, name: "Pixels with a purpose" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "style", exact:true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "sprites", exact:true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "icons", exact:true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Fonts" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Inventory" })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Palette" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Colours with a job" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Primary" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Typography" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Pixel type, with room to read" })).toBeVisible();
 
-  await page.getByRole("tab", { name: "Sprites" }).click();
-  await expect(page.getByRole("heading", { name: "pointer-idle-blocked" })).toBeVisible();
-  await page.getByRole("button", { name: "Pause" }).click();
-  await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+  await page.getByRole("link", { name: "sprites", exact:true }).click();
+  await expect(page.getByRole("button", { name: "pointer-idle-blocked", exact:true })).toBeVisible();
+  await page.getByRole("button", { name: "Play animation", exact:true }).click();
+  await page.getByRole("button", { name: "Pause animation", exact:true }).click();
+  await expect(page.getByRole("button", { name: "Play animation", exact:true })).toBeVisible();
 
-  await page.getByRole("tab", { name: "Icons" }).click();
-  await expect(page.getByRole("img", { name: "Home" })).toBeVisible();
+  await page.getByRole("link", { name: "icons", exact:true }).click();
+  await expect(page.getByRole("button", { name: "Home", exact:true })).toBeVisible();
 });
 
 test("rules explanation route renders inside the app shell", async ({ page }) => {

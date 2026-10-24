@@ -193,13 +193,13 @@ describe("LabReportRoute", () => {
     expect(reportLoaders.bot).toHaveBeenCalledOnce();
     expect(reportLoaders.analysis).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Analysis" }));
+    fireEvent.click(screen.getByRole("link", { name: "Analysis" }));
 
     await waitFor(() => expect(reportLoaders.analysis).toHaveBeenCalledOnce());
     expect(await screen.findByText("search-d3+pattern")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Analysis" })).toHaveAttribute(
-      "aria-selected",
-      "true",
+    expect(screen.getByRole("link", { name: "Analysis" })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
   });
 

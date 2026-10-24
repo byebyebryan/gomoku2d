@@ -38,6 +38,8 @@ export function HomeRoute() {
               <span aria-hidden="true">/</span>
               <Link to="/guide/#examples">Examples</Link>
               <span aria-hidden="true">/</span>
+              <Link to="/dev/">Developer</Link>
+              <span aria-hidden="true">/</span>
               <Link to="/lab/">Lab</Link>
               <span aria-hidden="true">/</span>
               <Link to="/visuals/">Visuals</Link>

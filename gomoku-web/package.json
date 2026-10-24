@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "postbuild": "node scripts/publish_visual_design_assets.mjs && node scripts/publish_reports.mjs && node scripts/publish_spa_routes.mjs",
+    "postbuild": "node scripts/publish_visual_design_assets.mjs && node scripts/publish_reports.mjs && node scripts/publish_reviews.mjs && node scripts/publish_spa_routes.mjs",
     "preview": "vite preview",
     "media:readme": "node scripts/capture_readme_media.mjs",
     "media:sharing": "node scripts/capture_sharing_media.mjs",
@@ -27,7 +27,8 @@
     "playtest": "playwright test",
     "playtest:engines": "playwright test --browser=all",
     "profile:browser": "playwright test --config playwright.profile.config.ts",
-    "playtest:smoke": "playwright test playtests/smoke.spec.ts"
+    "playtest:smoke": "playwright test playtests/smoke.spec.ts",
+    "review:export": "node scripts/export_review.mjs"
   },
   "dependencies": {
     "firebase": "^12.12.1",

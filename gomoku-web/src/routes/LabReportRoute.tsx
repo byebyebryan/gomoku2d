@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { useDocumentTitle } from "../app/useDocumentTitle";
@@ -39,7 +39,7 @@ const REPORT_VIEWS: Array<{ id: ReportView; label: string }> = [
 export function LabReportRoute() {
   useDocumentTitle("Lab Report");
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const view = parseReportView(searchParams.get("tab"));
   const analysisMatchPath = view === "analysis" ? searchParams.get("match") : null;
   const [analysisState, setAnalysisState] = useState<LoadState<PublishedAnalysisReport>>({
@@ -47,30 +47,28 @@ export function LabReportRoute() {
   });
   const [botState, setBotState] = useState<LoadState<PublishedBotReport>>({ status: "idle" });
 
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
   useEffect(() => {
     if (view === "analysis" || botState.status !== "idle") {
       return;
     }
 
-    let cancelled = false;
     setBotState({ status: "loading" });
     loadPublishedBotReport()
       .then((report) => {
-        if (!cancelled) {
+        if (mounted.current) {
           setBotState({ status: "loaded", report });
         }
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
+        if (mounted.current) {
           setBotState({
             status: "error",
             message: error instanceof Error ? error.message : String(error),
           });
         }
       });
-    return () => {
-      cancelled = true;
-    };
   }, [view]);
 
   useEffect(() => {
@@ -78,38 +76,22 @@ export function LabReportRoute() {
       return;
     }
 
-    let cancelled = false;
     setAnalysisState({ status: "loading" });
     loadAnalysisReport()
       .then((report) => {
-        if (!cancelled) {
+        if (mounted.current) {
           setAnalysisState({ status: "loaded", report });
         }
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
+        if (mounted.current) {
           setAnalysisState({
             status: "error",
             message: error instanceof Error ? error.message : String(error),
           });
         }
       });
-    return () => {
-      cancelled = true;
-    };
   }, [view]);
-
-  const setView = (nextView: ReportView) => {
-    const nextParams = new URLSearchParams();
-    if (nextView !== "ranking") {
-      nextParams.set("tab", nextView);
-    }
-    const currentMatch = searchParams.get("match");
-    if (nextView === "analysis" && currentMatch) {
-      nextParams.set("match", currentMatch);
-    }
-    setSearchParams(nextParams);
-  };
 
   let content: ReactNode;
 
@@ -141,71 +123,12 @@ export function LabReportRoute() {
     );
   }
 
-  return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
-        <header className={styles.hero}>
-          <div className={styles.headerRow}>
-            <div className={styles.headerCopy}>
-              <p className="uiPageEyebrow">Gomoku2D lab</p>
-              <h1 className={styles.title}>Lab Report</h1>
-              <p className={styles.subtitle}>
-                Inner workings of a Gomoku bot: rankings, search telemetry, and replay
-                analysis.
-              </p>
-            </div>
-            <nav className={styles.links} aria-label="Report links">
-              <Link className="uiAction uiActionNeutral" to="/">
-                <span className="uiActionLabel">Home</span>
-              </Link>
-              <Link className="uiAction uiActionNeutral" to="/visuals/">
-                <span className="uiActionLabel">Visuals</span>
-              </Link>
-            </nav>
-          </div>
-          <ReportTabs value={view} onChange={setView} />
-          <p className={styles.reportNote}>
-            Published reference runs describe their recorded engine revisions.
-            Current engine behavior can differ; see Provenance for dates and settings.
-          </p>
-          {botState.status === "loaded" && botState.report.provenance?.git_dirty ? (
-            <p className={styles.warning}>Development run: generated from a dirty git worktree.</p>
-          ) : null}
-        </header>
-
-        {content}
-      </div>
-    </main>
-  );
+  return <div className={styles.developerReport}>
+    <header className="dev-heading"><p className="dev-eyebrow">Experiments & analysis</p><h1>Inside the bot lab</h1><p className="dev-lead">Compare behavior under a recorded budget, then inspect the decisions.</p></header>
+    <nav className="dev-views" aria-label="Lab views">{REPORT_VIEWS.map(option=><Link key={option.id} to={option.id==="ranking"?"/lab/":`/lab/?tab=${option.id}${option.id==="analysis"&&analysisMatchPath?`&match=${encodeURIComponent(analysisMatchPath)}`:""}`} aria-current={view===option.id?"page":undefined} id={`lab-report-tab-${option.id}`}>{option.label}</Link>)}</nav>
+    <p className={styles.reportNote}>Published reference runs describe their recorded engine revisions. Current engine behavior can differ; see Provenance for dates and settings.</p>
+    {botState.status==="loaded"&&botState.report.provenance?.git_dirty?<p className={styles.warning}>Development run: generated from a dirty git worktree.</p>:null}
+    {content}
+  </div>;
 }
-
-function ReportTabs({
-  value,
-  onChange,
-}: {
-  value: ReportView;
-  onChange: (view: ReportView) => void;
-}) {
-  return (
-    <div className={styles.viewToggle} aria-label="Lab report sections" role="tablist">
-      {REPORT_VIEWS.map((option) => (
-        <button
-          key={option.id}
-          type="button"
-          id={`lab-report-tab-${option.id}`}
-          aria-controls={`lab-report-panel-${option.id}`}
-          aria-selected={value === option.id}
-          className={value === option.id ? styles.activeToggle : undefined}
-          onClick={() => onChange(option.id)}
-          role="tab"
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function parseReportView(value: string | null): ReportView {
-  return value === "search" || value === "analysis" ? value : "ranking";
-}
+function parseReportView(value:string|null):ReportView{return value==="search"||value==="analysis"?value:"ranking";}

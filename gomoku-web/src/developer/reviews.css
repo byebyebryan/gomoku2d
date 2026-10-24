@@ -1,0 +1,20 @@
+.dev-page .review-index { margin-top:26px; border-top:1px solid var(--border); }
+.dev-page .review-index article { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:24px; align-items:center; padding:22px 0; border-bottom:1px solid var(--border); }
+.dev-page .review-index article h2 { margin-bottom:10px; }
+.dev-page .review-index article p { max-width:70ch; }
+.dev-page .review-index-link { display:inline-flex; align-items:center; min-height:44px; margin-bottom:16px; color:var(--accent); }
+.dev-page .review-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.dev-page .review-pair[data-count="1"] { grid-template-columns:minmax(0,1fr); }
+.dev-page .review-pair figure { margin:0; min-width:0; }
+.dev-page .review-pair figcaption { padding-bottom:12px; }
+.dev-page .review-pair figcaption strong { display:block; font-family:var(--font-display); font-size:1.3rem; }
+.dev-page .review-pair figcaption span { color:var(--text-muted); font-size:var(--type-meta); overflow-wrap:anywhere; }
+.dev-page .review-capture { max-width:100%; height:570px; overflow:auto; border:1px solid var(--border); background:var(--surface-muted); }
+.dev-page .review-capture img { display:block; width:100%; height:auto; }
+.dev-page .review-full .review-capture { height:auto; max-height:none; }
+.dev-page .review-native img { width:auto; max-width:none; }
+.dev-page .review-original { display:inline-flex; min-height:44px; align-items:center; color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
+.dev-page .review-findings { margin:0; padding:0; list-style:none; }
+.dev-page .review-findings li { display:grid; grid-template-columns:100px minmax(0,1fr); gap:20px; padding:15px 0; border-top:1px solid var(--border); }
+.dev-page .review-findings li>span { color:var(--accent); font-family:var(--font-display); font-size:var(--type-meta); text-transform:uppercase; }
+@media(max-width:560px) { .dev-page .review-index article { grid-template-columns:minmax(0,1fr);gap:12px; }.dev-page .review-index .uiAction{justify-self:start}.dev-page .review-pair{grid-template-columns:minmax(0,1fr);gap:28px}.dev-page .review-capture{height:500px}.dev-page .review-findings li{grid-template-columns:min-content minmax(0,1fr);gap:14px} }

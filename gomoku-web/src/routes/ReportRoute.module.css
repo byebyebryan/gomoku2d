@@ -1034,3 +1034,21 @@
     font-size: var(--type-quiet);
   }
 }
+
+/* Inside the shared public developer frame. Keep detailed report rows intact. */
+.developerReport { display:grid; gap:20px; min-width:0; }
+.developerReport .panel { border:0; border-top:1px solid var(--border); background:transparent; padding:24px 0 0; }
+.developerReport .entrantWorkbench[data-view="ranking"] .entrantHead,
+.developerReport .entrantWorkbench[data-view="ranking"] .entrantRow summary { grid-template-columns:minmax(180px,1.5fr) repeat(4,minmax(65px,.7fr)); }
+.developerReport .entrantWorkbench[data-view="ranking"] .metricResults:is(:nth-child(5),:nth-child(6),:nth-child(7),:nth-child(9)) { display:none; }
+.developerReport .entrantRow { border-inline:0; background:transparent; }
+.developerReport .entrantGrid { gap:0; }
+.developerReport .entrantRow summary { padding:18px 12px; }
+@media(max-width:760px) { .developerReport .entrantWorkbench[data-view="ranking"] .entrantHead{display:none}.developerReport .entrantWorkbench[data-view="ranking"] .entrantRow summary{grid-template-columns:repeat(2,minmax(0,1fr))}.developerReport .entrantRow summary .botLabel{grid-column:1/-1} }
+
+.detailMetrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:16px}.detailMetrics dt{color:var(--text-muted)}.detailMetrics dd{margin:4px 0 0}
+
+@media (min-width:761px) and (max-width:1100px) {
+ .developerReport .entrantWorkbench[data-view="search"] .entrantHead,.developerReport .entrantWorkbench[data-view="search"] .entrantRow summary { grid-template-columns:minmax(150px,1.4fr) repeat(7,minmax(0,1fr)); }
+ .developerReport .metric { min-width:0; overflow-wrap:anywhere; }
+}

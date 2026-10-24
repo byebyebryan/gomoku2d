@@ -1,19 +1,18 @@
 # v0.6.3 developer area: design and implementation brief
 
 Owner: Bryan. Planning review, October 24, 2026, against `4052d94` after the
-[0.6.2 release](../archive/v0_6_2_release.md). Application implementation has
-not started. Agreed direction is separated from the proposed page, data and
+[0.6.2 release](../archive/v0_6_2_release.md). Application implementation was authorized after Bryan accepted the visual study. Agreed direction is separated from the proposed page, data and
 implementation contracts below; review these before starting work.
 
-Bryan authorized a goal loop for the plan/visual-study checkpoint. Complete A
-and B as locally committed, reviewable work. Production application changes in
-C onward remain behind the visual acceptance gate; no push or deployment is
-part of this checkpoint.
+Bryan accepted the visual study and authorized a full implementation goal loop
+on October 24, 2026. Complete C–F through local validation and a reviewable
+integrated preview. Commit in stages; push, release tagging and production
+deployment remain separate.
 
 The [standalone visual study](v0_6_3_design/README.md) now makes the proposed
 shared frame and representative pages reviewable. Its technical checks and
-delivery are recorded separately from Bryan's pending visual acceptance.
-Application checkpoints C onward have not started.
+delivery are recorded separately from Bryan's visual acceptance ("looks okay to me").
+The [execution record](v0_6_3_execution.md) tracks implementation and validation.
 
 ## 1. Agreed direction
 
@@ -254,7 +253,7 @@ from public publication.
 | Checkpoint | Work | Exit gate |
 |---|---|---|
 | A: plan review, locally committed | Review page/source/public-boundary contracts and content roster | Agreed scope, with unresolved visual choices named. No application implementation yet. |
-| B: visual study, awaiting Bryan | Overview, icon inspector and Lab compositions plus one review-case adaptation; real content and narrow/enlarged layouts | Bryan reviews the shared look, density and hierarchy before production implementation. |
+| B: visual study, accepted | Overview, icon inspector and Lab compositions plus one review-case adaptation; real content and narrow/enlarged layouts | Bryan reviews the shared look, density and hierarchy before production implementation. |
 | C: public shell/navigation | Public boundary, shared frame, URLs and recovery | Direct/reload/history/keyboard paths work, no private-account effects, game/shared replay behavior preserved. |
 | D: assets/design and Lab | Full source-backed inspectors and refined report presentation | Asset/token/frame/tint parity, report meanings/data/links preserved, responsive controls usable. |
 | E: reviews and Process | Curated records/viewer, initial cases/baseline, process copy and affected Markdown | A new review uses reusable capture/export/render procedures; provenance and acceptance stay accurate. |

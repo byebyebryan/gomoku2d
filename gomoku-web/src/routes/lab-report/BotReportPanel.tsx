@@ -408,6 +408,12 @@ function RankingDrilldown({
 }) {
   return (
     <div className={styles.entrantPairs}>
+      <dl className={styles.detailMetrics}>{report.standings.filter(row=>row.bot===bot).map(row=><Fragment key={row.bot}>
+        <div><dt>Shuffled Elo</dt><dd>{formatNumber(row.shuffled_elo_avg)} ± {formatNumber(row.shuffled_elo_stddev)}</dd></div>
+        <div><dt>Depth</dt><dd>{formatNumber(row.avg_depth)} · effective {formatNumber(row.avg_effective_depth??row.avg_depth)}</dd></div>
+        <div><dt>Width</dt><dd>{widthPrimary(row)} · {widthSecondary(row)}</dd></div>
+        <div><dt>Budget hit</dt><dd>{formatPercent((row.budget_exhausted_rate??0)*100)}</dd></div>
+      </Fragment>)}</dl>
       {pairs.map((pair) => (
         <OpponentDetails key={pairKey(pair)} report={report} bot={bot} pair={pair} />
       ))}

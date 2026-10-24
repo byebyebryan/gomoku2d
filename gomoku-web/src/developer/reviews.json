@@ -1,0 +1,287 @@
+[
+  {
+    "schema": 1,
+    "id": "action-icons-061",
+    "title": "A consistent family of action icons",
+    "scope": "Design / canonical icon additions",
+    "date": "2026-10-23",
+    "revision": "0.6.1 accepted icon checkpoint",
+    "question": "Can publishing and account actions read clearly beside the existing pixel icons?",
+    "summary": "Publish, Sign in/out, Trash, Sync and Exit retain the established 24px rectangle language. Cloud remains deferred.",
+    "disposition": "accepted",
+    "comparisons": [
+      {
+        "id": "family",
+        "title": "Reference family and retained additions",
+        "conditions": "Asset renders, not before/after application captures. Original 24px SVGs at native/integer enlarged sizes. Browser/capture timestamp was not recorded in this historical artifact.",
+        "media": [
+          {
+            "file": "comparison.png",
+            "sourcePath": "docs/working/publish_icon_review/comparison.png",
+            "sha256": "1e39cd0788f8f641e4aee2d3b3a9348c1343509d7c6121d2828f72dd28e085a2",
+            "width": 1024,
+            "height": 2967,
+            "label": "Family comparison",
+            "alt": "Family comparison; comparison",
+            "kind": "asset render",
+            "revision": "Canonical accepted SVG sources"
+          },
+          {
+            "file": "new-icons.png",
+            "sourcePath": "docs/working/publish_icon_review/new-icons.png",
+            "sha256": "c43959d37403dce4a713fd8dc1730842f8c6842e9c99747efc1818593e692ea1",
+            "width": 1024,
+            "height": 1027,
+            "label": "Six retained additions",
+            "alt": "Six retained additions; new icons",
+            "kind": "asset render",
+            "revision": "Same accepted SVG sources"
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "fixed",
+        "title": "Distinct publishing and account actions",
+        "detail": "Publish replaces the ambiguous Profile glyph. Account arrows share one frame; Trash and Sync have explicit roles."
+      },
+      {
+        "state": "deferred",
+        "title": "Cloud shape",
+        "detail": "Cloud did not meet visual acceptance and was removed. No new quit action was added for the available Exit icon."
+      }
+    ],
+    "technical": [
+      "Recorded geometry/raster checks cover integer coordinates, bounds and source derivations.",
+      "Original review recorded exact 1\u00d7/2\u00d7/10\u00d7 raster comparisons and 320px reflow. Asset availability does not establish runtime usage."
+    ],
+    "human": "Bryan selected Publish, the account pair and power-style Exit, then requested retaining the accepted icons and cutting Cloud. Physical-device acceptance was not recorded for this artifact.",
+    "followUp": "Canonical icons remain inspectable in Design & assets. Historical pixels stay frozen; later source changes must become a new record.",
+    "sources": [
+      {
+        "label": "Accepted icon review",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/working/publish_icon_review/README.md"
+      },
+      {
+        "label": "Geometry evidence",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/working/publish_icon_review/geometry.json"
+      },
+      {
+        "label": "Raster evidence",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/working/publish_icon_review/render.json"
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "id": "mobile-records-062",
+    "title": "Keep mobile records within reach",
+    "scope": "0.6.2 / Profile, public player and landscape match",
+    "date": "2026-10-24",
+    "revision": "754ed62 mobile checkpoint",
+    "question": "Can useful controls and records stay reachable on a narrow or short screen?",
+    "summary": "A compact Profile header, stable record tabs and clearer public replay rows reduce repeated chrome. This is an intermediate historical checkpoint.",
+    "disposition": "historical checkpoint",
+    "comparisons": [
+      {
+        "id": "profile",
+        "title": "Profile controls and record tabs",
+        "conditions": "Matching guest/synthetic scenario. 390 \u00d7 844 portrait for Profile/Public player; original landscape dimensions retained for Match. Browser and font-scale details are incomplete in this historical capture pair; see the original evidence.",
+        "media": [
+          {
+            "file": "profile-before.png",
+            "sourcePath": "docs/working/v0_6_2_mobile/profile-before.png",
+            "sha256": "3f1862cb920f210d6576124713fa78ed8a789c828cb32d25e8c16eb0a6fce89e",
+            "width": 390,
+            "height": 844,
+            "label": "Before \u00b7 ce5335d",
+            "alt": "Before \u00b7 ce5335d; profile before",
+            "kind": "application capture",
+            "revision": "ce5335d"
+          },
+          {
+            "file": "profile-after.png",
+            "sourcePath": "docs/working/v0_6_2_mobile/profile-after.png",
+            "sha256": "2bc721ea56daaf982beaa71337c9d83352ff2e82bcc6d973eb9bf86f493260c9",
+            "width": 390,
+            "height": 844,
+            "label": "After this pass \u00b7 754ed62",
+            "alt": "After this pass \u00b7 754ed62; profile after",
+            "kind": "application capture",
+            "revision": "754ed62"
+          }
+        ]
+      },
+      {
+        "id": "public",
+        "title": "Public player replay rows",
+        "conditions": "Matching guest/synthetic scenario. 390 \u00d7 844 portrait for Profile/Public player; original landscape dimensions retained for Match. Browser and font-scale details are incomplete in this historical capture pair; see the original evidence.",
+        "media": [
+          {
+            "file": "public-before.png",
+            "sourcePath": "docs/working/v0_6_2_mobile/public-before.png",
+            "sha256": "67ac24dc780c4e8c9745c968e6f717eeee8286fb295df695bd7de2b5e4f43761",
+            "width": 390,
+            "height": 844,
+            "label": "Before \u00b7 ce5335d",
+            "alt": "Before \u00b7 ce5335d; public before",
+            "kind": "application capture",
+            "revision": "ce5335d"
+          },
+          {
+            "file": "public-after.png",
+            "sourcePath": "docs/working/v0_6_2_mobile/public-after.png",
+            "sha256": "f7101c8c7e369cddad36390270dfa6da33f8e02e8ade455888f3c505245b0a56",
+            "width": 390,
+            "height": 844,
+            "label": "After this pass \u00b7 754ed62",
+            "alt": "After this pass \u00b7 754ed62; public after",
+            "kind": "application capture",
+            "revision": "754ed62"
+          }
+        ]
+      },
+      {
+        "id": "landscape",
+        "title": "Short landscape match",
+        "conditions": "Matching guest/synthetic scenario. 390 \u00d7 844 portrait for Profile/Public player; original landscape dimensions retained for Match. Browser and font-scale details are incomplete in this historical capture pair; see the original evidence.",
+        "media": [
+          {
+            "file": "landscape-before.png",
+            "sourcePath": "docs/working/v0_6_2_mobile/landscape-before.png",
+            "sha256": "dee32a28da67da23572eac0a43db55b523efd2dd4dcd9118618c4774b525e7a8",
+            "width": 844,
+            "height": 390,
+            "label": "Before \u00b7 ce5335d",
+            "alt": "Before \u00b7 ce5335d; landscape before",
+            "kind": "application capture",
+            "revision": "ce5335d"
+          },
+          {
+            "file": "landscape-after.png",
+            "sourcePath": "docs/working/v0_6_2_mobile/landscape-after.png",
+            "sha256": "1f207fb23413411c0726af63bf6eb5a7551808f852dcf3917e4b551fa5d269b2",
+            "width": 844,
+            "height": 390,
+            "label": "After this pass \u00b7 754ed62",
+            "alt": "After this pass \u00b7 754ed62; landscape after",
+            "kind": "application capture",
+            "revision": "754ed62"
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "fixed",
+        "title": "Essential account controls stay visible",
+        "detail": "Secondary Profile/reset controls move into a disclosure; three record tabs fit together in portrait."
+      },
+      {
+        "state": "fixed",
+        "title": "Replay rows lead with useful game information",
+        "detail": "A compact accessible replay action leaves room for result, opponent and move count."
+      },
+      {
+        "state": "open",
+        "title": "This pair is not the final 0.6.2 baseline",
+        "detail": "Later responsive review found landscape and enlarged-text cases that needed another correction."
+      }
+    ],
+    "technical": [
+      "The original checkpoint records 504 unit checks, affected browser journeys and offset-1000 emulator validation. Counts qualify that checkpoint only.",
+      "Source PNG hashes and dimensions are retained; Profile/Public player pairs use matching scenarios. Other saved-game captures with different session timestamps were not selected for this pair."
+    ],
+    "human": "Initial mobile feedback from Bryan was broadly positive. Physical-phone, keyboard and browser-chrome acceptance was not performed in this record.",
+    "followUp": "Later landscape/enlarged-text fixes landed at 9c4c3bb. The 0.6.2 release record supersedes this checkpoint for publication and final automated results.",
+    "sources": [
+      {
+        "label": "Original mobile review",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/working/v0_6_2_mobile/README.md"
+      },
+      {
+        "label": "Later responsive fixes",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/working/v0_6_2_mobile/review_fixes.json"
+      },
+      {
+        "label": "0.6.2 release",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/archive/v0_6_2_release.md"
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "id": "public-player-062",
+    "title": "A public player page with a useful record",
+    "scope": "0.6.2 / Public profile presentation",
+    "date": "2026-10-24",
+    "revision": "152674c public-player checkpoint",
+    "question": "How can a public player page feel like part of the game and expose meaningful data?",
+    "summary": "A two-column record view keeps identity and link controls on the left, optional statistics and a paged replay list on the right. These are dated implementation captures, not the initial mockup.",
+    "disposition": "historical checkpoint",
+    "comparisons": [
+      {
+        "id": "responsive",
+        "title": "Desktop and portrait at the same checkpoint",
+        "conditions": "Synthetic public fixture, 18 replay rows. Desktop and portrait are different viewport conditions, not a before/after claim. Browser and text-scale details are retained in original evidence where available.",
+        "media": [
+          {
+            "file": "desktop.png",
+            "sourcePath": "docs/working/v0_6_2_evidence/desktop.png",
+            "sha256": "25280f4a4860f44f9c2ed4ea5bf6769623ee0a26d4e720df3325de1edb3127da",
+            "width": 1440,
+            "height": 1000,
+            "label": "Desktop checkpoint",
+            "alt": "Desktop checkpoint; desktop",
+            "kind": "application capture",
+            "revision": "152674c"
+          },
+          {
+            "file": "portrait.png",
+            "sourcePath": "docs/working/v0_6_2_evidence/portrait.png",
+            "sha256": "67ac24dc780c4e8c9745c968e6f717eeee8286fb295df695bd7de2b5e4f43761",
+            "width": 390,
+            "height": 844,
+            "label": "Portrait checkpoint",
+            "alt": "Portrait checkpoint; portrait",
+            "kind": "application capture",
+            "revision": "152674c"
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "fixed",
+        "title": "More useful hierarchy",
+        "detail": "Public name, existing replay count and link controls form a compact identity panel. Statistics remain optional and self-reported."
+      },
+      {
+        "state": "recorded",
+        "title": "A bounded catalog, without a new public field",
+        "detail": "The view keeps existing public data and paged replay semantics. Presentation changes do not add cloud operations."
+      }
+    ],
+    "technical": [
+      "Original implementation evidence records route, responsive and catalog/error-state checks.",
+      "The later mobile checkpoint and release record contain follow-up results; these captures keep their original source identity."
+    ],
+    "human": "Bryan chose the record-style direction with two columns and requested more substance on the left. Later mobile feedback was broadly positive; physical-phone acceptance remains separate.",
+    "followUp": "Follow the mobile-records review for responsive refinements and the release record for shipped source/results.",
+    "sources": [
+      {
+        "label": "Implementation evidence",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/working/v0_6_2_evidence/evidence.json"
+      },
+      {
+        "label": "Design sequence",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/working/v0_6_2_design/README.md"
+      },
+      {
+        "label": "0.6.2 release",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/archive/v0_6_2_release.md"
+      }
+    ]
+  }
+]

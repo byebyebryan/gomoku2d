@@ -8,10 +8,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useNavigate } from "react-router-dom";
 
 import { App } from "./App";
-import { CloudSessionController } from "../cloud/CloudSessionController";
+import { CloudAuthController, CloudSessionController } from "../cloud/CloudSessionController";
 
 vi.mock("../cloud/CloudSessionController", () => ({
-  CloudAuthController: () => null,
+  CloudAuthController: vi.fn(() => null),
   CloudSessionController: vi.fn(() => null),
 }));
 
@@ -97,6 +97,17 @@ describe("App", () => {
 
   afterEach(() => {
     cleanup();
+  });
+
+  it.each([
+    ["/dev/", "Inside Gomoku2D"], ["/DEV/", "Inside Gomoku2D"],
+    ["/%64ev/", "Inside Gomoku2D"], ["/dev/process/", "Build. Inspect. Improve."],
+    ["/dev/unknown/", "Reference not found"], ["/visuals/", "Visuals"], ["/lab/", "Lab Report"],
+  ])("renders public developer entry %s without starting auth or private controllers",async(path,heading)=>{
+    render(<MemoryRouter initialEntries={[path]}><App/></MemoryRouter>);
+    expect(await screen.findByRole("heading",{name:heading})).toBeInTheDocument();
+    expect(CloudAuthController).not.toHaveBeenCalled();
+    expect(CloudSessionController).not.toHaveBeenCalled();
   });
 
   it.each([
