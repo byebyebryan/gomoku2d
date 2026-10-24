@@ -45,10 +45,6 @@ async function clipRecorder(page, name) {
       frame += count;
     },
     async finish() {
-      const input = resolve(folder, "%04d.png");
-      const palette = resolve(folder, "palette.png");
-      await run("ffmpeg", ["-y", "-framerate", "5", "-i", input, "-vf", "scale=960:-1:flags=lanczos,palettegen=max_colors=128", palette]);
-      await run("ffmpeg", ["-y", "-framerate", "5", "-i", input, "-i", palette, "-lavfi", "scale=960:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5", "-frames:v", String(frame), "-loop", "0", resolve(output, `${name}.gif`)]);
       return frame;
     },
   };
@@ -101,7 +97,10 @@ try {
   const { stdout: sourceCommit } = await run("git", ["rev-parse", "HEAD"], { cwd: root });
   const { stdout: sourceChanges } = await run("git", ["status", "--porcelain", "--", "gomoku-web/src", "gomoku-web/package.json", "gomoku-web/package-lock.json"], { cwd: root });
   await writeFile(resolve(temporary, "capture.json"), JSON.stringify({ version, sourceCommit: sourceCommit.trim(), applicationInputsClean: sourceChanges.trim() === "", base, profileId, viewport: { width: 1280, height: 800 }, gifWidth: 960, fps: 5,
-    sharingFrames, analysisFrames, examplePath, source: "Existing app UI; only focus was cleared, no content or style substitution." }, null, 2) + "\n");
+    sharingFrames, analysisFrames, encoded: false, examplePath, source: "Existing app UI; only focus was cleared, no content or style substitution." }, null, 2) + "\n");
+  if (process.env.GOMOKU_MEDIA_FRAMES_ONLY !== "1") {
+    await run(process.execPath, [resolve(root, "gomoku-web/scripts/encode_sharing_media.mjs")], { env: process.env });
+  }
   console.log(JSON.stringify({ version, sharingFrames, analysisFrames, assets: ["readme-sharing.gif", "readme-analysis.gif", "readme-replay-analysis.png", "readme-public-profile.png"] }));
 } finally {
   await browser.close();
