@@ -5,7 +5,9 @@ October 25, 2026. Owner: Bryan. Standalone design exploration following the
 Bryan wants the history from 0.2 through 0.6, including every release with a
 meaningful UI change, and neighbouring comparisons as the main way to inspect
 it. He requested a design pass before expanding capture or integrating a new
-history interface. None of these layout options is accepted yet.
+history interface. After reviewing the study, Bryan selected C for the overview
+and B for individual screens. Screen additions/deletions also need explicit
+presentation; the lifecycle refinement below is proposed for review.
 
 **[Open the interactive layout study](http://starship:8787/reports/f06db4103bfc9b1e3d9418f64d17c641784506f6e1f2caee0160f7cdbb59fabc/).**
 All 32 published files were fetched from Carbon and matched the export hashes.
@@ -37,10 +39,38 @@ captures must be distinguishable from original-period evidence and mockups.
 | B: Screen history | Visible screen buttons lead to a chronological capture trail. Each capture appears once. A chosen neighbouring step opens a focused comparison below the trail. | Best for seeing a screen evolve; provides less context about simultaneous changes elsewhere. |
 | C: Milestone browser | A compact grouped milestone list sits beside a comparison gallery. Previous/next positions stay stable. The rail becomes a disclosure on mobile. | Fast repeated inspection; gives less width to images and introduces a scrolling rail on desktop. |
 
-Initial recommendation: A as the chronological entry with B available for
-screen-focused exploration. This is a proposal for Bryan to review. Do not ship
-three independent production viewers by default. C tests whether quicker
-switching is valuable enough to justify its navigation and width cost.
+The initial study recommended A as the entry and B for screen exploration.
+Bryan instead selected **C for the overview and B for individual screens**.
+The published A/B/C report remains the original design exploration; that choice
+does not retroactively change its capture or validation evidence. A is retained
+as an explored alternative rather than a third production browsing mode.
+
+### Selected direction and lifecycle refinement
+
+C keeps the milestone sequence accessible beside the selected release's changes.
+Each changed screen can lead into its B trail at that version and viewport.
+Returning restores the milestone, scroll position and focused entry. The mobile
+milestone disclosure remains part of C's design.
+
+The content unit is a screen change, which can have one or two captures:
+
+| Change | Proposed presentation |
+|---|---|
+| Updated | Before/after captures of the same screen, using neighbouring relevant sources and matched display scale. |
+| Added | One capture, labelled Introduced in the new version, with the short purpose/change note. No empty before column. |
+| Removed | One last-existing capture, labelled with its actual source version, plus Removed in the later version and a replacement link when applicable. No empty after column. |
+| Replaced, merged or split | Explicit relationship between the old/new screens, with links to their trails; do not force a one-to-one identity. |
+
+Use the same heading, viewport controls, source context and screen-trail entry
+for each form. Keep a single portrait image at a sensible review scale; a lone
+image need not fill the width of a two-image comparison. Use Inspect change as
+the general action, with Compare reserved for entries that contain a pair.
+
+B trails begin with introduction and end with removal when appropriate. Retired
+screens remain discoverable as history. Presence/absence must come from the
+source/release inventory; a missing capture only means uncaptured, never removed.
+The original mockup's placeholders are coverage aids, not the proposed lifecycle
+presentation. This refinement is not yet implemented in the published study.
 
 All options expose the same content rather than merely changing colours or
 card borders. Portrait/Desktop controls switch actual source files; selected
@@ -143,8 +173,8 @@ existing app/manual preview services remain available. No user tabs were opened.
 
 ## Next decision
 
-Review the three actual compositions and choose the primary browsing model.
-Then settle the milestone inventory and scene coverage, adapt the reusable
+The primary browsing direction is C plus B. Review the lifecycle refinement,
+then settle the milestone inventory and scene coverage, adapt the reusable
 capture harness, and backfill neighbouring snapshots in manageable batches.
-Implementation of the selected interface follows that design choice. This pass
+Implementation of the selected interface follows that refinement. This pass
 does not authorize a production release, push or bulk historical recapture.
