@@ -392,7 +392,8 @@
     "gomoku-web/test-results/v063-sync-final.json": "3b5b5a38b6a468add73813576d1f415714abeada18971b6ae3122dcf7961b369",
     "gomoku-web/test-results/v063-qualified-build-final.json": "1a40eb9eff3c7c41987c495c59ed7670b51a4bf56ec616fbd791e12e86efd9c9",
     "gomoku-web/test-results/v063-delivery-qualified.json": "69bc849547de6febe145d3a678619aaed0e13e7f7c2ea6a6b6607ec783c8d6be",
-    "gomoku-web/test-results/v063-pixel-final.json": "1465ac00e6e8cc41380a99dfb7bada376239f40476c8e154b3393a08036734bd"
+    "gomoku-web/test-results/v063-pixel-final.json": "1465ac00e6e8cc41380a99dfb7bada376239f40476c8e154b3393a08036734bd",
+    "gomoku-web/test-results/v063-carbon-delivery.json": "eb10cb61ff5ccd93903d5c72bdbf4fda0a250d97ccb87380144d771ffb31204c"
   },
   "preserved": {
     "manual_preview": "8013 PID 25022",
@@ -414,5 +415,14 @@
     "Bryan visual pass on integrated implementation",
     "Physical/device and inherited real-account acceptance",
     "Separately authorized version/release preparation, exact-source CI and deployment verification"
-  ]
+  ],
+  "carbon_preview_followup": {
+    "host": "carbon",
+    "base": "http://localhost:46862/",
+    "files": 194,
+    "sha256_parity": true,
+    "checked_at": "2026-10-25T02:36:50.420831+00:00",
+    "forward_service": "gomoku2d-v063-carbon-preview.service on Starship",
+    "route": "SSH reverse forward Carbon 127.0.0.1:46862 -> Starship 127.0.0.1:46862"
+  }
 }

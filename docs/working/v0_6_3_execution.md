@@ -154,3 +154,14 @@ The [standalone reference export](http://starship:8787/reports/e6f63cc59c388bde2
 is the verified 26-file snapshot; earlier draft export snapshots are superseded.
 The [machine-readable validation](v0_6_3_validation.json) records build/source
 identity, artifact hashes, exact result scopes and preserved service boundaries.
+
+## Carbon access follow-up
+
+Carbon later became reachable over SSH. Direct access to Starship's preview
+port was rejected, so a separate transient user service,
+`gomoku2d-v063-carbon-preview.service`, now forwards Carbon's loopback port
+46862 to the integrated preview. Open `http://localhost:46862/dev/` on Carbon.
+All 194 qualified files were fetched on Carbon through this forward and matched
+the recorded hashes. The existing 8013/Auth/Firestore tunnel is unchanged.
+This verifies delivery from Carbon; Bryan's browser/visual acceptance remains
+separate. The earlier Starship URL remains available locally.
