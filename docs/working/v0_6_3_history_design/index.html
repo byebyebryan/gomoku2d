@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gomoku2D · UI history design study</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="app-controls.css">
+  <link rel="stylesheet" href="developer.css">
+  <link rel="stylesheet" href="study.css">
+  <script defer src="data.js"></script>
+  <script defer src="study.js"></script>
+</head>
+<body class="dev-page">
+  <a class="dev-skip" href="#content">Skip to history</a>
+  <aside class="study-bar" aria-label="Design study">
+    <div class="study-inner">
+      <p><strong>DESIGN STUDY</strong> · UI history · proposed layouts</p>
+      <nav class="options" aria-label="Layout options">
+        <a href="#layout=journal" data-layout="journal">A · Journal</a>
+        <a href="#layout=screens" data-layout="screens">B · Screens</a>
+        <a href="#layout=browser" data-layout="browser">C · Browser</a>
+      </nav>
+      <p class="study-explanation" id="option-note"></p>
+    </div>
+  </aside>
+  <div class="dev-shell">
+    <header class="dev-header">
+      <a class="dev-brand" href="https://gomoku2d.byebyebryan.com/">GOMOKU2D <span>/ DEVELOPER</span></a>
+      <div class="dev-project-links">
+        <a class="uiAction uiActionPrimary" href="https://gomoku2d.byebyebryan.com/"><span class="uiIcon" data-icon="play" aria-hidden="true"></span>PLAY</a>
+        <a class="uiAction uiActionNeutral" href="https://github.com/byebyebryan/gomoku2d">SOURCE</a>
+      </div>
+    </header>
+    <nav class="dev-nav" aria-label="Developer sections">
+      <a href="https://gomoku2d.byebyebryan.com/dev/">Overview</a>
+      <a href="https://gomoku2d.byebyebryan.com/visuals/">Design &amp; assets</a>
+      <a href="https://gomoku2d.byebyebryan.com/lab/">Lab</a>
+      <a href="#content" aria-current="page">UI review</a>
+    </nav>
+    <main id="content" tabindex="-1">
+      <nav class="review-nav" aria-label="UI review views">
+        <a href="http://localhost:46862/dev/reviews/core-screens-062/">Current screens</a>
+        <a href="#content" aria-current="page">UI history</a>
+        <a href="http://localhost:46862/dev/reviews/">Design reviews</a>
+      </nav>
+      <header class="history-heading">
+        <h1>UI history</h1>
+        <p class="dev-lead">Follow the screens, the changes and the decisions that shaped them.</p>
+      </header>
+      <div id="history"></div>
+      <section class="design-notes dev-section" aria-labelledby="design-notes-title">
+        <h2 id="design-notes-title">About this study</h2>
+        <p>Try each layout, a different milestone, and a screen such as Replay or Public player. The same proposed history is used throughout.</p>
+        <details class="dev-disclosure">
+          <summary>Recommendation, content boundaries and sources</summary>
+          <div class="dev-readable">
+            <p><strong>Starting recommendation:</strong> A for browsing the history, with B available when following one screen. C gives quicker repeated comparison, but takes width from the captures and needs more navigation on a phone.</p>
+            <p>The milestone roster and summaries are proposals drawn from the changelog. Source-diff review still decides which patches need their own entry. Capture coverage is incomplete; empty panels are deliberate placeholders, never another version's image.</p>
+            <p>The Public player example uses a 0.6.1-era development capture and the exact 0.6.2 release reference. Their synthetic content differs, so they illustrate this layout rather than establish a standardized release comparison. The older capture's exact commit is not established here.</p>
+            <p>Home, Match, Replay and Profile use the qualified 0.2.4/0.6.2 retrospective pilot where available. Those are the only recreated historical release captures included. Portrait references are generic viewports; they do not establish phone calibration.</p>
+            <p>Shared fonts, tokens and control styles are copied from the current app. Captured PNGs retain original bytes. No application integration, cloud access or new historical capture run is part of this study.</p>
+            <p><a href="source-manifest.json">Study source and asset hashes</a> · <a href="https://github.com/byebyebryan/gomoku2d/blob/4052d94/CHANGELOG.md">Release notes</a> · <a href="http://starship:8787/reports/3a2d77f9d8145ae00cf9b67c865e0f406f79f2f6764de2fc3a37ed6301772ada/">Earlier developer-area study</a></p>
+          </div>
+        </details>
+      </section>
+    </main>
+    <footer class="dev-footer"><span>Gomoku2D / UI history exploration</span><a href="http://starship:8787/reports/#project=gomoku2d">Project reports</a></footer>
+  </div>
+</body>
+</html>

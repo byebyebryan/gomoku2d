@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-25T19:28:40.658600+00:00",
+  "scope": "Standalone UI-history structure/layout exploration; no application integration, full historical capture, human acceptance, push or public Pages deployment",
+  "status": "ready for Bryan visual review; no layout selected",
+  "publication": {
+    "report_id": "f06db4103bfc9b1e3d9418f64d17c641784506f6e1f2caee0160f7cdbb59fabc",
+    "title": "Gomoku2D — UI history layout options",
+    "project": "gomoku2d",
+    "url": "http://starship:8787/reports/f06db4103bfc9b1e3d9418f64d17c641784506f6e1f2caee0160f7cdbb59fabc/",
+    "project_url": "http://starship:8787/reports/#project=gomoku2d",
+    "file_count": 32,
+    "byte_count": 453495,
+    "created_at": "2026-10-25T19:27:19.319880+00:00",
+    "delivery": {
+      "checked_at": "2026-10-25T19:27:19.718736+00:00",
+      "checked_from": "starship",
+      "state": "verified",
+      "http_status": 200,
+      "bytes": 4762,
+      "verified_url": "http://starship:8787/reports/f06db4103bfc9b1e3d9418f64d17c641784506f6e1f2caee0160f7cdbb59fabc/"
+    }
+  },
+  "sourceManifest": {
+    "path": "source_manifest.json",
+    "sha256": "d69892d876fd98d975b350295f44671167923a2b2eb91c159f8232a2f1414ba0",
+    "inputsMatch": true,
+    "outputFilesMatch": true
+  },
+  "browser": {
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "responsiveCases": 36,
+    "widthTextCases": [
+      "1280px / 100%",
+      "390px / 100%",
+      "320px / 100%",
+      "320px / 200%"
+    ],
+    "interactionJourneys": 3,
+    "pageConsoleErrors": 0,
+    "automaticExternalRequests": 0,
+    "horizontalOverflow": 0,
+    "duplicateTargets": 0,
+    "pairedPublicImages": {
+      "naturalSize": [
+        390,
+        844
+      ],
+      "equalDisplayScale": true
+    },
+    "automatedAccessibility": {
+      "violations": 0,
+      "incomplete": {
+        "color-contrast": 10
+      },
+      "manualJudgmentPending": true
+    }
+  },
+  "carbonDelivery": {
+    "host": "carbon",
+    "base": "http://starship:8787/reports/f06db4103bfc9b1e3d9418f64d17c641784506f6e1f2caee0160f7cdbb59fabc/",
+    "checkedAt": "2026-10-25T19:27:33.248519+00:00",
+    "filesChecked": 32,
+    "sha256Parity": true
+  },
+  "visualReview": {
+    "agent": "Three layouts at desktop and portrait; capture presentation and navigation",
+    "human": "Bryan selection pending"
+  },
+  "content": {
+    "proposedMilestones": 20,
+    "existingImages": 21,
+    "newHistoricalCaptureRuns": 0,
+    "imagePixelChanges": false,
+    "qualification": "Missing sources have explicit study placeholders; no capture from another version is substituted",
+    "publicPlayerExample": "0.6.1-era development checkpoint (exact commit unknown) versus 0.6.2 release; differing synthetic content; not standardized release parity"
+  },
+  "fixes": [
+    "Responsive rail opens when crossing back to desktop",
+    "Study controls wrap with enlarged text",
+    "Distinct milestone/comparison focus targets",
+    "Rail/button link styling retains intended control hierarchy"
+  ],
+  "driverCorrections": [
+    "Wait for font/layout readiness",
+    "Wait for hash-driven view changes",
+    "Wait for actual lazy-image loading before decoding",
+    "Fresh document for keyboard sequence"
+  ],
+  "remaining": [
+    "Bryan chooses the primary history browsing model",
+    "Audit release diffs to finalize milestone granularity and scene inventory",
+    "Backfill standardized neighbouring snapshots after design selection",
+    "Phone calibration and assistive-technology acceptance remain separate",
+    "Ten incomplete automated contrast checks need manual judgment"
+  ],
+  "receipts": {
+    "checks-published/results.json": {
+      "localPath": "gomoku-web/test-results/v063-history-design/checks-published/results.json",
+      "sha256": "d6d595b4f7f86e5b5a1fdd08dc226cd1945caa2cdffee86f0ccbe24aa5b078d7",
+      "availability": "ignored local raw receipt; durable summary here"
+    },
+    "check-published.log": {
+      "localPath": "gomoku-web/test-results/v063-history-design/check-published.log",
+      "sha256": "89052220bbb0a37cb99b5c8ca26636b1ca211b60982fef41763d178c6387a79b",
+      "availability": "ignored local raw receipt; durable summary here"
+    },
+    "carbon-delivery.json": {
+      "localPath": "gomoku-web/test-results/v063-history-design/carbon-delivery.json",
+      "sha256": "b607d260ef4b4fbf822cda8eb5620d376de212c988b83254a3bc170b970ddb23",
+      "availability": "ignored local raw receipt; durable summary here"
+    },
+    "publication.json": {
+      "localPath": "gomoku-web/test-results/v063-history-design/publication.json",
+      "sha256": "e39a0f3877c5dd6fd5b54781a97441ebf6b7ebea24273c3cef84703a3d8397a1",
+      "availability": "ignored local raw receipt; durable summary here"
+    }
+  },
+  "repository": {
+    "applicationSourcesChanged": false,
+    "releaseVersionChanged": false,
+    "push": false,
+    "productionPagesDeployment": false
+  },
+  "resources": {
+    "temporaryPreviewPort": 46865,
+    "cleanup": "owned temporary server stopped before handoff; shared report host retained",
+    "browserUse": "owned headless sessions only; no user tabs",
+    "existingPreviewServices": "preserved"
+  }
+}

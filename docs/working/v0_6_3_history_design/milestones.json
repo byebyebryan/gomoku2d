@@ -1,0 +1,22 @@
+[
+  {"version":"0.2.1","date":"2026-04-22","title":"A shell around the board","summary":"React takes ownership of Home, Match, Replay and Profile. Phaser becomes the board renderer.","screens":["Home","Match","Replay","Profile"]},
+  {"version":"0.2.2","date":"2026-04-22","title":"A flatter, quieter game","summary":"Fewer nested frames, clearer button roles and ledger-like history rows. Undo and replay branching join the play loop.","screens":["Match","Replay","Profile"]},
+  {"version":"0.2.3","date":"2026-04-22","title":"Mobile gets its own layout","summary":"Intentional portrait compositions, touch placement and a shared pixel icon language.","screens":["Match","Replay","Profile"]},
+  {"version":"0.2.4","date":"2026-04-24","title":"The local-play baseline","summary":"Tighter rails, quieter labels and safer short-screen flow complete the first local product.","screens":["Home","Match","Replay","Profile"]},
+  {"version":"0.3.0","date":"2026-04-27","title":"An optional cloud identity","summary":"Profile gains Google sign-in and explicit local, loading, signed-in and unavailable states.","screens":["Profile","Home"]},
+  {"version":"0.3.1","date":"2026-04-28","title":"Continuity after sign-in","summary":"Local identity and games can move into private cloud state, with visible import progress.","screens":["Profile"]},
+  {"version":"0.3.2","date":"2026-04-28","title":"One private history","summary":"Signed-in history, sync recovery and an inline reset flow become part of the record screen.","screens":["Profile","Replay"]},
+  {"version":"0.3.3","date":"2026-04-29","title":"Keep the record compact","summary":"Small sync badges, Show more history and explicit cloud deletion complete the account controls.","screens":["Profile"]},
+  {"version":"0.4.0","date":"2026-05-03","title":"The lab becomes visible","summary":"Published rankings, match trees and search metrics give bot experiments a browsable surface.","screens":["Lab"]},
+  {"version":"0.4.1","date":"2026-05-04","title":"Read the bot comparison","summary":"Ranking rows, pairwise expansion and mobile report navigation become easier to inspect.","screens":["Lab"]},
+  {"version":"0.4.2","date":"2026-05-08","title":"Explain a finished game","summary":"Analysis reports add proof boards, threat hints and per-turn explanations beside cleaner bot comparisons.","screens":["Lab"]},
+  {"version":"0.4.5","date":"2026-05-16","title":"Settings gets a home","summary":"Game and bot controls leave Profile. Presets, advanced settings, hints and timers become player-facing.","screens":["Settings","Profile","Match"]},
+  {"version":"0.4.6","date":"2026-05-17","title":"Replay becomes analysis","summary":"The replay page gains progressive analysis, timeline marks and a shared board-overlay vocabulary.","screens":["Replay","Match"]},
+  {"version":"0.4.7","date":"2026-05-19","title":"Find the turning point","summary":"The timeline separates setup, lethal onset and the last escape; status language follows the current frame.","screens":["Replay"]},
+  {"version":"0.4.8","date":"2026-05-21","title":"Make the evidence readable","summary":"Mistake-aware status, configurable evidence and calmer markers explain why the game turned.","screens":["Replay","Lab"]},
+  {"version":"0.5.1","date":"2026-05-25","title":"Bring the tools into the product","summary":"Lab and Visuals become first-class app pages with the game's shared presentation.","screens":["Lab","Visuals"]},
+  {"version":"0.5.2","date":"2026-05-27","title":"Teach from inside the game","summary":"Rules and Guide join the navigation, using actual board-rendered examples and clearer analysis entry points.","screens":["Rules & Guide","Home","Replay","Lab"]},
+  {"version":"0.5.5","date":"2026-10-16","title":"A more usable baseline","summary":"Keyboard play, clearer controls and recovery, reduced motion and refined mobile teaching pages.","screens":["Match","Settings","Profile","Replay","Rules & Guide"]},
+  {"version":"0.6.1","date":"2026-10-23","title":"Games can travel","summary":"Portable replay links, saved study copies and public player records add explicit sharing flows.","screens":["Replay","Profile","Public player"]},
+  {"version":"0.6.2","date":"2026-10-24","title":"A public page with a useful record","summary":"Two-column identity and record, compact games, and consistent mobile actions make sharing easier to explore.","screens":["Public player","Profile","Replay","Rules & Guide"]}
+]
