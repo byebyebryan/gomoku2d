@@ -246,3 +246,26 @@ all 194 final build files were fetched and hash-checked from Carbon. Temporary
 export hosting and owned headless browsers were stopped. The `gallery_followup`
 entry in [refinement validation](v0_6_3_review_refinement.json) records this later
 source/build and its pending Android-reference measurements.
+
+## Preview recovery, October 25
+
+The unmanaged 46862 preview process had exited. Carbon's old reverse-forward
+SSH session still held its loopback port, so reconnect attempts failed. That
+session was identified by process generation and its sole listener on 46862;
+only that stale preview session was closed. The existing manual 8013/Auth/
+Firestore services and forwarding were retained.
+
+The preview now runs as Starship's transient user service
+`gomoku2d-v063-preview.service`, with automatic restart. Carbon owns the local
+forward in its transient user service `gomoku2d-v063-preview-tunnel.service`:
+`127.0.0.1:46862` forwards over SSH to Starship's `127.0.0.1:46862`. Its client
+uses keepalives, a bounded connect timeout and automatic restart. The former
+Starship reverse-forward unit `gomoku2d-v063-carbon-preview.service` was stopped.
+This avoids depending on a remote SSH listener being released after a disconnect.
+The review URL remains `http://localhost:46862/dev/reviews/core-screens-062/`
+on Carbon.
+
+Both owned service processes were terminated as a recovery probe. They restarted,
+and Carbon fetched all 194 build files with matching hashes. The local receipt
+is `gomoku-web/test-results/v063-preview-service-recovery.json`. No application/build,
+production deployment or private-data changes were made.
