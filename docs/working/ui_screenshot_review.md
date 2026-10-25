@@ -45,9 +45,10 @@ mobile captures are useful for scroll audits but poor as release references.
 
 ## Asset Policy
 
-Keep only current release-relevant screenshots under `docs/assets/`. Old visual
-history should move to archive or be deleted once it no longer explains a
-current design decision.
+Keep current release media under `docs/assets/`. Dated review/reference media
+stays frozen at its indexed evidence path. Do not move or delete files used by
+a curated record without a deliberate migration that preserves bytes and links.
+Unselected working drafts can be archived separately.
 
 ## Curated Records And Reusable Exports
 

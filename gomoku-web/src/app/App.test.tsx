@@ -164,7 +164,7 @@ describe("App", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /gomoku2d/i }),
+      await screen.findByRole("heading", { name: /gomoku2d/i }),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("link", { name: /play/i }));
@@ -175,12 +175,14 @@ describe("App", () => {
     expect(screen.getByText(/black to move/i)).toBeInTheDocument();
   });
 
-  it("surfaces lab links on the home screen", () => {
+  it("surfaces lab links on the home screen", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
       </MemoryRouter>,
     );
+
+    await screen.findByRole("heading", { name: /gomoku2d/i });
 
     expect(screen.getByRole("link", { name: /^visuals$/i })).toHaveAttribute(
       "href",

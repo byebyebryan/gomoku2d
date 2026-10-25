@@ -101,13 +101,14 @@ visual pass. No push, version bump, tag or app deployment was performed.
 - The full ordinary lane plus affected reruns cover 252 distinct passing
   journeys and six intentional Firefox/WebKit WebGL qualification skips. The
   affected final lane passed 99 journeys; subsequent review-layout and native
-  raster refinements each passed their targeted three-engine checks.
+  raster refinements each passed their targeted three-engine checks. Native
+  comparison scroll synchronization and its off state also pass all three engines.
 - All 60 emulator journeys pass, including cached-sign-in isolation and a held
   private write across navigation. Five repetitions of stale-write, account-
   switch and reset races pass in all three engines (30 + 15 = 45).
 - A separate synthetic production-configured/non-emulator build passes the
   fresh developer boundary in three engines with external requests blocked.
-- The 66-view accessibility audit reports zero violations. Nine incomplete
+- The 66-view accessibility audit reports zero violations. Eight incomplete
   contrast checks remain around layered sprite/board content and offscreen
   elements; this does not establish screen-reader or physical-device acceptance.
 - Served source/media/report parity checks cover 108 routes/files. All 41
@@ -145,6 +146,11 @@ authorized 0.6.3 release preparation, exact-source CI and publication checks.
 The inherited real-account sharing/device handoff remains open in the 0.6.2
 release record. This local implementation does not close it.
 
-Final presentation review also puts the recorded Lab date and rule/budget context
+Final presentation review also puts the recorded Lab date and rule/run context
 beside the primary heading. Full provenance remains available below; missing
 historical dates stay unavailable rather than inheriting the current date.
+
+The [standalone reference export](http://starship:8787/reports/e6f63cc59c388bde2d824e4fff4cc862cbda98f05d2a031e6727b72a65c631ae/)
+is the verified 26-file snapshot; earlier draft export snapshots are superseded.
+The [machine-readable validation](v0_6_3_validation.json) records build/source
+identity, artifact hashes, exact result scopes and preserved service boundaries.

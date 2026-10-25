@@ -152,6 +152,31 @@ test("curated reviews retain frozen media and comparison controls", async ({ pag
         images.every((image) => (image as HTMLImageElement).naturalWidth === 390),
       ),
   ).toBe(true);
+  await page.getByRole("button", { name: "Native pixels", exact: true }).click();
+  const panes = page.locator(".review-capture");
+  await panes.first().evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await expect
+    .poll(() =>
+      panes.nth(1).evaluate((element) =>
+        Math.abs(element.scrollTop - (element.scrollHeight - element.clientHeight)),
+      ),
+    )
+    .toBeLessThanOrEqual(1);
+  await page.getByRole("button", { name: "Scroll together on", exact: true }).click();
+  const held = await panes.nth(1).evaluate((element) => element.scrollTop);
+  await panes.first().evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  await page.evaluate(
+    () => new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    ),
+  );
+  expect(await panes.nth(1).evaluate((element) => element.scrollTop)).toBe(held);
+  await page.getByRole("button", { name: "Scroll together off", exact: true }).click();
+  await page.getByRole("button", { name: "Fit image width", exact: true }).click();
   await page.getByRole("button", { name: "Show full captures", exact: true }).click();
   await expect(page.locator(".review-full")).toBeVisible();
   await page.getByRole("button", { name: "Public player replay rows", exact: true }).click();
