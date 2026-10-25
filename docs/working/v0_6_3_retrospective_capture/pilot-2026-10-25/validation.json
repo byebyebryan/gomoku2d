@@ -1,0 +1,580 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-25T18:05:57.626435+00:00",
+  "scope": "Local retrospective UI pilot and integrated developer site. No original-period, human, physical-device or production acceptance claim.",
+  "source": {
+    "integratedCommit": "e5cb398b195489843c58bee4a4454987167e1c87",
+    "note": "Runtime/source/media committed here; qualification documentation follows separately. Build/source hashes identify tested bytes.",
+    "sha256": {
+      "gomoku-web/package.json": "2d450c56ae9c481593e88cb95bd5b72a18c3e3fd7c01f10ad3612a9b16927aa8",
+      "gomoku-web/package-lock.json": "d53573f16db5c06b5c5b9347c9cd9229ee53d32a36847f118ffe8d15d402074e",
+      "gomoku-web/scripts/capture_retrospective_ui.mjs": "bcf47c2861601b18ffdec0f6f1a16c0a4b3c8840cab2301c3feb93c9dece7aed",
+      "gomoku-web/scripts/record_retrospective_build.mjs": "1e41c5a92d20e750234643e57d25f54691d6a5a58c876d329f298782b9af2027",
+      "gomoku-web/scripts/capture_retrospective_ui.test.mjs": "54d52852ed96f7c3b326b204407e426d214cc43848f82605bed4da90864d7487",
+      "gomoku-web/scripts/publish_reviews.mjs": "ff1816cbc06724529d7ced99f53c31f8fcfff9c868ea6f8616de787fcfd9ad03",
+      "gomoku-web/scripts/review_catalog.mjs": "62e22a696d188376e250b33d375a20ea20c7e6ba74ad96732513e827204a91e2",
+      "gomoku-web/scripts/export_review.mjs": "f3b36adee24ad0d951732757f7b049adf6541284a9b1b22468ba039b6b00e9df",
+      "gomoku-web/scripts/check_review_export.mjs": "559c90a5746ea7db1079ad6c9e74cfa808af18f971a8780a82f620294acf0e1c",
+      "gomoku-web/src/developer/DeveloperPages.tsx": "319e14214a217c7b0fc4eb07cbca9fa4dee8b90866b44531ad67a87dd918699c",
+      "gomoku-web/src/developer/ReviewCase.tsx": "9c3edf752c0dac98496b04ec44ac9f26e9995413497553f2aeafa758fe4ca0a0",
+      "gomoku-web/src/developer/ReviewComparison.tsx": "be6bbbf4a7461cd609387fa21f98f9cc940a4376e74ad18592e734aef9fa5980",
+      "gomoku-web/src/developer/ReviewRoutes.tsx": "3db496f9056ec305d001566251cb4a8468bbcb2f6456eef140107c4836d0f894",
+      "gomoku-web/src/developer/developer.css": "79a0ebd4b940ee938cfc09698ca8590bc49fbb7c7b9d2152b0ae9993a3a22a79",
+      "gomoku-web/src/developer/reviews.css": "35ff12b6c1d71d74fc796abadcdcb20f6ecea34147c860db1c5520f342b34083",
+      "gomoku-web/src/developer/review_record.ts": "a360a272714bd1099750d8931ab3eb1a10b80e81011e03eb17fcb2de0271a743",
+      "gomoku-web/src/developer/review_export.tsx": "8ec80ce1aba9260da2f565b9920977a8c4ba553bd973605dfa585c2a629a57a1",
+      "gomoku-web/src/developer/reviews.json": "f472b2b9e7954761c5ddc0202a03792c622f1d9c33c9b16ccdbffdd92fdef42d",
+      "gomoku-web/playtests/developer.spec.ts": "7d88d26ffcde1c9b2182fd95e75ff67f9c44603cd1ac73d80a7105b6b5e9af70"
+    }
+  },
+  "capture": {
+    "manifest": "capture.json",
+    "manifestSha256": "cf57332e463623372554a1a12b8f969f75e05c9e211744b3dcb9f61af0bb9985",
+    "status": "complete",
+    "captures": 16,
+    "profiles": [
+      {
+        "id": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "userAgentKind": "desktop Chromium default"
+      },
+      {
+        "id": "portrait",
+        "viewport": {
+          "width": 412,
+          "height": 800
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "userAgentKind": "generic Android mobile; not a measured OnePlus profile"
+      }
+    ],
+    "sources": [
+      {
+        "tag": "v0.2.4",
+        "adapter": "v024",
+        "commit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+        "sourceTree": "ebdbf2358c9c492220af0c202d5d1f076f1e3b07",
+        "applicationTree": "927aeb9a5049df8859057f88b84b21dad5813299",
+        "packageVersion": "0.2.4",
+        "packageLockSha256": "6374492b817b617788718b7f9725529e2bb210937b3e3f9afecb6cc6276828ee",
+        "cargoLockSha256": "6cd4104785acea418a0b0bde59aa487a5889dd37a72a314939b9c4a46c290497",
+        "wasmSha256": "2ed5a821a55cb0ee11faf0648b106824c2b1117b2d6ad7334cd20ea4a302accf",
+        "distSha256": "616a820a10a55b4052400542c75cbde8afba2cf8a5e9996bb3d0dd00c6540863",
+        "indexSha256": "141f4f3465e89e6397a3ce48a4529fc8e047406484c731508de646c3c94fecc2",
+        "buildReceipt": {
+          "tag": "v0.2.4",
+          "recordedAt": "2026-10-25T17:18:47.744718+00:00",
+          "environment": {
+            "node": "v26.12.1",
+            "npm": "12.2.1",
+            "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+            "wasmPack": "wasm-pack 0.14.0",
+            "firebaseMode": "unconfigured-local-guest",
+            "declaredNode": "20",
+            "wasmOpt": "wasm-opt version 133 (version_133-96-ga631c1445c)",
+            "wasmBuild": "release --target bundler --locked",
+            "npmInstall": "npm ci --no-audit --no-fund; npm12 default install-script policy"
+          }
+        },
+        "preview": {
+          "origin": "http://127.0.0.1:46924",
+          "port": 46924,
+          "indexMatchesBuild": true
+        },
+        "applicationInputsCleanBefore": true,
+        "applicationInputsCleanAfter": true
+      },
+      {
+        "tag": "v0.6.2",
+        "adapter": "v062",
+        "commit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+        "sourceTree": "105a2b9d528acfc081b15a99a3045b35d8abc723",
+        "applicationTree": "fcfe58b5924011ec78e053f64e8ea5a594e7563d",
+        "packageVersion": "0.6.2",
+        "packageLockSha256": "d53573f16db5c06b5c5b9347c9cd9229ee53d32a36847f118ffe8d15d402074e",
+        "cargoLockSha256": "121d5802eb56a1f79f933aa3baf326a0e1aa13ae2786809489ea36dac88e56f1",
+        "wasmSha256": "e2e177cf8948e055d315cd67be51e349cce267dd183117ee6567174efc37a48e",
+        "distSha256": "990416a1190519a725d172821a12c278e2ebb1d0183402f5aca1d53037734e1c",
+        "indexSha256": "db627813c1c8fb9eecc4f0cbdddfd10fbdc292f60d25aabda206691a7b4cc84b",
+        "buildReceipt": {
+          "tag": "v0.6.2",
+          "recordedAt": "2026-10-25T17:18:47.831535+00:00",
+          "environment": {
+            "node": "v26.12.1",
+            "npm": "12.2.1",
+            "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+            "wasmPack": "wasm-pack 0.14.0",
+            "firebaseMode": "unconfigured-local-guest",
+            "declaredNode": "24",
+            "wasmOpt": "wasm-opt version 133 (version_133-96-ga631c1445c)",
+            "wasmBuild": "release --target bundler --locked",
+            "npmInstall": "npm ci --no-audit --no-fund; npm12 default install-script policy"
+          }
+        },
+        "preview": {
+          "origin": "http://127.0.0.1:46962",
+          "port": 46962,
+          "indexMatchesBuild": true
+        },
+        "applicationInputsCleanBefore": true,
+        "applicationInputsCleanAfter": true
+      }
+    ],
+    "tool": {
+      "node": "v24.14.1",
+      "script": "scripts/capture_retrospective_ui.mjs",
+      "scriptSha256": "bcf47c2861601b18ffdec0f6f1a16c0a4b3c8840cab2301c3feb93c9dece7aed",
+      "playwrightPackage": "@playwright/test",
+      "playwrightVersion": "1.64.1",
+      "browserName": "chromium",
+      "browserVersion": "156.0.8078.4"
+    },
+    "allImageHashesAndDimensionsVerified": true,
+    "allImagesVisuallyInspectedByAgent": true,
+    "allContextsZeroNetworkConsolePageErrors": true,
+    "pngTransformations": "none",
+    "fixture": "synthetic local guest; freestyle win; Match ply 8 / Replay ply 9; no configured cloud"
+  },
+  "validation": {
+    "types": {
+      "passed": true,
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-final-types.log",
+        "sha256": "04964269a569a25c3fd6ba893425ebc56ce091e919a6656ec414da2dfbc910d1",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    },
+    "units": {
+      "passed": 527,
+      "files": 53,
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-final-units.log",
+        "sha256": "582314a83dc14cc319bd691bf484b5388c9e795f65d8bcdb243ff1b9ea6bb330",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    },
+    "captureTool": {
+      "passed": 6,
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-tool-tests.log",
+        "sha256": "a3898b57de307dcfde92de75c6999b7d807986cae1565e4f781d01078652c36a",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    },
+    "build": {
+      "passed": true,
+      "curatedRecords": 5,
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-final-build.log",
+        "sha256": "0cfbb4051420790ec675895f096d9d0f97be1f5b7e5ee672435a4dfb8ba1f827",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    },
+    "developerBrowser": {
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "statistics": {
+        "startTime": "2026-10-25T17:51:40.387Z",
+        "duration": 84932.861,
+        "expected": 30,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-browser.json",
+        "sha256": "cdd1b7aabdefa5d4aa1b1c3f83b787b5815de94b558ebaaa760336add175168d",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    },
+    "standaloneExport": {
+      "base": "http://127.0.0.1:46864/",
+      "record": "ui-evolution-024-062",
+      "results": [
+        {
+          "engine": "chromium",
+          "passed": true,
+          "selected_images": 2,
+          "history": true,
+          "reload": true,
+          "native_and_full": true,
+          "narrow_200_percent": true,
+          "errors": [],
+          "outside": []
+        },
+        {
+          "engine": "firefox",
+          "passed": true,
+          "selected_images": 2,
+          "history": true,
+          "reload": true,
+          "native_and_full": true,
+          "narrow_200_percent": true,
+          "errors": [],
+          "outside": []
+        },
+        {
+          "engine": "webkit",
+          "passed": true,
+          "selected_images": 2,
+          "history": true,
+          "reload": true,
+          "native_and_full": true,
+          "narrow_200_percent": true,
+          "errors": [],
+          "outside": []
+        }
+      ],
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-export-browser.json",
+        "sha256": "33d556d88da7bcf16f5e4d8a45cc9791ea0d607e0002601d3276a1d4f1908d4d",
+        "availability": "local ignored receipt; summary qualified here"
+      },
+      "published": false
+    },
+    "accessibilityResponsiveAudit": {
+      "views": 18,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "widths": [
+        1280,
+        390,
+        320
+      ],
+      "largeText": "320px at 200%",
+      "violations": 0,
+      "horizontalOverflow": 0,
+      "incompleteContrastResults": 6,
+      "incompleteNeedsManualJudgment": true,
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-view-audit/checks.json",
+        "sha256": "999081a219e1519b1fc8f4f69d4a85b2974499d3bd544c048b6a38d22d708d61",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    },
+    "sourceDelivery": {
+      "base": "http://127.0.0.1:46862/",
+      "checked": 126,
+      "records": 5,
+      "recorded_reports_unchanged": true,
+      "sha256_parity": true,
+      "local_build": "gomoku-web/dist",
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-delivery.json",
+        "sha256": "5ba51af4a5742671ca600655ed8bbaef3141f454fdd47f8edaed2888db484ccd",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    },
+    "negativeChecks": {
+      "results": [
+        {
+          "tag": "v0.2.4",
+          "receiptParity": true
+        },
+        {
+          "tag": "v0.6.2",
+          "receiptParity": true
+        },
+        {
+          "wrongPreviewRejected": true,
+          "noOutputWritten": true
+        },
+        {
+          "existingCaptureRejected": true,
+          "all17FilesUnchanged": true
+        }
+      ],
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-live-safety.json",
+        "sha256": "728b69939d4bf6b4ded86c3d653800a563652a23ef62e7f1ded56b82336cd8fb",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    },
+    "carbonDelivery": {
+      "base": "http://127.0.0.1:46862/",
+      "checkedAt": "2026-10-25T18:02:29.567202+00:00",
+      "files": 212,
+      "sha256Parity": true,
+      "distInventorySha256": "fb1934ab636c42391004daee00739ccb266b79da75369de5169782f5a892f0e5",
+      "receipt": {
+        "path": "gomoku-web/test-results/retro-carbon-delivery.json",
+        "sha256": "cad084364cf283b0a9bf596b4f79cd586eb82305268b006fe91fe7ddb3bd605a",
+        "availability": "local ignored receipt; summary qualified here"
+      }
+    }
+  },
+  "integratedBuildFiles": {
+    "404.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "analysis-report/report.json": "3b8399fc1bbf5e797c7c56b52df5e7a579bf099e317cbc22e6297ea069391ca5",
+    "assets/AssetPreviewRoute-CDHqO1Bu.css": "723f175b7494a3918fea7222484e2625f64694b817b8492f31f5cf7a23cdbf94",
+    "assets/AssetPreviewRoute-CjBq1O1Z.js": "b9efbd0c37044f5d3e14d751dcc1d47a0c190b134c23d38d37c49f321780ade8",
+    "assets/Board-DuxfdgtR.js": "93feefef94af1923e4211283f3aec16668215eec814bb911eb77c34e9ffc15ca",
+    "assets/Board-ev2mndZK.css": "eeef309417dfbdb542ba14c739ebf91de728d3701f865a6f6036d7a31b5da976",
+    "assets/DeveloperApp-B4LiPKS5.css": "a91eae67d2d5701bd7441077023a20777e8e6f3e505c8b19787762e091c8124c",
+    "assets/DeveloperApp-BcyrDVWl.js": "ed49f3b58e9f18f1630de397f84b0a73e266dfe3a501972258a3025ec1f45747",
+    "assets/GuideRoute-D0XWSwEQ.css": "cc116f39699233dc37df08c16321a25fff0fb8b8e838920316bf782937def44e",
+    "assets/GuideRoute-DlhIURHa.js": "3884aeb9669ae08bf79476f7f2dff34897a2c24869db5a74fd1933d5a54df7ac",
+    "assets/Icon-7V1tz3ON.js": "c77406870f4cb8847d718d4669453cae432bf0cc91ce231e7b1df38b08fad93b",
+    "assets/LabReportRoute-C3WVVckS.css": "db5e254e5fa3833ef88347bedc8fa5b00da06ac7b956b6b48ed99c2ade1e03c8",
+    "assets/LabReportRoute-C3_CoiFg.js": "c8b3206891a543aa71d99123ac3f86b99ff72fa04558eacb850bd24fe300183a",
+    "assets/LocalMatchRoute-DOT4cc_F.js": "d30e5e1d43e8670b619f34a8883cdb69bf34edce0abe0216cb2a8a1fb06aef1f",
+    "assets/LocalMatchRoute-jEMs5th3.css": "c8d68c4ffac7e8c20b5e1aa91788ab60f8feea4dae7a296ed9287477c9ce68a2",
+    "assets/PixelOperator-Bold-CLeLR2Kg.ttf": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+    "assets/PixelOperator-C4gCAeI2.ttf": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+    "assets/PixelOperator8-Bold-DQXNZxi5.ttf": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+    "assets/PlayerApp-DGnMFJQU.js": "0b165aa2573da502596dd5511389a18507bd7b85153de413d02c86a495de8d8f",
+    "assets/PlayerApp-d9LJAj2-.css": "67f7648cec993dd729f27cd306715e3a417ac77cdf568fdee37a0cd9a5e72b33",
+    "assets/PolicyRoute-BhZxa1OP.js": "dd109a1db4fa0461bc63ce4176c455b94f57fc0d59bd9c9c5cba7f3d1c23b420",
+    "assets/PolicyRoute-BwlW-aSm.css": "8c04758445645cb6182ee332a318d3d6747f614a3b247b5238caf56ec09ecdae",
+    "assets/ProfileRoute-CHST5e-0.js": "65af71ddf574bd18a747aaff53f341a4f6f50cbb2ab95a647fc3c18eeea5b469",
+    "assets/ProfileRoute-CItmf9ON.css": "3f52e374bea91e444acd7b21865f989e1380980edbaca44248f53524b77ca355",
+    "assets/PublicPlayerRoute-DXWTSjJY.css": "8570f0e4be9368a822041e2c7c9369c8ae4354156b8ab196a09f5d7fd0809681",
+    "assets/PublicPlayerRoute-DZ5MkoAj.js": "15c64ea3071ebeb975a09a5afb6562dfadaf5376130773433727d2814b9d169d",
+    "assets/README.md": "0158a68f759ff86c5765039c3373dbc47c6a5d0fa6bb9ab22a6490de4eeba893",
+    "assets/ReplayLibraryPanel-BVPEQPbh.js": "d4a6780214983bd823016f92e5847d5df4c3acc6d3b01d67c67c313f99582fc9",
+    "assets/ReplayLibraryPanel-FW9y-hqV.css": "69f0333cdace44fd83103ef63921338a9a9481f1a526c7909d4a9d90496ca64c",
+    "assets/ReplayRoute-BMD4ZydV.css": "532658d3357b8dbaad74f2f425ad1ada8092534d00823430f0bd22d9d3a26a61",
+    "assets/ReplayRoute-Cp2XUOcE.js": "af80c445797dd8a6b665c5968f9158f2fb1eb3ffb98af7da44c06cd4d6b0c38b",
+    "assets/ReplayRoute-t2rDCWiI.js": "2191de0f0778b78ec66802a8138510ab8bbaf33f48f6f22760d60083110b45e1",
+    "assets/ReviewRoutes-B3zjbc4e.css": "d4b634b7bd771e00f12a9964a934847d9b40e92db47d5a4bffbe67899d43ad2c",
+    "assets/ReviewRoutes-amA0kDLK.js": "6070d89632884b4d891e39ac6c01d96862e4afce19135a261359c60bf019c1f5",
+    "assets/RulesRoute-Dv8yzwWR.css": "f5865de48039a645986271ef2d12c31b87549d83ae2764548ea907046f459c15",
+    "assets/RulesRoute-hhcyW-oq.js": "fff5652809437963be943c609cb719bba65f90629feb935bb7ed4daf9bbe9cfe",
+    "assets/SettingsRoute-Dh7LeZCo.css": "f434a856d27e0d28066cc886a06e9853a4d49e37025f59659ca9161c4cfce4d3",
+    "assets/SettingsRoute-EUALpzoT.js": "804cbde315257e8950539f974c58b84dd8692e1ee92f7a96d8199ab42a85c788",
+    "assets/SharedReplayRoute-KZwht8bK.js": "03e6de6b849f906fa64dc83e32982ae08bd0efa3265fc9c04e02deaa67ac608a",
+    "assets/asset_manifest.json": "4561a39324f12344878678f836c9b75a4771525938a0dd7bf29bc0022fb18e7a",
+    "assets/board_model-CZzAtTO9.js": "bf02c04acda5989da400e8cebfbc5e8d170fd7b2adfe1573f25c02bfb1c48ea3",
+    "assets/board_sprite_resolver-Br0D_gyw.js": "c47ff0ff9f38cb14d428d9a738de52f18523b72ab3b3455a6736b53919ed7f4d",
+    "assets/bot_config-BQyrbE-n.js": "0dc9fccf06ce9b390c7123745d6a597c0b22bee6d07d0e86a8cac81a505ab663",
+    "assets/bot_worker-qceE-vPe.js": "a344aa0277ea7322e08a0a9d61e41b9fa6e51e7cca139052d41da776ff9a7446",
+    "assets/cloud_promotion_store-BfSA2APy.js": "a51c5a82b8564e26b78f0fe33177d954f96a384b70531bb864d35b5fb6d18390",
+    "assets/cloud_sync-oCQE7rGe.js": "47905b89a97c806fa521011435cdc1de680e369ffef581a3463d15f530209d83",
+    "assets/constants-DKcsxR6O.js": "6c98ff34ef26e8e4e8dc4aa3841abf5433a48525f611019ab0621d771356b64e",
+    "assets/favicon.png": "22e8d958e7d4d67a1547bddb42000282e33b343b6d4b8cf2e0a7197f26c6ee82",
+    "assets/firebase-D9QeXs0u.js": "bcdee33c8bf979eec0a28ad27d8527d7e3037fb19e8585b8e654557c092dec0a",
+    "assets/fonts/LICENSE.txt": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328",
+    "assets/fonts/PixelOperator-Bold.ttf": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+    "assets/fonts/PixelOperator.ttf": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+    "assets/fonts/PixelOperator8-Bold.ttf": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+    "assets/fonts/PixelOperator8.ttf": "5cccb9ef6cf18977b6e5721d49a1a6e78dd6a6f1c4f69537470f7dc1dc829ffc",
+    "assets/fonts/PixelOperatorHB.ttf": "fba7efcd1595f795e7ced3dd88bcac890a4fd00a3d7a2212ec0ba67f9d7bff49",
+    "assets/fonts/PixelOperatorHB8.ttf": "3569a5481727cc277be02ffa72348d40bf3ad9f03b9687b0da3b19fb717d00c8",
+    "assets/fonts/PixelOperatorHBSC.ttf": "0d1092e620659d122285c310dfeed531df2d8f7d6bb112dddf6f93a776da8216",
+    "assets/fonts/PixelOperatorMono-Bold.ttf": "7b8a5f6cfd5fdb06ddac7d976935babf05afa5ef7bf6b8c1b8cf919b481d33e1",
+    "assets/fonts/PixelOperatorMono.ttf": "e171000f12d196e7a8a1a91c1a429ef3264a0ff007d5f62fa3dc44ef8df51226",
+    "assets/fonts/PixelOperatorMono8-Bold.ttf": "11704bf2bddcde0996909166ad9d10a7ff38eb311a59cb07991f63e5f0185f76",
+    "assets/fonts/PixelOperatorMono8.ttf": "b627505e178c0c51b0ce7d432f2974fdc2064339f17fb5242b7237becad3c467",
+    "assets/fonts/PixelOperatorMonoHB.ttf": "ae7eda40c2fb15e3672a79dee3860d13ab62b3e25f0cccee770b3f45b84c4955",
+    "assets/fonts/PixelOperatorMonoHB8.ttf": "6cc07440ab17ad773fb2814c028d8fe70ecab835f2a577c081a3d226b256be92",
+    "assets/fonts/PixelOperatorSC-Bold.ttf": "41d6116e70a8118de331b60166be488b40d6cb93717eb4e87a9630aa2843a0b8",
+    "assets/fonts/PixelOperatorSC.ttf": "9cfa8dd81cf88ceb340d1aac09492a8d6197dcef70c377129225745dd5e7cfa1",
+    "assets/fonts/README.md": "cace7c1415d758e931da358831db10eea12769282fe152cc0950a204df8930c1",
+    "assets/gomoku_wasm_bg-CckJkYUu.wasm": "82e6be1525d83cca9bcb82c99a5e5a3f7c7cf51ed0c292acd54c5930b0ab417a",
+    "assets/icons/README.md": "9ea5f6da4bc614e2d5d0d2541da145638d84e8a0b49c24c2b84da90db9d6a0d9",
+    "assets/icons/back.svg": "4c2a22cddbf822b695d4fc21a010bb25c55dea123ad3062da70b2a91be7311b9",
+    "assets/icons/bot.svg": "4a34511e787565ba8a79a114f82f5fe4a51ebe1ab4e130aa0c4c134f75c43394",
+    "assets/icons/circle.svg": "71b87dd626554b0cf0d51b413f3e068f68a1b58b415f849100c4c4a140c6f3d1",
+    "assets/icons/close.svg": "59c5ea4b2f4dbb25457cce923f50e7879f1802d8eddda56761f9a9cad6121f5c",
+    "assets/icons/confirm.svg": "8ccc3e89114d76f318c62ea3ec722f2a376424cb3b468df7e8b21827b4f1d420",
+    "assets/icons/copy.svg": "9ecbecdfafe277fa0ffb4aded29411974fb82a9770eb6d70115479ed4ab4db5f",
+    "assets/icons/double_next.svg": "3d0411ae3f255c537a40dc80afea75467cbb34d26a149a3d85d7228614f77ebf",
+    "assets/icons/double_prev.svg": "626c6aa296e2580c6128e219e9e81596ff85dbc3d6a4c6416ba7bbe7b2369882",
+    "assets/icons/exit.svg": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e",
+    "assets/icons/fast_forward.svg": "d5d1673b824b51799ae3ec2f73cbfd258227535048493e329cb983ce4ee58eba",
+    "assets/icons/fast_rewind.svg": "fc94846feff9ef2182ea6b51b7d2616d0f9d5296866229f0421c04b5432a2e54",
+    "assets/icons/filled_circle.svg": "72111880939558a0b3b2ee37191d2cedb7499eae7c1c633e5f2953aee77acdbb",
+    "assets/icons/first.svg": "f7d8118cd60faa5bcd93970a1ec3bb8575157cc327fa1cd6ba22006892afe6a8",
+    "assets/icons/forbidden.svg": "c466d59f23152be77f8103e58a132d11c63db30dc33a71215714ccdf6f7683c1",
+    "assets/icons/forward.svg": "69b4d0febd28d1f861b8767e54ecf664af857e4cb72b568095fdda3f000d2a93",
+    "assets/icons/grid.svg": "84f82b7ebc7e7d5454838ea69bb5570a69604f680d7dcef37de81bc8aa3db0d8",
+    "assets/icons/help.svg": "961bb8ed79f9eeb383646fe4e838960d9a4e22b21805630e9dee8f6cd528ed07",
+    "assets/icons/home.svg": "ca5e95cf5ac1c890dde79b921d2dbc795fc09e4b9d2d69639b8c20ab7a619803",
+    "assets/icons/human.svg": "ce5acbddbab188c01d71ea338a10d6edf3c8c1d81b2dc2d4024a80a9202725c4",
+    "assets/icons/icon_sheet.png": "efeeda45ea4a527c773ab14c3542d5796bb28f740df81b76ded88835c20487c3",
+    "assets/icons/info.svg": "4c3a6ff37fdf8e568e3e4a69f26740f5f0f348d2fd62aea54f8ee5cf6f0adc63",
+    "assets/icons/last.svg": "af787afc604a2ce1199bf8fdb73ab77e0ae87f00391c2389d688bde456ead388",
+    "assets/icons/manifest.json": "ea3a4356ddea595b705c278930fbba9dab6385a23989e4291d13c34014a98c33",
+    "assets/icons/minus.svg": "7d0134ce50235e77f8c8677b1333a2f92134f5b7468c9ca9cb9fcb4ee15f3646",
+    "assets/icons/next.svg": "f484707f11db046123a00a2bdee4693756e05d5c541e3133731a98463f2776e5",
+    "assets/icons/pause.svg": "ff829869d67520ab584d63d16e41501fb5aa18c8671bc8f2d5fd6f786f7f8153",
+    "assets/icons/play.svg": "a74f5b8cf5d3d06792df593b0840aa6d34f1e0439da76c54a59256a5b117d63d",
+    "assets/icons/play_reverse.svg": "69a62c1cdbaceb555670ae739f635954a486eae4b8716702a00921c8ddb235cf",
+    "assets/icons/plus.svg": "bbefc5a5de699504baa34a18464f826ad37bf4a92a7d15d185f3e7161732492e",
+    "assets/icons/prev.svg": "9a265cc02412d8ecf178a26245e30d88cce41d689f34f0fa58aba47604f8c9b5",
+    "assets/icons/profile.svg": "d120b65d2f46d8362903f52b61a595f507e2cf03b7b5ee01ecffaf1e0cab73be",
+    "assets/icons/publish.svg": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019",
+    "assets/icons/replay.svg": "94939ab786718d418e16aaefcc1fc3dfa5f7965744f111f9dc36b4fd10754ee9",
+    "assets/icons/reset.svg": "985bdf8109e8cd7cab1ea917b433c263aeb91b3a45353e6393de7b0f885de5c2",
+    "assets/icons/save.svg": "ec257dc16724b23cac8736462ab93c6e87fcb20d408f242b124f03a05bbffb38",
+    "assets/icons/settings.svg": "e15afda087e8d5ea0571a015a210c44fd4fd213f31a38ab2f59c3104402a3f80",
+    "assets/icons/share.svg": "5bef75b55f7aed217e66664012737b7963d7b23e4e41badcd28627f4662b4f4f",
+    "assets/icons/sign_in.svg": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea",
+    "assets/icons/sign_out.svg": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa",
+    "assets/icons/sync.svg": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33",
+    "assets/icons/trash.svg": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28",
+    "assets/icons/undo.svg": "03c56730a2e3373de689e5125051708f32b551220af5424b94f780ffc2132f58",
+    "assets/icons/win.svg": "950a76ac976a9cd3487971f55b39e0b8f17a8f789d776562f39362f8cf9cd1a8",
+    "assets/index-BzajAtUe.css": "e86fc58ea309de749cd0ba82c2550d3e313ba829fee52bdca9222be0c3758382",
+    "assets/index-XRuwGJX5.js": "5c90deaa37f509fc644334a0fd23540e6d37a92a13782fb3ef7624e705548db4",
+    "assets/jsx-runtime-CeYPBauN.js": "f2e72f1332c58062fba54beb2790bdcb28a2764bf905538f1c62cc0f59855934",
+    "assets/links-dgpv3VTZ.js": "807abd7b62d3aa47f9e05d87d2a59da7b91b22619ab6f7e3cf83273e9b046713",
+    "assets/local_match_session-B1EhjRFn.js": "58f4d61bcb905688a565f8ea5d34bee71fc896afd2c456331c8872c9f9b6269d",
+    "assets/local_replay-D_wNot_M.js": "ce0babcdf073a9ee8c40228d9aed429f9389d9f3eb9a777c1fccadca08dded01",
+    "assets/local_replay_core-CqhYXxG4.js": "962a1fc5601c4bd3eb2461e481540735eb0fb631f35a016b9ca17006b300ea82",
+    "assets/og_source.png": "5270c76589e18c4dea8d35d567d08350134089bc4d8aebcfa0281348edacddb7",
+    "assets/portable_replay_codec-DyUF9Yh8.js": "e03f06e83ef5929d53d4a2458d02f0d356e8d1185f878d75e5bb021a0246e47c",
+    "assets/public_catalog-DHGd4825.js": "0e4e40e3d70e0d37d5e9328d3c46d5721070d768559723ea89fc78badb2657bb",
+    "assets/public_player_navigation-C5f9CBxr.js": "ea407e1056c6752c07667067e9bdbf2c3a370b8b152e62c9069ba7863d7070d0",
+    "assets/replay_analysis_validation-BVMq5CcL.js": "a00daba1d9ffa4a2d98b4bb943ae223f9fb7a72cac4edb26079f03f417ff0c52",
+    "assets/replay_analysis_worker-B1F-Kagk.js": "c1e9a0e848b5f345b8bcb0099d4f994995b2780df283c0b9d6d6d8dd3c24fadf",
+    "assets/rolldown-runtime-XKyaHtl9.js": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7",
+    "assets/saved_match-CBKVMc6K.js": "b11a88d7911c634e53731a1c16e9fa22f34a83f7fd86fa27c0b9adbf3664ffac",
+    "assets/sequence_font-BHmT62ms.js": "d1f198ff901270b972d412ce478f2dcd32efd781c9799711a3acf2f91539916f",
+    "assets/sharing_public-Dz96k7BZ.js": "3972550d27d7ed2a4ff5761dba4c2cebdcf92b6e27abe1b350084b8dff6f5725",
+    "assets/sprites/README.md": "6f1997209492232b9e8af72d64e79b12013dc1c9aaf1f6012744104b519a5607",
+    "assets/sprites/caution.png": "d303a195993c640f9524a86cc262223e261c9bf2bc718ebbc0e9cdd1ffd51f49",
+    "assets/sprites/highlighter.png": "61a6798e4b17af416aba25af261ede8e7af1e0bab37dcf00c52434580a28bad5",
+    "assets/sprites/hover.png": "4b938017d74b92b5f74c5a39036b1564bfa4ab00d16b56733d33a40175cbdfba",
+    "assets/sprites/marker.png": "862a4746ca27a0a3e25cfab61a9bed94b2d27c9c0dd4b0aa5e208a8343949bbd",
+    "assets/sprites/pointer.png": "bda6179bae6d9e213948e5e10f6f65fd267779b1fc50188e936262c961f09136",
+    "assets/sprites/stone.png": "7bda65543e1fa51342f10924952ea34a89cc5856965c09c189b7070b1865135b",
+    "assets/sprites/transform.png": "24b75a897b8032a4b737f3e1039a59e765b4154c1f18959e495f5228c33f0ffa",
+    "assets/useDocumentTitle-IrVrDvCW.js": "f31f870196d8f9227822c67ff38bade34b1a49d653c392be50e65c1f7e3dedef",
+    "assets/wasm_bridge-Dn-XC-wI.js": "805827c1c57911932cf1d9cd144d6e96ec14efd4807a27d39bc50350f0dc8081",
+    "bot-report/report.json": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43",
+    "dev/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "dev/process/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "dev/reviews/action-icons-061/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "dev/reviews/core-screens-062/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "dev/reviews/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "dev/reviews/mobile-records-062/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "dev/reviews/public-player-062/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "dev/reviews/ui-evolution-024-062/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "favicon-16x16.png": "338a4bccccb366e72667a3451da2180bfdc27a412cb3c47c2046ad3ae98442e6",
+    "favicon-32x32.png": "e8f05658fa438c3db17319eff98b392e5c4a53a657d490eca7bca049d74a712d",
+    "favicon.ico": "ab9a0b0c6f1dc07c9526ac1a7fdaf9b776dc8d6a2e25384f8469846504b074e5",
+    "guide/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "lab/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "match/local/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "og.png": "5270c76589e18c4dea8d35d567d08350134089bc4d8aebcfa0281348edacddb7",
+    "player/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "privacy/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "profile/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "replay/shared/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "reviews/action-icons-061/comparison.png": "1e39cd0788f8f641e4aee2d3b3a9348c1343509d7c6121d2828f72dd28e085a2",
+    "reviews/action-icons-061/new-icons.png": "c43959d37403dce4a713fd8dc1730842f8c6842e9c99747efc1818593e692ea1",
+    "reviews/action-icons-061/record.json": "f00d985529672848d502dc0767d5b943eaf85fcde6328539a69efdd7fea970c9",
+    "reviews/core-screens-062/home-desktop.png": "7552659f108e36ee833de57c04dbff94613182778b6f98484712a9fc94bccb45",
+    "reviews/core-screens-062/home-portrait.png": "13dbcc15a7d8c12e9a882175728471a696c38b14c0528bf28da15ce219e44778",
+    "reviews/core-screens-062/match-desktop.png": "ef04f82fe8f856c3317d8da090413100952f53a22e1828d9796a4ac703ee411d",
+    "reviews/core-screens-062/match-enlarged.png": "6dd0870dae5f457a282917e795080c69b167035da8707e66eb53074b7743caba",
+    "reviews/core-screens-062/match-landscape.png": "6566c9737bf373fca5ecd82e23d3925b1b64e887db1ec86216cd2ff6005b7d66",
+    "reviews/core-screens-062/match-portrait.png": "f0b3d4f7f99033923178a9a87c9e693377fd6523f7cf5655672324b954bb912b",
+    "reviews/core-screens-062/profile-desktop.png": "6988b52888a5948bac06601c11c8367ef69a426eb470984bcd0e65ff3b479c51",
+    "reviews/core-screens-062/profile-enlarged.png": "5d954385f128df91a64c00ac8da2df55ce1e33ae551815d197e6a39e714b8efd",
+    "reviews/core-screens-062/profile-landscape.png": "4c719a4d5487635f5b28ba2f7df46565f54c62c512ba72e49baa5db66e03fe70",
+    "reviews/core-screens-062/profile-portrait.png": "1cf1da5e71156c0652dcb343c0cdd0bc94d9738b58077c0924582cf30b498144",
+    "reviews/core-screens-062/public-player-desktop.png": "25d61f95c1c8c891726231f5446485aedc30b9007dc18f3e437622f936af56db",
+    "reviews/core-screens-062/public-player-enlarged.png": "c96e33f96415a9b011f97211390ab609f1e86a72320c2a610c6a173a845a895f",
+    "reviews/core-screens-062/public-player-landscape.png": "48d1829ff9cc4792a8d7535c05c11e114b13ee0e322bac9fca5e7c9565046cc6",
+    "reviews/core-screens-062/public-player-portrait.png": "af4bf1318247f879c765cba6963777f0bf2d5a5c491e8ed9d4d20a4d091c6de4",
+    "reviews/core-screens-062/record.json": "14ef9edf146e8725d9c6de3cc720a87db362cd74f6c1b9d10c732e2484f73d51",
+    "reviews/core-screens-062/replay-desktop.png": "27b7b165a529b62cf942ce635918e61396574d325758f92b370bb0917a090173",
+    "reviews/core-screens-062/replay-portrait.png": "a13a1cda4c027eeec99bd6cdc97b235e8a322a9f7e3eac7da5e701bb1711f666",
+    "reviews/core-screens-062/settings-desktop.png": "926e65b93fb752d8074ac0aeb4023d647d9614a8a2a4bdca07892953c01e9c60",
+    "reviews/core-screens-062/settings-portrait.png": "a606e0392b3d707b3dc0bf810f5b61a0ac675935697414ad83cc4268805dec33",
+    "reviews/mobile-records-062/landscape-after.png": "1f207fb23413411c0726af63bf6eb5a7551808f852dcf3917e4b551fa5d269b2",
+    "reviews/mobile-records-062/landscape-before.png": "dee32a28da67da23572eac0a43db55b523efd2dd4dcd9118618c4774b525e7a8",
+    "reviews/mobile-records-062/profile-after.png": "2bc721ea56daaf982beaa71337c9d83352ff2e82bcc6d973eb9bf86f493260c9",
+    "reviews/mobile-records-062/profile-before.png": "3f1862cb920f210d6576124713fa78ed8a789c828cb32d25e8c16eb0a6fce89e",
+    "reviews/mobile-records-062/public-after.png": "f7101c8c7e369cddad36390270dfa6da33f8e02e8ade455888f3c505245b0a56",
+    "reviews/mobile-records-062/public-before.png": "67ac24dc780c4e8c9745c968e6f717eeee8286fb295df695bd7de2b5e4f43761",
+    "reviews/mobile-records-062/record.json": "84f60a152ad01333d74d80bd782a3b7d102d82d5c401735e436b57f00381eb02",
+    "reviews/public-player-062/desktop.png": "25280f4a4860f44f9c2ed4ea5bf6769623ee0a26d4e720df3325de1edb3127da",
+    "reviews/public-player-062/portrait.png": "67ac24dc780c4e8c9745c968e6f717eeee8286fb295df695bd7de2b5e4f43761",
+    "reviews/public-player-062/record.json": "b9769051e0cd9f77c1be91144e6a2c04b0d7904416229059b2bb66fc60630174",
+    "reviews/ui-evolution-024-062/record.json": "3b5c6347e010d48b1232abf7740c4f247d494c9f8a68cd4209f9f528d3b17ff2",
+    "reviews/ui-evolution-024-062/v024-home-desktop.png": "e45753b7cfcb0201ed347a18fda8796f0df437c89fe07e278a60c4ab8f131df7",
+    "reviews/ui-evolution-024-062/v024-home-portrait.png": "ff955f9684ea87bbffb8b9f667910c1262cc6650f1cc76c7b2e9f679c9b28125",
+    "reviews/ui-evolution-024-062/v024-match-desktop.png": "99f267248a4357aef5dde76d8ce8d99debc1dbfed351d5ba2c694d07e31b15b3",
+    "reviews/ui-evolution-024-062/v024-match-portrait.png": "e27d24b3aad3fa3c0615d0d36d3a1fbf76609540f72236eef8161fd9ae62b27f",
+    "reviews/ui-evolution-024-062/v024-profile-desktop.png": "d26dcf13d6706169f30f278226d43336903296b9bc567b2c937fd075616bfdf9",
+    "reviews/ui-evolution-024-062/v024-profile-portrait.png": "009afb20e3cf90d3be8c28faed970213ac9d488290b654da8fd04694874781be",
+    "reviews/ui-evolution-024-062/v024-replay-desktop.png": "0f1abf547b4d722e21e16a68e0965ca4c736ca46bd011663888d78c8dc1b69bf",
+    "reviews/ui-evolution-024-062/v024-replay-portrait.png": "4cddc79210078d67f9147b27f7bc6492cba67d9d6dc1eacc6b7000724b84cb6c",
+    "reviews/ui-evolution-024-062/v062-home-desktop.png": "7552659f108e36ee833de57c04dbff94613182778b6f98484712a9fc94bccb45",
+    "reviews/ui-evolution-024-062/v062-home-portrait.png": "26512a3bc9b4caeeecbf6168d499c424d5da0ede84297478b68c44f3cfbc9975",
+    "reviews/ui-evolution-024-062/v062-match-desktop.png": "06d6306a3982f3c2c2c2776e23c5a90d1d15ec0388d509291f3a2f6e1e95bcb6",
+    "reviews/ui-evolution-024-062/v062-match-portrait.png": "1419f15eab5a0d96f3e77f1190d3422e7617d47ebc2bd395353b44450ccc5c1d",
+    "reviews/ui-evolution-024-062/v062-profile-desktop.png": "e6f47824138422e600fc363fe16df7f8964e5a4554f700ebe0d5269eed8dfe50",
+    "reviews/ui-evolution-024-062/v062-profile-portrait.png": "23d86bcf22412b6bdb80757012e480ddc7973b40c709aa1b1c22eed4909bd515",
+    "reviews/ui-evolution-024-062/v062-replay-desktop.png": "3d3aa9ea89571fad67fae57e761186834285b159288d4241fab753e8f2aa8319",
+    "reviews/ui-evolution-024-062/v062-replay-portrait.png": "fbe67c0117f42e5dc26fef85bec53ce158c0c419edcba074a3bf07e97a77313e",
+    "rules/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "settings/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "terms/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564",
+    "visuals/index.html": "b64a651a95eb127c7183aa234a088e33f223adc4a38df5124b3adedae27d7564"
+  },
+  "cleanup": {
+    "checkedAt": "2026-10-25T18:04:15.600881+00:00",
+    "ownedRootRemoved": "/tmp/gomoku2d-retro-pilot-9ctqpg17",
+    "ownedWorktreesRemoved": [
+      "v024",
+      "v062"
+    ],
+    "ownedPortsClosed": [
+      46924,
+      46962,
+      46864
+    ],
+    "foreignWorktreePreserved": "/home/bryan/.codex/worktrees/beaf/gomoku2d",
+    "originalServices": {
+      "gomoku2d-v063-preview.service": "active",
+      "gomoku2d-v06-preview.service": "active",
+      "gomoku2d-v06-emulators.service": "active",
+      "gomoku2d-v06-carbon-tunnel.service": "active"
+    },
+    "captureAndFailedRunRetained": true,
+    "port8001Untouched": true,
+    "browserUse": "headless only; no user tabs opened"
+  },
+  "remainingAcceptance": [
+    "Bryan visual review of the retrospective presentation before more milestones",
+    "Real phone CSS viewport, DPR, browser mode/chrome and text calibration",
+    "Manual judgment for incomplete automated contrast checks; screen-reader/device acceptance not established"
+  ],
+  "recordedProductFollowUps": [
+    "Desktop Profile rightmost record action clips at 1280px in both tagged applications",
+    "Long synthetic player name truncates the v0.6.2 Match status"
+  ],
+  "limits": [
+    "These are newly recreated retrospective layouts, not original-period browser captures.",
+    "Portrait is a generic Android touch viewport, not a measured OnePlus/browser-chrome profile.",
+    "Automated readiness does not establish human or physical-device acceptance.",
+    "Phaser canvas animation is not guaranteed to freeze; board captures record the observed frame.",
+    "Phaser renderer is recorded as unknown unless safely exposed by the page."
+  ],
+  "repositoryDelivery": {
+    "commits": "local only",
+    "push": false,
+    "versionOrTagChange": false,
+    "productionPublication": false,
+    "bulkHistoryBackfill": false
+  }
+}

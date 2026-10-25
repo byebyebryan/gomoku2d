@@ -269,3 +269,37 @@ Both owned service processes were terminated as a recovery probe. They restarted
 and Carbon fetched all 194 build files with matching hashes. The local receipt
 is `gomoku-web/test-results/v063-preview-service-recovery.json`. No application/build,
 production deployment or private-data changes were made.
+
+## Retrospective UI pilot, October 25
+
+Bryan authorized a bounded historical recapture pilot before backfilling more
+milestones. The [pilot contract and reproduction procedure](v0_6_3_retrospective_capture.md)
+cover v0.2.4 and v0.6.2, with Home, Match, Replay and Profile captured from exact
+tagged applications and their generated Wasm. Luna implemented guarded capture
+and build-receipt tools; the primary built the tags, orchestrated capture,
+reviewed all 16 images and integrated the curated comparison.
+
+The UI review index keeps Current screens first, adds UI evolution, and retains
+the existing Design & layout reviews. The new **From local play to replay
+analysis** entry lists all eight desktop/portrait version pairs. Existing frozen
+evidence and public review URLs are unchanged. Both builds use synthetic local
+guest data with cloud deliberately unconfigured. Portrait 412×800 is provisional
+Android touch emulation, not a measured OnePlus reference. Exact source/tool/
+fixture and per-image provenance live in the [frozen capture manifest](v0_6_3_retrospective_capture/pilot-2026-10-25/capture.json).
+
+Type checks, 527 unit tests, six capture-tool checks and production build pass.
+All 30 developer journeys and the standalone pilot export pass across three
+engines. The 18-view audit has no overflow or automated violations; six incomplete
+contrast results still require manual judgment. Delivery verifies 126 routes/
+files, preserves recorded Lab reports, and hash-checks all 212 integrated build
+files from Carbon. [Pilot validation](v0_6_3_retrospective_capture/pilot-2026-10-25/validation.json)
+records the result boundaries and artifact identities.
+
+Open `http://localhost:46862/dev/reviews/ui-evolution-024-062/` on Carbon. Managed
+preview/forward services remain active. Temporary historical previews, export
+hosting and the two owned detached worktrees were removed; original manual
+services and the foreign worktree were preserved. No user browser tabs were
+opened. The work is committed locally, with no push or production publication.
+Bryan's presentation review and phone calibration remain open before more
+history is added. Desktop Profile clipping and long-name Match truncation are
+recorded product follow-ups, with the tagged captures left intact.

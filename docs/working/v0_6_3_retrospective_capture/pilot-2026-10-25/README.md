@@ -18,3 +18,8 @@ Original historical media and the earlier frozen 0.6.2 screen reference remain
 intact. The agent inspected all 16 images. The desktop Profile action clipping
 at 1280 and later long-name Match ellipsis are visible source behavior, recorded
 for separate follow-up rather than corrected in tagged applications.
+
+[Validation](validation.json) qualifies the integrated viewer, standalone export,
+build/source delivery and cleanup. The [capture procedure](../../v0_6_3_retrospective_capture.md)
+describes how to prepare new isolated sources and receipts. These captures do
+not require keeping the temporary source worktrees or historical previews alive.
