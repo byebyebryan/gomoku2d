@@ -256,6 +256,7 @@
   cursor: pointer;
 }
 .dev-tool[aria-pressed="true"],
+.dev-views a[aria-current="location"],
 .dev-views a[aria-current="page"] {
   background: var(--info);
   border-color: var(--info-border);

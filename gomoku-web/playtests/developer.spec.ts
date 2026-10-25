@@ -147,21 +147,22 @@ test("curated reviews retain frozen media and comparison controls", async ({ pag
       exact: true,
     }),
   ).toBeVisible();
-  await page
+  const profile = page.locator('[data-comparison="profile"]');
+  await profile
     .locator(".review-capture img")
     .evaluateAll((images) =>
       Promise.all(images.map((image) => (image as HTMLImageElement).decode())),
     );
   expect(
-    await page
+    await profile
       .locator(".review-capture img")
       .evaluateAll((images) =>
         images.every((image) => (image as HTMLImageElement).naturalWidth === 390),
       ),
   ).toBe(true);
-  await page.getByRole("button", { name: "Full captures", exact: true }).click();
-  await page.getByRole("button", { name: "Native pixels", exact: true }).click();
-  const panes = page.locator(".review-capture");
+  await profile.getByRole("button", { name: "Full captures", exact: true }).click();
+  await profile.getByRole("button", { name: "Native pixels", exact: true }).click();
+  const panes = profile.locator(".review-capture");
   await panes.first().evaluate((element) => {
     element.scrollTop = element.scrollHeight;
   });
@@ -174,8 +175,10 @@ test("curated reviews retain frozen media and comparison controls", async ({ pag
         ),
     )
     .toBeLessThanOrEqual(1);
-  await page.getByRole("button", { name: "Scroll together on", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Scroll together off", exact: true })).toBeVisible();
+  await profile.getByRole("button", { name: "Scroll together on", exact: true }).click();
+  await expect(
+    profile.getByRole("button", { name: "Scroll together off", exact: true }),
+  ).toBeVisible();
   const held = await panes.nth(1).evaluate((element) => element.scrollTop);
   await panes.first().evaluate((element) => {
     element.scrollTop = 0;
@@ -187,30 +190,29 @@ test("curated reviews retain frozen media and comparison controls", async ({ pag
       ),
   );
   expect(await panes.nth(1).evaluate((element) => element.scrollTop)).toBe(held);
-  await page.getByRole("button", { name: "Scroll together off", exact: true }).click();
-  await page.getByRole("button", { name: "Matched scale", exact: true }).click();
-  await page.getByRole("button", { name: "Full captures", exact: true }).click();
-  await expect(page.locator(".review-full")).toBeVisible();
-  await page.getByRole("button", { name: "Public player replay rows", exact: true }).click();
+  await profile.getByRole("button", { name: "Scroll together off", exact: true }).click();
+  await profile.getByRole("button", { name: "Matched scale", exact: true }).click();
+  await profile.getByRole("button", { name: "Full captures", exact: true }).click();
+  await expect(profile.locator(".review-full")).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Screens in this review" })
+    .getByRole("link", { name: "Public player replay rows", exact: true })
+    .click();
   await expect(page.locator('img[src$="public-after.png"]')).toBeVisible();
   await page.reload();
   await expect(page.locator('img[src$="public-after.png"]')).toBeVisible();
-  await page.getByRole("button", { name: "Native pixels", exact: true }).click();
-  await expect(page.locator(".review-native")).toBeVisible();
+  const publicPair = page.locator('[data-comparison="public"]');
+  await publicPair.getByRole("button", { name: "Native pixels", exact: true }).click();
+  await expect(publicPair.locator(".review-native")).toBeVisible();
   await page.setViewportSize({ width: 320, height: 800 });
   await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
   expect(
     await page.locator(".dev-page").evaluate((e) => e.scrollWidth - e.clientWidth),
   ).toBeLessThanOrEqual(1);
-  await page.goto("/dev/reviews/core-screens-062/");
-  await page
-    .getByRole("combobox", { name: "Screen and conditions" })
-    .selectOption("profile-stress");
+  await page.goto("/dev/reviews/core-screens-062/?pair=public-player-stress");
+  await expect(page.locator(".review-layout-checks")).toHaveAttribute("open", "");
   await page.setViewportSize({ width: 320, height: 800 });
   await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
-  await page
-    .getByRole("combobox", { name: "Screen and conditions" })
-    .selectOption("public-player-stress");
   await page
     .getByText("Technical evidence, sources and media identity", {
       exact: true,
@@ -236,13 +238,14 @@ test("responsive review captures share a scale and show their full frames", asyn
     await page.setViewportSize({ width, height });
     for (const path of ["/dev/reviews/core-screens-062/", "/dev/reviews/public-player-062/"]) {
       await page.goto(path);
-      await page.getByRole("button", { name: "Matched scale", exact: true }).waitFor();
+      const pair = page.locator(".review-gallery > .review-comparison").first();
+      await pair.getByRole("button", { name: "Matched scale", exact: true }).waitFor();
       await page.evaluate((size) => (document.documentElement.style.fontSize = size), font);
-      for (const image of await page.locator(".review-capture img").all()) {
+      for (const image of await pair.locator(".review-capture img").all()) {
         await image.scrollIntoViewIfNeeded();
         await image.evaluate((element) => (element as HTMLImageElement).decode());
       }
-      const captures = await page.locator(".review-capture img").evaluateAll((images) =>
+      const captures = await pair.locator(".review-capture img").evaluateAll((images) =>
         images.map((element) => {
           const image = element as HTMLImageElement;
           const pane = image.parentElement!;
@@ -271,6 +274,42 @@ test("responsive review captures share a scale and show their full frames", asyn
     page.getByText("Keep the board dominant on match and replay screens.", {
       exact: true,
     }),
+  ).toBeVisible();
+});
+
+test("screen gallery exposes all six views and keeps layout checks secondary", async ({ page }) => {
+  await page.goto("/dev/reviews/core-screens-062/");
+  const gallery = page.locator(".review-gallery");
+  await expect(gallery.locator(":scope > .review-comparison")).toHaveCount(6);
+  await expect(gallery.locator(".review-capture img")).toHaveCount(12);
+  await expect(page.getByRole("combobox")).toHaveCount(0);
+  await expect(page.locator(".review-layout-checks")).not.toHaveAttribute("open");
+  for (const title of ["Home", "Match", "Replay", "Settings", "Profile", "Public Player"])
+    await expect(gallery.getByRole("heading", { name: title, exact: true })).toBeVisible();
+  const firstNative = gallery.locator('[data-comparison="home"]')
+    .getByRole("button", { name: "Native pixels", exact: true });
+  await firstNative.focus();
+  await firstNative.press("Space");
+  await expect(firstNative).toHaveAttribute("aria-pressed", "true");
+  await expect(firstNative).toBeFocused();
+  await page
+    .getByRole("navigation", { name: "Screens in this review" })
+    .getByRole("link", { name: "Public Player", exact: true })
+    .click();
+  const focused = gallery.locator('[data-comparison="public-player"]');
+  await expect(focused).toBeFocused();
+  await expect(page).toHaveURL(/pair=public-player/);
+  await focused.getByRole("button", { name: "Native pixels", exact: true }).click();
+  await expect(focused.locator(".review-native")).toBeVisible();
+  await expect(gallery.locator('[data-comparison="home"] .review-native')).toHaveCount(0);
+  await page.reload();
+  await expect(focused).toBeFocused();
+  await expect(focused.locator(".review-native")).toBeVisible();
+  await page.goBack();
+  await expect(focused.locator(".review-native")).toHaveCount(0);
+  await page.getByText("Layout checks: landscape & large text", { exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Match · landscape & 200% text", exact: true }),
   ).toBeVisible();
 });
 

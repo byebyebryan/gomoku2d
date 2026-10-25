@@ -90,5 +90,88 @@
     "Bryan visual review of the refinement",
     "Manual contrast and physical/accessibility acceptance",
     "Separately authorized release preparation and publication"
-  ]
+  ],
+  "gallery_followup": {
+    "checked_at": "2026-10-25T03:26:35.766151+00:00",
+    "base_commit": "fa3f6a6d5b00e94168b4032171246d176e433c2d",
+    "source_sha256": {
+      "gomoku-web/playtests/developer.spec.ts": "3629d16004f9efba3ab2ca8f6b6a0d48e74e018adb15d9dbe3d587fc27d7090b",
+      "gomoku-web/scripts/check_review_export.mjs": "559c90a5746ea7db1079ad6c9e74cfa808af18f971a8780a82f620294acf0e1c",
+      "gomoku-web/src/developer/ReviewCase.tsx": "3cc64e6033edcbe5c215aaefc85b0e3f03cb083cde9b3e436ab74fc43a2cb470",
+      "gomoku-web/src/developer/developer.css": "79a0ebd4b940ee938cfc09698ca8590bc49fbb7c7b9d2152b0ae9993a3a22a79",
+      "gomoku-web/src/developer/review_record.test.ts": "2f5d68ec0bd24215403bf93803c14f56c959e5cea3cbe284805d7f5a1877f6c8",
+      "gomoku-web/src/developer/review_record.ts": "056d540cb562c65a3a1d55ba21ae0a63fcd67fc8ea4ccb9c6453b1b90512c0b9",
+      "gomoku-web/src/developer/reviews.css": "35ff12b6c1d71d74fc796abadcdcb20f6ecea34147c860db1c5520f342b34083",
+      "gomoku-web/src/developer/reviews.json": "4f24e97921c2c70e95a05055d4d7f6006c43b873d1378aba69f0415132b93329",
+      "gomoku-web/src/developer/ReviewComparison.tsx": "be6bbbf4a7461cd609387fa21f98f9cc940a4376e74ad18592e734aef9fa5980"
+    },
+    "changes": [
+      "All six normal screen pairs shown without a dropdown; jump links and legacy pair URLs retained",
+      "Landscape/200%-text cases grouped under a closed layout-check disclosure",
+      "Inspection/synchronized scrolling remains scoped to one pair; controls retain keyboard focus",
+      "Frozen media unchanged; metadata identifies the generic portrait viewport"
+    ],
+    "checks": {
+      "units": 527,
+      "typecheck": "passed app/scripts/tools",
+      "build": "passed",
+      "developer_suite_before_final_focus_guard": {
+        "passed": 27,
+        "failed": 0,
+        "engines": 3
+      },
+      "final_viewer_checks": {
+        "passed": 9,
+        "failed": 0,
+        "engines": 3
+      },
+      "export": {
+        "passed_engines": 3,
+        "history_reload_native_full_narrow_200_percent": true
+      },
+      "accessibility": {
+        "views": 27,
+        "violations": 0,
+        "incomplete_entries": 15,
+        "manual_judgment": "colour-contrast remains incomplete; no screen-reader/device acceptance claim"
+      },
+      "source_media_delivery": {
+        "files": 108,
+        "sha256_parity": true
+      },
+      "carbon_delivery": {
+        "host": "carbon",
+        "url": "http://localhost:46862/dev/reviews/core-screens-062/",
+        "files": 194,
+        "sha256_parity": true,
+        "checked_at": "2026-10-25T03:25:54.054669+00:00"
+      }
+    },
+    "build_sha256_manifest": "a85f01f4a3b72f253d7e546e2995a465302b3772daafb5137bb9b5e5a91e3fcc",
+    "raw_evidence_sha256": {
+      "gomoku-web/test-results/v063-gallery-build-final.log": "5da7cd5ab82737e692f70d2d7facc0aa16640f59879f1832b867a9f71abb7323",
+      "gomoku-web/test-results/v063-gallery-types.log": "04964269a569a25c3fd6ba893425ebc56ce091e919a6656ec414da2dfbc910d1",
+      "gomoku-web/test-results/v063-gallery-unit.log": "7db5e06c318e95ccba27532756e2d114925c97c7befd977f64db9f886363ee9f",
+      "gomoku-web/test-results/v063-gallery-browser.json": "1fe160e3199f00e430e447dd6c755685d1bbee75c901f8eee48e301b10a11730",
+      "gomoku-web/test-results/v063-gallery-final.json": "1cd028e2b7b113c2cef4304d4b679b5d1b0412a3df24e708077af1cf3f72fea4",
+      "gomoku-web/test-results/v063-gallery-export-final.json": "ac88e88c721ab532157ac6b75445ab4d50d8994dce528d99dbc8193276ca788c",
+      "gomoku-web/test-results/v063-gallery-visuals/checks.json": "7511dd0a3872b5a881df5435efb40d91a8d0616c62194d9553dade567a78694c",
+      "gomoku-web/test-results/v063-gallery-delivery-final.log": "8fcda9ef85652c9d827bf68fd76f7bf7ee3d570747dc7392b3d4b34dc6dbda79",
+      "gomoku-web/test-results/v063-gallery-carbon.json": "fc2e65ddf9b45988cce7e438de2eb9644ace5ab7346b2ae0947d7dc338591e20"
+    },
+    "cleanup": "Owned headless browsers and temporary export server stopped; integrated preview and Carbon forwarding retained",
+    "android_reference": {
+      "existing": "390 x 844 CSS-pixel desktop-Chromium viewport resize at DPR 1",
+      "physical_device_measured": false,
+      "android_user_agent_touch_emulation": false,
+      "browser_chrome_measured": false,
+      "proposed_device": "Bryan OnePlus Android phone",
+      "pending": [
+        "Normal browser/address-bar/full-screen mode",
+        "Actual viewport width/height and pixel ratio"
+      ],
+      "new_captures": "Use a new set; do not resize or relabel the frozen release media"
+    },
+    "scope": "Local source/preview only; no push/version/tag/production deployment or new device/human acceptance claim"
+  }
 }

@@ -8,6 +8,14 @@ describe("curated public review contract", () => {
     expect(records.every(isReviewRecord)).toBe(true);
     expect(new Set(records.map((record) => record.id)).size).toBe(records.length);
   });
+  it("rejects an unsupported comparison purpose", () => {
+    expect(
+      isReviewRecord({
+        ...records[0],
+        comparisons: [{ ...records[0].comparisons[0], purpose: "unknown" }],
+      }),
+    ).toBe(false);
+  });
   it.each(["../secret.png", "https://example.test/image.png", "nested/file.png"])(
     "rejects a media path outside its served record: %s",
     (file) => {

@@ -143,28 +143,15 @@
   }
 }
 
-.dev-page .review-choice {
-  display: grid;
-  gap: 8px;
-  max-width: 430px;
-  margin: 18px 0;
+.dev-page .review-comparison {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  scroll-margin-block-start: 24px;
+  outline: none;
 }
-.dev-page .review-choice select {
-  max-width: 100%;
-  min-height: 44px;
-  padding: 8px;
-  color: var(--text);
-  background: var(--surface-muted);
-  border: 2px solid var(--border);
-}
-
-.dev-page .review-choice {
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr);
-}
-.dev-page .review-choice select {
-  min-width: 0;
-  width: 100%;
+.dev-page .review-layout-checks {
+  margin-top: 30px;
 }
 .dev-page .dev-disclosure li {
   overflow-wrap: anywhere;

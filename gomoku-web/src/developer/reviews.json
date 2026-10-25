@@ -7,7 +7,7 @@
     "date": "2026-10-24",
     "revision": "v0.6.2 \u00b7 37a122d",
     "question": "What did the released player surfaces look like under explicit, repeatable conditions?",
-    "summary": "Home, Match, Replay, Settings, Profile and Public player at desktop and portrait, with short-landscape/enlarged-text references. These frozen images describe the released game, independently of later developer-site work.",
+    "summary": "Home, Match, Replay, Settings, Profile and Public player from the released game. Portrait references use a generic 390 \u00d7 844 headless viewport, not a measured handset.",
     "disposition": "screen reference",
     "comparisons": [
       {
@@ -70,7 +70,7 @@
       },
       {
         "id": "match-stress",
-        "title": "Match \u00b7 short/enlarged",
+        "title": "Match \u00b7 landscape & 200% text",
         "conditions": "Same release, browser and synthetic fixtures. Left: 844 \u00d7 390 landscape at 100% text. Right: 320 \u00d7 800 portrait at 200% text. Different viewports are not a before/after claim.",
         "media": [
           {
@@ -90,12 +90,13 @@
             "sha256": "6dd0870dae5f457a282917e795080c69b167035da8707e66eb53074b7743caba",
             "width": 320,
             "height": 800,
-            "label": "Match \u00b7 enlarged",
+            "label": "Match \u00b7 200% text",
             "alt": "Released 0.6.2 match at 320 \u00d7 800, 200% text",
             "kind": "application capture",
             "revision": "v0.6.2 \u00b7 37a122d"
           }
-        ]
+        ],
+        "purpose": "layout-check"
       },
       {
         "id": "replay",
@@ -186,7 +187,7 @@
       },
       {
         "id": "profile-stress",
-        "title": "Profile \u00b7 short/enlarged",
+        "title": "Profile \u00b7 landscape & 200% text",
         "conditions": "Same release, browser and synthetic fixtures. Left: 844 \u00d7 390 landscape at 100% text. Right: 320 \u00d7 800 portrait at 200% text. Different viewports are not a before/after claim.",
         "media": [
           {
@@ -206,12 +207,13 @@
             "sha256": "5d954385f128df91a64c00ac8da2df55ce1e33ae551815d197e6a39e714b8efd",
             "width": 320,
             "height": 800,
-            "label": "Profile \u00b7 enlarged",
+            "label": "Profile \u00b7 200% text",
             "alt": "Released 0.6.2 profile at 320 \u00d7 800, 200% text",
             "kind": "application capture",
             "revision": "v0.6.2 \u00b7 37a122d"
           }
-        ]
+        ],
+        "purpose": "layout-check"
       },
       {
         "id": "public-player",
@@ -244,7 +246,7 @@
       },
       {
         "id": "public-player-stress",
-        "title": "Public Player \u00b7 short/enlarged",
+        "title": "Public Player \u00b7 landscape & 200% text",
         "conditions": "Same release, browser and synthetic fixtures. Left: 844 \u00d7 390 landscape at 100% text. Right: 320 \u00d7 800 portrait at 200% text. Different viewports are not a before/after claim.",
         "media": [
           {
@@ -264,12 +266,13 @@
             "sha256": "c96e33f96415a9b011f97211390ab609f1e86a72320c2a610c6a173a845a895f",
             "width": 320,
             "height": 800,
-            "label": "Public Player \u00b7 enlarged",
+            "label": "Public Player \u00b7 200% text",
             "alt": "Released 0.6.2 public-player at 320 \u00d7 800, 200% text",
             "kind": "application capture",
             "revision": "v0.6.2 \u00b7 37a122d"
           }
-        ]
+        ],
+        "purpose": "layout-check"
       }
     ],
     "findings": [

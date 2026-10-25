@@ -1,32 +1,58 @@
-import { useRef, type CSSProperties } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import type { ReviewRecord } from "./review_record";
+import { ReviewComparison } from "./ReviewComparison";
 import { ReviewChecklist } from "./ReviewChecklist";
 import "./reviews.css";
 
 export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaRoot?: string }) {
-  const [params, setParams] = useSearchParams();
-  const comparison =
-    record.comparisons.find((pair) => pair.id === params.get("pair")) ?? record.comparisons[0];
-  const full = params.get("full") !== "0",
-    native = params.get("native") === "1",
-    sync = params.get("sync") !== "off";
-  const panes = useRef<(HTMLDivElement | null)[]>([]),
-    busy = useRef(false);
-  function update(values: Record<string, string | null>) {
-    const next = new URLSearchParams(params);
-    for (const [key, value] of Object.entries(values)) {
-      if (value === null) next.delete(key);
-      else next.set(key, value);
-    }
-    setParams(next, { preventScrollReset: true });
-  }
+  const [params] = useSearchParams();
+  const primary = record.comparisons.filter((pair) => pair.purpose !== "layout-check");
+  const checks = record.comparisons.filter((pair) => pair.purpose === "layout-check");
+  const first = primary[0] ?? record.comparisons[0];
+  const selected = record.comparisons.find((pair) => pair.id === params.get("pair"));
+  const sections = useRef(new Map<string, HTMLElement>());
+  const checkDetails = useRef<HTMLDetailsElement>(null);
+  const previous = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const old = previous.current;
+    previous.current = selected?.id;
+    if (!selected && !old) return;
+    if (selected?.purpose === "layout-check" && checkDetails.current)
+      checkDetails.current.open = true;
+    const frame = requestAnimationFrame(() => {
+      const section = sections.current.get(selected?.id ?? first.id);
+      if (section?.contains(document.activeElement)) return;
+      section?.scrollIntoView({ block: "start" });
+      section?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [selected?.id, selected?.purpose, first.id]);
+  const commonConditions = primary.every((pair) => pair.conditions === first.conditions)
+    ? first.conditions
+    : null;
   const root = mediaRoot ?? `${import.meta.env.BASE_URL}reviews/${record.id}/`;
-  const largestWidth = Math.max(...comparison.media.map((media) => media.width));
-  const layout = {
-    "--review-columns": comparison.media.map((media) => `minmax(0, ${media.width}fr)`).join(" "),
-    "--review-max-width": `${comparison.media.reduce((sum, media) => sum + media.width, 0) + 24 * (comparison.media.length - 1)}px`,
-  } as CSSProperties;
+  function renderComparison(pair: ReviewRecord["comparisons"][number]) {
+    return (
+      <section
+        className="review-comparison"
+        data-comparison={pair.id}
+        key={pair.id}
+        tabIndex={-1}
+        aria-labelledby={`review-${record.id}-${pair.id}`}
+        ref={(element) => {
+          if (element) sections.current.set(pair.id, element);
+          else sections.current.delete(pair.id);
+        }}
+      >
+        <h2 id={`review-${record.id}-${pair.id}`}>{pair.title}</h2>
+        {pair.conditions !== commonConditions && (
+          <p className="dev-meta dev-readable">{pair.conditions}</p>
+        )}
+        <ReviewComparison comparison={pair} root={root} firstId={first.id} />
+      </section>
+    );
+  }
   return (
     <article className="review-case">
       <header className="dev-heading">
@@ -38,122 +64,32 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
         </p>
         <p className="dev-readable">{record.summary}</p>
       </header>
-      {record.comparisons.length > 4 ? (
-        <label className="review-choice">
-          Screen and conditions
-          <select value={comparison.id} onChange={(event) => update({ pair: event.target.value })}>
-            {record.comparisons.map((pair) => (
-              <option key={pair.id} value={pair.id}>
-                {pair.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : (
-        <nav className="dev-views" aria-label="Review comparisons">
-          {record.comparisons.map((pair) => (
-            <button
+      <nav className="dev-views" aria-label="Screens in this review">
+        {primary.map((pair) => {
+          const next = new URLSearchParams(params);
+          next.set("pair", pair.id);
+          for (const key of ["native", "full", "sync"]) next.delete(key);
+          return (
+            <Link
               className="dev-tool"
               key={pair.id}
-              aria-pressed={pair.id === comparison.id}
-              onClick={() => update({ pair: pair.id })}
+              to={{ search: next.toString() }}
+              preventScrollReset
+              aria-current={selected?.id === pair.id ? "location" : undefined}
             >
               {pair.title}
-            </button>
-          ))}
-        </nav>
+            </Link>
+          );
+        })}
+      </nav>
+      {commonConditions && <p className="dev-meta dev-readable">{commonConditions}</p>}
+      <div className="review-gallery">{primary.map(renderComparison)}</div>
+      {checks.length > 0 && (
+        <details className="dev-disclosure review-layout-checks" ref={checkDetails}>
+          <summary>Layout checks: landscape & large text</summary>
+          <div>{checks.map(renderComparison)}</div>
+        </details>
       )}
-      <p className="dev-meta dev-readable">{comparison.conditions}</p>
-      <div className="dev-tools">
-        <button
-          className="dev-tool"
-          aria-pressed={!native}
-          onClick={() => update({ native: null })}
-        >
-          Matched scale
-        </button>
-        <button className="dev-tool" aria-pressed={native} onClick={() => update({ native: "1" })}>
-          Native pixels
-        </button>
-        <button
-          className="dev-tool"
-          aria-pressed={full}
-          onClick={() => update({ full: full ? "0" : null })}
-        >
-          Full captures
-        </button>
-        {comparison.media.length > 1 && (!full || native) && (
-          <button
-            className="dev-tool"
-            aria-pressed={sync}
-            onClick={() => update({ sync: sync ? "off" : null })}
-          >
-            Scroll together {sync ? "on" : "off"}
-          </button>
-        )}
-      </div>
-      <div
-        className={`review-pair ${full ? "review-full" : ""} ${native ? "review-native" : ""}`}
-        data-count={comparison.media.length}
-        style={layout}
-      >
-        {comparison.media.map((media, index) => (
-          <figure
-            key={media.file}
-            style={
-              {
-                "--review-width-ratio": media.width / largestWidth,
-              } as CSSProperties
-            }
-          >
-            <figcaption>
-              <strong>{media.label}</strong>
-              <span>
-                {media.kind} · {media.width} × {media.height} · {media.revision}
-              </span>
-            </figcaption>
-            <div
-              className="review-capture"
-              tabIndex={!full || native ? 0 : -1}
-              role="region"
-              aria-label={`${media.label} capture${!full || native ? ", scroll to inspect" : ""}`}
-              ref={(element) => {
-                panes.current[index] = element;
-              }}
-              onScroll={(event) => {
-                if (!sync || busy.current) return;
-                busy.current = true;
-                const source = event.currentTarget;
-                for (const target of panes.current) {
-                  if (!target || source === target) continue;
-                  const y = source.scrollHeight - source.clientHeight,
-                    x = source.scrollWidth - source.clientWidth;
-                  target.scrollTop =
-                    y > 0
-                      ? (source.scrollTop / y) * (target.scrollHeight - target.clientHeight)
-                      : 0;
-                  target.scrollLeft =
-                    x > 0 ? (source.scrollLeft / x) * (target.scrollWidth - target.clientWidth) : 0;
-                }
-                requestAnimationFrame(() => {
-                  busy.current = false;
-                });
-              }}
-            >
-              <img
-                src={root + media.file}
-                width={media.width}
-                height={media.height}
-                alt={media.alt}
-                loading="lazy"
-              />
-            </div>
-            <a className="review-original dev-meta" href={root + media.file}>
-              Original image
-            </a>
-          </figure>
-        ))}
-      </div>
       <ReviewChecklist />
       <section className="dev-section">
         <h2>
@@ -191,15 +127,17 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
               </li>
             ))}
           </ul>
-          {comparison.media.map((media) => (
-            <p key={media.file} className="dev-meta">
-              {media.label}
-              <br />
-              <code>{media.sourcePath}</code>
-              <br />
-              SHA-256 <code>{media.sha256}</code>
-            </p>
-          ))}
+          {record.comparisons
+            .flatMap((pair) => pair.media)
+            .map((media) => (
+              <p key={media.file} className="dev-meta">
+                {media.label}
+                <br />
+                <code>{media.sourcePath}</code>
+                <br />
+                SHA-256 <code>{media.sha256}</code>
+              </p>
+            ))}
         </div>
       </details>
     </article>

@@ -19,35 +19,34 @@ for (const [engine, type] of Object.entries({ chromium, firefox, webkit })) {
   try {
     await page.goto(base);
     await page.getByRole("heading", { name: record.title, exact: true }).waitFor();
-    const select = page.getByRole("combobox", {
-      name: "Screen and conditions",
-    });
-    if (await select.count()) await select.selectOption(pair.id);
-    else await page.getByRole("button", { name: pair.title, exact: true }).click();
-    await page.locator(`.review-capture img[src$="${pair.media.at(-1)?.file}"]`).waitFor();
-    for (const image of await page.locator(".review-capture img").all()) {
+    const target = new URL(base);
+    target.searchParams.set("pair", pair.id);
+    await page.goto(target.href);
+    const section = page.locator(`[data-comparison="${pair.id}"]`);
+    await section.locator(`.review-capture img[src$="${pair.media.at(-1)?.file}"]`).waitFor();
+    for (const image of await section.locator(".review-capture img").all()) {
       await image.scrollIntoViewIfNeeded();
       await image.evaluate((image) => /** @type {HTMLImageElement} */ (image).decode());
     }
-    const widths = await page
+    const widths = await section
       .locator(".review-capture img")
       .evaluateAll((images) =>
         images.map((image) => /** @type {HTMLImageElement} */ (image).naturalWidth),
       );
     if (widths.join(",") !== pair.media.map((media) => media.width).join(","))
       throw new Error("Wrong selected media");
-    const full = page.getByRole("button", {
+    const full = section.getByRole("button", {
       name: "Full captures",
       exact: true,
     });
     if ((await full.getAttribute("aria-pressed")) !== "true") await full.click();
-    await page.getByRole("button", { name: "Native pixels", exact: true }).click();
+    await section.getByRole("button", { name: "Native pixels", exact: true }).click();
     await page.reload();
-    await page.locator(".review-native").waitFor();
+    await section.locator(".review-native").waitFor();
     await page.goBack();
-    await page.locator(".review-native").waitFor({ state: "hidden" });
+    await section.locator(".review-native").waitFor({ state: "hidden" });
     await page.goForward();
-    await page.locator(".review-native").waitFor();
+    await section.locator(".review-native").waitFor();
     await page
       .getByText("Technical evidence, sources and media identity", {
         exact: true,
@@ -103,7 +102,7 @@ for (const [engine, type] of Object.entries({ chromium, firefox, webkit })) {
   }
 }
 await writeFile(
-  "test-results/v063-export-browser.json",
+  process.env.REVIEW_CHECK_OUTPUT ?? "test-results/v063-export-browser.json",
   JSON.stringify({ base, record: record.id, results }, null, 2) + "\n",
 );
 console.log(JSON.stringify(results));

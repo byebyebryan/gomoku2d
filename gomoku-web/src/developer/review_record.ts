@@ -13,6 +13,7 @@ export interface ReviewComparison {
   id: string;
   title: string;
   conditions: string;
+  purpose?: "layout-check";
   media: ReviewMedia[];
 }
 export interface ReviewRecord {
@@ -59,6 +60,7 @@ export function isReviewRecord(value: unknown): value is ReviewRecord {
         safeName(pair.id) &&
         text(pair.title) &&
         text(pair.conditions) &&
+        (pair.purpose === undefined || pair.purpose === "layout-check") &&
         Array.isArray(pair.media) &&
         pair.media.length > 0 &&
         pair.media.length <= 2 &&

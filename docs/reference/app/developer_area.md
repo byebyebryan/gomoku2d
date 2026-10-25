@@ -68,7 +68,8 @@ asset-only teal is a preview colour; the inspector is not Phaser acceptance.
 Each typed/validated record includes:
 
 - Stable ID, title, date, scope, revision, question and disposition.
-- One or more comparisons with captions and explicit conditions.
+- One or more comparisons with captions and explicit conditions; optional
+  `purpose: "layout-check"` places a QA case in the secondary disclosure.
 - Local media filename, source path, SHA-256, dimensions, kind and source revision.
 - Findings with fixed/deferred/open/recorded disposition.
 - Technical evidence, actual human review, follow-up and public source links.
@@ -78,7 +79,15 @@ PNG hashes/dimensions before copying selected files to `/reviews/<id>/`.
 Source/evidence links use public GitHub URLs; internal report-host URLs are not
 public dependencies. Only curated case routes receive direct-entry HTML.
 
-The viewer defaults to complete captures at one shared scale. Columns are
+The viewer lists all normal screen/view comparisons on one page, with jump links
+rather than a screen-selection dropdown. The released reference shows six
+sections: Home, Match, Replay, Settings, Profile and Public player. Landscape
+and 200%-text QA cases live in a closed “Layout checks” disclosure. Legacy
+`pair` deep links still jump to/focus their section; QA links open that disclosure.
+Inspection query settings apply to the focused pair and never synchronize scroll
+between unrelated screen sections.
+
+Each comparison defaults to complete captures at one shared scale. Columns are
 proportional to source-image widths: a 1280px desktop capture gets a wider pane
 than a 390px portrait capture, with the same source-to-display scale and no
 upsampling. Narrow layouts stack the captures while preserving that shared
@@ -96,6 +105,14 @@ The initial catalog contains accepted action icons, public-player/mobile
 checkpoints and a released 0.6.2 core-screen reference. That reference comes from
 a detached exact release checkout and explicit guest/emulator fixtures, separate
 from later developer-area code. Human/device acceptance remains stated per record.
+
+The frozen portrait images use generic 390 × 844 CSS-pixel viewports in desktop
+Chromium at DPR 1. The harness resized the viewport; it did not emulate Android
+user-agent/touch behavior, real browser toolbars or a measured OnePlus viewport.
+Their dimensions and hashes must not be changed to imply device validation.
+A new Android reference should use a separately captured set with measured usable
+viewport, browser/display mode, pixel ratio and source identity. Bryan's OnePlus
+is the proposed real-device reference; its exact viewport remains unmeasured.
 
 ## Reusable standalone export
 

@@ -32,6 +32,11 @@ Use current production-style build unless intentionally testing dev behavior:
 
 Prefer consistent mobile viewport height for comparisons. Very tall full-page
 mobile captures are useful for scroll audits but poor as release references.
+Use measured usable browser dimensions for a named device: CSS viewport,
+visual viewport, DPR, display/text scaling and address-bar/full-screen state.
+A resized desktop viewport is a generic layout reference, not Android-device
+validation. Keep landscape and large-text stress checks secondary to the normal
+screen gallery; label their differing conditions explicitly.
 
 ## Review Checklist
 

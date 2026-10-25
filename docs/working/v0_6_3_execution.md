@@ -206,3 +206,43 @@ production deployment was performed.
 The [refinement validation](v0_6_3_review_refinement.json) qualifies this later
 build; the earlier validation record remains a dated baseline. Bryan's visual
 review of the new layout is the next acceptance gate.
+
+## Screen gallery and mobile-reference follow-up
+
+Bryan asked to expose all screen/view references rather than switch a dropdown,
+and questioned the “short/enlarged” labels and portrait height. The reference
+now lists all six normal desktop/portrait pairs on one page, with jump links.
+Layout checks are secondary under a closed disclosure, named landscape and
+200% text. An optional validated comparison purpose owns that grouping. Existing
+pair URLs, including QA deep links, still focus/jump to their section; QA links
+open the disclosure. Native/full/sync inspection applies to the focused pair,
+with scroll synchronization confined to that pair. Standalone exports reuse the
+same gallery. No screenshot pixels or capture identities were changed.
+
+Inspection of the frozen harness confirmed that 390 × 844 at DPR 1 was a generic
+desktop-Chromium viewport resize. It was not measured on Bryan's phone and did
+not emulate Android browser chrome, user agent or touch. The record now says so.
+The short-landscape (844 × 390) and 200%-text (320 × 800) cases remain useful QA
+inputs, separately labelled, rather than primary product views.
+
+A OnePlus-class Android phone is a reasonable proposed real-device reference.
+[OnePlus 13 specifications](https://www.oneplus.com/us/13/specs) give a physical
+19.8:9 display; that does not establish usable CSS-pixel dimensions. The
+[visual viewport](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport)
+records the visible web area, while browser UI and display settings matter to
+what fits. Browser mode and actual viewport measurements remain open inputs
+for a new capture set. Do not silently resize/relabel the frozen release images.
+[What is my viewport](https://whatismyviewport.com/) is an available readout for
+the phone's viewport and DPR. No specific OnePlus CSS size was adopted from
+conflicting third-party device tables.
+
+Gallery validation: build/type checks and 527 units pass; the full developer lane
+passes 27 journeys across three engines. A final focus-retention correction
+passes nine targeted viewer journeys, including keyboard activation of the first
+inspection control. The refreshed standalone export passes all three engines.
+The 27-view audit reports zero violations and 15 incomplete contrast entries,
+with manual judgment still required. Source/media parity covers 108 files;
+all 194 final build files were fetched and hash-checked from Carbon. Temporary
+export hosting and owned headless browsers were stopped. The `gallery_followup`
+entry in [refinement validation](v0_6_3_review_refinement.json) records this later
+source/build and its pending Android-reference measurements.
