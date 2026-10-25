@@ -60,6 +60,7 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
         <h1>{record.title}</h1>
         <p className="dev-lead">{record.question}</p>
         <p className="dev-meta">
+          {record.disposition === "retrospective comparison" ? "Recaptured " : ""}
           {record.date} · {record.revision} · {record.disposition}
         </p>
         <p className="dev-readable">{record.summary}</p>
@@ -93,7 +94,11 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
       <ReviewChecklist />
       <section className="dev-section">
         <h2>
-          {record.disposition === "screen reference" ? "Reference notes" : "Findings and decisions"}
+          {record.disposition === "screen reference"
+            ? "Reference notes"
+            : record.disposition === "retrospective comparison"
+              ? "Visible changes"
+              : "Findings and decisions"}
         </h2>
         <ul className="review-findings">
           {record.findings.map((finding, index) => (

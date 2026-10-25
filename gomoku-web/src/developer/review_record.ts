@@ -25,7 +25,11 @@ export interface ReviewRecord {
   revision: string;
   question: string;
   summary: string;
-  disposition: "accepted" | "historical checkpoint" | "screen reference";
+  disposition:
+    | "accepted"
+    | "historical checkpoint"
+    | "screen reference"
+    | "retrospective comparison";
   comparisons: ReviewComparison[];
   findings: { state: "fixed" | "deferred" | "open" | "recorded"; title: string; detail: string }[];
   technical: string[];
@@ -48,7 +52,9 @@ export function isReviewRecord(value: unknown): value is ReviewRecord {
   )
     return false;
   if (
-    !["accepted", "historical checkpoint", "screen reference"].includes(String(value.disposition))
+    !["accepted", "historical checkpoint", "screen reference", "retrospective comparison"].includes(
+      String(value.disposition),
+    )
   )
     return false;
   if (

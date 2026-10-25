@@ -57,5 +57,28 @@ settle the final Android reference size or replace the pending phone readout.
 
 ## Execution
 
-Investigation started. Luna owns the bounded tag/build/fixture investigation;
-the primary owns capture contracts, orchestration, integration and acceptance.
+Luna completed the tag/build/fixture investigation without application edits.
+Both versions support the same deterministic freestyle win. Their storage keys,
+schemas and Replay routes differ; external adapters will express those differences.
+Replay at ply 8 can start a populated Match with Black/human to move, avoiding
+live bot timing. Luna is implementing the capture CLI and its guarded preflight;
+the primary owns tagged builds, media orchestration, public integration and review.
+
+The primary built both peeled tag commits in separate owned worktrees using
+wasm-pack 0.14.0, Rust 1.99.1, locked Cargo dependencies, Node 26.12.1 and npm
+12.2.1. Each used its own `npm ci` and tag-specific production build/postbuild.
+No application or lockfile edits were required; tracked worktrees remained clean.
+The declared Node versions were 20 and 24 respectively; the actual modern host
+runtime is a recorded deviation, not a claim of reproducing original binaries.
+The v0.2.4 and v0.6.2 outputs contained 90 and 147 files. Local receipts retain
+all file hashes and tool/configuration details.
+
+Both builds deliberately omit Firebase configuration: the scene is an offline
+local guest, and v0.6.2's cloud sign-in is disabled. This is an explicit capture
+condition, not a reproduction of the cloud-configured production account state.
+No Auth/Firestore emulator or production backend is needed for these four scenes.
+
+An initial old-version preview inherited its historical auto-open behavior and
+tried to start unavailable Firefox; no user tab opened. It was restarted with
+`BROWSER=none`. Owned preview ports are 46924 and 46962; the integrated Carbon
+preview and existing manual services remain separate.

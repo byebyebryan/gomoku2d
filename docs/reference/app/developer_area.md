@@ -74,6 +74,14 @@ Each typed/validated record includes:
 - Findings with fixed/deferred/open/recorded disposition.
 - Technical evidence, actual human review, follow-up and public source links.
 
+The current screen gallery stays first. A `retrospective comparison` disposition
+places recreated historical layouts under UI evolution, with an explicit
+“Recaptured” date and visible-change observations. Existing dated design/review
+records remain directly addressable. The
+[retrospective pilot](../../working/v0_6_3_retrospective_capture.md) owns the
+capture protocol and its v0.2.4 / v0.6.2 qualification; it does not imply a
+complete version archive or original-period acceptance.
+
 The build validates schema, stable IDs, safe media paths, unique IDs/files and
 PNG hashes/dimensions before copying selected files to `/reviews/<id>/`.
 Source/evidence links use public GitHub URLs; internal report-host URLs are not

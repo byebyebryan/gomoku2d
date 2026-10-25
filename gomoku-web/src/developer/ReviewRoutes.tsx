@@ -44,38 +44,49 @@ export function ReviewRoutes() {
       <ReviewChecklist />
       {[
         {
-          title: "Screen references",
+          title: "Current screens",
           records: catalog.filter((item) => item.disposition === "screen reference"),
         },
         {
-          title: "Design & layout reviews",
-          records: catalog.filter((item) => item.disposition !== "screen reference"),
+          title: "UI evolution",
+          records: catalog.filter((item) => item.disposition === "retrospective comparison"),
         },
-      ].map((group) => (
-        <section className="dev-section" key={group.title}>
-          <h2>{group.title}</h2>
-          <div className="review-index">
-            {group.records.map((item) => (
-              <article key={item.id}>
-                <div>
-                  <h2>{item.title}</h2>
-                  <p className="dev-muted">{item.summary}</p>
-                  <p className="dev-meta">
-                    {item.date} · {item.scope} · {item.disposition}
-                  </p>
-                </div>
-                <Link
-                  className="uiAction uiActionNeutral"
-                  to={`/dev/reviews/${item.id}/`}
-                  aria-label={`Review: ${item.title}`}
-                >
-                  Review
-                </Link>
-              </article>
-            ))}
-          </div>
-        </section>
-      ))}
+        {
+          title: "Design & layout reviews",
+          records: catalog.filter(
+            (item) =>
+              item.disposition !== "screen reference" &&
+              item.disposition !== "retrospective comparison",
+          ),
+        },
+      ]
+        .filter((group) => group.records.length > 0)
+        .map((group) => (
+          <section className="dev-section" key={group.title}>
+            <h2>{group.title}</h2>
+            <div className="review-index">
+              {group.records.map((item) => (
+                <article key={item.id}>
+                  <div>
+                    <h2>{item.title}</h2>
+                    <p className="dev-muted">{item.summary}</p>
+                    <p className="dev-meta">
+                      {item.disposition === "retrospective comparison" ? "Recaptured " : ""}
+                      {item.date} · {item.scope} · {item.disposition}
+                    </p>
+                  </div>
+                  <Link
+                    className="uiAction uiActionNeutral"
+                    to={`/dev/reviews/${item.id}/`}
+                    aria-label={`Review: ${item.title}`}
+                  >
+                    Review
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
     </>
   );
 }
