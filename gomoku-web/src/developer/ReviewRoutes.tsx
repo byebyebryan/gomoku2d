@@ -4,6 +4,7 @@ import { isReviewRecord, type ReviewRecord } from "./review_record";
 import { ReviewCase } from "./ReviewCase";
 import { ReviewChecklist } from "./ReviewChecklist";
 import { useDocumentTitle } from "../app/useDocumentTitle";
+import { HistoryRoutes, ReviewNavigation, historyRouteTitle } from "./HistoryRoutes";
 
 const catalog: ReviewRecord[] = records.filter(isReviewRecord);
 if (catalog.length !== records.length) throw new Error("Unsupported review catalog");
@@ -12,7 +13,11 @@ export function ReviewRoutes() {
   const path = decodeURIComponent(pathname).replace(/\/+$/, "");
   const id = path.split("/").slice(3).join("/");
   const record = catalog.find((item) => item.id === id);
-  useDocumentTitle(record?.title ?? "UI review");
+  useDocumentTitle(record?.title ?? (id === "history" || id.startsWith("history/")
+    ? historyRouteTitle(id === "history" ? undefined : id.slice("history/".length))
+    : "UI review"));
+  if (id === "history" || id.startsWith("history/"))
+    return <HistoryRoutes screenId={id === "history" ? undefined : id.slice("history/".length)} />;
   if (id && !record)
     return (
       <section>
@@ -26,6 +31,7 @@ export function ReviewRoutes() {
   if (record)
     return (
       <>
+        <ReviewNavigation />
         <Link className="review-index-link" to="/dev/reviews/">
           ← Review index
         </Link>
@@ -34,6 +40,7 @@ export function ReviewRoutes() {
     );
   return (
     <>
+      <ReviewNavigation />
       <header className="dev-heading">
         <p className="dev-eyebrow">Screens, comparisons & findings</p>
         <h1>UI review</h1>
@@ -42,6 +49,11 @@ export function ReviewRoutes() {
         </p>
       </header>
       <ReviewChecklist />
+      <section className="dev-section history-index-entry">
+        <h2>Follow the UI through its versions</h2>
+        <p className="dev-muted">Browse the milestones, inspect neighbouring changes and follow individual screens through their history.</p>
+        <Link className="uiAction uiActionNeutral" to="/dev/reviews/history/">Open UI history</Link>
+      </section>
       {[
         {
           title: "Current screens",

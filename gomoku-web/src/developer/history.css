@@ -1,0 +1,51 @@
+.dev-page .history-review-nav{display:flex;flex-wrap:wrap;gap:6px 22px;margin-bottom:26px;font-family:var(--font-display)}
+.dev-page .history-review-nav a{display:inline-flex;align-items:center;min-height:44px;padding:8px 0;border-bottom:2px solid transparent;color:var(--text-muted);text-decoration:none}
+.dev-page .history-review-nav a[aria-current=page]{color:var(--accent);border-bottom-color:var(--accent)}
+.dev-page .history-heading{margin-bottom:28px}.dev-page .history-heading h1{outline:none}
+.dev-page .history-workbench{display:grid;grid-template-columns:232px minmax(0,1fr);gap:32px;align-items:start}
+.dev-page .history-milestone-rail{position:sticky;top:20px;min-width:0}
+.dev-page .history-milestone-rail>summary{display:none}
+.dev-page .history-milestone-rail>nav{max-height:calc(100dvh - 60px);overflow:auto;padding-right:12px}
+.dev-page .history-milestone-rail section{margin-bottom:20px}
+.dev-page .history-milestone-rail h2{font-size:var(--type-meta);color:var(--text-muted);margin:0 0 8px}
+.dev-page .history-milestone-rail .history-milestone-link{display:block;min-height:44px;padding:10px 12px;border-left:3px solid var(--border);color:var(--text);text-decoration:none}
+.dev-page .history-milestone-link strong{display:block;font-family:var(--font-display);font-weight:400}
+.dev-page .history-milestone-link span{display:block;margin-top:4px;font-size:var(--type-quiet);color:var(--text-muted)}
+.dev-page .history-milestone-link:hover{background:var(--surface-muted)}
+.dev-page .history-milestone-link[aria-current=page]{border-left-color:var(--accent);background:var(--surface-muted)}
+.dev-page .history-milestone-link[aria-current=page] strong{color:var(--accent)}
+.dev-page .history-milestone-content{min-width:0}.dev-page .history-milestone-heading>h2{outline:none}
+.dev-page .history-neighbours{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+.dev-page .history-neighbours .history-next{justify-content:flex-end;text-align:right}
+.dev-page .history-neighbours a{justify-content:flex-start}
+.dev-page .history-layout-controls,.dev-page .history-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dev-page .history-toolbar{justify-content:space-between;gap:14px;margin:20px 0}
+.dev-page .history-change-jumps{display:flex;flex-wrap:wrap;gap:6px 18px;margin:20px 0}
+.dev-page .history-change-jumps a{display:flex;align-items:center;gap:8px;min-height:44px;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.dev-page .history-change-jumps a span{font-size:var(--type-quiet);color:var(--text-muted);text-decoration:none}
+.dev-page .history-change-jumps a[aria-current=location]{text-decoration-thickness:3px}
+.dev-page .history-change,.dev-page .history-inspect{padding-top:24px;margin-top:28px;border-top:1px solid var(--border);outline:none;scroll-margin-top:24px}
+.dev-page .history-change-heading{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 18px;margin-bottom:14px}
+.dev-page .history-change-heading h2{margin:0}.dev-page .history-change-heading>span{font-family:var(--font-display);color:var(--accent);font-size:var(--type-meta)}
+.dev-page .history-view{outline:none;scroll-margin-top:24px;margin:24px 0}.dev-page .history-view+.history-view{padding-top:24px;border-top:1px solid var(--border)}
+.dev-page .history-lifecycle-note{color:var(--accent);font-family:var(--font-display)}
+.dev-page .history-coverage-note{color:var(--text-muted);border-left:3px solid var(--info);padding:10px 14px;font-size:var(--type-meta);max-width:66ch}
+.dev-page .history-relations{display:flex;flex-wrap:wrap;gap:8px 18px;list-style:none;margin:14px 0;padding:0;font-size:var(--type-meta);color:var(--text-muted)}
+.dev-page .history-relations a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.dev-page .history-source-context{margin:18px 0}.dev-page .history-source-context section+section{margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+.dev-page .history-source-context h3{font-size:1.2rem}.dev-page .history-source-context p{max-width:75ch}
+.dev-page .history-page .history-back{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);margin-bottom:20px;text-decoration:underline;text-underline-offset:3px}
+.dev-page .history-trail{display:grid;gap:28px;align-items:start;margin-top:26px}
+.dev-page .history-trail-desktop{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dev-page .history-trail-portrait{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dev-page .history-trail-entry{min-width:0;padding-top:16px;border-top:3px solid var(--border)}
+.dev-page .history-trail-entry:first-child{border-top-color:var(--info)}
+.dev-page .history-trail-entry:last-child{border-top-color:var(--accent)}
+.dev-page .history-trail-entry h2{font-size:1.4rem;margin-bottom:6px}
+.dev-page .history-trail-entry figure{margin:0 0 14px;max-width:var(--history-source-width)}
+.dev-page .history-trail-entry img{display:block;width:calc(100% * var(--history-image-ratio));max-width:100%;height:auto;outline:1px solid var(--border)}
+.dev-page .history-trail-entry figcaption{font-size:var(--type-meta);color:var(--text-muted);margin-top:12px;overflow-wrap:anywhere}
+.dev-page .history-retired{margin:28px 0;padding:20px 0;border-block:1px solid var(--border)}
+@media(max-width:1000px){.dev-page .history-workbench{grid-template-columns:200px minmax(0,1fr);gap:24px}.dev-page .history-trail-portrait{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:780px){.dev-page .history-workbench{grid-template-columns:minmax(0,1fr);gap:22px}.dev-page .history-milestone-rail{position:static;border-block:1px solid var(--border)}.dev-page .history-milestone-rail>summary{display:list-item;min-height:52px;cursor:pointer;padding:12px 0;color:var(--accent);font-family:var(--font-display)}.dev-page .history-milestone-rail>nav{max-height:none;overflow:visible;padding:12px 0}.dev-page .history-milestone-rail:not([open])>nav{display:none}.dev-page .history-trail-desktop{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:560px){.dev-page .history-review-nav{gap:4px 16px;font-size:var(--type-meta);margin-bottom:22px}.dev-page .history-trail-portrait{grid-template-columns:minmax(0,1fr)}.dev-page .history-neighbours{gap:8px}.dev-page .history-neighbours a{padding:8px}.dev-page .history-trail-entry figure{max-width:var(--history-source-width)}.dev-page .history-toolbar{justify-content:flex-start}}

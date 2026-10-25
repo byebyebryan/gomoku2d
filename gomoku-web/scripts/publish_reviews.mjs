@@ -1,6 +1,7 @@
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { readReviewCatalog, webRoot, repoRoot } from "./review_catalog.mjs";
+import { publishHistory } from "./publish_history.mjs";
 export async function publishReviews(destination = resolve(webRoot, "dist")) {
   const records = await readReviewCatalog();
   for (const record of records) {
@@ -12,5 +13,6 @@ export async function publishReviews(destination = resolve(webRoot, "dist")) {
         await copyFile(resolve(repoRoot, media.sourcePath), resolve(target, media.file));
   }
   console.log(`Published ${records.length} curated review records and their allowlisted media.`);
+  await publishHistory(destination);
 }
 if (process.argv[1] === new URL(import.meta.url).pathname) await publishReviews(process.argv[2]);

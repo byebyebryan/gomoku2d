@@ -1,4 +1,4 @@
-import type { ReviewMedia } from "./review_record";
+import type { ReviewMedia } from "./review_record.js";
 
 export type HistoryLayout = "desktop" | "portrait";
 export interface HistoryRelease {
@@ -116,6 +116,8 @@ function isChange(v: unknown): v is HistoryChange {
         (v.kind !== "added" || (s.before === undefined && s.after !== undefined)) &&
         (v.kind !== "removed" || (s.before !== undefined && s.after === undefined)))) return false;
   if (!unique(v.states.map(s => (s as { id: string }).id))) return false;
+  if (v.kind === "updated" && (!v.states.some(s => (s as Record<string, unknown>).before !== undefined) ||
+      !v.states.some(s => (s as Record<string, unknown>).after !== undefined))) return false;
   if (v.related !== undefined && (!Array.isArray(v.related) || !v.related.every(r =>
       object(r) && name(r.screen) &&
       ["replaces", "replaced-by", "merged-into", "split-into", "split-from"].includes(String(r.relation))))) return false;

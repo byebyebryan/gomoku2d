@@ -1,6 +1,7 @@
 import { copyFile, mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { readReviewCatalog } from "./review_catalog.mjs";
+import { readHistoryCatalog } from "./history_catalog.mjs";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -35,6 +36,8 @@ async function copyIndexToRoute(route) {
 
 const reviews=await readReviewCatalog();
 staticRoutes.push(...reviews.map(record=>`dev/reviews/${record.id}`));
+const history = await readHistoryCatalog();
+staticRoutes.push("dev/reviews/history", ...history.screens.map(screen => `dev/reviews/history/${screen.id}`));
 
 await Promise.all([
   copyFile(indexPath, join(distRoot, "404.html")),
