@@ -286,7 +286,8 @@ test("screen gallery exposes all six views and keeps layout checks secondary", a
   await expect(page.locator(".review-layout-checks")).not.toHaveAttribute("open");
   for (const title of ["Home", "Match", "Replay", "Settings", "Profile", "Public Player"])
     await expect(gallery.getByRole("heading", { name: title, exact: true })).toBeVisible();
-  const firstNative = gallery.locator('[data-comparison="home"]')
+  const firstNative = gallery
+    .locator('[data-comparison="home"]')
     .getByRole("button", { name: "Native pixels", exact: true });
   await firstNative.focus();
   await firstNative.press("Space");
@@ -406,4 +407,60 @@ test("native icon rasters and published sources retain canonical pixels", async 
     ).toBe(0);
     expect(mismatch.antialias).toEqual([]);
   }
+});
+
+test("retrospective UI evolution keeps versions paired and current screens first", async ({
+  page,
+}) => {
+  await page.goto("/dev/reviews/");
+  await expect(page.locator("#developer-content > section.dev-section > h2")).toHaveText([
+    "Current screens",
+    "UI evolution",
+    "Design & layout reviews",
+  ]);
+  await page
+    .getByRole("link", { name: "Review: From local play to replay analysis", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "From local play to replay analysis", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".review-case > .dev-heading > .dev-meta")).toContainText("Recaptured");
+  const gallery = page.locator(".review-gallery");
+  await expect(gallery.locator(":scope > .review-comparison")).toHaveCount(8);
+  await expect(gallery.locator(".review-capture img")).toHaveCount(16);
+  const home = gallery.locator('[data-comparison="home-desktop"]');
+  await expect(home.locator("figcaption strong")).toHaveText(["v0.2.4", "v0.6.2"]);
+  await page
+    .getByRole("navigation", { name: "Screens in this review" })
+    .getByRole("link", { name: "Replay · portrait", exact: true })
+    .click();
+  const replay = gallery.locator('[data-comparison="replay-portrait"]');
+  await expect(replay).toBeFocused();
+  for (const image of await replay.locator(".review-capture img").all()) {
+    await image.scrollIntoViewIfNeeded();
+    await image.evaluate((element) => (element as HTMLImageElement).decode());
+  }
+  const dimensions = await replay.locator(".review-capture img").evaluateAll((images) =>
+    images.map((element) => {
+      const image = element as HTMLImageElement;
+      return {
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        scale: image.getBoundingClientRect().width / image.naturalWidth,
+      };
+    }),
+  );
+  expect(dimensions.every((image) => image.width === 412 && image.height === 800)).toBe(true);
+  expect(Math.abs(dimensions[0].scale - dimensions[1].scale)).toBeLessThan(0.001);
+  await replay.getByRole("button", { name: "Native pixels", exact: true }).click();
+  await page.reload();
+  await expect(replay.locator(".review-native")).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
+  await page.getByText("Technical evidence, sources and media identity", { exact: true }).click();
+  expect(
+    await page
+      .locator(".dev-page")
+      .evaluate((element) => element.scrollWidth - element.clientWidth),
+  ).toBeLessThanOrEqual(1);
 });

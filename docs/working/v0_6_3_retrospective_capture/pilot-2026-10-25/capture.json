@@ -1,0 +1,1116 @@
+{
+  "schemaVersion": 1,
+  "status": "complete",
+  "captureType": "retrospective-ui",
+  "startedAt": "2026-10-25T17:41:39.555Z",
+  "finishedAt": "2026-10-25T17:41:48.453Z",
+  "captureTool": {
+    "node": "v24.14.1",
+    "script": "scripts/capture_retrospective_ui.mjs",
+    "scriptSha256": "bcf47c2861601b18ffdec0f6f1a16c0a4b3c8840cab2301c3feb93c9dece7aed",
+    "playwrightPackage": "@playwright/test",
+    "playwrightVersion": "1.64.1",
+    "browserName": "chromium",
+    "browserVersion": "156.0.8078.4"
+  },
+  "contract": {
+    "profiles": [
+      {
+        "id": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "userAgentKind": "desktop Chromium default"
+      },
+      {
+        "id": "portrait",
+        "viewport": {
+          "width": 412,
+          "height": 800
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "userAgentKind": "generic Android mobile; not a measured OnePlus profile"
+      }
+    ],
+    "locale": "en-US",
+    "timezoneId": "UTC",
+    "textScale": "100% browser default; no text zoom applied",
+    "reducedMotion": "reduce",
+    "screenshotScale": "css",
+    "fullPage": false,
+    "normalScenes": [
+      "home",
+      "match",
+      "replay",
+      "profile"
+    ],
+    "limitations": [
+      "These are newly recreated retrospective layouts, not original-period browser captures.",
+      "Portrait is a generic Android touch viewport, not a measured OnePlus/browser-chrome profile.",
+      "Automated readiness does not establish human or physical-device acceptance.",
+      "Phaser canvas animation is not guaranteed to freeze; board captures record the observed frame.",
+      "Phaser renderer is recorded as unknown unless safely exposed by the page."
+    ]
+  },
+  "fixture": {
+    "profileId": "retrospective-capture-profile",
+    "displayName": "Reference Player",
+    "matchId": "retrospective-capture-match",
+    "savedAt": "2026-10-24T00:00:00.000Z",
+    "ruleset": "freestyle",
+    "moveCells": [
+      112,
+      0,
+      113,
+      15,
+      114,
+      30,
+      115,
+      1,
+      116
+    ],
+    "winningMoves": [
+      {
+        "row": 7,
+        "col": 7
+      },
+      {
+        "row": 7,
+        "col": 8
+      },
+      {
+        "row": 7,
+        "col": 9
+      },
+      {
+        "row": 7,
+        "col": 10
+      },
+      {
+        "row": 7,
+        "col": 11
+      }
+    ],
+    "result": "black_won",
+    "matchPosition": {
+      "ply": 8,
+      "sideToMove": "black",
+      "human": "black",
+      "status": "playing"
+    },
+    "replayPosition": {
+      "ply": 9,
+      "status": "black_won"
+    },
+    "profileAdapters": {
+      "v0.2.4": "v024",
+      "v0.6.2": "v062"
+    },
+    "storageAdapters": {
+      "v0_2_4": {
+        "key": "gomoku2d.guest-profile.v1",
+        "storageVersion": 0,
+        "historyPath": "state.history",
+        "moveEncoding": "array of {col,row,moveNumber,player}"
+      },
+      "v0_6_2": {
+        "key": "gomoku2d.local-profile.v5",
+        "storageVersion": 5,
+        "historyPath": "state.matchHistory.replayMatches",
+        "matchSchemaVersion": 2,
+        "moveEncoding": "flat move_cells array"
+      }
+    },
+    "identityModel": {
+      "v0_2_4": "guest profile; Practice Bot opponent",
+      "v0_6_2": "local profile; Normal Bot opponent; cloud deliberately unconfigured"
+    }
+  },
+  "sources": [
+    {
+      "tag": "v0.2.4",
+      "adapter": "v024",
+      "commit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+      "sourceTree": "ebdbf2358c9c492220af0c202d5d1f076f1e3b07",
+      "applicationTree": "927aeb9a5049df8859057f88b84b21dad5813299",
+      "packageVersion": "0.2.4",
+      "packageLockSha256": "6374492b817b617788718b7f9725529e2bb210937b3e3f9afecb6cc6276828ee",
+      "cargoLockSha256": "6cd4104785acea418a0b0bde59aa487a5889dd37a72a314939b9c4a46c290497",
+      "wasmSha256": "2ed5a821a55cb0ee11faf0648b106824c2b1117b2d6ad7334cd20ea4a302accf",
+      "distSha256": "616a820a10a55b4052400542c75cbde8afba2cf8a5e9996bb3d0dd00c6540863",
+      "indexSha256": "141f4f3465e89e6397a3ce48a4529fc8e047406484c731508de646c3c94fecc2",
+      "buildReceipt": {
+        "tag": "v0.2.4",
+        "recordedAt": "2026-10-25T17:18:47.744718+00:00",
+        "environment": {
+          "node": "v26.12.1",
+          "npm": "12.2.1",
+          "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+          "wasmPack": "wasm-pack 0.14.0",
+          "firebaseMode": "unconfigured-local-guest",
+          "declaredNode": "20",
+          "wasmOpt": "wasm-opt version 133 (version_133-96-ga631c1445c)",
+          "wasmBuild": "release --target bundler --locked",
+          "npmInstall": "npm ci --no-audit --no-fund; npm12 default install-script policy"
+        }
+      },
+      "preview": {
+        "origin": "http://127.0.0.1:46924",
+        "port": 46924,
+        "indexMatchesBuild": true
+      },
+      "applicationInputsCleanBefore": true,
+      "applicationInputsCleanAfter": true
+    },
+    {
+      "tag": "v0.6.2",
+      "adapter": "v062",
+      "commit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+      "sourceTree": "105a2b9d528acfc081b15a99a3045b35d8abc723",
+      "applicationTree": "fcfe58b5924011ec78e053f64e8ea5a594e7563d",
+      "packageVersion": "0.6.2",
+      "packageLockSha256": "d53573f16db5c06b5c5b9347c9cd9229ee53d32a36847f118ffe8d15d402074e",
+      "cargoLockSha256": "121d5802eb56a1f79f933aa3baf326a0e1aa13ae2786809489ea36dac88e56f1",
+      "wasmSha256": "e2e177cf8948e055d315cd67be51e349cce267dd183117ee6567174efc37a48e",
+      "distSha256": "990416a1190519a725d172821a12c278e2ebb1d0183402f5aca1d53037734e1c",
+      "indexSha256": "db627813c1c8fb9eecc4f0cbdddfd10fbdc292f60d25aabda206691a7b4cc84b",
+      "buildReceipt": {
+        "tag": "v0.6.2",
+        "recordedAt": "2026-10-25T17:18:47.831535+00:00",
+        "environment": {
+          "node": "v26.12.1",
+          "npm": "12.2.1",
+          "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+          "wasmPack": "wasm-pack 0.14.0",
+          "firebaseMode": "unconfigured-local-guest",
+          "declaredNode": "24",
+          "wasmOpt": "wasm-opt version 133 (version_133-96-ga631c1445c)",
+          "wasmBuild": "release --target bundler --locked",
+          "npmInstall": "npm ci --no-audit --no-fund; npm12 default install-script policy"
+        }
+      },
+      "preview": {
+        "origin": "http://127.0.0.1:46962",
+        "port": 46962,
+        "indexMatchesBuild": true
+      },
+      "applicationInputsCleanBefore": true,
+      "applicationInputsCleanAfter": true
+    }
+  ],
+  "contexts": [
+    {
+      "source": "v0.2.4",
+      "profile": "desktop",
+      "contextId": "v0.2.4:desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false,
+      "userAgentKind": "desktop Chromium default",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+      "locale": "en-US",
+      "timezoneId": "UTC",
+      "textScale": "100% browser default; no text zoom applied",
+      "reducedMotion": "reduce",
+      "screenshotScale": "css",
+      "fullPage": false,
+      "browserVersion": "156.0.8078.4",
+      "state": "complete",
+      "network": {
+        "allowedSameOriginRequests": 42,
+        "blockedRequests": 0
+      }
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "portrait",
+      "contextId": "v0.2.4:portrait",
+      "viewport": {
+        "width": 412,
+        "height": 800
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": true,
+      "hasTouch": true,
+      "userAgentKind": "generic Android mobile; not a measured OnePlus profile",
+      "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+      "locale": "en-US",
+      "timezoneId": "UTC",
+      "textScale": "100% browser default; no text zoom applied",
+      "reducedMotion": "reduce",
+      "screenshotScale": "css",
+      "fullPage": false,
+      "browserVersion": "156.0.8078.4",
+      "state": "complete",
+      "network": {
+        "allowedSameOriginRequests": 42,
+        "blockedRequests": 0
+      }
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "desktop",
+      "contextId": "v0.6.2:desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false,
+      "userAgentKind": "desktop Chromium default",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+      "locale": "en-US",
+      "timezoneId": "UTC",
+      "textScale": "100% browser default; no text zoom applied",
+      "reducedMotion": "reduce",
+      "screenshotScale": "css",
+      "fullPage": false,
+      "browserVersion": "156.0.8078.4",
+      "state": "complete",
+      "network": {
+        "allowedSameOriginRequests": 85,
+        "blockedRequests": 0
+      }
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "portrait",
+      "contextId": "v0.6.2:portrait",
+      "viewport": {
+        "width": 412,
+        "height": 800
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": true,
+      "hasTouch": true,
+      "userAgentKind": "generic Android mobile; not a measured OnePlus profile",
+      "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+      "locale": "en-US",
+      "timezoneId": "UTC",
+      "textScale": "100% browser default; no text zoom applied",
+      "reducedMotion": "reduce",
+      "screenshotScale": "css",
+      "fullPage": false,
+      "browserVersion": "156.0.8078.4",
+      "state": "complete",
+      "network": {
+        "allowedSameOriginRequests": 85,
+        "blockedRequests": 0
+      }
+    }
+  ],
+  "captures": [
+    {
+      "source": "v0.2.4",
+      "profile": "desktop",
+      "contextId": "v0.2.4:desktop",
+      "screen": "home",
+      "route": "/",
+      "readiness": {
+        "route": "/",
+        "heading": "Gomoku2D",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": null,
+        "reducedMotion": true
+      },
+      "file": "v0.2.4/desktop/home.png",
+      "sha256": "e45753b7cfcb0201ed347a18fda8796f0df437c89fe07e278a60c4ab8f131df7",
+      "width": 1280,
+      "height": 900,
+      "capturedAt": "2026-10-25T17:41:39.780Z"
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "desktop",
+      "contextId": "v0.2.4:desktop",
+      "screen": "profile",
+      "route": "/profile",
+      "readiness": {
+        "route": "/profile",
+        "heading": "Profile",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": null,
+        "reducedMotion": true,
+        "identity": "Reference Player",
+        "nonemptyHistory": true,
+        "opponent": "Practice Bot"
+      },
+      "file": "v0.2.4/desktop/profile.png",
+      "sha256": "d26dcf13d6706169f30f278226d43336903296b9bc567b2c937fd075616bfdf9",
+      "width": 1280,
+      "height": 900,
+      "capturedAt": "2026-10-25T17:41:40.636Z"
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "desktop",
+      "contextId": "v0.2.4:desktop",
+      "screen": "replay",
+      "route": "/replays/local/retrospective-capture-match",
+      "readiness": {
+        "route": "/replays/local/retrospective-capture-match",
+        "heading": "Replay",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": {
+          "canvas": {
+            "width": 744,
+            "height": 744
+          },
+          "gridVisible": false,
+          "renderer": {
+            "value": "unknown",
+            "reason": "The app does not expose its Phaser renderer; the canvas context was not probed."
+          }
+        },
+        "reducedMotion": true,
+        "finalPlySeek": {
+          "method": "native replay timeline End key",
+          "from": [
+            "Move 4 / 9"
+          ],
+          "to": "Move 9 / 9"
+        },
+        "ply": 9,
+        "moveCount": "Move 9 / 9",
+        "result": "black_won",
+        "blackPlayer": "Reference Player",
+        "whitePlayer": "Practice Bot"
+      },
+      "file": "v0.2.4/desktop/replay.png",
+      "sha256": "0f1abf547b4d722e21e16a68e0965ca4c736ca46bd011663888d78c8dc1b69bf",
+      "width": 1280,
+      "height": 900,
+      "capturedAt": "2026-10-25T17:41:41.599Z"
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "desktop",
+      "contextId": "v0.2.4:desktop",
+      "screen": "match",
+      "route": "/match/local",
+      "readiness": {
+        "route": "/match/local",
+        "heading": "Local Match",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": {
+          "canvas": {
+            "width": 744,
+            "height": 744
+          },
+          "gridVisible": false,
+          "renderer": {
+            "value": "unknown",
+            "reason": "The app does not expose its Phaser renderer; the canvas context was not probed."
+          }
+        },
+        "reducedMotion": true,
+        "ply": 8,
+        "moveCount": "Move 8",
+        "status": "Reference Player to move",
+        "activePlayer": "Reference Player",
+        "opponent": "Practice Bot",
+        "compactTouchQueryMatches": false
+      },
+      "file": "v0.2.4/desktop/match.png",
+      "sha256": "99f267248a4357aef5dde76d8ce8d99debc1dbfed351d5ba2c694d07e31b15b3",
+      "width": 1280,
+      "height": 900,
+      "capturedAt": "2026-10-25T17:41:41.865Z"
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "portrait",
+      "contextId": "v0.2.4:portrait",
+      "screen": "home",
+      "route": "/",
+      "readiness": {
+        "route": "/",
+        "heading": "Gomoku2D",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": null,
+        "reducedMotion": true
+      },
+      "file": "v0.2.4/portrait/home.png",
+      "sha256": "ff955f9684ea87bbffb8b9f667910c1262cc6650f1cc76c7b2e9f679c9b28125",
+      "width": 412,
+      "height": 800,
+      "capturedAt": "2026-10-25T17:41:42.007Z"
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "portrait",
+      "contextId": "v0.2.4:portrait",
+      "screen": "profile",
+      "route": "/profile",
+      "readiness": {
+        "route": "/profile",
+        "heading": "Profile",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": null,
+        "reducedMotion": true,
+        "identity": "Reference Player",
+        "nonemptyHistory": true,
+        "opponent": "Practice Bot"
+      },
+      "file": "v0.2.4/portrait/profile.png",
+      "sha256": "009afb20e3cf90d3be8c28faed970213ac9d488290b654da8fd04694874781be",
+      "width": 412,
+      "height": 800,
+      "capturedAt": "2026-10-25T17:41:42.841Z"
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "portrait",
+      "contextId": "v0.2.4:portrait",
+      "screen": "replay",
+      "route": "/replays/local/retrospective-capture-match",
+      "readiness": {
+        "route": "/replays/local/retrospective-capture-match",
+        "heading": "Replay",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": {
+          "canvas": {
+            "width": 388,
+            "height": 388
+          },
+          "gridVisible": false,
+          "renderer": {
+            "value": "unknown",
+            "reason": "The app does not expose its Phaser renderer; the canvas context was not probed."
+          }
+        },
+        "reducedMotion": true,
+        "finalPlySeek": {
+          "method": "native replay timeline End key",
+          "from": [
+            "Move 4 / 9"
+          ],
+          "to": "Move 9 / 9"
+        },
+        "ply": 9,
+        "moveCount": "Move 9 / 9",
+        "result": "black_won",
+        "blackPlayer": "Reference Player",
+        "whitePlayer": "Practice Bot"
+      },
+      "file": "v0.2.4/portrait/replay.png",
+      "sha256": "4cddc79210078d67f9147b27f7bc6492cba67d9d6dc1eacc6b7000724b84cb6c",
+      "width": 412,
+      "height": 800,
+      "capturedAt": "2026-10-25T17:41:43.757Z"
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "portrait",
+      "contextId": "v0.2.4:portrait",
+      "screen": "match",
+      "route": "/match/local",
+      "readiness": {
+        "route": "/match/local",
+        "heading": "Local Match",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": {
+          "canvas": {
+            "width": 388,
+            "height": 388
+          },
+          "gridVisible": false,
+          "renderer": {
+            "value": "unknown",
+            "reason": "The app does not expose its Phaser renderer; the canvas context was not probed."
+          }
+        },
+        "reducedMotion": true,
+        "ply": 8,
+        "moveCount": "Move 8",
+        "status": "Reference Player to move",
+        "activePlayer": "Reference Player",
+        "opponent": "Practice Bot",
+        "compactTouchQueryMatches": true
+      },
+      "file": "v0.2.4/portrait/match.png",
+      "sha256": "e27d24b3aad3fa3c0615d0d36d3a1fbf76609540f72236eef8161fd9ae62b27f",
+      "width": 412,
+      "height": 800,
+      "capturedAt": "2026-10-25T17:41:43.974Z"
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "desktop",
+      "contextId": "v0.6.2:desktop",
+      "screen": "home",
+      "route": "/",
+      "readiness": {
+        "route": "/",
+        "heading": "Gomoku2D",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": null,
+        "reducedMotion": true
+      },
+      "file": "v0.6.2/desktop/home.png",
+      "sha256": "7552659f108e36ee833de57c04dbff94613182778b6f98484712a9fc94bccb45",
+      "width": 1280,
+      "height": 900,
+      "capturedAt": "2026-10-25T17:41:44.130Z"
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "desktop",
+      "contextId": "v0.6.2:desktop",
+      "screen": "profile",
+      "route": "/profile",
+      "readiness": {
+        "route": "/profile",
+        "heading": "Profile",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": null,
+        "reducedMotion": true,
+        "identity": "Reference Player",
+        "nonemptyHistory": true,
+        "opponent": "Normal Bot",
+        "cloudSync": "unavailable",
+        "cloudStatusVisible": true,
+        "signInDisabled": true,
+        "profileControlsOpen": true
+      },
+      "file": "v0.6.2/desktop/profile.png",
+      "sha256": "e6f47824138422e600fc363fe16df7f8964e5a4554f700ebe0d5269eed8dfe50",
+      "width": 1280,
+      "height": 900,
+      "capturedAt": "2026-10-25T17:41:45.015Z"
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "desktop",
+      "contextId": "v0.6.2:desktop",
+      "screen": "replay",
+      "route": "/replay/retrospective-capture-match",
+      "readiness": {
+        "route": "/replay/retrospective-capture-match",
+        "heading": "Replay Analysis",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": {
+          "canvas": {
+            "width": 744,
+            "height": 744
+          },
+          "gridVisible": true,
+          "renderer": {
+            "value": "unknown",
+            "reason": "The app does not expose its Phaser renderer; the canvas context was not probed."
+          }
+        },
+        "reducedMotion": true,
+        "finalPlySeek": {
+          "method": "native replay timeline End key",
+          "from": [
+            "Move 9 / 9"
+          ],
+          "to": "Move 9 / 9"
+        },
+        "analysisStatus": "Black has won",
+        "analysisSettled": true,
+        "ply": 9,
+        "moveCount": "Move 9 / 9",
+        "result": "black_won",
+        "blackPlayer": "Reference Player",
+        "whitePlayer": "Normal Bot"
+      },
+      "file": "v0.6.2/desktop/replay.png",
+      "sha256": "3d3aa9ea89571fad67fae57e761186834285b159288d4241fab753e8f2aa8319",
+      "width": 1280,
+      "height": 900,
+      "capturedAt": "2026-10-25T17:41:45.982Z"
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "desktop",
+      "contextId": "v0.6.2:desktop",
+      "screen": "match",
+      "route": "/match/local",
+      "readiness": {
+        "route": "/match/local",
+        "heading": "Local Match",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": {
+          "canvas": {
+            "width": 744,
+            "height": 744
+          },
+          "gridVisible": true,
+          "renderer": {
+            "value": "unknown",
+            "reason": "The app does not expose its Phaser renderer; the canvas context was not probed."
+          }
+        },
+        "reducedMotion": true,
+        "ply": 8,
+        "moveCount": "Move 8",
+        "status": "Reference Player to move",
+        "activePlayer": "Reference Player",
+        "opponent": "Normal Bot",
+        "compactTouchQueryMatches": false
+      },
+      "file": "v0.6.2/desktop/match.png",
+      "sha256": "06d6306a3982f3c2c2c2776e23c5a90d1d15ec0388d509291f3a2f6e1e95bcb6",
+      "width": 1280,
+      "height": 900,
+      "capturedAt": "2026-10-25T17:41:46.248Z"
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "portrait",
+      "contextId": "v0.6.2:portrait",
+      "screen": "home",
+      "route": "/",
+      "readiness": {
+        "route": "/",
+        "heading": "Gomoku2D",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": null,
+        "reducedMotion": true
+      },
+      "file": "v0.6.2/portrait/home.png",
+      "sha256": "26512a3bc9b4caeeecbf6168d499c424d5da0ede84297478b68c44f3cfbc9975",
+      "width": 412,
+      "height": 800,
+      "capturedAt": "2026-10-25T17:41:46.407Z"
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "portrait",
+      "contextId": "v0.6.2:portrait",
+      "screen": "profile",
+      "route": "/profile",
+      "readiness": {
+        "route": "/profile",
+        "heading": "Profile",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": null,
+        "reducedMotion": true,
+        "identity": "Reference Player",
+        "nonemptyHistory": true,
+        "opponent": "Normal Bot",
+        "cloudSync": "unavailable",
+        "cloudStatusVisible": false,
+        "signInDisabled": true,
+        "profileControlsOpen": false
+      },
+      "file": "v0.6.2/portrait/profile.png",
+      "sha256": "23d86bcf22412b6bdb80757012e480ddc7973b40c709aa1b1c22eed4909bd515",
+      "width": 412,
+      "height": 800,
+      "capturedAt": "2026-10-25T17:41:47.274Z"
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "portrait",
+      "contextId": "v0.6.2:portrait",
+      "screen": "replay",
+      "route": "/replay/retrospective-capture-match",
+      "readiness": {
+        "route": "/replay/retrospective-capture-match",
+        "heading": "Replay Analysis",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": {
+          "canvas": {
+            "width": 388,
+            "height": 388
+          },
+          "gridVisible": true,
+          "renderer": {
+            "value": "unknown",
+            "reason": "The app does not expose its Phaser renderer; the canvas context was not probed."
+          }
+        },
+        "reducedMotion": true,
+        "finalPlySeek": {
+          "method": "native replay timeline End key",
+          "from": [
+            "Move 9 / 9"
+          ],
+          "to": "Move 9 / 9"
+        },
+        "analysisStatus": "Black has won",
+        "analysisSettled": true,
+        "ply": 9,
+        "moveCount": "Move 9 / 9",
+        "result": "black_won",
+        "blackPlayer": "Reference Player",
+        "whitePlayer": "Normal Bot"
+      },
+      "file": "v0.6.2/portrait/replay.png",
+      "sha256": "fbe67c0117f42e5dc26fef85bec53ce158c0c419edcba074a3bf07e97a77313e",
+      "width": 412,
+      "height": 800,
+      "capturedAt": "2026-10-25T17:41:48.224Z"
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "portrait",
+      "contextId": "v0.6.2:portrait",
+      "screen": "match",
+      "route": "/match/local",
+      "readiness": {
+        "route": "/match/local",
+        "heading": "Local Match",
+        "fonts": [
+          {
+            "family": "PixelOperator",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperatorBold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          },
+          {
+            "family": "PixelOperator8Bold",
+            "loadedFaceCount": 1,
+            "loaded": true
+          }
+        ],
+        "board": {
+          "canvas": {
+            "width": 388,
+            "height": 388
+          },
+          "gridVisible": true,
+          "renderer": {
+            "value": "unknown",
+            "reason": "The app does not expose its Phaser renderer; the canvas context was not probed."
+          }
+        },
+        "reducedMotion": true,
+        "ply": 8,
+        "moveCount": "Move 8",
+        "status": "Reference Player to move",
+        "activePlayer": "Reference Player",
+        "opponent": "Normal Bot",
+        "compactTouchQueryMatches": true
+      },
+      "file": "v0.6.2/portrait/match.png",
+      "sha256": "1419f15eab5a0d96f3e77f1190d3422e7617d47ebc2bd395353b44450ccc5c1d",
+      "width": 412,
+      "height": 800,
+      "capturedAt": "2026-10-25T17:41:48.424Z"
+    }
+  ],
+  "network": [
+    {
+      "source": "v0.2.4",
+      "profile": "desktop",
+      "allowedSameOriginRequests": 42,
+      "blockedRequests": [],
+      "failedRequests": [],
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "portrait",
+      "allowedSameOriginRequests": 42,
+      "blockedRequests": [],
+      "failedRequests": [],
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "desktop",
+      "allowedSameOriginRequests": 85,
+      "blockedRequests": [],
+      "failedRequests": [],
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "portrait",
+      "allowedSameOriginRequests": 85,
+      "blockedRequests": [],
+      "failedRequests": [],
+      "consoleErrors": [],
+      "pageErrors": []
+    }
+  ],
+  "errors": [
+    {
+      "source": "v0.2.4",
+      "profile": "desktop",
+      "console": [],
+      "page": []
+    },
+    {
+      "source": "v0.2.4",
+      "profile": "portrait",
+      "console": [],
+      "page": []
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "desktop",
+      "console": [],
+      "page": []
+    },
+    {
+      "source": "v0.6.2",
+      "profile": "portrait",
+      "console": [],
+      "page": []
+    }
+  ],
+  "failures": []
+}

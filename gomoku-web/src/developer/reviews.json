@@ -597,5 +597,302 @@
         "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/archive/v0_6_2_release.md"
       }
     ]
+  },
+  {
+    "schema": 1,
+    "id": "ui-evolution-024-062",
+    "title": "From local play to replay analysis",
+    "scope": "UI evolution / 0.2.4 \u2192 0.6.2",
+    "date": "2026-10-25",
+    "revision": "v0.2.4 d9a3476 \u2192 v0.6.2 37a122d",
+    "question": "Four shared screens, recreated from two release tags under the same capture conditions.",
+    "summary": "Home, Match, Replay and Profile at desktop and a provisional touch portrait size. These are new retrospective captures of the tagged applications, with the same local player and game.",
+    "disposition": "retrospective comparison",
+    "comparisons": [
+      {
+        "id": "home-desktop",
+        "title": "Home \u00b7 desktop",
+        "conditions": "1280 \u00d7 900 CSS pixels, DPR 1, 100% text. Desktop Chromium. The same local guest entry point. Both versions are offline/local; the newer cloud controls are unconfigured.",
+        "media": [
+          {
+            "file": "v024-home-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.2.4/desktop/home.png",
+            "sha256": "e45753b7cfcb0201ed347a18fda8796f0df437c89fe07e278a60c4ab8f131df7",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.4",
+            "alt": "Retrospective v0.2.4 home, 1280 by 900 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "d9a3476"
+          },
+          {
+            "file": "v062-home-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.6.2/desktop/home.png",
+            "sha256": "7552659f108e36ee833de57c04dbff94613182778b6f98484712a9fc94bccb45",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.6.2",
+            "alt": "Retrospective v0.6.2 home, 1280 by 900 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "37a122d"
+          }
+        ]
+      },
+      {
+        "id": "home-portrait",
+        "title": "Home \u00b7 portrait",
+        "conditions": "412 \u00d7 800 CSS pixels, DPR 1, 100% text. Provisional generic Android touch context; not a measured OnePlus viewport. The same local guest entry point. Both versions are offline/local; the newer cloud controls are unconfigured.",
+        "media": [
+          {
+            "file": "v024-home-portrait.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.2.4/portrait/home.png",
+            "sha256": "ff955f9684ea87bbffb8b9f667910c1262cc6650f1cc76c7b2e9f679c9b28125",
+            "width": 412,
+            "height": 800,
+            "label": "v0.2.4",
+            "alt": "Retrospective v0.2.4 home, 412 by 800 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "d9a3476"
+          },
+          {
+            "file": "v062-home-portrait.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.6.2/portrait/home.png",
+            "sha256": "26512a3bc9b4caeeecbf6168d499c424d5da0ede84297478b68c44f3cfbc9975",
+            "width": 412,
+            "height": 800,
+            "label": "v0.6.2",
+            "alt": "Retrospective v0.6.2 home, 412 by 800 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "37a122d"
+          }
+        ]
+      },
+      {
+        "id": "match-desktop",
+        "title": "Match \u00b7 desktop",
+        "conditions": "1280 \u00d7 900 CSS pixels, DPR 1, 100% text. Desktop Chromium. The same eight-stone position, with Black/human to move. Both versions are offline/local; the newer cloud controls are unconfigured.",
+        "media": [
+          {
+            "file": "v024-match-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.2.4/desktop/match.png",
+            "sha256": "99f267248a4357aef5dde76d8ce8d99debc1dbfed351d5ba2c694d07e31b15b3",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.4",
+            "alt": "Retrospective v0.2.4 match, 1280 by 900 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "d9a3476"
+          },
+          {
+            "file": "v062-match-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.6.2/desktop/match.png",
+            "sha256": "06d6306a3982f3c2c2c2776e23c5a90d1d15ec0388d509291f3a2f6e1e95bcb6",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.6.2",
+            "alt": "Retrospective v0.6.2 match, 1280 by 900 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "37a122d"
+          }
+        ]
+      },
+      {
+        "id": "match-portrait",
+        "title": "Match \u00b7 portrait",
+        "conditions": "412 \u00d7 800 CSS pixels, DPR 1, 100% text. Provisional generic Android touch context; not a measured OnePlus viewport. The same eight-stone position, with Black/human to move. Both versions are offline/local; the newer cloud controls are unconfigured.",
+        "media": [
+          {
+            "file": "v024-match-portrait.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.2.4/portrait/match.png",
+            "sha256": "e27d24b3aad3fa3c0615d0d36d3a1fbf76609540f72236eef8161fd9ae62b27f",
+            "width": 412,
+            "height": 800,
+            "label": "v0.2.4",
+            "alt": "Retrospective v0.2.4 match, 412 by 800 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "d9a3476"
+          },
+          {
+            "file": "v062-match-portrait.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.6.2/portrait/match.png",
+            "sha256": "1419f15eab5a0d96f3e77f1190d3422e7617d47ebc2bd395353b44450ccc5c1d",
+            "width": 412,
+            "height": 800,
+            "label": "v0.6.2",
+            "alt": "Retrospective v0.6.2 match, 412 by 800 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "37a122d"
+          }
+        ]
+      },
+      {
+        "id": "replay-desktop",
+        "title": "Replay \u00b7 desktop",
+        "conditions": "1280 \u00d7 900 CSS pixels, DPR 1, 100% text. Desktop Chromium. The same finished nine-move freestyle game at its final ply. Both versions are offline/local; the newer cloud controls are unconfigured.",
+        "media": [
+          {
+            "file": "v024-replay-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.2.4/desktop/replay.png",
+            "sha256": "0f1abf547b4d722e21e16a68e0965ca4c736ca46bd011663888d78c8dc1b69bf",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.4",
+            "alt": "Retrospective v0.2.4 replay, 1280 by 900 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "d9a3476"
+          },
+          {
+            "file": "v062-replay-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.6.2/desktop/replay.png",
+            "sha256": "3d3aa9ea89571fad67fae57e761186834285b159288d4241fab753e8f2aa8319",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.6.2",
+            "alt": "Retrospective v0.6.2 replay, 1280 by 900 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "37a122d"
+          }
+        ]
+      },
+      {
+        "id": "replay-portrait",
+        "title": "Replay \u00b7 portrait",
+        "conditions": "412 \u00d7 800 CSS pixels, DPR 1, 100% text. Provisional generic Android touch context; not a measured OnePlus viewport. The same finished nine-move freestyle game at its final ply. Both versions are offline/local; the newer cloud controls are unconfigured.",
+        "media": [
+          {
+            "file": "v024-replay-portrait.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.2.4/portrait/replay.png",
+            "sha256": "4cddc79210078d67f9147b27f7bc6492cba67d9d6dc1eacc6b7000724b84cb6c",
+            "width": 412,
+            "height": 800,
+            "label": "v0.2.4",
+            "alt": "Retrospective v0.2.4 replay, 412 by 800 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "d9a3476"
+          },
+          {
+            "file": "v062-replay-portrait.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.6.2/portrait/replay.png",
+            "sha256": "fbe67c0117f42e5dc26fef85bec53ce158c0c419edcba074a3bf07e97a77313e",
+            "width": 412,
+            "height": 800,
+            "label": "v0.6.2",
+            "alt": "Retrospective v0.6.2 replay, 412 by 800 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "37a122d"
+          }
+        ]
+      },
+      {
+        "id": "profile-desktop",
+        "title": "Profile \u00b7 desktop",
+        "conditions": "1280 \u00d7 900 CSS pixels, DPR 1, 100% text. Desktop Chromium. The same local identity and one completed win. Both versions are offline/local; the newer cloud controls are unconfigured.",
+        "media": [
+          {
+            "file": "v024-profile-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.2.4/desktop/profile.png",
+            "sha256": "d26dcf13d6706169f30f278226d43336903296b9bc567b2c937fd075616bfdf9",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.4",
+            "alt": "Retrospective v0.2.4 profile, 1280 by 900 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "d9a3476"
+          },
+          {
+            "file": "v062-profile-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.6.2/desktop/profile.png",
+            "sha256": "e6f47824138422e600fc363fe16df7f8964e5a4554f700ebe0d5269eed8dfe50",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.6.2",
+            "alt": "Retrospective v0.6.2 profile, 1280 by 900 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "37a122d"
+          }
+        ]
+      },
+      {
+        "id": "profile-portrait",
+        "title": "Profile \u00b7 portrait",
+        "conditions": "412 \u00d7 800 CSS pixels, DPR 1, 100% text. Provisional generic Android touch context; not a measured OnePlus viewport. The same local identity and one completed win. Both versions are offline/local; the newer cloud controls are unconfigured.",
+        "media": [
+          {
+            "file": "v024-profile-portrait.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.2.4/portrait/profile.png",
+            "sha256": "009afb20e3cf90d3be8c28faed970213ac9d488290b654da8fd04694874781be",
+            "width": 412,
+            "height": 800,
+            "label": "v0.2.4",
+            "alt": "Retrospective v0.2.4 profile, 412 by 800 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "d9a3476"
+          },
+          {
+            "file": "v062-profile-portrait.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/v0.6.2/portrait/profile.png",
+            "sha256": "23d86bcf22412b6bdb80757012e480ddc7973b40c709aa1b1c22eed4909bd515",
+            "width": 412,
+            "height": 800,
+            "label": "v0.6.2",
+            "alt": "Retrospective v0.6.2 profile, 412 by 800 CSS pixels; synthetic local guest",
+            "kind": "application capture",
+            "revision": "37a122d"
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "recorded",
+        "title": "The title screen keeps its visual identity",
+        "detail": "The pixel title, palette and direct Play/Profile entry persist. Settings and the Rules, Guide, Lab and Visuals links expand the later entry point."
+      },
+      {
+        "state": "recorded",
+        "title": "Replay grows into an analysis surface",
+        "detail": "The same final board moves from basic replay transport to analysis status, marked timeline moments, richer overlays and a Share replay action."
+      },
+      {
+        "state": "recorded",
+        "title": "The player record gains distinct collections",
+        "detail": "Profile retains a record layout while adding My games, Saved replays and Public profile tabs. Compact portrait puts secondary account controls behind a disclosure."
+      },
+      {
+        "state": "open",
+        "title": "Some constraints remain visible in both releases",
+        "detail": "At 1280px the rightmost desktop record action is clipped in both tags. The long synthetic player name also truncates the later Match status. The captures retain those tagged layouts; this pilot does not repair historical application behavior."
+      }
+    ],
+    "technical": [
+      "Recaptured 2026-10-25T17:41:48.453Z using Chromium 156.0.8078.4, Playwright 1.64.1, and capture script SHA-256 bcf47c2861601b18ffdec0f6f1a16c0a4b3c8840cab2301c3feb93c9dece7aed.",
+      "Sources are exact tagged application, assets and generated Wasm. Each had its own locked dependency install and production build; no application or lockfile edits were required.",
+      "Build host: Node 26.12.1 / npm 12.2.1, Rust 1.99.1, wasm-pack 0.14.0. Tags declare Node 20/24; these are recorded modern-toolchain reconstructions, not original release binaries.",
+      "Desktop 1280\u00d7900 and provisional portrait 412\u00d7800; DPR 1, CSS-pixel PNGs, 100% text, UTC/en-US and reduced motion. Portrait emulates mobile/touch input with a generic Android UA; real browser chrome and OnePlus dimensions remain unmeasured.",
+      "Fixture: Reference Player, freestyle, move cells 112,0,113,15,114,30,115,1,116; Match at ply 8 and Replay at ply 9. The tags retain their own Practice Bot / Normal Bot identities and supported storage schemas.",
+      "Both scenes use local guest state with cloud deliberately unconfigured. No real accounts, Auth/Firestore services or external/private-data requests were used. All four contexts recorded zero network, console and page errors.",
+      "Replay is sought with its supported timeline End key before capture; Match branches after one Previous step. v0.6.2 analysis settles before capture. Compact account controls remain in their ordinary closed state.",
+      "All 16 PNG dimensions and hashes match the manifest, and both tagged source/build identities remain unchanged after capture. Phaser renderer is unobserved; canvas animation phase is not guaranteed to freeze. These are layout references, not renderer or physical-device acceptance."
+    ],
+    "human": "The agent inspected all 16 source images and verified their provenance and fixtures. Bryan has not yet reviewed this retrospective pilot. Original-period and physical-device acceptance are not established.",
+    "followUp": "Use this bounded pilot to review the history presentation before selecting more milestones. Calibrate the Android reference from the phone before treating the provisional portrait size as a device target; assess the recorded desktop Profile clipping separately.",
+    "sources": [
+      {
+        "label": "v0.2.4 source",
+        "url": "https://github.com/byebyebryan/gomoku2d/tree/d9a3476d11dcb24e1c3fa67374a27b867a781da1"
+      },
+      {
+        "label": "v0.6.2 source",
+        "url": "https://github.com/byebyebryan/gomoku2d/tree/37a122d2bd8e899bcfc581055e685c0327f43cb4"
+      },
+      {
+        "label": "Retrospective capture manifest",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/main/docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/capture.json"
+      },
+      {
+        "label": "Capture workflow and qualification",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/main/docs/working/v0_6_3_retrospective_capture.md"
+      }
+    ]
   }
 ]
