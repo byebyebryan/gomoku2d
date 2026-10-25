@@ -1,0 +1,2972 @@
+{
+  "schema": 1,
+  "releases": [
+    {
+      "version": "0.2.1",
+      "date": "2026-04-22",
+      "commit": "add1953c3228849a8d37c424d0deec971c1fc937"
+    },
+    {
+      "version": "0.2.2",
+      "date": "2026-04-22",
+      "commit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc"
+    },
+    {
+      "version": "0.2.3",
+      "date": "2026-04-22",
+      "commit": "95b9707a6c01d77fa50d181bdd1ee4542047a2a2"
+    },
+    {
+      "version": "0.2.4",
+      "date": "2026-04-24",
+      "commit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1"
+    },
+    {
+      "version": "0.3.0",
+      "date": "2026-04-27",
+      "commit": "5e44832d872cc1030be6707b97dcd9f9b067d83c"
+    },
+    {
+      "version": "0.3.1",
+      "date": "2026-04-28",
+      "commit": "b9fcc3df81cc2ccea24140a3556db40c1929c5f7"
+    },
+    {
+      "version": "0.3.2",
+      "date": "2026-04-28",
+      "commit": "3a8dbb05d94f8811e995ae7621329a390a313954"
+    },
+    {
+      "version": "0.3.3",
+      "date": "2026-04-29",
+      "commit": "73c1698667ddb85085feedf42c7f2cc2a9de7073"
+    },
+    {
+      "version": "0.4.0",
+      "date": "2026-05-03",
+      "commit": "0fc4a45b79c5056cefa5e7485599c0eef5e6295a"
+    },
+    {
+      "version": "0.4.1",
+      "date": "2026-05-04",
+      "commit": "aaa6ac548fc2f3fc8c1a3815abd262473823be6f"
+    },
+    {
+      "version": "0.4.2",
+      "date": "2026-05-08",
+      "commit": "5e132248d9602ab0ce3abbdf86da8f92a3fa0e26"
+    },
+    {
+      "version": "0.4.3",
+      "date": "2026-05-12",
+      "commit": "dba0fb4213520d30f3640729cccaad0ceb5ccc58"
+    },
+    {
+      "version": "0.4.4",
+      "date": "2026-05-14",
+      "commit": "9744aa2576860fbc3af14148504cb2144ef69b75"
+    },
+    {
+      "version": "0.4.5",
+      "date": "2026-05-16",
+      "commit": "b97dcff422350ebe78bb0d2cf5061ce52a408ed0"
+    },
+    {
+      "version": "0.4.6",
+      "date": "2026-05-17",
+      "commit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b"
+    },
+    {
+      "version": "0.4.7",
+      "date": "2026-05-19",
+      "commit": "0b93fed092975c172959343a45decc9c8c89fe2e"
+    },
+    {
+      "version": "0.4.8",
+      "date": "2026-05-21",
+      "commit": "ea188acaf3e98b0b0b0952c05993391bc8a8a1ef"
+    },
+    {
+      "version": "0.5.0",
+      "date": "2026-05-22",
+      "commit": "678a69ac51f2b1f4fa968bf9fe03b69831b847c9"
+    },
+    {
+      "version": "0.5.1",
+      "date": "2026-05-25",
+      "commit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827"
+    },
+    {
+      "version": "0.5.2",
+      "date": "2026-05-27",
+      "commit": "71793b0f21adf408b5b714514937d979ecffc944"
+    },
+    {
+      "version": "0.5.3",
+      "date": "2026-07-22",
+      "commit": "8fa3035f2e2e7445907c1d74903d27b1fa072c1a"
+    },
+    {
+      "version": "0.5.4",
+      "date": "2026-07-23",
+      "commit": "b09ac7ff56f1452bccdf63334ce38415b92fdbd8"
+    },
+    {
+      "version": "0.5.5",
+      "date": "2026-10-16",
+      "commit": "73658d0a546ba558c746854d38cdac7ec2465802"
+    },
+    {
+      "version": "0.6.1",
+      "date": "2026-10-23",
+      "commit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f"
+    },
+    {
+      "version": "0.6.2",
+      "date": "2026-10-24",
+      "commit": "37a122d2bd8e899bcfc581055e685c0327f43cb4"
+    }
+  ],
+  "screens": [
+    {
+      "id": "home",
+      "title": "Home",
+      "description": "Game entry points and navigation to product and developer surfaces.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Home and navigation"
+        }
+      ]
+    },
+    {
+      "id": "match",
+      "title": "Local Match",
+      "description": "Local game board, turn controls, and in-game recovery.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Local match"
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "title": "Profile",
+      "description": "Local and cloud identity, game history, and public-profile controls.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Profile overview"
+        },
+        {
+          "id": "account",
+          "title": "Account and sync"
+        },
+        {
+          "id": "reset",
+          "title": "Reset confirmation"
+        },
+        {
+          "id": "saved-replays",
+          "title": "Saved Replays"
+        },
+        {
+          "id": "public-settings",
+          "title": "Public profile settings"
+        },
+        {
+          "id": "empty",
+          "title": "Empty profile"
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "title": "Replay",
+      "description": "Saved-match viewer with analysis and sharing controls.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Final board"
+        },
+        {
+          "id": "share",
+          "title": "Share replay"
+        },
+        {
+          "id": "publish",
+          "title": "Publish replay"
+        }
+      ]
+    },
+    {
+      "id": "settings",
+      "title": "Settings",
+      "description": "Game presets and configurable controls.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Basic settings"
+        },
+        {
+          "id": "custom",
+          "title": "Custom and advanced settings"
+        }
+      ]
+    },
+    {
+      "id": "visuals",
+      "title": "Visuals",
+      "description": "A single identity for legacy asset-preview pages and the React Visuals route.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Visuals entry"
+        },
+        {
+          "id": "sprites",
+          "title": "Sprites"
+        },
+        {
+          "id": "icons",
+          "title": "Icons"
+        },
+        {
+          "id": "fonts",
+          "title": "Fonts"
+        }
+      ]
+    },
+    {
+      "id": "bot-report",
+      "title": "Bot Report",
+      "description": "Legacy static tournament-ranking report retained through its final source version.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Ranking results"
+        },
+        {
+          "id": "search",
+          "title": "Search metrics"
+        },
+        {
+          "id": "pairwise",
+          "title": "Pairwise comparisons"
+        }
+      ]
+    },
+    {
+      "id": "analysis-report",
+      "title": "Analysis Report",
+      "description": "Legacy static turn-analysis report retained through its final source version.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Turn analysis"
+        },
+        {
+          "id": "proof-open",
+          "title": "Board proof open"
+        }
+      ]
+    },
+    {
+      "id": "lab",
+      "title": "Lab",
+      "description": "React tournament report and replay-analysis views.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Lab overview"
+        },
+        {
+          "id": "search",
+          "title": "Search metrics in Lab"
+        },
+        {
+          "id": "analysis",
+          "title": "Replay analysis"
+        }
+      ]
+    },
+    {
+      "id": "rules",
+      "title": "Rules",
+      "description": "Rule explanations with board diagrams.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Rules and examples"
+        }
+      ]
+    },
+    {
+      "id": "guide",
+      "title": "Guide",
+      "description": "Learning flow with board examples and account-free continuation examples.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Guide overview"
+        },
+        {
+          "id": "examples",
+          "title": "Sharing and continuation examples"
+        }
+      ]
+    },
+    {
+      "id": "privacy",
+      "title": "Privacy",
+      "description": "Privacy policy, retaining its identity through the static-to-SPA route change.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Privacy policy"
+        }
+      ]
+    },
+    {
+      "id": "terms",
+      "title": "Terms",
+      "description": "Terms page, retaining its identity through the static-to-SPA route change.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Terms"
+        }
+      ]
+    },
+    {
+      "id": "public-player",
+      "title": "Public Player",
+      "description": "Opt-in public player page with statistics and a game catalog.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Public profile, statistics, and catalog"
+        }
+      ]
+    },
+    {
+      "id": "shared-replay",
+      "title": "Shared Replay",
+      "description": "Account-free portable replay viewer with an optional public-profile return path.",
+      "states": [
+        {
+          "id": "default",
+          "title": "Shared replay"
+        },
+        {
+          "id": "from-profile",
+          "title": "Return to public profile"
+        }
+      ]
+    }
+  ],
+  "milestones": [
+    {
+      "version": "0.2.1",
+      "title": "React play baseline",
+      "summary": "Home, local match, guest profile, and replay establish the first React game flow.",
+      "changes": [
+        {
+          "id": "home-start",
+          "screen": "home",
+          "kind": "added",
+          "summary": "Home opens the React game flow.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Initial Home surface.",
+              "afterVersion": "0.2.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/add1953c3228849a8d37c424d0deec971c1fc937/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "match-start",
+          "screen": "match",
+          "kind": "added",
+          "summary": "Local Match provides the initial board and turn controls.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Initial local match.",
+              "afterVersion": "0.2.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Local Match route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/add1953c3228849a8d37c424d0deec971c1fc937/gomoku-web/src/routes/LocalMatchRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "profile-start",
+          "screen": "profile",
+          "kind": "added",
+          "summary": "Profile shows the guest profile and local history.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Guest profile and local history.",
+              "afterVersion": "0.2.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/add1953c3228849a8d37c424d0deec971c1fc937/gomoku-web/src/routes/ProfileRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "replay-start",
+          "screen": "replay",
+          "kind": "added",
+          "summary": "Replay opens saved local matches.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Initial local replay viewer.",
+              "afterVersion": "0.2.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/add1953c3228849a8d37c424d0deec971c1fc937/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.2.2",
+      "title": "Local history and replay branching",
+      "summary": "A clearer action hierarchy, Profile ledger, live undo, and Replay to Play From Here extend local play.",
+      "changes": [
+        {
+          "id": "home-hierarchy",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home action roles become clearer within a flatter shell.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home shell and primary actions.",
+              "beforeVersion": "0.2.1",
+              "afterVersion": "0.2.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/a0a87e2adaf31f50c5e45f245c9765b09eac6fbc/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "match-undo",
+          "screen": "match",
+          "kind": "updated",
+          "summary": "Local Match adds live undo.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Board controls include live undo.",
+              "beforeVersion": "0.2.1",
+              "afterVersion": "0.2.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Local Match route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/a0a87e2adaf31f50c5e45f245c9765b09eac6fbc/gomoku-web/src/routes/LocalMatchRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "profile-ledger",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile adds a local game ledger.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Guest profile with game ledger.",
+              "beforeVersion": "0.2.1",
+              "afterVersion": "0.2.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/a0a87e2adaf31f50c5e45f245c9765b09eac6fbc/gomoku-web/src/routes/ProfileRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "replay-branching",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay adds Play From Here for a saved match.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Replay offers a branch into Local Match.",
+              "beforeVersion": "0.2.1",
+              "afterVersion": "0.2.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/a0a87e2adaf31f50c5e45f245c9765b09eac6fbc/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.2.3",
+      "title": "Touch portrait layouts",
+      "summary": "Match, Replay, and Profile gain portrait layouts; the board adds touch placement and a pending-rule note.",
+      "changes": [
+        {
+          "id": "home-icon-language",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home adopts the updated shared icon language.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home with the updated icon language.",
+              "beforeVersion": "0.2.2",
+              "afterVersion": "0.2.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/95b9707a6c01d77fa50d181bdd1ee4542047a2a2/gomoku-web/src/routes/HomeRoute.tsx"
+            },
+            {
+              "label": "Icon component",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/95b9707a6c01d77fa50d181bdd1ee4542047a2a2/gomoku-web/src/ui/Icon.tsx"
+            }
+          ]
+        },
+        {
+          "id": "match-touch",
+          "screen": "match",
+          "kind": "updated",
+          "summary": "Local Match gains an authored portrait layout, touch board placement, and a pending-rule note.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Portrait match with touch placement and the pending-rule note.",
+              "beforeVersion": "0.2.2",
+              "afterVersion": "0.2.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Local Match route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/95b9707a6c01d77fa50d181bdd1ee4542047a2a2/gomoku-web/src/routes/LocalMatchRoute.tsx"
+            },
+            {
+              "label": "Board component",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/95b9707a6c01d77fa50d181bdd1ee4542047a2a2/gomoku-web/src/components/Board/Board.tsx"
+            }
+          ]
+        },
+        {
+          "id": "profile-portrait",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile gains an authored portrait layout.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Portrait profile.",
+              "beforeVersion": "0.2.2",
+              "afterVersion": "0.2.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/95b9707a6c01d77fa50d181bdd1ee4542047a2a2/gomoku-web/src/routes/ProfileRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "replay-portrait",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay gains an authored portrait layout.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Replay reflows for portrait.",
+              "beforeVersion": "0.2.2",
+              "afterVersion": "0.2.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/95b9707a6c01d77fa50d181bdd1ee4542047a2a2/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.2.4",
+      "title": "Shell and asset-preview polish",
+      "summary": "Short-viewport scrolling, board overlays and sprites, a Home version label, and published asset previews refine the local game.",
+      "changes": [
+        {
+          "id": "home-version",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home adds a version label and the Practice Bot name.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home shows version and opponent identity.",
+              "beforeVersion": "0.2.3",
+              "afterVersion": "0.2.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.2.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/CHANGELOG.md"
+            },
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "match-board-polish",
+          "screen": "match",
+          "kind": "updated",
+          "summary": "Match refines board overlays and sprite presentation for short viewports.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Board overlay and scrolling refinements.",
+              "beforeVersion": "0.2.3",
+              "afterVersion": "0.2.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.2.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/CHANGELOG.md"
+            },
+            {
+              "label": "Local Match route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/gomoku-web/src/routes/LocalMatchRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "replay-board-polish",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay refines board overlays and scrolling for short viewports.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Replay board and scrolling refinements.",
+              "beforeVersion": "0.2.3",
+              "afterVersion": "0.2.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.2.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "visuals-asset-previews",
+          "screen": "visuals",
+          "kind": "added",
+          "summary": "Published asset-preview pages establish one Visuals history across the preview entry, sprites, icons, and fonts.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Asset-preview entry page.",
+              "afterVersion": "0.2.4"
+            },
+            {
+              "id": "sprites",
+              "summary": "Sprite preview page.",
+              "afterVersion": "0.2.4"
+            },
+            {
+              "id": "icons",
+              "summary": "Icon preview page.",
+              "afterVersion": "0.2.4"
+            },
+            {
+              "id": "fonts",
+              "summary": "Font preview page.",
+              "afterVersion": "0.2.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.2.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/CHANGELOG.md"
+            },
+            {
+              "label": "Asset preview publisher",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/gomoku-web/scripts/publish_asset_previews.mjs"
+            },
+            {
+              "label": "Asset preview entry",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/gomoku-web/assets/preview.html"
+            }
+          ]
+        },
+        {
+          "id": "profile-local-record-polish",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile refines the local game record and its presentation.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile with the polished local record.",
+              "beforeVersion": "0.2.3",
+              "afterVersion": "0.2.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.2.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/gomoku-web/src/routes/ProfileRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.0",
+      "title": "Cloud identity and policy pages",
+      "summary": "Profile adds Google identity and local/cloud availability; Home links to separate Privacy and Terms pages.",
+      "changes": [
+        {
+          "id": "home-policy-links",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home links to Privacy and Terms.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home links to policy pages.",
+              "beforeVersion": "0.2.4",
+              "afterVersion": "0.3.0"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.0 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/CHANGELOG.md"
+            },
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "profile-cloud-account",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile exposes account identity and local/cloud availability.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile shows cloud availability.",
+              "beforeVersion": "0.2.4",
+              "afterVersion": "0.3.0"
+            },
+            {
+              "id": "account",
+              "summary": "Signed-out account and cloud availability.",
+              "afterVersion": "0.3.0"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.0 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/gomoku-web/src/routes/ProfileRoute.tsx"
+            },
+            {
+              "label": "Firebase client configuration",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/gomoku-web/src/cloud/firebase.ts"
+            }
+          ]
+        },
+        {
+          "id": "privacy-page",
+          "screen": "privacy",
+          "kind": "added",
+          "summary": "A separate Privacy page is added at its public URL.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Static Privacy page.",
+              "afterVersion": "0.3.0"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.0 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/CHANGELOG.md"
+            },
+            {
+              "label": "Privacy page",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/gomoku-web/public/privacy/index.html"
+            }
+          ]
+        },
+        {
+          "id": "terms-page",
+          "screen": "terms",
+          "kind": "added",
+          "summary": "A separate Terms page is added at its public URL.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Static Terms page.",
+              "afterVersion": "0.3.0"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.0 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/CHANGELOG.md"
+            },
+            {
+              "label": "Terms page",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e44832d872cc1030be6707b97dcd9f9b067d83c/gomoku-web/public/terms/index.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.1",
+      "title": "Guest history promotion",
+      "summary": "Guest-to-cloud import shows progress and identity-bearing saved-match rows while guest history remains local.",
+      "changes": [
+        {
+          "id": "profile-import",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile shows local guest-history import progress and account identity.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile overview during guest-history promotion.",
+              "beforeVersion": "0.3.0",
+              "afterVersion": "0.3.1"
+            },
+            {
+              "id": "account",
+              "summary": "Account state shows import progress.",
+              "beforeVersion": "0.3.0",
+              "afterVersion": "0.3.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b9fcc3df81cc2ccea24140a3556db40c1929c5f7/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b9fcc3df81cc2ccea24140a3556db40c1929c5f7/gomoku-web/src/routes/ProfileRoute.tsx"
+            },
+            {
+              "label": "Cloud promotion state",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b9fcc3df81cc2ccea24140a3556db40c1929c5f7/gomoku-web/src/cloud/cloud_promotion_store.ts"
+            }
+          ]
+        },
+        {
+          "id": "replay-history-identity",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay history rows carry player identity for promoted matches.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Saved match rows include player identity.",
+              "beforeVersion": "0.2.4",
+              "afterVersion": "0.3.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b9fcc3df81cc2ccea24140a3556db40c1929c5f7/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b9fcc3df81cc2ccea24140a3556db40c1929c5f7/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.2",
+      "title": "Cloud history and recovery states",
+      "summary": "Signed-in cloud history becomes active in Profile and Replay, with pending/sync recovery badges and reset confirmation.",
+      "changes": [
+        {
+          "id": "profile-cloud-history",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile uses signed-in cloud history and exposes sync recovery and reset confirmation.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile uses cloud history when signed in.",
+              "beforeVersion": "0.3.1",
+              "afterVersion": "0.3.2"
+            },
+            {
+              "id": "account",
+              "summary": "Account state shows pending and sync recovery.",
+              "beforeVersion": "0.3.1",
+              "afterVersion": "0.3.2"
+            },
+            {
+              "id": "reset",
+              "summary": "Inline reset confirmation.",
+              "afterVersion": "0.3.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/3a8dbb05d94f8811e995ae7621329a390a313954/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/3a8dbb05d94f8811e995ae7621329a390a313954/gomoku-web/src/routes/ProfileRoute.tsx"
+            },
+            {
+              "label": "Cloud history state",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/3a8dbb05d94f8811e995ae7621329a390a313954/gomoku-web/src/cloud/cloud_history_store.ts"
+            }
+          ]
+        },
+        {
+          "id": "replay-cloud-history",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay uses signed-in cloud history and exposes pending/sync state.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Replay history reflects active cloud history.",
+              "beforeVersion": "0.3.1",
+              "afterVersion": "0.3.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/3a8dbb05d94f8811e995ae7621329a390a313954/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/3a8dbb05d94f8811e995ae7621329a390a313954/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.3.3",
+      "title": "Cloud deletion and replay route continuity",
+      "summary": "Profile adds cloud deletion and expanded history; saved replay links use /replay/:matchId without creating a new screen identity.",
+      "changes": [
+        {
+          "id": "profile-cloud-management",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile adds cloud deletion, history expansion, sync badges, and reset-scope wording.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile history and controls.",
+              "beforeVersion": "0.3.2",
+              "afterVersion": "0.3.3"
+            },
+            {
+              "id": "account",
+              "summary": "Account state includes cloud deletion and sync status.",
+              "beforeVersion": "0.3.2",
+              "afterVersion": "0.3.3"
+            },
+            {
+              "id": "reset",
+              "summary": "Reset state clarifies its scope.",
+              "beforeVersion": "0.3.2",
+              "afterVersion": "0.3.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/gomoku-web/src/routes/ProfileRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "replay-route-rename",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Saved replay links adopt /replay/:matchId; Replay keeps the same screen identity.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Saved replay route uses the canonical path.",
+              "beforeVersion": "0.3.2",
+              "afterVersion": "0.3.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/gomoku-web/src/routes/ReplayRoute.tsx"
+            },
+            {
+              "label": "0.3.3 route table",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/gomoku-web/src/app/App.tsx"
+            }
+          ]
+        },
+        {
+          "id": "privacy-copy-refinement",
+          "screen": "privacy",
+          "kind": "updated",
+          "summary": "Privacy policy copy is refined while the existing page identity remains.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Updated Privacy policy copy.",
+              "beforeVersion": "0.3.0",
+              "afterVersion": "0.3.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/CHANGELOG.md"
+            },
+            {
+              "label": "Privacy policy",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/gomoku-web/public/privacy/index.html"
+            }
+          ]
+        },
+        {
+          "id": "terms-copy-refinement",
+          "screen": "terms",
+          "kind": "updated",
+          "summary": "Terms copy is refined while the existing page identity remains.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Updated Terms copy.",
+              "beforeVersion": "0.3.0",
+              "afterVersion": "0.3.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.3.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/CHANGELOG.md"
+            },
+            {
+              "label": "Terms",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73c1698667ddb85085feedf42c7f2cc2a9de7073/gomoku-web/public/terms/index.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.0",
+      "title": "Static Bot Report",
+      "summary": "The Bot Report begins as a static ranking report with match trees and provenance.",
+      "changes": [
+        {
+          "id": "bot-report-added",
+          "screen": "bot-report",
+          "kind": "added",
+          "summary": "The static Bot Report presents ranking results, match trees, and provenance.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Initial static ranking results.",
+              "afterVersion": "0.4.0"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.0 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/0fc4a45b79c5056cefa5e7485599c0eef5e6295a/CHANGELOG.md"
+            },
+            {
+              "label": "0.4.0 reports index.html",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/0fc4a45b79c5056cefa5e7485599c0eef5e6295a/gomoku-bot-lab/reports/index.html"
+            },
+            {
+              "label": "0.4.0 reports latest.json",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/0fc4a45b79c5056cefa5e7485599c0eef5e6295a/gomoku-bot-lab/reports/latest.json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.1",
+      "title": "Expanded Bot Report",
+      "summary": "The Bot Report adds Search metrics and pairwise views, a larger ranking ladder, expandable comparisons, and a mobile table; Home links to Lab and Assets.",
+      "changes": [
+        {
+          "id": "home-report-navigation",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home adds navigation to the Bot Report and asset previews.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home links to report and asset surfaces.",
+              "beforeVersion": "0.3.0",
+              "afterVersion": "0.4.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/aaa6ac548fc2f3fc8c1a3815abd262473823be6f/CHANGELOG.md"
+            },
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/aaa6ac548fc2f3fc8c1a3815abd262473823be6f/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "bot-report-expanded",
+          "screen": "bot-report",
+          "kind": "updated",
+          "summary": "The report adds Search metrics and pairwise views, a larger ranking ladder, expandable detail, and a mobile table.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Expanded ranking results.",
+              "beforeVersion": "0.4.0",
+              "afterVersion": "0.4.1"
+            },
+            {
+              "id": "search",
+              "summary": "Search metrics view.",
+              "afterVersion": "0.4.1"
+            },
+            {
+              "id": "pairwise",
+              "summary": "Pairwise comparison view.",
+              "afterVersion": "0.4.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/aaa6ac548fc2f3fc8c1a3815abd262473823be6f/CHANGELOG.md"
+            },
+            {
+              "label": "0.4.1 reports index.html",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/aaa6ac548fc2f3fc8c1a3815abd262473823be6f/gomoku-bot-lab/reports/index.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.2",
+      "title": "Replay Analysis Report",
+      "summary": "A standalone Analysis Report adds board proof, threat markers, and per-turn explanations.",
+      "changes": [
+        {
+          "id": "analysis-report-added",
+          "screen": "analysis-report",
+          "kind": "added",
+          "summary": "The static Analysis Report adds board proof, threat markers, and turn explanations.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Turn analysis report.",
+              "afterVersion": "0.4.2"
+            },
+            {
+              "id": "proof-open",
+              "summary": "Board proof and turn detail open.",
+              "afterVersion": "0.4.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e132248d9602ab0ce3abbdf86da8f92a3fa0e26/CHANGELOG.md"
+            },
+            {
+              "label": "0.4.2 analysis-reports index.html",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e132248d9602ab0ce3abbdf86da8f92a3fa0e26/gomoku-bot-lab/analysis-reports/index.html"
+            },
+            {
+              "label": "0.4.2 analysis-reports latest.json",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e132248d9602ab0ce3abbdf86da8f92a3fa0e26/gomoku-bot-lab/analysis-reports/latest.json"
+            }
+          ]
+        },
+        {
+          "id": "bot-report-polish",
+          "screen": "bot-report",
+          "kind": "updated",
+          "summary": "Bot Report updates its ranking and Search metrics presentation.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Bot Report with the v0.4.2 ranking presentation.",
+              "beforeVersion": "0.4.1",
+              "afterVersion": "0.4.2"
+            },
+            {
+              "id": "search",
+              "summary": "Search metrics view with the v0.4.2 report data.",
+              "beforeVersion": "0.4.1",
+              "afterVersion": "0.4.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e132248d9602ab0ce3abbdf86da8f92a3fa0e26/CHANGELOG.md"
+            },
+            {
+              "label": "Bot Report",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/5e132248d9602ab0ce3abbdf86da8f92a3fa0e26/gomoku-bot-lab/reports/index.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.3",
+      "title": "Portal and Exit metrics",
+      "summary": "Bot Report ranking rows add Portal and Exit metrics; Analysis Report content is regenerated.",
+      "changes": [
+        {
+          "id": "bot-report-portal-exit",
+          "screen": "bot-report",
+          "kind": "updated",
+          "summary": "Ranking results add Portal and Exit table metrics.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Ranking table includes Portal and Exit columns.",
+              "beforeVersion": "0.4.1",
+              "afterVersion": "0.4.3"
+            },
+            {
+              "id": "search",
+              "summary": "Search metrics view includes Portal and Exit table metrics.",
+              "beforeVersion": "0.4.2",
+              "afterVersion": "0.4.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/dba0fb4213520d30f3640729cccaad0ceb5ccc58/CHANGELOG.md"
+            },
+            {
+              "label": "0.4.3 reports index.html",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/dba0fb4213520d30f3640729cccaad0ceb5ccc58/gomoku-bot-lab/reports/index.html"
+            }
+          ]
+        },
+        {
+          "id": "analysis-report-refresh",
+          "screen": "analysis-report",
+          "kind": "updated",
+          "summary": "The Analysis Report receives regenerated visible data and presentation.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Turn analysis report content.",
+              "beforeVersion": "0.4.2",
+              "afterVersion": "0.4.3"
+            },
+            {
+              "id": "proof-open",
+              "summary": "Opened proof with refreshed report content.",
+              "beforeVersion": "0.4.2",
+              "afterVersion": "0.4.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/dba0fb4213520d30f3640729cccaad0ceb5ccc58/CHANGELOG.md"
+            },
+            {
+              "label": "0.4.3 analysis-reports index.html",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/dba0fb4213520d30f3640729cccaad0ceb5ccc58/gomoku-bot-lab/analysis-reports/index.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.4",
+      "title": "Pooled search-budget metrics",
+      "summary": "Bot Report replaces depth/breadth/average-node columns with pooled budget and stage metrics; Analysis Report refreshes.",
+      "changes": [
+        {
+          "id": "bot-report-budget-columns",
+          "screen": "bot-report",
+          "kind": "updated",
+          "summary": "Ranking results show pooled search budget and stage breakdowns.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Pooled budget and stage columns.",
+              "beforeVersion": "0.4.3",
+              "afterVersion": "0.4.4"
+            },
+            {
+              "id": "search",
+              "summary": "Search metrics view includes pooled-budget and stage metrics.",
+              "beforeVersion": "0.4.3",
+              "afterVersion": "0.4.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/9744aa2576860fbc3af14148504cb2144ef69b75/CHANGELOG.md"
+            },
+            {
+              "label": "0.4.4 reports index.html",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/9744aa2576860fbc3af14148504cb2144ef69b75/gomoku-bot-lab/reports/index.html"
+            }
+          ]
+        },
+        {
+          "id": "analysis-report-refresh",
+          "screen": "analysis-report",
+          "kind": "updated",
+          "summary": "The Analysis Report receives refreshed visible content.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Turn analysis report content.",
+              "beforeVersion": "0.4.3",
+              "afterVersion": "0.4.4"
+            },
+            {
+              "id": "proof-open",
+              "summary": "Opened proof with refreshed report content.",
+              "beforeVersion": "0.4.3",
+              "afterVersion": "0.4.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/9744aa2576860fbc3af14148504cb2144ef69b75/CHANGELOG.md"
+            },
+            {
+              "label": "0.4.4 analysis-reports index.html",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/9744aa2576860fbc3af14148504cb2144ef69b75/gomoku-bot-lab/analysis-reports/index.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.5",
+      "title": "Settings route",
+      "summary": "Settings moves configuration controls out of Profile into a dedicated route with presets, custom controls, hints, timers, and touch options.",
+      "changes": [
+        {
+          "id": "profile-settings-moved",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile no longer owns game-configuration controls.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile without the moved game-configuration controls.",
+              "beforeVersion": "0.3.3",
+              "afterVersion": "0.4.5"
+            }
+          ],
+          "related": [
+            {
+              "screen": "settings",
+              "relation": "split-into"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b97dcff422350ebe78bb0d2cf5061ce52a408ed0/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b97dcff422350ebe78bb0d2cf5061ce52a408ed0/gomoku-web/src/routes/ProfileRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "settings-added",
+          "screen": "settings",
+          "kind": "added",
+          "summary": "Settings provides presets and Custom controls for hints, timers, and touch options.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Basic settings and presets.",
+              "afterVersion": "0.4.5"
+            },
+            {
+              "id": "custom",
+              "summary": "Custom settings and optional controls.",
+              "afterVersion": "0.4.5"
+            }
+          ],
+          "related": [
+            {
+              "screen": "profile",
+              "relation": "split-from"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b97dcff422350ebe78bb0d2cf5061ce52a408ed0/CHANGELOG.md"
+            },
+            {
+              "label": "Settings route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b97dcff422350ebe78bb0d2cf5061ce52a408ed0/gomoku-web/src/routes/SettingsRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "match-default-opponent",
+          "screen": "match",
+          "kind": "updated",
+          "summary": "Match reflects the settings preset bridge and the Normal Bot default name.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Local match with the new default opponent label and settings.",
+              "beforeVersion": "0.2.4",
+              "afterVersion": "0.4.5"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b97dcff422350ebe78bb0d2cf5061ce52a408ed0/CHANGELOG.md"
+            },
+            {
+              "label": "Local Match route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b97dcff422350ebe78bb0d2cf5061ce52a408ed0/gomoku-web/src/routes/LocalMatchRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.6",
+      "title": "In-app Replay Analysis",
+      "summary": "Replay adds progressive browser analysis with status, a timeline, last-escape state, and board evidence.",
+      "changes": [
+        {
+          "id": "replay-analysis",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay reaches a settled analysis state on the final board with timeline and evidence.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Final board with analysis settled.",
+              "beforeVersion": "0.3.3",
+              "afterVersion": "0.4.6"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.6 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/2ec50c02f29deb02c14295d07929e9f7e835fd2b/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/2ec50c02f29deb02c14295d07929e9f7e835fd2b/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.7",
+      "title": "Replay Analysis timeline",
+      "summary": "The Replay Analysis timeline separates setup corridor, lethal tail, last escape, and lethal onset.",
+      "changes": [
+        {
+          "id": "replay-timeline",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "The settled analysis timeline distinguishes setup, lethal tail, last escape, and lethal onset.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Final board with the refined analysis timeline.",
+              "beforeVersion": "0.4.6",
+              "afterVersion": "0.4.7"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.7 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/0b93fed092975c172959343a45decc9c8c89fe2e/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/0b93fed092975c172959343a45decc9c8c89fe2e/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.4.8",
+      "title": "Replay evidence and report updates",
+      "summary": "Replay Analysis adds mistake classification and configurable evidence overlays; Bot Report pairwise and columns change.",
+      "changes": [
+        {
+          "id": "replay-evidence",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay Analysis adds mistake classification and configurable evidence overlays.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Final board with classification and evidence overlays.",
+              "beforeVersion": "0.4.7",
+              "afterVersion": "0.4.8"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.8 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/gomoku-web/src/routes/ReplayRoute.tsx"
+            },
+            {
+              "label": "Settings route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/gomoku-web/src/routes/SettingsRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "bot-report-columns",
+          "screen": "bot-report",
+          "kind": "updated",
+          "summary": "Bot Report updates its table columns and pairwise view.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Ranking results with updated columns.",
+              "beforeVersion": "0.4.4",
+              "afterVersion": "0.4.8"
+            },
+            {
+              "id": "pairwise",
+              "summary": "Pairwise comparison view with updated fields.",
+              "beforeVersion": "0.4.4",
+              "afterVersion": "0.4.8"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.8 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/CHANGELOG.md"
+            },
+            {
+              "label": "0.4.8 reports index.html",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/gomoku-bot-lab/reports/index.html"
+            }
+          ]
+        },
+        {
+          "id": "match-evidence-overlays",
+          "screen": "match",
+          "kind": "updated",
+          "summary": "Match adopts configurable evidence overlays and the shared hint vocabulary.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Local match with configurable board evidence overlays.",
+              "beforeVersion": "0.4.5",
+              "afterVersion": "0.4.8"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.8 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/CHANGELOG.md"
+            },
+            {
+              "label": "Local Match route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/gomoku-web/src/routes/LocalMatchRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "analysis-report-evidence",
+          "screen": "analysis-report",
+          "kind": "updated",
+          "summary": "Analysis Report adds failure steps, missed candidates, onset evidence, and clearer proof markers.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Turn analysis with failure steps and onset evidence.",
+              "beforeVersion": "0.4.4",
+              "afterVersion": "0.4.8"
+            },
+            {
+              "id": "proof-open",
+              "summary": "Opened board proof with the refined evidence markers.",
+              "beforeVersion": "0.4.4",
+              "afterVersion": "0.4.8"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.8 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/CHANGELOG.md"
+            },
+            {
+              "label": "Analysis Report",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/gomoku-bot-lab/analysis-reports/index.html"
+            }
+          ]
+        },
+        {
+          "id": "settings-evidence-overlays",
+          "screen": "settings",
+          "kind": "updated",
+          "summary": "Settings adds configurable evidence-overlay controls using the Replay Analysis hint vocabulary.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Settings exposes the new evidence controls.",
+              "beforeVersion": "0.4.5",
+              "afterVersion": "0.4.8"
+            },
+            {
+              "id": "custom",
+              "summary": "Custom settings configure evidence overlays.",
+              "beforeVersion": "0.4.5",
+              "afterVersion": "0.4.8"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.4.8 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/CHANGELOG.md"
+            },
+            {
+              "label": "Settings route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/gomoku-web/src/routes/SettingsRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.5.1",
+      "title": "React Lab and Visuals",
+      "summary": "Generated report pages become React Lab views and asset previews become React Visuals; the legacy reports retire into Lab.",
+      "changes": [
+        {
+          "id": "home-product-navigation",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home presents the product-first entry points for Lab and Visuals.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home navigation to the React product and developer surfaces.",
+              "beforeVersion": "0.4.1",
+              "afterVersion": "0.5.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/CHANGELOG.md"
+            },
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "lab-added",
+          "screen": "lab",
+          "kind": "added",
+          "summary": "React Lab brings tournament reporting and replay analysis into one screen.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Lab report overview.",
+              "afterVersion": "0.5.1"
+            },
+            {
+              "id": "search",
+              "summary": "Search metrics in Lab.",
+              "afterVersion": "0.5.1"
+            },
+            {
+              "id": "analysis",
+              "summary": "Replay analysis and proof in Lab.",
+              "afterVersion": "0.5.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/CHANGELOG.md"
+            },
+            {
+              "label": "React Lab route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/gomoku-web/src/routes/BotReportRoute.tsx"
+            },
+            {
+              "label": "React Analysis route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/gomoku-web/src/routes/AnalysisReportRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "visuals-react-update",
+          "screen": "visuals",
+          "kind": "updated",
+          "summary": "The existing Visuals identity moves from legacy asset-preview pages to the React Asset Preview route.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "React Visuals entry.",
+              "beforeVersion": "0.5.0",
+              "afterVersion": "0.5.1"
+            },
+            {
+              "id": "sprites",
+              "summary": "React sprite preview.",
+              "beforeVersion": "0.5.0",
+              "afterVersion": "0.5.1"
+            },
+            {
+              "id": "icons",
+              "summary": "React icon preview.",
+              "beforeVersion": "0.5.0",
+              "afterVersion": "0.5.1"
+            },
+            {
+              "id": "fonts",
+              "summary": "React font preview.",
+              "beforeVersion": "0.5.0",
+              "afterVersion": "0.5.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/CHANGELOG.md"
+            },
+            {
+              "label": "Last legacy asset-preview entry",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/678a69ac51f2b1f4fa968bf9fe03b69831b847c9/gomoku-web/assets/preview.html"
+            },
+            {
+              "label": "React Visuals route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/gomoku-web/src/routes/AssetPreviewRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "bot-report-retired",
+          "screen": "bot-report",
+          "kind": "removed",
+          "summary": "The standalone Bot Report presentation retires as its report view moves into Lab.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Last static Bot Report at v0.5.0.",
+              "beforeVersion": "0.5.0"
+            },
+            {
+              "id": "search",
+              "summary": "Last Search metrics view at v0.5.0.",
+              "beforeVersion": "0.5.0"
+            },
+            {
+              "id": "pairwise",
+              "summary": "Last pairwise Bot Report at v0.5.0.",
+              "beforeVersion": "0.5.0"
+            }
+          ],
+          "related": [
+            {
+              "screen": "lab",
+              "relation": "merged-into"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/CHANGELOG.md"
+            },
+            {
+              "label": "Last static Bot Report",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/678a69ac51f2b1f4fa968bf9fe03b69831b847c9/gomoku-bot-lab/reports/index.html"
+            },
+            {
+              "label": "0.5.1 route table",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/gomoku-web/src/app/App.tsx"
+            }
+          ]
+        },
+        {
+          "id": "analysis-report-retired",
+          "screen": "analysis-report",
+          "kind": "removed",
+          "summary": "The standalone Analysis Report presentation retires as its proof and turn-analysis view moves into Lab.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Last static Analysis Report at v0.5.0.",
+              "beforeVersion": "0.5.0"
+            },
+            {
+              "id": "proof-open",
+              "summary": "Last opened proof at v0.5.0.",
+              "beforeVersion": "0.5.0"
+            }
+          ],
+          "related": [
+            {
+              "screen": "lab",
+              "relation": "merged-into"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/CHANGELOG.md"
+            },
+            {
+              "label": "Last static Analysis Report",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/678a69ac51f2b1f4fa968bf9fe03b69831b847c9/gomoku-bot-lab/analysis-reports/index.html"
+            },
+            {
+              "label": "0.5.1 route table",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/bf861f596e7a5bf03b588953f6552b9a3c4c7827/gomoku-web/src/app/App.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.5.2",
+      "title": "Rules and Guide",
+      "summary": "Rules and Guide add board-rendered teaching examples; Lab and Visuals adopt canonical support URLs and Replay labels update.",
+      "changes": [
+        {
+          "id": "home-learning-links",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home adds navigation to Rules and Guide.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home links to teaching routes.",
+              "beforeVersion": "0.5.1",
+              "afterVersion": "0.5.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+            },
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "lab-canonical-route",
+          "screen": "lab",
+          "kind": "updated",
+          "summary": "Lab adopts /lab/ as its canonical support URL.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Lab overview under the canonical support route.",
+              "beforeVersion": "0.5.1",
+              "afterVersion": "0.5.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+            },
+            {
+              "label": "0.5.2 route table",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/gomoku-web/src/app/App.tsx"
+            },
+            {
+              "label": "Lab route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/gomoku-web/src/routes/BotReportRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "visuals-canonical-route",
+          "screen": "visuals",
+          "kind": "updated",
+          "summary": "Visuals adopts /visuals/ as its canonical support URL; the existing screen identity remains.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Visuals under the canonical support route.",
+              "beforeVersion": "0.5.1",
+              "afterVersion": "0.5.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+            },
+            {
+              "label": "0.5.2 route table",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/gomoku-web/src/app/App.tsx"
+            },
+            {
+              "label": "Visuals route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/gomoku-web/src/routes/AssetPreviewRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "replay-analysis-labels",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay entry labels become Analyze, Inspect, and Replay Analysis.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Replay uses the updated analysis and inspection labels.",
+              "beforeVersion": "0.4.8",
+              "afterVersion": "0.5.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "rules-added",
+          "screen": "rules",
+          "kind": "added",
+          "summary": "Rules introduces board-rendered teaching examples.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Rules and rendered board example.",
+              "afterVersion": "0.5.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+            },
+            {
+              "label": "Rules route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/gomoku-web/src/routes/RulesRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "guide-added",
+          "screen": "guide",
+          "kind": "added",
+          "summary": "Guide introduces live board-rendered teaching examples.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Guide with a rendered teaching example.",
+              "afterVersion": "0.5.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+            },
+            {
+              "label": "Guide route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/gomoku-web/src/routes/GuideRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.5.3",
+      "title": "Policy route and navigation",
+      "summary": "Privacy and Terms move into the React policy route at the same public URLs; Home, Visuals, and Lab links are refined.",
+      "changes": [
+        {
+          "id": "home-product-navigation",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home receives the product-first navigation refinement.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Product-first Home navigation.",
+              "beforeVersion": "0.5.2",
+              "afterVersion": "0.5.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/CHANGELOG.md"
+            },
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "visuals-navigation",
+          "screen": "visuals",
+          "kind": "updated",
+          "summary": "Visuals navigation is refined without changing its screen identity.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Visuals navigation and entry.",
+              "beforeVersion": "0.5.2",
+              "afterVersion": "0.5.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/CHANGELOG.md"
+            },
+            {
+              "label": "Visuals route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/gomoku-web/src/routes/AssetPreviewRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "lab-analysis-links",
+          "screen": "lab",
+          "kind": "updated",
+          "summary": "Lab adds direct links into analysis views.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Lab overview with direct analysis links.",
+              "beforeVersion": "0.5.2",
+              "afterVersion": "0.5.3"
+            },
+            {
+              "id": "analysis",
+              "summary": "Direct Lab analysis links.",
+              "beforeVersion": "0.5.2",
+              "afterVersion": "0.5.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/CHANGELOG.md"
+            },
+            {
+              "label": "Lab route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/gomoku-web/src/routes/LabReportRoute.tsx"
+            },
+            {
+              "label": "Analysis route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/gomoku-web/src/routes/AnalysisReportRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "privacy-spa-route",
+          "screen": "privacy",
+          "kind": "updated",
+          "summary": "Privacy moves from a static page into PolicyRoute at the same public URL.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Privacy policy in the React policy route.",
+              "beforeVersion": "0.3.3",
+              "afterVersion": "0.5.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/CHANGELOG.md"
+            },
+            {
+              "label": "Policy route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/gomoku-web/src/routes/PolicyRoute.tsx"
+            },
+            {
+              "label": "0.5.3 route table",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/gomoku-web/src/app/App.tsx"
+            }
+          ]
+        },
+        {
+          "id": "terms-spa-route",
+          "screen": "terms",
+          "kind": "updated",
+          "summary": "Terms moves from a static page into PolicyRoute at the same public URL.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Terms in the React policy route.",
+              "beforeVersion": "0.3.3",
+              "afterVersion": "0.5.3"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.3 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/CHANGELOG.md"
+            },
+            {
+              "label": "Policy route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/gomoku-web/src/routes/PolicyRoute.tsx"
+            },
+            {
+              "label": "0.5.3 route table",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/8fa3035f2e2e7445907c1d74903d27b1fa072c1a/gomoku-web/src/app/App.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.5.4",
+      "title": "Visible copy reconciliation",
+      "summary": "Visible copy and empty/reset states are reconciled across Profile, policy, Settings, Rules, Guide, Visuals, and Lab.",
+      "changes": [
+        {
+          "id": "profile-empty-reset-copy",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile refines empty and reset states and the Play a game action.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile empty state and action.",
+              "beforeVersion": "0.4.5",
+              "afterVersion": "0.5.4"
+            },
+            {
+              "id": "reset",
+              "summary": "Updated reset copy and recovery action.",
+              "beforeVersion": "0.3.3",
+              "afterVersion": "0.5.4"
+            },
+            {
+              "id": "empty",
+              "summary": "Empty profile copy and Play a game action.",
+              "beforeVersion": "0.5.3",
+              "afterVersion": "0.5.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/gomoku-web/src/routes/ProfileRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "settings-copy",
+          "screen": "settings",
+          "kind": "updated",
+          "summary": "Settings wording is reconciled.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Updated settings wording.",
+              "beforeVersion": "0.4.8",
+              "afterVersion": "0.5.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/CHANGELOG.md"
+            },
+            {
+              "label": "Settings route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/gomoku-web/src/routes/SettingsRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "rules-copy",
+          "screen": "rules",
+          "kind": "updated",
+          "summary": "Rules wording is reconciled.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Updated Rules wording.",
+              "beforeVersion": "0.5.2",
+              "afterVersion": "0.5.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/CHANGELOG.md"
+            },
+            {
+              "label": "Rules route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/gomoku-web/src/routes/RulesRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "guide-copy",
+          "screen": "guide",
+          "kind": "updated",
+          "summary": "Guide wording is reconciled.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Updated Guide wording.",
+              "beforeVersion": "0.5.2",
+              "afterVersion": "0.5.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/CHANGELOG.md"
+            },
+            {
+              "label": "Guide route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/gomoku-web/src/routes/GuideRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "privacy-copy",
+          "screen": "privacy",
+          "kind": "updated",
+          "summary": "Privacy wording and date are refined.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Updated Privacy text and date.",
+              "beforeVersion": "0.5.3",
+              "afterVersion": "0.5.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/CHANGELOG.md"
+            },
+            {
+              "label": "Policy route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/gomoku-web/src/routes/PolicyRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "terms-copy",
+          "screen": "terms",
+          "kind": "updated",
+          "summary": "Terms wording and date are refined.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Updated Terms text and date.",
+              "beforeVersion": "0.5.3",
+              "afterVersion": "0.5.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/CHANGELOG.md"
+            },
+            {
+              "label": "Policy route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/gomoku-web/src/routes/PolicyRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "visuals-label",
+          "screen": "visuals",
+          "kind": "updated",
+          "summary": "Visuals updates its Visual-system label.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Visual-system label.",
+              "beforeVersion": "0.5.3",
+              "afterVersion": "0.5.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/CHANGELOG.md"
+            },
+            {
+              "label": "Visuals route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/gomoku-web/src/routes/AssetPreviewRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "lab-presets",
+          "screen": "lab",
+          "kind": "updated",
+          "summary": "Lab improves preset badges and specification readability.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Preset badges and readable specifications.",
+              "beforeVersion": "0.5.3",
+              "afterVersion": "0.5.4"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.4 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/CHANGELOG.md"
+            },
+            {
+              "label": "Lab route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b09ac7ff56f1452bccdf63334ce38415b92fdbd8/gomoku-web/src/routes/LabReportRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.5.5",
+      "title": "Accessible recovery and responsive teaching views",
+      "summary": "Local storage and bot failures gain recovery states; keyboard, semantic, reduced-motion, analysis-marker, and mobile teaching cues improve.",
+      "changes": [
+        {
+          "id": "match-recovery-accessibility",
+          "screen": "match",
+          "kind": "updated",
+          "summary": "Match keeps local play available when storage fails and exposes failed-bot retry, keyboard placement, semantic board cues, and reduced-motion board cues.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Local match with storage and failed-turn recovery plus keyboard controls.",
+              "beforeVersion": "0.4.8",
+              "afterVersion": "0.5.5"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/CHANGELOG.md"
+            },
+            {
+              "label": "Local Match route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/routes/LocalMatchRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "profile-storage-notice",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "The app-level persistence notice explains when local saves are unavailable.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile with the app-level local-save availability notice.",
+              "beforeVersion": "0.5.4",
+              "afterVersion": "0.5.5"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/routes/ProfileRoute.tsx"
+            },
+            {
+              "label": "Application shell",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/app/App.tsx"
+            },
+            {
+              "label": "Local persistence notice",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/profile/LocalPersistenceNotice.tsx"
+            }
+          ]
+        },
+        {
+          "id": "replay-analysis-attribution",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay Analysis preserves possible versus confirmed escape markers and attribution.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Final board with attributed escape confidence.",
+              "beforeVersion": "0.5.2",
+              "afterVersion": "0.5.5"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/routes/ReplayRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "settings-semantics",
+          "screen": "settings",
+          "kind": "updated",
+          "summary": "Settings explains presets and advanced controls and exposes semantic selection and read-only cues.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Settings with semantic controls and read-only cues.",
+              "beforeVersion": "0.5.4",
+              "afterVersion": "0.5.5"
+            },
+            {
+              "id": "custom",
+              "summary": "Custom controls with clarified advanced options.",
+              "beforeVersion": "0.4.8",
+              "afterVersion": "0.5.5"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/CHANGELOG.md"
+            },
+            {
+              "label": "Settings route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/routes/SettingsRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "lab-analysis-cues",
+          "screen": "lab",
+          "kind": "updated",
+          "summary": "Lab explains evidence markers and loading/error states.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Lab overview with the loading and error explanations.",
+              "beforeVersion": "0.5.4",
+              "afterVersion": "0.5.5"
+            },
+            {
+              "id": "analysis",
+              "summary": "Analysis markers and loading/error explanations.",
+              "beforeVersion": "0.5.3",
+              "afterVersion": "0.5.5"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/CHANGELOG.md"
+            },
+            {
+              "label": "Lab route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/routes/LabReportRoute.tsx"
+            },
+            {
+              "label": "Analysis route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/routes/AnalysisReportRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "rules-mobile",
+          "screen": "rules",
+          "kind": "updated",
+          "summary": "Rules refines mobile headers and diagram grids from 320px upward.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Mobile Rules layout and diagrams.",
+              "beforeVersion": "0.5.4",
+              "afterVersion": "0.5.5"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/CHANGELOG.md"
+            },
+            {
+              "label": "Rules route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/routes/RulesRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "guide-mobile-markers",
+          "screen": "guide",
+          "kind": "updated",
+          "summary": "Guide refines mobile layout and preserves marker explanations.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Mobile Guide layout and marker explanations.",
+              "beforeVersion": "0.5.4",
+              "afterVersion": "0.5.5"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.5.5 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/CHANGELOG.md"
+            },
+            {
+              "label": "Guide route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/73658d0a546ba558c746854d38cdac7ec2465802/gomoku-web/src/routes/GuideRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.6.1",
+      "title": "Public profiles and shared replay",
+      "summary": "Opt-in public profiles add stats and a public catalog; Profile gains saved games, and Replay gains share/publish paths.",
+      "changes": [
+        {
+          "id": "home-public-entry",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home links the public-profile and replay-sharing loop.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home navigation to public identity and sharing.",
+              "beforeVersion": "0.5.3",
+              "afterVersion": "0.6.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/CHANGELOG.md"
+            },
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "profile-library-public-settings",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile adds My Games, Saved Replays, and opt-in public-profile settings.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile with the game and replay library.",
+              "beforeVersion": "0.5.5",
+              "afterVersion": "0.6.1"
+            },
+            {
+              "id": "saved-replays",
+              "summary": "Saved Replays tab.",
+              "afterVersion": "0.6.1"
+            },
+            {
+              "id": "public-settings",
+              "summary": "Public-profile controls.",
+              "afterVersion": "0.6.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/gomoku-web/src/routes/ProfileRoute.tsx"
+            },
+            {
+              "label": "Replay library",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/gomoku-web/src/routes/ReplayLibraryPanel.tsx"
+            }
+          ]
+        },
+        {
+          "id": "replay-sharing",
+          "screen": "replay",
+          "kind": "updated",
+          "summary": "Replay adds shareable links and optional public-catalog publication.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Replay with saved and shareable context.",
+              "beforeVersion": "0.5.5",
+              "afterVersion": "0.6.1"
+            },
+            {
+              "id": "share",
+              "summary": "Share a portable replay link.",
+              "afterVersion": "0.6.1"
+            },
+            {
+              "id": "publish",
+              "summary": "Publish a replay to the public catalog.",
+              "afterVersion": "0.6.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/CHANGELOG.md"
+            },
+            {
+              "label": "Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/gomoku-web/src/routes/ReplayRoute.tsx"
+            },
+            {
+              "label": "Share replay panel",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/gomoku-web/src/routes/ShareReplayPanel.tsx"
+            },
+            {
+              "label": "Publish replay panel",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/gomoku-web/src/routes/PublishReplayPanel.tsx"
+            }
+          ]
+        },
+        {
+          "id": "public-player-added",
+          "screen": "public-player",
+          "kind": "added",
+          "summary": "Public Player displays opt-in public identity, statistics, and a game catalog.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Public profile with stats and catalog.",
+              "afterVersion": "0.6.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/CHANGELOG.md"
+            },
+            {
+              "label": "Public Player route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/gomoku-web/src/routes/PublicPlayerRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "shared-replay-added",
+          "screen": "shared-replay",
+          "kind": "added",
+          "summary": "Shared Replay opens an account-free portable replay link.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Portable shared replay viewer.",
+              "afterVersion": "0.6.1"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.1 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/CHANGELOG.md"
+            },
+            {
+              "label": "Shared Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/gomoku-web/src/routes/SharedReplayRoute.tsx"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.6.2",
+      "title": "Catalog refinement and replay return",
+      "summary": "Public Player refines its catalog, Profile controls improve, Shared Replay returns to its public origin, and Guide adds account-free examples.",
+      "changes": [
+        {
+          "id": "home-guide-discovery",
+          "screen": "home",
+          "kind": "updated",
+          "summary": "Home improves discovery of the learning and public-profile loop.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Home with updated Guide and public-profile entry points.",
+              "beforeVersion": "0.6.1",
+              "afterVersion": "0.6.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/CHANGELOG.md"
+            },
+            {
+              "label": "Home route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/gomoku-web/src/routes/HomeRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "profile-public-controls",
+          "screen": "profile",
+          "kind": "updated",
+          "summary": "Profile refines its public-profile controls and navigation.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Profile library and public-profile controls.",
+              "beforeVersion": "0.6.1",
+              "afterVersion": "0.6.2"
+            },
+            {
+              "id": "public-settings",
+              "summary": "Refined public-profile controls.",
+              "beforeVersion": "0.6.1",
+              "afterVersion": "0.6.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/CHANGELOG.md"
+            },
+            {
+              "label": "Profile route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/gomoku-web/src/routes/ProfileRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "public-player-catalog",
+          "screen": "public-player",
+          "kind": "updated",
+          "summary": "Public Player refines the card/catalog layout, compact rows, optional dated statistics, and recovery states.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Updated public profile, statistics, and game catalog.",
+              "beforeVersion": "0.6.1",
+              "afterVersion": "0.6.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/CHANGELOG.md"
+            },
+            {
+              "label": "Public Player route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/gomoku-web/src/routes/PublicPlayerRoute.tsx"
+            }
+          ]
+        },
+        {
+          "id": "shared-replay-return",
+          "screen": "shared-replay",
+          "kind": "updated",
+          "summary": "Shared Replay restores the originating public page, including page, scroll, and focus context.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Shared replay with return context.",
+              "beforeVersion": "0.6.1",
+              "afterVersion": "0.6.2"
+            },
+            {
+              "id": "from-profile",
+              "summary": "Return link and restored public-profile origin.",
+              "afterVersion": "0.6.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/CHANGELOG.md"
+            },
+            {
+              "label": "Shared Replay route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/gomoku-web/src/routes/SharedReplayRoute.tsx"
+            },
+            {
+              "label": "Public replay navigation",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/gomoku-web/src/routes/public_player_navigation.ts"
+            }
+          ]
+        },
+        {
+          "id": "guide-sharing-examples",
+          "screen": "guide",
+          "kind": "updated",
+          "summary": "Guide adds two account-free sharing and continuation examples.",
+          "states": [
+            {
+              "id": "default",
+              "summary": "Guide with new account-free examples.",
+              "beforeVersion": "0.5.5",
+              "afterVersion": "0.6.2"
+            },
+            {
+              "id": "examples",
+              "summary": "Sharing and continuation examples.",
+              "afterVersion": "0.6.2"
+            }
+          ],
+          "sources": [
+            {
+              "label": "0.6.2 release notes",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/CHANGELOG.md"
+            },
+            {
+              "label": "Guide route",
+              "url": "https://github.com/byebyebryan/gomoku2d/blob/37a122d2bd8e899bcfc581055e685c0327f43cb4/gomoku-web/src/routes/GuideRoute.tsx"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "This is a proposed change/state matrix, not a capture manifest or final public catalog. It contains no snapshot claims.",
+    "All 25 actual release sources are listed. v0.5.0 remains provenance and the last source baseline for the legacy Bot and Analysis Reports; it is intentionally not a UI milestone.",
+    "v0.5.1 retires Bot Report and Analysis Report into Lab. Visuals remains one screen identity across the legacy asset pages and React route. The v0.3.3 Replay URL rename and v0.5.3 Privacy/Terms route migration retain their existing screen identities.",
+    "Replay default means a final-board view; analysis is settled beginning at v0.4.6. Public Player default includes its stats and catalog. Capture only the listed meaningful states; unlisted coverage is unrecorded, not evidence of absence.",
+    "Legacy account, sync, and reset states use the primary-qualified synthetic transport for v0.3.x through v0.5.4; no production accounts are used.",
+    "The v0.2.1 through v0.2.3 source locks/toolchain limitations and generated Wasm dependency remain capture receipt concerns from the inventory, not claims in this matrix."
+  ]
+}

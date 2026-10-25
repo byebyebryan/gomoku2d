@@ -178,6 +178,7 @@ function portablePayload(uid, number = 1) {
 /** @param {string} uid */
 async function seedPublicProfile(uid) {
   const updated = { __timestampValue: "2026-10-24T00:00:00.000Z" };
+  const pageCounts = [8, 1, 0, 0];
   await seedDocument(`public_profiles/${uid}`, {
     schema_version: 1,
     uid,
@@ -193,10 +194,12 @@ async function seedPublicProfile(uid) {
       draws: 2,
       updated_at: updated,
     },
-    catalog_page_counts: [8, 1, 0, 0],
+    catalog_page_counts: pageCounts,
   });
-  for (let page = 0; page < 2; page++) {
-    const entries = Array.from({ length: page === 0 ? 8 : 1 }, (_, index) => {
+  // Owner settings/publish checks validate all four page markers, including
+  // zero-count pages. Keep the synthetic dataset valid for readers and writers.
+  for (let page = 0; page < pageCounts.length; page++) {
+    const entries = Array.from({ length: pageCounts[page] }, (_, index) => {
       const number = page * 8 + index + 1;
       return {
         ...portablePayload(uid, number),

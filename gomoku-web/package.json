@@ -30,7 +30,9 @@
     "playtest:smoke": "playwright test playtests/smoke.spec.ts",
     "review:export": "node scripts/export_review.mjs",
     "capture:retrospective": "node scripts/capture_retrospective_ui.mjs",
-    "capture:retrospective:receipt": "node scripts/record_retrospective_build.mjs"
+    "capture:retrospective:receipt": "node scripts/record_retrospective_build.mjs",
+    "capture:history": "node scripts/capture_history_ui.mjs",
+    "test:history-capture": "node --test scripts/capture_history_ui.test.mjs"
   },
   "dependencies": {
     "firebase": "^12.12.1",
