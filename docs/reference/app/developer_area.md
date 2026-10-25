@@ -38,10 +38,10 @@ so reference typography does not change player screens.
 
 | Surface | Owner | Source contract |
 |---|---|---|
-| Overview / Process | `src/developer/DeveloperPages.tsx` | Prepared explanation with concrete review/release examples; no automatically rendered Markdown |
+| Overview | `src/developer/DeveloperPages.tsx` | Direct entry to asset inspection, Lab and UI review tools; no automatically rendered Markdown |
 | Assets | `AssetPreviewRoute`, `IconInspector`, `SpriteInspector` | Actual CSS classes/tokens, canonical SVGs and source sprite inventory |
 | Lab | Existing report loaders, report panels and DOM proof boards | Unchanged `reports/lab/` JSON, recorded revisions/budgets and bounded analysis semantics |
-| Reviews | `reviews.json`, `review_record.ts`, `ReviewCase.tsx` | Explicitly curated static records, frozen media and separate technical/human status |
+| UI review | `reviews.json`, `review_record.ts`, `ReviewCase.tsx`, `ReviewChecklist.tsx` | Screen references, historical comparisons, the actual screenshot-review checklist and separate technical/human status |
 
 Lab keeps `tab=ranking|search|analysis` and `match` deep links. Its detailed
 metrics and opponent/game drill-down remain available; secondary ranking metrics
@@ -78,8 +78,15 @@ PNG hashes/dimensions before copying selected files to `/reviews/<id>/`.
 Source/evidence links use public GitHub URLs; internal report-host URLs are not
 public dependencies. Only curated case routes receive direct-entry HTML.
 
-The viewer supports comparison selection, fitted/full-height panes, native-pixel
-inspection and optional synchronized scrolling. Desktop/portrait pairs and
+The viewer defaults to complete captures at one shared scale. Columns are
+proportional to source-image widths: a 1280px desktop capture gets a wider pane
+than a 390px portrait capture, with the same source-to-display scale and no
+upsampling. Narrow layouts stack the captures while preserving that shared
+scale. Native-pixel inspection remains available for detail. Full captures can
+be turned off for bounded scroll panes, with optional synchronized scrolling.
+Top edges align even when captions wrap.
+The `native=1`, `full=0` (bounded panes), `pair` and `sync=off` query selections
+survive reload/history; existing `full=1` links still show complete captures. Desktop/portrait pairs and
 asset-family comparisons are labelled as such; they are not invented before/after
 claims. Technical success does not establish human approval. Unknown historical
 conditions remain explicitly unknown. Later fixes/acceptance are dated additions;
@@ -122,3 +129,9 @@ inspection tools. Current behavior belongs in reference docs; active work in
 working notes; completed snapshots stay indexed at stable paths. Release records
 own publication facts. Keep the process record current as procedures improve;
 retrospective journey articles are later work.
+
+The developer navigation focuses on working tools: Overview, Design & assets,
+Lab and UI review. The earlier prose Process page is removed; `/dev/process/`
+redirects to `/dev/reviews/` without initializing the player tree. The review
+index and cases expose the screenshot-review checklist alongside real references
+and findings, rather than presenting a generic development manifesto.

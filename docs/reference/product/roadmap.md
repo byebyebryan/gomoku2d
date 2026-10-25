@@ -22,15 +22,16 @@ planning the next releases does not close them.
 ## `0.6` Sequence
 
 Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
-site and process presentation in 0.6.3, then replay collections in 0.6.4.
+site and practical UI review tools in 0.6.3, then replay collections in 0.6.4.
 Curated learning follows later, unnumbered for now.
-`0.6.2` is published; remaining human checks stay explicit. `0.6.3` and `0.6.4`
-remain planned. No future release dates are committed.
+`0.6.2` is published; remaining human checks stay explicit. `0.6.3` is
+implemented locally and awaits visual/release acceptance; `0.6.4` remains
+planned. No future release dates are committed.
 
 | Release | Focus | Player outcome |
 |---|---|---|
 | `0.6.2` | Public-profile design, sharing usability, documentation and presentation | Understand a player's page, open a game, and understand saving, sharing and publishing; demonstrate the app without signing in |
-| `0.6.3` | Developer site, design/assets and process presentation | Inspect the current design system, compare assets/screens and understand the evolving development/validation workflow |
+| `0.6.3` | Developer site, design/assets and UI review tools | Inspect the current design system, compare assets/screens at matched scale and follow real review findings |
 | `0.6.4` | Replay collection and study tools | Recognize saved games visually, give them private context, and reopen a deliberately chosen moment |
 | Later | Curated learning through replays | Read a short tactical prompt, inspect the example, and try another line against the existing bot |
 
@@ -66,7 +67,7 @@ thumbnail implementation in `0.6.4`. `0.6.2` does not require a sharing-data or
 portable-format change. Human visual approval precedes implementation of the
 selected layout; refreshed media follows the accepted UI.
 
-### `0.6.3`: Developer Site and Development Process
+### `0.6.3`: Developer Site and UI Review
 
 - Establish prepared human presentation alongside detailed agent/maintainer
   Markdown. Reconcile current facts, duplication and reference/archive status.
@@ -74,9 +75,10 @@ selected layout; refreshed media follows the accepted UI.
   sprites and a full icon inspector with native sizes and enlarged pixel grids.
 - Organize existing UI comparison reports into a reusable review gallery with
   source/capture conditions, findings and acceptance status.
-- Present the evolving research, implementation, review/fix and release process,
-  available validation and its limits. Record the process better before writing
-  retrospective journey stories.
+- Show the useful parts of the process through tools already used for the work:
+  source inspectors, recorded experiments, screen references, matched-scale UI
+  comparisons and the maintained screenshot checklist. Record findings and
+  follow-up alongside evidence; retrospective journey stories remain later work.
 - Derive current references from canonical sources where practical and retain
   historical reviews as dated snapshots. Reuse static hosting without a backend.
 

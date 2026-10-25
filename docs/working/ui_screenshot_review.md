@@ -69,8 +69,12 @@ Markdown keeps detailed maintainer/agent context and deeper evidence.
    media identity, findings, technical checks, actual human review and follow-up.
    A current screen reference and a historical fix have distinct dispositions.
 4. Run type/unit/build checks. The publisher checks the curated allowlist, safe
-   paths, SHA-256 and dimensions. Inspect full/fit/native images, synchronized
-   panes, narrow/enlarged text, keyboard and source/error recovery.
+   paths, SHA-256 and dimensions. Inspect the default full captures at matched
+   scale: source widths determine pane proportions, so desktop and mobile
+   content have the same visual scale. Check native pixels and optional bounded
+   scroll panes separately. Review narrow/enlarged text, keyboard, synchronized
+   scrolling and source/error recovery. Display scaling must not alter frozen
+   media or imply that enlarged-text captures used the same text setting.
 5. Prepare an ad-hoc export from the same record/viewer with `npm run review:export
    -- <id> test-results/review-exports/<new-name>` in `gomoku-web`. The new directory
    includes selected media, fonts/license and source context. Check it under its

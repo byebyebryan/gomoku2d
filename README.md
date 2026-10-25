@@ -143,7 +143,7 @@ opt-in public profiles/statistics.
 The [release record](docs/archive/v0_6_2_release.md) owns source, CI, deployment
 and production evidence. The inherited real signed-in sharing round trip
 remains pending; physical-device and human-accessibility limits remain recorded.
-Next is the [0.6.3 developer site and process presentation](docs/working/v0_6_3_developer_site_plan.md).
+Next is the [0.6.3 developer site and UI review tools](docs/working/v0_6_3_developer_site_plan.md).
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
 [v0.6.2 changelog](CHANGELOG.md#062---2026-10-24) ·

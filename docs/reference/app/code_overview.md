@@ -27,7 +27,7 @@ threat, bot, or replay-analysis semantics.
 | Area | Files | Contract |
 |---|---|---|
 | App shell | `src/main.tsx`, `src/app/App.tsx`, `src/app/PlayerApp.tsx`, `src/app/global.css` | Lazy developer/player selection, player lifecycle and global tokens |
-| Developer references | `src/developer/*`, `src/routes/AssetPreviewRoute.tsx` | Public frame, prepared Process/Overview, canonical inspectors and typed curated reviews; no private or engine initialization |
+| Developer references | `src/developer/*`, `src/routes/AssetPreviewRoute.tsx` | Public frame, tool overview, canonical inspectors and typed UI review references/comparisons; no private or engine initialization |
 | Routes | `src/routes/*Route.tsx` | Product screens: Home, Match, Replay, Profile, Settings |
 | Board component | `src/components/Board/Board.tsx` | React wrapper around the Phaser board scene |
 | Board renderer | `src/board/*` | Phaser scene, sprites, overlays, input mapping, and animation timing |

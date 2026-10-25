@@ -1,0 +1,94 @@
+{
+  "checked_at": "2026-10-25T03:07:29.986262+00:00",
+  "scope": "Local developer UI review refinement; no push/version/tag/deployment or human acceptance claim",
+  "source": {
+    "base_commit": "d9c96b5a99a481b35d795fa79dc944aabf219fc8",
+    "sha256": {
+      "gomoku-web/playtests/developer.spec.ts": "5da3d1dda7666989cc2e98e7c91b99b381540d01f2b24faea5f0b8f8f6d40612",
+      "gomoku-web/scripts/check_review_export.mjs": "b070db06539bdaf054c496c28cb502242c45450de31be853ee44a961c61936ef",
+      "gomoku-web/src/app/App.test.tsx": "03c4c2fa93fa9447954e48e509896ef5707e3ce9b0cfd3a7908747825c1952af",
+      "gomoku-web/src/developer/DeveloperApp.tsx": "96af5e4268e0cb1780e5c01882bbaa6f9478873ef1e2c305de79c1cd1fadc517",
+      "gomoku-web/src/developer/DeveloperPages.tsx": "319e14214a217c7b0fc4eb07cbca9fa4dee8b90866b44531ad67a87dd918699c",
+      "gomoku-web/src/developer/ReviewCase.tsx": "b6503f255f265a6faab094fd002e1191cc6187f1217115c022ed1200b8790d89",
+      "gomoku-web/src/developer/ReviewRoutes.tsx": "8d55e7bb98d45d329d3e2f4e8288870e95cbd093e3742b72f4ddffe9b4a12fa6",
+      "gomoku-web/src/developer/developer.css": "d36c95660764796c884d2552fa2f6828ada6fb8a14d63e39574cfb2fc09c17d3",
+      "gomoku-web/src/developer/reviews.css": "2daeacce9577fcf068149efa7c9f1c6e1ae3600dfdfa1510d0c11642ab69b7ed",
+      "gomoku-web/src/developer/ReviewChecklist.tsx": "4b9e49f872ba21183f5caa61a5bd0f4325d31a7c0e39db8c60c09294a98a03a7"
+    }
+  },
+  "changes": [
+    "Remove prose Process page; redirect its URL to UI review",
+    "Present the maintained screenshot checklist alongside real references/comparisons/findings",
+    "Default to full captures with source-width-proportional columns, shared scale and aligned top edges",
+    "Retain native pixels, bounded panes, synchronization and URL/history controls"
+  ],
+  "checks": {
+    "build": "passed",
+    "typecheck": "passed app/scripts/tools",
+    "units": {
+      "passed": 526,
+      "files": 53
+    },
+    "developer_suite": {
+      "passed": 24,
+      "failed": 0,
+      "engines": 3,
+      "scope": "Complete developer suite before final caption-alignment CSS adjustment"
+    },
+    "final_viewer_checks": {
+      "passed": 6,
+      "failed": 0,
+      "engines": 3,
+      "scope": "After alignment: curated controls and shared-scale/full-frame/top-edge checks, 1280/844/390/320px and 200% narrow text"
+    },
+    "accessibility": {
+      "views": 27,
+      "violations": 0,
+      "incomplete_entries": 15,
+      "incomplete_rules": [
+        "color-contrast"
+      ],
+      "scope": "Review index and two mixed-device cases with checklist opened; manual contrast/screen-reader/device acceptance remains separate"
+    },
+    "standalone_export": {
+      "engines_passed": 3,
+      "record": "core-screens-062",
+      "history_reload_native_full_narrow_200_percent": true,
+      "scope": "Prepared local export using the same ReviewCase/styles; temporary server stopped; not republished as a shared report"
+    },
+    "static_delivery": {
+      "checked": 108,
+      "sha256_parity": true,
+      "records": 4,
+      "frozen_media_and_recorded_reports_unchanged": true
+    },
+    "carbon_delivery": {
+      "host": "carbon",
+      "base": "http://localhost:46862/",
+      "files": 194,
+      "sha256_parity": true,
+      "checked_at": "2026-10-25T03:04:46.869737+00:00"
+    }
+  },
+  "build": {
+    "files": 194,
+    "sha256_manifest": "5847c932363aa6315cb257d34ef296dd90d392926b713e25c0ef44945c81ad6d",
+    "full_manifest": "gomoku-web/test-results/v063-review-refinement-carbon.json"
+  },
+  "raw_evidence_sha256": {
+    "gomoku-web/test-results/v063-review-refinement-build-aligned.log": "aebf592db2fbcc04ed5494fd5b19d8d33a82a3f457668c7e03839538f7a7a6af",
+    "gomoku-web/test-results/v063-review-refinement-types-final.log": "04964269a569a25c3fd6ba893425ebc56ce091e919a6656ec414da2dfbc910d1",
+    "gomoku-web/test-results/v063-review-refinement-unit-final.log": "dab32ecfd0e7628adc3e1f8565afe7e24f596a3b820cbd9bf5e901dff41c4d21",
+    "gomoku-web/test-results/v063-review-refinement-final.json": "17be4ba15e034e969e10da55eecffa52b85227d4bcc00f082838b68e68283f60",
+    "gomoku-web/test-results/v063-review-refinement-aligned.json": "6c838b5134de10985a50dccf369be67fef14b9d3ddd0e07aa67003205b9370c6",
+    "gomoku-web/test-results/v063-review-refinement-visuals/checks.json": "7511dd0a3872b5a881df5435efb40d91a8d0616c62194d9553dade567a78694c",
+    "gomoku-web/test-results/v063-review-refinement-export-browser.json": "ac88e88c721ab532157ac6b75445ab4d50d8994dce528d99dbc8193276ca788c",
+    "gomoku-web/test-results/v063-review-refinement-delivery-aligned.log": "8fcda9ef85652c9d827bf68fd76f7bf7ee3d570747dc7392b3d4b34dc6dbda79",
+    "gomoku-web/test-results/v063-review-refinement-carbon.json": "cb81ac415567e12bc1fbbb8e05801f5e763d6390a6acc7c490376597e471d78f"
+  },
+  "remaining": [
+    "Bryan visual review of the refinement",
+    "Manual contrast and physical/accessibility acceptance",
+    "Separately authorized release preparation and publication"
+  ]
+}

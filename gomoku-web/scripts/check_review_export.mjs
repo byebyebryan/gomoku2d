@@ -19,7 +19,9 @@ for (const [engine, type] of Object.entries({ chromium, firefox, webkit })) {
   try {
     await page.goto(base);
     await page.getByRole("heading", { name: record.title, exact: true }).waitFor();
-    const select = page.getByRole("combobox", { name: "Screen and conditions" });
+    const select = page.getByRole("combobox", {
+      name: "Screen and conditions",
+    });
     if (await select.count()) await select.selectOption(pair.id);
     else await page.getByRole("button", { name: pair.title, exact: true }).click();
     await page.locator(`.review-capture img[src$="${pair.media.at(-1)?.file}"]`).waitFor();
@@ -34,7 +36,11 @@ for (const [engine, type] of Object.entries({ chromium, firefox, webkit })) {
       );
     if (widths.join(",") !== pair.media.map((media) => media.width).join(","))
       throw new Error("Wrong selected media");
-    await page.getByRole("button", { name: "Show full captures", exact: true }).click();
+    const full = page.getByRole("button", {
+      name: "Full captures",
+      exact: true,
+    });
+    if ((await full.getAttribute("aria-pressed")) !== "true") await full.click();
     await page.getByRole("button", { name: "Native pixels", exact: true }).click();
     await page.reload();
     await page.locator(".review-native").waitFor();
@@ -42,7 +48,11 @@ for (const [engine, type] of Object.entries({ chromium, firefox, webkit })) {
     await page.locator(".review-native").waitFor({ state: "hidden" });
     await page.goForward();
     await page.locator(".review-native").waitFor();
-    await page.getByText("Technical evidence, sources and media identity", { exact: true }).click();
+    await page
+      .getByText("Technical evidence, sources and media identity", {
+        exact: true,
+      })
+      .click();
     await page.setViewportSize({ width: 320, height: 800 });
     await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
     await page.evaluate(() => document.fonts.ready);
@@ -84,7 +94,9 @@ for (const [engine, type] of Object.entries({ chromium, firefox, webkit })) {
         ),
       }),
     );
-    await page.screenshot({ path: `test-results/v063-export-${engine}-failure.png` });
+    await page.screenshot({
+      path: `test-results/v063-export-${engine}-failure.png`,
+    });
     throw error;
   } finally {
     await browser.close();

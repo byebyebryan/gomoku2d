@@ -15,7 +15,7 @@ sharing check and retained human/device deferrals.
 [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
 identifies the published build. The [roadmap](reference/product/roadmap.md)
 and [0.6.3 developer-site plan](working/v0_6_3_developer_site_plan.md) put
-design/assets and evolving process/review presentation next, followed by
+design/assets and practical UI review tools next, followed by
 0.6.4 replay collections; curated learning follows later. The
 [follow-up research](working/v0_6_followup_plan.md) retains future scope, and
 the [implementation archive](archive/v0_6_implementation.md) indexes completed
@@ -40,7 +40,7 @@ semantics; the [execution record](working/v0_6_3_execution.md) owns local
 validation. This does not change the published-release statement above.
 
 Markdown is detailed agent/maintainer context. The developer area prepares
-selected design references, inspectors, review comparisons and process explanations
+selected design references, inspectors, review comparisons and the screenshot checklist
 for human reading; it does not automatically publish this tree.
 
 ## Choose A Path

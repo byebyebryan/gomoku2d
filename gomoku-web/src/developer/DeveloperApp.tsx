@@ -1,9 +1,9 @@
 import { Component, Suspense, lazy, useEffect, useRef, type ReactNode } from "react";
-import { Link, NavLink, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { Icon } from "../ui/Icon";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { PROJECT_SOURCE_URL } from "../app/links";
-import { DeveloperOverview, DeveloperProcess } from "./DeveloperPages";
+import { DeveloperOverview } from "./DeveloperPages";
 import "./developer.css";
 
 const Assets = lazy(async () => ({
@@ -12,13 +12,14 @@ const Assets = lazy(async () => ({
 const Lab = lazy(async () => ({
   default: (await import("../routes/LabReportRoute")).LabReportRoute,
 }));
-const Reviews = lazy(async () => ({ default: (await import("./ReviewRoutes")).ReviewRoutes }));
+const Reviews = lazy(async () => ({
+  default: (await import("./ReviewRoutes")).ReviewRoutes,
+}));
 const sections = [
   ["/dev/", "Overview"],
   ["/visuals/", "Design & assets"],
   ["/lab/", "Lab"],
-  ["/dev/reviews/", "Reviews"],
-  ["/dev/process/", "Process"],
+  ["/dev/reviews/", "UI review"],
 ];
 
 class DeveloperRecovery extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -100,7 +101,7 @@ function DeveloperFrame() {
         <footer className="dev-footer">
           <span>Gomoku2D · the work behind the game</span>
           <span>
-            <Link to="/dev/process/">Process & evidence</Link> ·{" "}
+            <Link to="/dev/reviews/">UI review</Link> ·{" "}
             <a href={`${import.meta.env.BASE_URL}assets/fonts/LICENSE.txt`}>Font license</a>
           </span>
         </footer>
@@ -125,7 +126,7 @@ export function DeveloperApp() {
     <Routes>
       <Route element={<DeveloperFrame />}>
         <Route path="/dev" element={<DeveloperOverview />} />
-        <Route path="/dev/process" element={<DeveloperProcess />} />
+        <Route path="/dev/process" element={<Navigate to="/dev/reviews/" replace />} />
         <Route path="/dev/reviews/*" element={<Reviews />} />
         <Route path="/lab" element={<Lab />} />
         <Route path="/visuals" element={<Assets />} />

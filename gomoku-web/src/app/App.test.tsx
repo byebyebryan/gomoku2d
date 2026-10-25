@@ -93,6 +93,7 @@ vi.mock("../routes/PolicyRoute", () => ({
 describe("App", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    HTMLElement.prototype.scrollTo = vi.fn();
   });
 
   afterEach(() => {
@@ -101,7 +102,7 @@ describe("App", () => {
 
   it.each([
     ["/dev/", "Inside Gomoku2D"], ["/DEV/", "Inside Gomoku2D"],
-    ["/%64ev/", "Inside Gomoku2D"], ["/dev/process/", "Build. Inspect. Improve."],
+    ["/%64ev/", "Inside Gomoku2D"], ["/dev/process/", "UI review"],
     ["/dev/unknown/", "Reference not found"], ["/visuals/", "Visuals"], ["/lab/", "Lab Report"],
   ])("renders public developer entry %s without starting auth or private controllers",async(path,heading)=>{
     render(<MemoryRouter initialEntries={[path]}><App/></MemoryRouter>);

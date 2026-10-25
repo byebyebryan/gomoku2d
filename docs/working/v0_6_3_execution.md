@@ -165,3 +165,44 @@ All 194 qualified files were fetched on Carbon through this forward and matched
 the recorded hashes. The existing 8013/Auth/Firestore tunnel is unchanged.
 This verifies delivery from Carbon; Bryan's browser/visual acceptance remains
 separate. The earlier Starship URL remains available locally.
+
+## UI review refinement after the integrated preview
+
+Bryan asked to show the process through useful working tools, beginning with UI
+review. The generic prose Process page and its overview copy are removed. The
+navigation now contains Overview, Design & assets, Lab and UI review; the old
+Process URL redirects to the review index. The index separates released screen
+references from historical layout/icon reviews. The actual screenshot checklist
+is available in both the index and case viewer, with a link to its maintained MD
+procedure. No new claims of human acceptance are introduced.
+
+The default comparison uses source-width proportions and complete captures.
+For example, desktop 1280 and portrait 390 receive columns in that proportion,
+so their source pixels use one display scale. Captions share a row and screenshot
+top edges align. Narrow layouts stack at the same scale; native pixels remain
+available for detail. Full captures can be toggled off for bounded scroll panes.
+Scroll synchronization is offered in native-pixel or bounded-pane mode.
+Frozen screenshots, captions and source identities are unchanged.
+
+Build/type checks and all 526 units pass. The developer suite passes 24 journeys
+across Chromium/Firefox/WebKit. The final caption-alignment adjustment passes
+six targeted viewer journeys. These assert matched image scale, complete frames,
+aligned top edges, history, native pixels, scrolling, legacy redirect and narrow
+layouts including 320px/200% text. The standalone export also passes all three
+engines using the shared component/styles. A 27-view audit with the checklist
+opened reports zero violations and 15 incomplete colour-contrast entries; these
+still need manual judgment and do not establish screen-reader/device acceptance.
+The initial scroll-off test raced the URL-state commit; it now waits for the off
+control before moving the pane. JSDOM's missing scrolling API is stubbed only in
+the route test fixture.
+
+The 108-route/file source/media parity check passes, and all 194 final build
+files were fetched through Carbon's localhost forward with matching hashes.
+The integrated preview remains `http://localhost:46862/dev/` on Carbon. Owned
+headless browsers and the temporary standalone-export server were closed.
+Existing manual services and forwarding remain active. No push, release or
+production deployment was performed.
+
+The [refinement validation](v0_6_3_review_refinement.json) qualifies this later
+build; the earlier validation record remains a dated baseline. Bryan's visual
+review of the new layout is the next acceptance gate.

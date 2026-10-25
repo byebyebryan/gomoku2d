@@ -14,6 +14,14 @@ shared frame and representative pages reviewable. Its technical checks and
 delivery are recorded separately from Bryan's visual acceptance ("looks okay to me").
 The [execution record](v0_6_3_execution.md) tracks implementation and validation.
 
+Refinement after the integrated preview: Bryan selected useful working tools
+as the process presentation. The standalone prose Process page is replaced by
+UI review, with the maintained checklist, screen references, actual comparisons
+and findings. Desktop/portrait comparisons default to complete images at matched
+scale. The original proposed page descriptions below remain the design history;
+the [current contract](../reference/app/developer_area.md) and
+[execution record](v0_6_3_execution.md) own the resulting implementation.
+
 ## 1. Agreed direction
 
 Expand the existing GitHub Pages site at `gomoku2d.byebyebryan.com`, in this

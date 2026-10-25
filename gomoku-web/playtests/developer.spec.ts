@@ -124,9 +124,13 @@ test("public navigation, keyboard entry and unknown-route recovery work", async 
   await expect(page.locator("#developer-content")).toBeFocused();
   await page
     .getByRole("navigation", { name: "Developer sections" })
-    .getByRole("link", { name: "Process", exact: true })
+    .getByRole("link", { name: "UI review", exact: true })
     .click();
   await expect(page.locator("#developer-content")).toBeFocused();
+  await expect(page.getByRole("heading", { name: "UI review", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "Developer sections" }).getByRole("link"),
+  ).toHaveCount(4);
   await page.goBack();
   await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
   await page.goto("/dev/not-a-page/");
@@ -138,7 +142,10 @@ test("public navigation, keyboard entry and unknown-route recovery work", async 
 test("curated reviews retain frozen media and comparison controls", async ({ page }) => {
   await page.goto("/dev/reviews/mobile-records-062/");
   await expect(
-    page.getByRole("heading", { name: "Keep mobile records within reach", exact: true }),
+    page.getByRole("heading", {
+      name: "Keep mobile records within reach",
+      exact: true,
+    }),
   ).toBeVisible();
   await page
     .locator(".review-capture img")
@@ -152,6 +159,7 @@ test("curated reviews retain frozen media and comparison controls", async ({ pag
         images.every((image) => (image as HTMLImageElement).naturalWidth === 390),
       ),
   ).toBe(true);
+  await page.getByRole("button", { name: "Full captures", exact: true }).click();
   await page.getByRole("button", { name: "Native pixels", exact: true }).click();
   const panes = page.locator(".review-capture");
   await panes.first().evaluate((element) => {
@@ -159,25 +167,29 @@ test("curated reviews retain frozen media and comparison controls", async ({ pag
   });
   await expect
     .poll(() =>
-      panes.nth(1).evaluate((element) =>
-        Math.abs(element.scrollTop - (element.scrollHeight - element.clientHeight)),
-      ),
+      panes
+        .nth(1)
+        .evaluate((element) =>
+          Math.abs(element.scrollTop - (element.scrollHeight - element.clientHeight)),
+        ),
     )
     .toBeLessThanOrEqual(1);
   await page.getByRole("button", { name: "Scroll together on", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Scroll together off", exact: true })).toBeVisible();
   const held = await panes.nth(1).evaluate((element) => element.scrollTop);
   await panes.first().evaluate((element) => {
     element.scrollTop = 0;
   });
   await page.evaluate(
-    () => new Promise<void>((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-    ),
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
   );
   expect(await panes.nth(1).evaluate((element) => element.scrollTop)).toBe(held);
   await page.getByRole("button", { name: "Scroll together off", exact: true }).click();
-  await page.getByRole("button", { name: "Fit image width", exact: true }).click();
-  await page.getByRole("button", { name: "Show full captures", exact: true }).click();
+  await page.getByRole("button", { name: "Matched scale", exact: true }).click();
+  await page.getByRole("button", { name: "Full captures", exact: true }).click();
   await expect(page.locator(".review-full")).toBeVisible();
   await page.getByRole("button", { name: "Public player replay rows", exact: true }).click();
   await expect(page.locator('img[src$="public-after.png"]')).toBeVisible();
@@ -199,7 +211,11 @@ test("curated reviews retain frozen media and comparison controls", async ({ pag
   await page
     .getByRole("combobox", { name: "Screen and conditions" })
     .selectOption("public-player-stress");
-  await page.getByText("Technical evidence, sources and media identity", { exact: true }).click();
+  await page
+    .getByText("Technical evidence, sources and media identity", {
+      exact: true,
+    })
+    .click();
   expect(
     await page
       .locator(".dev-page")
@@ -208,6 +224,54 @@ test("curated reviews retain frozen media and comparison controls", async ({ pag
   await expect(page.locator('img[src$="public-player-enlarged.png"]')).toBeVisible();
   await page.goto("/dev/reviews/unknown/");
   await expect(page.getByRole("heading", { name: "Review not found", exact: true })).toBeVisible();
+});
+
+test("responsive review captures share a scale and show their full frames", async ({ page }) => {
+  for (const [width, height, font] of [
+    [1280, 900, "100%"],
+    [844, 390, "100%"],
+    [390, 844, "100%"],
+    [320, 800, "200%"],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    for (const path of ["/dev/reviews/core-screens-062/", "/dev/reviews/public-player-062/"]) {
+      await page.goto(path);
+      await page.getByRole("button", { name: "Matched scale", exact: true }).waitFor();
+      await page.evaluate((size) => (document.documentElement.style.fontSize = size), font);
+      for (const image of await page.locator(".review-capture img").all()) {
+        await image.scrollIntoViewIfNeeded();
+        await image.evaluate((element) => (element as HTMLImageElement).decode());
+      }
+      const captures = await page.locator(".review-capture img").evaluateAll((images) =>
+        images.map((element) => {
+          const image = element as HTMLImageElement;
+          const pane = image.parentElement!;
+          return {
+            scale: image.getBoundingClientRect().width / image.naturalWidth,
+            width: image.getBoundingClientRect().width,
+            top: image.getBoundingClientRect().top,
+            cropped: pane.scrollHeight - pane.clientHeight,
+          };
+        }),
+      );
+      expect(Math.abs(captures[0].scale - captures[1].scale)).toBeLessThan(0.001);
+      expect(captures[0].scale).toBeLessThanOrEqual(1);
+      expect(captures[0].width).toBeGreaterThan(captures[1].width);
+      if (width > 560) expect(Math.abs(captures[0].top - captures[1].top)).toBeLessThanOrEqual(1);
+      expect(captures.every((capture) => capture.cropped <= 1)).toBe(true);
+      expect(
+        await page.locator(".dev-page").evaluate((e) => e.scrollWidth - e.clientWidth),
+      ).toBeLessThanOrEqual(1);
+    }
+  }
+  await page.goto("/dev/process/");
+  await expect(page).toHaveURL(/\/dev\/reviews\/$/);
+  await page.getByText("UI review checklist", { exact: true }).click();
+  await expect(
+    page.getByText("Keep the board dominant on match and replay screens.", {
+      exact: true,
+    }),
+  ).toBeVisible();
 });
 
 test("sprite previews preserve player colour, stepping and reduced motion", async ({ page }) => {

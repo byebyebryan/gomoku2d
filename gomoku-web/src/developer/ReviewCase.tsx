@@ -1,13 +1,14 @@
-import { useRef } from "react";
+import { useRef, type CSSProperties } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { ReviewRecord } from "./review_record";
+import { ReviewChecklist } from "./ReviewChecklist";
 import "./reviews.css";
 
 export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaRoot?: string }) {
   const [params, setParams] = useSearchParams();
   const comparison =
     record.comparisons.find((pair) => pair.id === params.get("pair")) ?? record.comparisons[0];
-  const full = params.get("full") === "1",
+  const full = params.get("full") !== "0",
     native = params.get("native") === "1",
     sync = params.get("sync") !== "off";
   const panes = useRef<(HTMLDivElement | null)[]>([]),
@@ -21,6 +22,11 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
     setParams(next, { preventScrollReset: true });
   }
   const root = mediaRoot ?? `${import.meta.env.BASE_URL}reviews/${record.id}/`;
+  const largestWidth = Math.max(...comparison.media.map((media) => media.width));
+  const layout = {
+    "--review-columns": comparison.media.map((media) => `minmax(0, ${media.width}fr)`).join(" "),
+    "--review-max-width": `${comparison.media.reduce((sum, media) => sum + media.width, 0) + 24 * (comparison.media.length - 1)}px`,
+  } as CSSProperties;
   return (
     <article className="review-case">
       <header className="dev-heading">
@@ -61,19 +67,22 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
       <div className="dev-tools">
         <button
           className="dev-tool"
-          aria-pressed={full}
-          onClick={() => update({ full: full ? null : "1" })}
+          aria-pressed={!native}
+          onClick={() => update({ native: null })}
         >
-          {full ? "Fit comparison panes" : "Show full captures"}
+          Matched scale
+        </button>
+        <button className="dev-tool" aria-pressed={native} onClick={() => update({ native: "1" })}>
+          Native pixels
         </button>
         <button
           className="dev-tool"
-          aria-pressed={native}
-          onClick={() => update({ native: native ? null : "1" })}
+          aria-pressed={full}
+          onClick={() => update({ full: full ? "0" : null })}
         >
-          {native ? "Fit image width" : "Native pixels"}
+          Full captures
         </button>
-        {comparison.media.length > 1 && (
+        {comparison.media.length > 1 && (!full || native) && (
           <button
             className="dev-tool"
             aria-pressed={sync}
@@ -86,9 +95,17 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
       <div
         className={`review-pair ${full ? "review-full" : ""} ${native ? "review-native" : ""}`}
         data-count={comparison.media.length}
+        style={layout}
       >
         {comparison.media.map((media, index) => (
-          <figure key={media.file}>
+          <figure
+            key={media.file}
+            style={
+              {
+                "--review-width-ratio": media.width / largestWidth,
+              } as CSSProperties
+            }
+          >
             <figcaption>
               <strong>{media.label}</strong>
               <span>
@@ -97,9 +114,9 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
             </figcaption>
             <div
               className="review-capture"
-              tabIndex={0}
+              tabIndex={!full || native ? 0 : -1}
               role="region"
-              aria-label={`${media.label} capture, scroll to inspect`}
+              aria-label={`${media.label} capture${!full || native ? ", scroll to inspect" : ""}`}
               ref={(element) => {
                 panes.current[index] = element;
               }}
@@ -137,6 +154,7 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
           </figure>
         ))}
       </div>
+      <ReviewChecklist />
       <section className="dev-section">
         <h2>
           {record.disposition === "screen reference" ? "Reference notes" : "Findings and decisions"}
