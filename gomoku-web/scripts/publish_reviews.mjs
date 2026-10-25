@@ -7,12 +7,21 @@ export async function publishReviews(destination = resolve(webRoot, "dist")) {
   for (const record of records) {
     const target = resolve(destination, "reviews", record.id);
     await mkdir(target, { recursive: true });
-    await writeFile(resolve(target, "record.json"), JSON.stringify(record, null, 2) + "\n");
+    await writeFile(
+      resolve(target, "record.json"),
+      JSON.stringify(record, null, 2) + "\n",
+    );
     for (const pair of record.comparisons)
       for (const media of pair.media)
-        await copyFile(resolve(repoRoot, media.sourcePath), resolve(target, media.file));
+        await copyFile(
+          resolve(repoRoot, media.sourcePath),
+          resolve(target, media.file),
+        );
   }
-  console.log(`Published ${records.length} curated review records and their allowlisted media.`);
+  console.log(
+    `Published ${records.length} curated review records and their allowlisted media.`,
+  );
   await publishHistory(destination);
 }
-if (process.argv[1] === new URL(import.meta.url).pathname) await publishReviews(process.argv[2]);
+if (process.argv[1] === new URL(import.meta.url).pathname)
+  await publishReviews(process.argv[2]);

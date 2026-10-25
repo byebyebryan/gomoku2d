@@ -1,0 +1,2 @@
+# Hash-identified process output: preserve whitespace emitted by the tagged build.
+builds/*/build.log -whitespace

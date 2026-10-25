@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "qualifiedAt": "2026-10-25T23:10:29.660634+00:00",
+  "sources": 25,
+  "milestones": 24,
+  "changes": 89,
+  "snapshots": 137,
+  "publishedImages": 274,
+  "originalRunManifests": 41,
+  "byteChecks": "Every promoted PNG SHA-256 and dimensions match its complete manifest; no unexpected network/console/page errors.",
+  "conditions": "Retrospective modern Chromium; generic Android touch, not physical phone acceptance."
+}

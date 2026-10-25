@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-25T20:58:31.240478+00:00",
+  "tag": "v0.2.1",
+  "sourceCommit": "add1953c3228849a8d37c424d0deec971c1fc937",
+  "sourceTree": "5595af9b0fd3b688b26fccb5f335d94c62e23c7b",
+  "applicationTree": "492d0440530673f5bb6cb06b3417e05a6dc24dc8",
+  "packageVersion": "0.1.0",
+  "packageLockSha256": "2d0c347122f0d6b482ef8e18c8ffd22ed16239d7f2aca152038b5cb6d8af4066",
+  "cargoLock": {
+    "kind": "generated-external",
+    "sha256": "e7cc7afb68e2dacc0591dc5f7aae47deda250b2072f4ee485d945021a53bfbc0"
+  },
+  "wasmSha256": "c003ad463a9cbd28266dea52c86f76f0a932bf654483ef0fdcb7da0ef990d539",
+  "distSha256": "b07f9ae5c8343b248567f69d73a6d7ff8949f8c910639735e0e46eb9542a431e",
+  "indexSha256": "391e6f139646fff58974c85310af457b0e83e053a36a95164dca94a97408cd8a",
+  "files": [
+    {
+      "path": "404.html",
+      "sha256": "391e6f139646fff58974c85310af457b0e83e053a36a95164dca94a97408cd8a"
+    },
+    {
+      "path": "assets/Board-BFNtfZFQ.css",
+      "sha256": "69bba30ec0bf84512114557b8ded540223724ac910759d0f4e7ebfd9f35895bc"
+    },
+    {
+      "path": "assets/Board-CUrhosqL.js",
+      "sha256": "181e25d614086ac10cb95f70ae953472e3ce63eaaf0912c4e044bb8ab05f42f4"
+    },
+    {
+      "path": "assets/LocalMatchRoute-CKHrjxhT.js",
+      "sha256": "efd822758d938a322c84d9c17c7d8dd802d827edf48c835b75520e085fbc2f92"
+    },
+    {
+      "path": "assets/LocalMatchRoute-Dub7Tj6R.css",
+      "sha256": "d614596dfdf909c5de67d21546097846dd926fbf9b3834b05e40879075c6dc1d"
+    },
+    {
+      "path": "assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+      "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+    },
+    {
+      "path": "assets/PixelOperator-C4gCAeI2.ttf",
+      "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+    },
+    {
+      "path": "assets/PixelOperator8-Bold-DdofeDmZ.fnt",
+      "sha256": "764a1e3ef60af68cfe68aebfab399be21eff4196b33f09040aebc9b54a19b796"
+    },
+    {
+      "path": "assets/ProfileRoute-CBUIyMBu.css",
+      "sha256": "8e762b77409179423ed05b5df5ba37aeef90eed50b44e61dad82a0d12b6e958d"
+    },
+    {
+      "path": "assets/ProfileRoute-CzDioSNC.js",
+      "sha256": "070d9cba9718ff02c3740e97cc6c5546d1fcc12d5a684c66ff1386425e95d171"
+    },
+    {
+      "path": "assets/ReplayRoute-B6E3Fi4B.js",
+      "sha256": "e0d3240d9f2723a31cc3b9d7be59456efe23f06308a38a5cafe29ba1ef762ae1"
+    },
+    {
+      "path": "assets/ReplayRoute-BmiZYGso.css",
+      "sha256": "d73f16afddc85d086fde6009f0fcb91d06225ed681492741e21a17d801030eed"
+    },
+    {
+      "path": "assets/bot_worker-DY1BgBX_.js",
+      "sha256": "3455220204e953dc130b5ccc50008b9ab9a523b4a5213aac65595a27a6e52c37"
+    },
+    {
+      "path": "assets/gomoku_wasm_bg-BNUacn0L.wasm",
+      "sha256": "c003ad463a9cbd28266dea52c86f76f0a932bf654483ef0fdcb7da0ef990d539"
+    },
+    {
+      "path": "assets/gomoku_wasm_bg.wasm",
+      "sha256": "ced48030f841466d20ce6bffb4b6571cf562f1c0dbadeebfe51e230ab4b0782d"
+    },
+    {
+      "path": "assets/index-BsOQaIJL.js",
+      "sha256": "052794faa567df01fdcd902c93bcc258497b9c84ef2322b07f3bf4ec1e142609"
+    },
+    {
+      "path": "assets/index-CiCFHCmJ.css",
+      "sha256": "0389fc76eb56d2bec514b7949f2b4468844b4c7b521e142a4d5301e9b1a5893a"
+    },
+    {
+      "path": "assets/jsx-runtime-Di5XmrZk.js",
+      "sha256": "d0c3a30ba93fa48f99d89ca7cc67f1ab9c6e1a8468b206eea8377f2824a1a28a"
+    },
+    {
+      "path": "assets/local_replay-CQrBceIM.js",
+      "sha256": "310b99800ff186d2b20cbeaff9bed27b49402ca59e69ff5475914f7fba35d450"
+    },
+    {
+      "path": "assets/sprites/PixelOperator8-Bold.fnt",
+      "sha256": "764a1e3ef60af68cfe68aebfab399be21eff4196b33f09040aebc9b54a19b796"
+    },
+    {
+      "path": "assets/sprites/PixelOperator8-Bold.png",
+      "sha256": "f79f0605041c255cf25cf1491cacb3e3c35e22ec65d10cb11a1031964e7b9099"
+    },
+    {
+      "path": "assets/sprites/button.png",
+      "sha256": "01c705645618f52ea88af5976d461cd2d8d87f834152f3b1ba38455319b20920"
+    },
+    {
+      "path": "assets/sprites/pointer.png",
+      "sha256": "c6957154cf95e1a800256a664c87737b2845dc33fb55a4796fe0b615a3ae8064"
+    },
+    {
+      "path": "assets/sprites/stone.png",
+      "sha256": "7ef202f693ad04b0dc318d6fa7d595cdbe2bca7c379a2eaf9b7ebf835fdee0dc"
+    },
+    {
+      "path": "assets/sprites/warning.png",
+      "sha256": "3535a106dd660e3d2b2f521a6117d7c6405c26731cad5720c45a950cd9793afd"
+    },
+    {
+      "path": "assets/wasm_bridge-B42QrwjF.js",
+      "sha256": "5ce89cb01b536df52ef715c6b61c34fb4e08e70b05f72bdcdb916ecd5474823d"
+    },
+    {
+      "path": "index.html",
+      "sha256": "391e6f139646fff58974c85310af457b0e83e053a36a95164dca94a97408cd8a"
+    }
+  ],
+  "reportInputs": [],
+  "environment": {
+    "node": "v26.12.1",
+    "npm": "12.2.1",
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27) (Arch Linux rust 1:1.99.1-1)",
+    "wasmPack": "wasm-pack 0.14.0",
+    "firebaseMode": "none",
+    "firebaseEnvironment": {},
+    "wasmBuild": "wasm-pack release --target bundler; generated Cargo resolution recorded separately",
+    "npmInstall": "npm ci --no-audit --no-fund; host npm default install-script policy",
+    "firebaseModeDescription": "unconfigured-local-guest"
+  },
+  "commands": [
+    {
+      "args": [
+        "/home/bryan/.cargo/bin/wasm-pack",
+        "build",
+        "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_2_1/gomoku-bot-lab/gomoku-wasm",
+        "--target",
+        "bundler"
+      ],
+      "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_2_1"
+    },
+    {
+      "args": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_2_1/gomoku-web"
+    },
+    {
+      "args": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_2_1/gomoku-web"
+    }
+  ],
+  "buildLogSha256": "693301968ecafbb13d5d8880b8123fa062f2f329a08a9f6a7af853011dadbcc1",
+  "applicationInputsClean": true,
+  "normalization": {
+    "recordedAt": "2026-10-25T21:45:36.674111+00:00",
+    "field": "environment.firebaseMode",
+    "previous": "unconfigured-local-guest",
+    "canonical": "none",
+    "reason": "Equivalent enum for the actual --cloud-mode build argument; source, dependency, Wasm and dist bytes unchanged. Original receipt retained.",
+    "originalReceiptSha256": "5adde3b6fdbeaafc1b7ca5e7622a56e773dc5ce5c66e56eefe3f6f6571c9ee65"
+  }
+}

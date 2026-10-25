@@ -1,0 +1,152 @@
+[
+  {
+    "tag": "v0.2.1",
+    "firebaseMode": "none",
+    "sourceCommit": "add1953c3228849a8d37c424d0deec971c1fc937",
+    "distSha256": "b07f9ae5c8343b248567f69d73a6d7ff8949f8c910639735e0e46eb9542a431e"
+  },
+  {
+    "tag": "v0.2.2",
+    "firebaseMode": "none",
+    "sourceCommit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+    "distSha256": "127dce53fd172960235eb33fa9408f5506cca28ba482709d8112eeb4c4f6206c"
+  },
+  {
+    "tag": "v0.2.3",
+    "firebaseMode": "none",
+    "sourceCommit": "95b9707a6c01d77fa50d181bdd1ee4542047a2a2",
+    "distSha256": "161dac38f0b49171e24822a184c11f6aefc437848ef4ea9fd76d3c98439c21e7"
+  },
+  {
+    "tag": "v0.2.4",
+    "firebaseMode": "none",
+    "sourceCommit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+    "distSha256": "616a820a10a55b4052400542c75cbde8afba2cf8a5e9996bb3d0dd00c6540863"
+  },
+  {
+    "tag": "v0.3.0",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "5e44832d872cc1030be6707b97dcd9f9b067d83c",
+    "distSha256": "5524e61f39d4cb94449f4131f1476c6cb5a39627696b788ccb614358b15adef5"
+  },
+  {
+    "tag": "v0.3.1",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "b9fcc3df81cc2ccea24140a3556db40c1929c5f7",
+    "distSha256": "eddf75aff5b61d0e92b76f3dabbd39ea2872c09040b507afe691d54731c0c29c"
+  },
+  {
+    "tag": "v0.3.2",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "3a8dbb05d94f8811e995ae7621329a390a313954",
+    "distSha256": "59575cd5313f24761ccacae6b03c2472f107e0fc362c2a1a8778499308f52032"
+  },
+  {
+    "tag": "v0.3.3",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "73c1698667ddb85085feedf42c7f2cc2a9de7073",
+    "distSha256": "c83e2662a2702de916027ec5ee5949dd8e3dad744b92034309c63ef2f2f4a1c9"
+  },
+  {
+    "tag": "v0.4.0",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "0fc4a45b79c5056cefa5e7485599c0eef5e6295a",
+    "distSha256": "ea9c370f85481a852f6b9b696d3c960d4280814eb186ad0b1aa03b5487e877ed"
+  },
+  {
+    "tag": "v0.4.1",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "aaa6ac548fc2f3fc8c1a3815abd262473823be6f",
+    "distSha256": "2021f02082bba6f703e27b48bae7279489090a505aeb361b6c8d76e4cb9119f8"
+  },
+  {
+    "tag": "v0.4.2",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "5e132248d9602ab0ce3abbdf86da8f92a3fa0e26",
+    "distSha256": "54d0860c0499043f0b2c13f7dcd1aa329b19f7f6d88a9847976a814e1713e5ec"
+  },
+  {
+    "tag": "v0.4.3",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "dba0fb4213520d30f3640729cccaad0ceb5ccc58",
+    "distSha256": "23b07df5cac3b6374044241d6f1c23b6741f408d9a4df885b440d1a53a61110d"
+  },
+  {
+    "tag": "v0.4.4",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "9744aa2576860fbc3af14148504cb2144ef69b75",
+    "distSha256": "b1516135109e011d296863ade461c5e68aa0c5c98ab2171770b3cf6d3f9c5df9"
+  },
+  {
+    "tag": "v0.4.5",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "b97dcff422350ebe78bb0d2cf5061ce52a408ed0",
+    "distSha256": "af4f611fc89b8c8e9f3cc8074cbf6fad8b0e4e933fbd858f18cea538da7258bc"
+  },
+  {
+    "tag": "v0.4.6",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b",
+    "distSha256": "75866f3f35c4dfbcebbce35384c24c238efcf1c1d86f8f2465786695eb3ffc6f"
+  },
+  {
+    "tag": "v0.4.7",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+    "distSha256": "25b324a87cf735aefae2f556cb95d3aa4b0292031aca04e160b27c3510a81622"
+  },
+  {
+    "tag": "v0.4.8",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "ea188acaf3e98b0b0b0952c05993391bc8a8a1ef",
+    "distSha256": "0627cafa077094ee32104b02e7e3bf9cb567029e5d15cde19a808fd2efe336cc"
+  },
+  {
+    "tag": "v0.5.0",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "678a69ac51f2b1f4fa968bf9fe03b69831b847c9",
+    "distSha256": "b8de3c1edff68afae6459abbfdb42c82809d418d6dbbf4420d2354b13c7bba99"
+  },
+  {
+    "tag": "v0.5.1",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+    "distSha256": "66d73f2da00f6726fc7f72403209fbfdea12975c9855fd0587e303737da5f90f"
+  },
+  {
+    "tag": "v0.5.2",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+    "distSha256": "272b17c9004fab6290593741881f2721d8772e2548a3b7711f2e8a4eb705db5f"
+  },
+  {
+    "tag": "v0.5.3",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "8fa3035f2e2e7445907c1d74903d27b1fa072c1a",
+    "distSha256": "a4357324ba705bfbe623552a4be40be54c062283449de561d1456e76874da91f"
+  },
+  {
+    "tag": "v0.5.4",
+    "firebaseMode": "legacy-proxy",
+    "sourceCommit": "b09ac7ff56f1452bccdf63334ce38415b92fdbd8",
+    "distSha256": "984d9adf689a8ddcd929ce08e5aaafff6abfb20225b98d3666b3b0364d4e7092"
+  },
+  {
+    "tag": "v0.5.5",
+    "firebaseMode": "modern-emulators",
+    "sourceCommit": "73658d0a546ba558c746854d38cdac7ec2465802",
+    "distSha256": "3f4256dc7b7fa5458903a5a34827758f4c7daacc1e36e10fc74ebdf596632526"
+  },
+  {
+    "tag": "v0.6.1",
+    "firebaseMode": "modern-emulators",
+    "sourceCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+    "distSha256": "888a1e2546922349fa63b3ade958781cc2a7670dda25a2b9958978cdc09d8cb7"
+  },
+  {
+    "tag": "v0.6.2",
+    "firebaseMode": "modern-emulators",
+    "sourceCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+    "distSha256": "10a84c09c015521d3787554083155a27d5999c04da6a62bebc2523164302b3df"
+  }
+]

@@ -4,20 +4,34 @@ import { isReviewRecord, type ReviewRecord } from "./review_record";
 import { ReviewCase } from "./ReviewCase";
 import { ReviewChecklist } from "./ReviewChecklist";
 import { useDocumentTitle } from "../app/useDocumentTitle";
-import { HistoryRoutes, ReviewNavigation, historyRouteTitle } from "./HistoryRoutes";
+import {
+  HistoryRoutes,
+  ReviewNavigation,
+  historyRouteTitle,
+} from "./HistoryRoutes";
 
 const catalog: ReviewRecord[] = records.filter(isReviewRecord);
-if (catalog.length !== records.length) throw new Error("Unsupported review catalog");
+if (catalog.length !== records.length)
+  throw new Error("Unsupported review catalog");
 export function ReviewRoutes() {
   const { pathname } = useLocation();
   const path = decodeURIComponent(pathname).replace(/\/+$/, "");
   const id = path.split("/").slice(3).join("/");
   const record = catalog.find((item) => item.id === id);
-  useDocumentTitle(record?.title ?? (id === "history" || id.startsWith("history/")
-    ? historyRouteTitle(id === "history" ? undefined : id.slice("history/".length))
-    : "UI review"));
+  useDocumentTitle(
+    record?.title ??
+      (id === "history" || id.startsWith("history/")
+        ? historyRouteTitle(
+            id === "history" ? undefined : id.slice("history/".length),
+          )
+        : "UI review"),
+  );
   if (id === "history" || id.startsWith("history/"))
-    return <HistoryRoutes screenId={id === "history" ? undefined : id.slice("history/".length)} />;
+    return (
+      <HistoryRoutes
+        screenId={id === "history" ? undefined : id.slice("history/".length)}
+      />
+    );
   if (id && !record)
     return (
       <section>
@@ -45,23 +59,23 @@ export function ReviewRoutes() {
         <p className="dev-eyebrow">Screens, comparisons & findings</p>
         <h1>UI review</h1>
         <p className="dev-lead">
-          Inspect the screens. Compare the changes. Follow up on what still needs work.
+          Inspect the screens. Compare the changes. Follow up on what still
+          needs work.
         </p>
       </header>
       <ReviewChecklist />
-      <section className="dev-section history-index-entry">
-        <h2>Follow the UI through its versions</h2>
-        <p className="dev-muted">Browse the milestones, inspect neighbouring changes and follow individual screens through their history.</p>
-        <Link className="uiAction uiActionNeutral" to="/dev/reviews/history/">Open UI history</Link>
-      </section>
       {[
         {
           title: "Current screens",
-          records: catalog.filter((item) => item.disposition === "screen reference"),
+          records: catalog.filter(
+            (item) => item.disposition === "screen reference",
+          ),
         },
         {
           title: "UI evolution",
-          records: catalog.filter((item) => item.disposition === "retrospective comparison"),
+          records: catalog.filter(
+            (item) => item.disposition === "retrospective comparison",
+          ),
         },
         {
           title: "Design & layout reviews",
@@ -76,6 +90,20 @@ export function ReviewRoutes() {
         .map((group) => (
           <section className="dev-section" key={group.title}>
             <h2>{group.title}</h2>
+            {group.title === "UI evolution" && (
+              <div className="history-index-entry">
+                <p className="dev-muted">
+                  Browse the milestones, inspect neighbouring changes and follow
+                  individual screens through their history.
+                </p>
+                <Link
+                  className="uiAction uiActionNeutral"
+                  to="/dev/reviews/history/"
+                >
+                  Open UI history
+                </Link>
+              </div>
+            )}
             <div className="review-index">
               {group.records.map((item) => (
                 <article key={item.id}>
@@ -83,7 +111,9 @@ export function ReviewRoutes() {
                     <h2>{item.title}</h2>
                     <p className="dev-muted">{item.summary}</p>
                     <p className="dev-meta">
-                      {item.disposition === "retrospective comparison" ? "Recaptured " : ""}
+                      {item.disposition === "retrospective comparison"
+                        ? "Recaptured "
+                        : ""}
                       {item.date} · {item.scope} · {item.disposition}
                     </p>
                   </div>

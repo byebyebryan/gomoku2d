@@ -1,0 +1,3349 @@
+{
+  "schemaVersion": 1,
+  "kind": "historical-ui-capture",
+  "status": "failed",
+  "capturedAt": "2026-10-25T22:57:38.823Z",
+  "captureTool": {
+    "filename": "capture_history_ui.mjs",
+    "sha256": "64f9a1723afe9be91b020e59894fcb9babcaa8ceda06a29eb85a47118009ffa0",
+    "version": 1
+  },
+  "tools": {
+    "node": "v24.14.1",
+    "platform": "linux",
+    "architecture": "x64",
+    "browser": {
+      "name": "Chromium",
+      "version": "156.0.8078.4"
+    }
+  },
+  "sources": [
+    {
+      "tag": "v0.6.1",
+      "commit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+      "sourceTree": "0abd829bf01a708a81ffa3612e6be1a4aef8f562",
+      "applicationTree": "caf39b5d9fa112d9f28c1124f9def29e925328a1",
+      "adapter": "local-v5",
+      "packageVersion": "0.6.1",
+      "packageLockSha256": "7eeff88d021df00e05cad3851c12ec538013ace683ced9f8c657ef9ab8c31e44",
+      "cargoLock": {
+        "kind": "tracked",
+        "sha256": "121d5802eb56a1f79f933aa3baf326a0e1aa13ae2786809489ea36dac88e56f1"
+      },
+      "wasmSha256": "e2e177cf8948e055d315cd67be51e349cce267dd183117ee6567174efc37a48e",
+      "distSha256": "888a1e2546922349fa63b3ade958781cc2a7670dda25a2b9958978cdc09d8cb7",
+      "indexSha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6",
+      "reportInputs": [],
+      "buildReceipt": {
+        "recordedAt": "2026-10-25T21:02:13.296254+00:00",
+        "environment": {
+          "node": "v26.12.1",
+          "npm": "12.2.1",
+          "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+          "cargo": "cargo 1.99.1 (5f94df478 2026-08-27) (Arch Linux rust 1:1.99.1-1)",
+          "wasmPack": "wasm-pack 0.14.0",
+          "firebaseMode": "modern-emulators",
+          "firebaseEnvironment": {
+            "VITE_FIREBASE_API_KEY": "[synthetic key redacted]",
+            "VITE_FIREBASE_APP_ID": "1:123:web:history",
+            "VITE_FIREBASE_AUTH_DOMAIN": "127.0.0.1",
+            "VITE_FIREBASE_MESSAGING_SENDER_ID": "123",
+            "VITE_FIREBASE_PROJECT_ID": "demo-gomoku-history",
+            "VITE_FIREBASE_STORAGE_BUCKET": "unused",
+            "VITE_FIREBASE_EMULATORS": "1",
+            "VITE_FIREBASE_AUTH_EMULATOR_PORT": "29099",
+            "VITE_FIREBASE_FIRESTORE_EMULATOR_PORT": "28081"
+          },
+          "wasmBuild": "wasm-pack release --target bundler -- --locked",
+          "npmInstall": "npm ci --no-audit --no-fund; host npm default install-script policy",
+          "firebaseModeDescription": "synthetic-demo-native-emulators"
+        },
+        "assumption": null
+      },
+      "previewOrigin": "http://127.0.0.1:47223",
+      "distFiles": [
+        {
+          "path": "404.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "analysis-report/report.json",
+          "sha256": "3b8399fc1bbf5e797c7c56b52df5e7a579bf099e317cbc22e6297ea069391ca5"
+        },
+        {
+          "path": "assets/AssetPreviewRoute-B9p8d-8D.css",
+          "sha256": "a58b954a0e909a09c30a92466d1777844813a11886154549ce8276b0f8c6f717"
+        },
+        {
+          "path": "assets/AssetPreviewRoute-Cs-bt5zU.js",
+          "sha256": "80badacb7f9b1c2f4daa6260b98bc02e92df72d79dba83356a2237360fb6bbfb"
+        },
+        {
+          "path": "assets/Board-BmUfhmvV.js",
+          "sha256": "565a903e4c21154929ce5c3735ab7ec08f85da4ce967bb74c494889abb7ee938"
+        },
+        {
+          "path": "assets/Board-ev2mndZK.css",
+          "sha256": "eeef309417dfbdb542ba14c739ebf91de728d3701f865a6f6036d7a31b5da976"
+        },
+        {
+          "path": "assets/GuideRoute-DFEXHPF_.js",
+          "sha256": "8f04a317d7072758b35a4d61a1937e0ab58f8bf39436259f267780c31f568d38"
+        },
+        {
+          "path": "assets/GuideRoute-Dz9s15MR.css",
+          "sha256": "7f1f97d4bc4c00175d4fddc227fae3a72fb4d39c824aaa7fb55c390fd47bdf53"
+        },
+        {
+          "path": "assets/Icon-DPnlUttj.js",
+          "sha256": "1bdbc8a459bd2aa1ec913b07dba8b2380dce7991185ed6817c7b8a6aa45d5ecd"
+        },
+        {
+          "path": "assets/LabReportRoute-B8y-R7Ou.css",
+          "sha256": "82876289389df7c63d798712c00153a09f65590ca94781218498fef3e93eb68f"
+        },
+        {
+          "path": "assets/LabReportRoute-D0KJso5A.js",
+          "sha256": "6bef12031451fe4088f796c5fa47c42469fa2dca7edce40a2cc56cb90dc7b0af"
+        },
+        {
+          "path": "assets/LocalMatchRoute-5Im5blTp.js",
+          "sha256": "010b004c350f3ba01de355598594ea1aff8ade6e2b5b5280c2a135fb6d229af2"
+        },
+        {
+          "path": "assets/LocalMatchRoute-jEMs5th3.css",
+          "sha256": "c8d68c4ffac7e8c20b5e1aa91788ab60f8feea4dae7a296ed9287477c9ce68a2"
+        },
+        {
+          "path": "assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+          "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+        },
+        {
+          "path": "assets/PixelOperator-C4gCAeI2.ttf",
+          "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+        },
+        {
+          "path": "assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+          "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+        },
+        {
+          "path": "assets/PolicyRoute-BwlW-aSm.css",
+          "sha256": "8c04758445645cb6182ee332a318d3d6747f614a3b247b5238caf56ec09ecdae"
+        },
+        {
+          "path": "assets/PolicyRoute-C5FYF2V5.js",
+          "sha256": "a5c09621f5c89725a8c485d879c4a6fa2c3e150dd2840a1c9f13e5887ff34bca"
+        },
+        {
+          "path": "assets/ProfileRoute-BSvRRF2y.css",
+          "sha256": "d2fcfa8e83cdac99ddf7973f539bcdcae4683147d1d30cc98e38812e77dee5b3"
+        },
+        {
+          "path": "assets/ProfileRoute-BmDdtprw.js",
+          "sha256": "8015956b645ee30602c28463cfd4253b23e11a5502bdd251cf145d9470f1ffd4"
+        },
+        {
+          "path": "assets/PublicPlayerRoute-DiBJKDWa.js",
+          "sha256": "71797a6286a3c0c695d4c65f1d0e3069243cab99ccfbefc9c3e5980fda16eb35"
+        },
+        {
+          "path": "assets/README.md",
+          "sha256": "c0e0aa88a1b2989d4ef2e54378859e091e12b403f0722569b202d1448a998c43"
+        },
+        {
+          "path": "assets/ReplayLibraryPanel-C4dZUVh6.js",
+          "sha256": "7f3739b3e1d05ea9b68d92b5d5e05da7f225b7b963b32ddb2e52bfa0a01c220c"
+        },
+        {
+          "path": "assets/ReplayLibraryPanel-CURdW3qw.css",
+          "sha256": "cf384c9d5fe5fdc6b7f4149301e2f653e37b330ca8dcf4db8d94aed9b0f3f1ff"
+        },
+        {
+          "path": "assets/ReplayRoute-Vk219O_e.css",
+          "sha256": "1c732321b1f02774c138fba64c2b1bd1747a614c135ce647b9c5cfcb29e0db4e"
+        },
+        {
+          "path": "assets/ReplayRoute-k6ArHsjU.js",
+          "sha256": "391f7e7dc608c0f1f388ac5f3ad991d693238e718488da8a66ef0f649a010944"
+        },
+        {
+          "path": "assets/ReplayRoute-t5fvdmwB.js",
+          "sha256": "8a662919fcbb0f75f5de274b560e0af2f19d6c74a7df0fa28a10c35909c3ba0a"
+        },
+        {
+          "path": "assets/RulesRoute-Dv8yzwWR.css",
+          "sha256": "f5865de48039a645986271ef2d12c31b87549d83ae2764548ea907046f459c15"
+        },
+        {
+          "path": "assets/RulesRoute-fa-SA_jI.js",
+          "sha256": "ffa39358a769ab19ca519326f5cefd1299ddf91cc405868fb86245232768bf18"
+        },
+        {
+          "path": "assets/SettingsRoute-Cy5gHysc.js",
+          "sha256": "e4fabc3a021620bee5535e8228ae2edb3023406acccfb60ceefbd77d53df4b08"
+        },
+        {
+          "path": "assets/SettingsRoute-Dh7LeZCo.css",
+          "sha256": "f434a856d27e0d28066cc886a06e9853a4d49e37025f59659ca9161c4cfce4d3"
+        },
+        {
+          "path": "assets/SharedReplayRoute-iNiZurwt.js",
+          "sha256": "f3115d927b217207484a351615a73ff283a658e07f60179967c965b6e036671b"
+        },
+        {
+          "path": "assets/SharingPanels-DRf2sfP2.css",
+          "sha256": "94511efd9c7d5d0648e44c0ae713239ca5972ea635a9f972e4b5caa457474dd7"
+        },
+        {
+          "path": "assets/SharingPanels.module-C2Irghdi.js",
+          "sha256": "e29c794b9bccdbff5bdcd47c58596901438475c781d0083badeedbe2d681086f"
+        },
+        {
+          "path": "assets/asset_manifest.json",
+          "sha256": "0d71a947651a53748a3f7d2e490fc1a2d6ece2c711cc1296e08ad534f736a47c"
+        },
+        {
+          "path": "assets/board_model-CZzAtTO9.js",
+          "sha256": "bf02c04acda5989da400e8cebfbc5e8d170fd7b2adfe1573f25c02bfb1c48ea3"
+        },
+        {
+          "path": "assets/bot_config-BQyrbE-n.js",
+          "sha256": "0dc9fccf06ce9b390c7123745d6a597c0b22bee6d07d0e86a8cac81a505ab663"
+        },
+        {
+          "path": "assets/bot_worker-DBOx8t91.js",
+          "sha256": "48154ba7e66933b904659fcfcf0fa52839f0f3ca3d984dd3d6f12a7bf201200f"
+        },
+        {
+          "path": "assets/cloud_sync-Cy7CtTTC.js",
+          "sha256": "d543c3f79d1efb65cef311bd85ccd6f4c76c2e13cbd8ed71c75e05c213552255"
+        },
+        {
+          "path": "assets/constants-DKcsxR6O.js",
+          "sha256": "6c98ff34ef26e8e4e8dc4aa3841abf5433a48525f611019ab0621d771356b64e"
+        },
+        {
+          "path": "assets/favicon.png",
+          "sha256": "22e8d958e7d4d67a1547bddb42000282e33b343b6d4b8cf2e0a7197f26c6ee82"
+        },
+        {
+          "path": "assets/firebase-V9FT05AG.js",
+          "sha256": "23432e650311946c92beeb2ba58535074169839fc450a28f3d73fcf74b19fa37"
+        },
+        {
+          "path": "assets/fonts/LICENSE.txt",
+          "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+        },
+        {
+          "path": "assets/fonts/PixelOperator-Bold.ttf",
+          "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+        },
+        {
+          "path": "assets/fonts/PixelOperator.ttf",
+          "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+        },
+        {
+          "path": "assets/fonts/PixelOperator8-Bold.ttf",
+          "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+        },
+        {
+          "path": "assets/fonts/PixelOperator8.ttf",
+          "sha256": "5cccb9ef6cf18977b6e5721d49a1a6e78dd6a6f1c4f69537470f7dc1dc829ffc"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorHB.ttf",
+          "sha256": "fba7efcd1595f795e7ced3dd88bcac890a4fd00a3d7a2212ec0ba67f9d7bff49"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorHB8.ttf",
+          "sha256": "3569a5481727cc277be02ffa72348d40bf3ad9f03b9687b0da3b19fb717d00c8"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorHBSC.ttf",
+          "sha256": "0d1092e620659d122285c310dfeed531df2d8f7d6bb112dddf6f93a776da8216"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMono-Bold.ttf",
+          "sha256": "7b8a5f6cfd5fdb06ddac7d976935babf05afa5ef7bf6b8c1b8cf919b481d33e1"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMono.ttf",
+          "sha256": "e171000f12d196e7a8a1a91c1a429ef3264a0ff007d5f62fa3dc44ef8df51226"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMono8-Bold.ttf",
+          "sha256": "11704bf2bddcde0996909166ad9d10a7ff38eb311a59cb07991f63e5f0185f76"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMono8.ttf",
+          "sha256": "b627505e178c0c51b0ce7d432f2974fdc2064339f17fb5242b7237becad3c467"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMonoHB.ttf",
+          "sha256": "ae7eda40c2fb15e3672a79dee3860d13ab62b3e25f0cccee770b3f45b84c4955"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMonoHB8.ttf",
+          "sha256": "6cc07440ab17ad773fb2814c028d8fe70ecab835f2a577c081a3d226b256be92"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorSC-Bold.ttf",
+          "sha256": "41d6116e70a8118de331b60166be488b40d6cb93717eb4e87a9630aa2843a0b8"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorSC.ttf",
+          "sha256": "9cfa8dd81cf88ceb340d1aac09492a8d6197dcef70c377129225745dd5e7cfa1"
+        },
+        {
+          "path": "assets/fonts/README.md",
+          "sha256": "cace7c1415d758e931da358831db10eea12769282fe152cc0950a204df8930c1"
+        },
+        {
+          "path": "assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+          "sha256": "e2e177cf8948e055d315cd67be51e349cce267dd183117ee6567174efc37a48e"
+        },
+        {
+          "path": "assets/icons/README.md",
+          "sha256": "9ea5f6da4bc614e2d5d0d2541da145638d84e8a0b49c24c2b84da90db9d6a0d9"
+        },
+        {
+          "path": "assets/icons/back.svg",
+          "sha256": "4c2a22cddbf822b695d4fc21a010bb25c55dea123ad3062da70b2a91be7311b9"
+        },
+        {
+          "path": "assets/icons/bot.svg",
+          "sha256": "4a34511e787565ba8a79a114f82f5fe4a51ebe1ab4e130aa0c4c134f75c43394"
+        },
+        {
+          "path": "assets/icons/circle.svg",
+          "sha256": "71b87dd626554b0cf0d51b413f3e068f68a1b58b415f849100c4c4a140c6f3d1"
+        },
+        {
+          "path": "assets/icons/close.svg",
+          "sha256": "59c5ea4b2f4dbb25457cce923f50e7879f1802d8eddda56761f9a9cad6121f5c"
+        },
+        {
+          "path": "assets/icons/confirm.svg",
+          "sha256": "8ccc3e89114d76f318c62ea3ec722f2a376424cb3b468df7e8b21827b4f1d420"
+        },
+        {
+          "path": "assets/icons/copy.svg",
+          "sha256": "9ecbecdfafe277fa0ffb4aded29411974fb82a9770eb6d70115479ed4ab4db5f"
+        },
+        {
+          "path": "assets/icons/double_next.svg",
+          "sha256": "3d0411ae3f255c537a40dc80afea75467cbb34d26a149a3d85d7228614f77ebf"
+        },
+        {
+          "path": "assets/icons/double_prev.svg",
+          "sha256": "626c6aa296e2580c6128e219e9e81596ff85dbc3d6a4c6416ba7bbe7b2369882"
+        },
+        {
+          "path": "assets/icons/exit.svg",
+          "sha256": "ef1a727f5310e91d47ff52f8e3072697ec44ef7c0686686e7aa69a8fed667e8e"
+        },
+        {
+          "path": "assets/icons/fast_forward.svg",
+          "sha256": "d5d1673b824b51799ae3ec2f73cbfd258227535048493e329cb983ce4ee58eba"
+        },
+        {
+          "path": "assets/icons/fast_rewind.svg",
+          "sha256": "fc94846feff9ef2182ea6b51b7d2616d0f9d5296866229f0421c04b5432a2e54"
+        },
+        {
+          "path": "assets/icons/filled_circle.svg",
+          "sha256": "72111880939558a0b3b2ee37191d2cedb7499eae7c1c633e5f2953aee77acdbb"
+        },
+        {
+          "path": "assets/icons/first.svg",
+          "sha256": "f7d8118cd60faa5bcd93970a1ec3bb8575157cc327fa1cd6ba22006892afe6a8"
+        },
+        {
+          "path": "assets/icons/forbidden.svg",
+          "sha256": "c466d59f23152be77f8103e58a132d11c63db30dc33a71215714ccdf6f7683c1"
+        },
+        {
+          "path": "assets/icons/forward.svg",
+          "sha256": "69b4d0febd28d1f861b8767e54ecf664af857e4cb72b568095fdda3f000d2a93"
+        },
+        {
+          "path": "assets/icons/grid.svg",
+          "sha256": "84f82b7ebc7e7d5454838ea69bb5570a69604f680d7dcef37de81bc8aa3db0d8"
+        },
+        {
+          "path": "assets/icons/help.svg",
+          "sha256": "961bb8ed79f9eeb383646fe4e838960d9a4e22b21805630e9dee8f6cd528ed07"
+        },
+        {
+          "path": "assets/icons/home.svg",
+          "sha256": "ca5e95cf5ac1c890dde79b921d2dbc795fc09e4b9d2d69639b8c20ab7a619803"
+        },
+        {
+          "path": "assets/icons/human.svg",
+          "sha256": "ce5acbddbab188c01d71ea338a10d6edf3c8c1d81b2dc2d4024a80a9202725c4"
+        },
+        {
+          "path": "assets/icons/icon_sheet.png",
+          "sha256": "efeeda45ea4a527c773ab14c3542d5796bb28f740df81b76ded88835c20487c3"
+        },
+        {
+          "path": "assets/icons/info.svg",
+          "sha256": "4c3a6ff37fdf8e568e3e4a69f26740f5f0f348d2fd62aea54f8ee5cf6f0adc63"
+        },
+        {
+          "path": "assets/icons/last.svg",
+          "sha256": "af787afc604a2ce1199bf8fdb73ab77e0ae87f00391c2389d688bde456ead388"
+        },
+        {
+          "path": "assets/icons/manifest.json",
+          "sha256": "ea3a4356ddea595b705c278930fbba9dab6385a23989e4291d13c34014a98c33"
+        },
+        {
+          "path": "assets/icons/minus.svg",
+          "sha256": "7d0134ce50235e77f8c8677b1333a2f92134f5b7468c9ca9cb9fcb4ee15f3646"
+        },
+        {
+          "path": "assets/icons/next.svg",
+          "sha256": "f484707f11db046123a00a2bdee4693756e05d5c541e3133731a98463f2776e5"
+        },
+        {
+          "path": "assets/icons/pause.svg",
+          "sha256": "ff829869d67520ab584d63d16e41501fb5aa18c8671bc8f2d5fd6f786f7f8153"
+        },
+        {
+          "path": "assets/icons/play.svg",
+          "sha256": "a74f5b8cf5d3d06792df593b0840aa6d34f1e0439da76c54a59256a5b117d63d"
+        },
+        {
+          "path": "assets/icons/play_reverse.svg",
+          "sha256": "69a62c1cdbaceb555670ae739f635954a486eae4b8716702a00921c8ddb235cf"
+        },
+        {
+          "path": "assets/icons/plus.svg",
+          "sha256": "bbefc5a5de699504baa34a18464f826ad37bf4a92a7d15d185f3e7161732492e"
+        },
+        {
+          "path": "assets/icons/prev.svg",
+          "sha256": "9a265cc02412d8ecf178a26245e30d88cce41d689f34f0fa58aba47604f8c9b5"
+        },
+        {
+          "path": "assets/icons/profile.svg",
+          "sha256": "d120b65d2f46d8362903f52b61a595f507e2cf03b7b5ee01ecffaf1e0cab73be"
+        },
+        {
+          "path": "assets/icons/publish.svg",
+          "sha256": "c70d4cae4469345452918e161fa8b701d7b4f51f4b95279737b05b867688a019"
+        },
+        {
+          "path": "assets/icons/replay.svg",
+          "sha256": "94939ab786718d418e16aaefcc1fc3dfa5f7965744f111f9dc36b4fd10754ee9"
+        },
+        {
+          "path": "assets/icons/reset.svg",
+          "sha256": "985bdf8109e8cd7cab1ea917b433c263aeb91b3a45353e6393de7b0f885de5c2"
+        },
+        {
+          "path": "assets/icons/save.svg",
+          "sha256": "ec257dc16724b23cac8736462ab93c6e87fcb20d408f242b124f03a05bbffb38"
+        },
+        {
+          "path": "assets/icons/settings.svg",
+          "sha256": "e15afda087e8d5ea0571a015a210c44fd4fd213f31a38ab2f59c3104402a3f80"
+        },
+        {
+          "path": "assets/icons/share.svg",
+          "sha256": "5bef75b55f7aed217e66664012737b7963d7b23e4e41badcd28627f4662b4f4f"
+        },
+        {
+          "path": "assets/icons/sign_in.svg",
+          "sha256": "68ac9701f65122fd6abdb7bde3604bff2bb5bba8c8624e40529523e78aa4d9ea"
+        },
+        {
+          "path": "assets/icons/sign_out.svg",
+          "sha256": "2ac57e81bcd8f02ab4e991fe1920e36265d7cf4c8e1b9ced9c5a41a17ebaf5fa"
+        },
+        {
+          "path": "assets/icons/sync.svg",
+          "sha256": "d0a7e4538080634634e690288eff544bd87e9bf8feb50cbdb411a217ddc20a33"
+        },
+        {
+          "path": "assets/icons/trash.svg",
+          "sha256": "3042595eb7eac9728033309b2d5492a4b2552186b421c6f9ba54488f934d9e28"
+        },
+        {
+          "path": "assets/icons/undo.svg",
+          "sha256": "03c56730a2e3373de689e5125051708f32b551220af5424b94f780ffc2132f58"
+        },
+        {
+          "path": "assets/icons/win.svg",
+          "sha256": "950a76ac976a9cd3487971f55b39e0b8f17a8f789d776562f39362f8cf9cd1a8"
+        },
+        {
+          "path": "assets/index-BmitjQed.js",
+          "sha256": "1c2d7ecd8b2a7d85aff615095ed7b7df694554822fa55cac639200963851f40b"
+        },
+        {
+          "path": "assets/index-CONOe58E.css",
+          "sha256": "a8496eb2d20dfae92f1c3fedca8c7560783af149febc35e3ec60c31f252644b8"
+        },
+        {
+          "path": "assets/jsx-runtime-7Zlu8Y5E.js",
+          "sha256": "631bc431dbd6d276ae06a69ea6b526cfd488d3c3992c2e5b85c8d34310612ee6"
+        },
+        {
+          "path": "assets/links-dgpv3VTZ.js",
+          "sha256": "807abd7b62d3aa47f9e05d87d2a59da7b91b22619ab6f7e3cf83273e9b046713"
+        },
+        {
+          "path": "assets/local_match_session-BK6rP_8r.js",
+          "sha256": "17a73c6e4fb9ddb2dc6b965414f3034d00e178774a065230070cc8926ef72690"
+        },
+        {
+          "path": "assets/local_replay-D_wNot_M.js",
+          "sha256": "ce0babcdf073a9ee8c40228d9aed429f9389d9f3eb9a777c1fccadca08dded01"
+        },
+        {
+          "path": "assets/local_replay_core-CMNEbifi.js",
+          "sha256": "c6a6c4c9a95cdf6292f1b193b5fc93bb41cd1a8d5185de5e72f15bfaf0b4d5a4"
+        },
+        {
+          "path": "assets/og_source.png",
+          "sha256": "5270c76589e18c4dea8d35d567d08350134089bc4d8aebcfa0281348edacddb7"
+        },
+        {
+          "path": "assets/replay_analysis_validation-BVMq5CcL.js",
+          "sha256": "a00daba1d9ffa4a2d98b4bb943ae223f9fb7a72cac4edb26079f03f417ff0c52"
+        },
+        {
+          "path": "assets/replay_analysis_worker-Bp4D61e0.js",
+          "sha256": "a8230cce6c8f002a3230d941e95cde7b8fca37f9c9d02a9085d7a04caa87145c"
+        },
+        {
+          "path": "assets/rolldown-runtime-XKyaHtl9.js",
+          "sha256": "548d1dbf321e7d2ae804fcc158b588706a7c52f8ca175de1490c6ccb4dbe55b7"
+        },
+        {
+          "path": "assets/saved_match-CBKVMc6K.js",
+          "sha256": "b11a88d7911c634e53731a1c16e9fa22f34a83f7fd86fa27c0b9adbf3664ffac"
+        },
+        {
+          "path": "assets/sequence_font-BHmT62ms.js",
+          "sha256": "d1f198ff901270b972d412ce478f2dcd32efd781c9799711a3acf2f91539916f"
+        },
+        {
+          "path": "assets/sharing_public-odfFJhcq.js",
+          "sha256": "146027dbe80d261564db35d403412905f41c3b9b3ec3f2c19f9ec1f6b4850cc7"
+        },
+        {
+          "path": "assets/sprites/README.md",
+          "sha256": "6f1997209492232b9e8af72d64e79b12013dc1c9aaf1f6012744104b519a5607"
+        },
+        {
+          "path": "assets/sprites/caution.png",
+          "sha256": "d303a195993c640f9524a86cc262223e261c9bf2bc718ebbc0e9cdd1ffd51f49"
+        },
+        {
+          "path": "assets/sprites/highlighter.png",
+          "sha256": "61a6798e4b17af416aba25af261ede8e7af1e0bab37dcf00c52434580a28bad5"
+        },
+        {
+          "path": "assets/sprites/hover.png",
+          "sha256": "4b938017d74b92b5f74c5a39036b1564bfa4ab00d16b56733d33a40175cbdfba"
+        },
+        {
+          "path": "assets/sprites/marker.png",
+          "sha256": "862a4746ca27a0a3e25cfab61a9bed94b2d27c9c0dd4b0aa5e208a8343949bbd"
+        },
+        {
+          "path": "assets/sprites/pointer.png",
+          "sha256": "bda6179bae6d9e213948e5e10f6f65fd267779b1fc50188e936262c961f09136"
+        },
+        {
+          "path": "assets/sprites/stone.png",
+          "sha256": "7bda65543e1fa51342f10924952ea34a89cc5856965c09c189b7070b1865135b"
+        },
+        {
+          "path": "assets/sprites/transform.png",
+          "sha256": "24b75a897b8032a4b737f3e1039a59e765b4154c1f18959e495f5228c33f0ffa"
+        },
+        {
+          "path": "assets/wasm_bridge-EShrKPQ_.js",
+          "sha256": "25bf3a03ac8bcd8ee72054cefd5b35cb4cb434b647c21d55edcfa3d7f6a1729f"
+        },
+        {
+          "path": "bot-report/report.json",
+          "sha256": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43"
+        },
+        {
+          "path": "favicon-16x16.png",
+          "sha256": "338a4bccccb366e72667a3451da2180bfdc27a412cb3c47c2046ad3ae98442e6"
+        },
+        {
+          "path": "favicon-32x32.png",
+          "sha256": "e8f05658fa438c3db17319eff98b392e5c4a53a657d490eca7bca049d74a712d"
+        },
+        {
+          "path": "favicon.ico",
+          "sha256": "ab9a0b0c6f1dc07c9526ac1a7fdaf9b776dc8d6a2e25384f8469846504b074e5"
+        },
+        {
+          "path": "guide/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "lab/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "match/local/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "og.png",
+          "sha256": "5270c76589e18c4dea8d35d567d08350134089bc4d8aebcfa0281348edacddb7"
+        },
+        {
+          "path": "player/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "privacy/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "profile/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "replay/shared/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "rules/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "settings/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "terms/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        },
+        {
+          "path": "visuals/index.html",
+          "sha256": "fb0f99b5d1f23014c58f2ed861042159086029f57711a92d534a004aa23c2af6"
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "sourceClean": true,
+        "exactTagCommit": true,
+        "servedIndexMatches": true,
+        "servedDistFiles": 144,
+        "allServedFilesMatchReceipt": true
+      }
+    }
+  ],
+  "fixture": {
+    "id": "missed_defense_closed_four",
+    "identity": "Reference Player",
+    "profileId": "history-fixture-profile",
+    "matchId": "history-fixture-match",
+    "savedAt": "2026-10-24T00:00:00.000Z",
+    "ruleset": "freestyle",
+    "mode": "local human Black vs tagged default bot White",
+    "botName": "Normal Bot",
+    "status": "completed; Black win",
+    "moveCells": [
+      112,
+      111,
+      113,
+      0,
+      114,
+      15,
+      115,
+      1,
+      116
+    ],
+    "moveCount": 9,
+    "localStorageKey": "gomoku2d.local-profile.v5",
+    "additionalLocalStorageKeys": [
+      "gomoku2d.replay-library.v1"
+    ],
+    "localStorageSchema": "local-v5",
+    "additionalProfileStates": [],
+    "matchCapture": "Replay final ply 9, Previous once to ply 8, Play From Here; Black human idle"
+  },
+  "profiles": [
+    {
+      "id": "desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false,
+      "userAgentKind": "desktop Chromium default"
+    },
+    {
+      "id": "portrait",
+      "viewport": {
+        "width": 412,
+        "height": 800
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": true,
+      "hasTouch": true,
+      "userAgentKind": "generic Android mobile; not a measured OnePlus profile"
+    }
+  ],
+  "transport": {
+    "mode": "native-emulators",
+    "session": "account",
+    "scope": "synthetic demo Auth/Firestore only; no real accounts or production data"
+  },
+  "limitations": [
+    "These screenshots recreate the tagged source layout; they do not recover the historical browser or device runtime.",
+    "Portrait is a generic Android touch context at 412×800 DPR1, not a measured OnePlus viewport.",
+    "Reduced motion is requested; Phaser animation is not frozen or assumed deterministic."
+  ],
+  "captures": [
+    {
+      "screen": "profile",
+      "state": "public-settings",
+      "profile": {
+        "id": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "userAgentKind": "desktop Chromium default",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false
+      },
+      "status": "captured",
+      "file": "v0.6.1/desktop/profile--public-settings.png",
+      "errors": {
+        "console": [],
+        "page": [],
+        "expectedBootstrapBlocked": {
+          "requests": [],
+          "requestFailures": [],
+          "consoleErrors": []
+        },
+        "expectedTransportCancellations": []
+      },
+      "network": {
+        "allowed": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/profile",
+            "resourceType": "document",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-BmitjQed.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/rolldown-runtime-XKyaHtl9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/jsx-runtime-7Zlu8Y5E.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/bot_config-BQyrbE-n.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/constants-DKcsxR6O.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/saved_match-CBKVMc6K.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/firebase-V9FT05AG.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Icon-DPnlUttj.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/cloud_sync-Cy7CtTTC.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/links-dgpv3VTZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sequence_font-BHmT62ms.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-CONOe58E.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-CURdW3qw.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/SharingPanels-DRf2sfP2.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ProfileRoute-BSvRRF2y.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-C4gCAeI2.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ProfileRoute-BmDdtprw.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay-D_wNot_M.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sharing_public-odfFJhcq.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-C4dZUVh6.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/SharingPanels.module-C2Irghdi.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:29099/identitytoolkit.googleapis.com/v1/accounts:lookup",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/wasm_bridge-EShrKPQ_.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_validation-BVMq5CcL.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:batchGet",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:commit",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          }
+        ],
+        "forbidden": [],
+        "failed": [],
+        "expectedTransportCancellations": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "expectedBootstrapBlocked": {
+          "requests": [],
+          "requestFailures": [],
+          "consoleErrors": []
+        }
+      },
+      "readiness": {
+        "heading": "Profile",
+        "fonts": {
+          "status": "loaded",
+          "faces": [
+            {
+              "family": "PixelOperator",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperatorBold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperator8Bold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            }
+          ]
+        },
+        "fixture": {
+          "displayName": "Reference Player",
+          "historyOpponent": "Normal Bot",
+          "publicSettings": {
+            "selected": "true",
+            "publicUid": "AJs0n2vKmKzmIUR7uUYLC288MCOf"
+          }
+        },
+        "match": null,
+        "replay": null,
+        "analysis": null,
+        "customSettings": null,
+        "reportView": null,
+        "proof": null,
+        "framing": null,
+        "assetPage": null,
+        "examples": null,
+        "publicProfileUid": null,
+        "publicCatalogRows": null,
+        "statsVisible": null,
+        "portableReplay": null,
+        "returnToProfile": null,
+        "returnToProfileControl": null,
+        "publicSettings": null,
+        "savedReplays": null,
+        "replayAction": null,
+        "sharedReplayContext": null,
+        "matchSetup": null,
+        "pointer": "moved to 2,2 before screenshot",
+        "viewport": {
+          "innerWidth": 1280,
+          "innerHeight": 900,
+          "visualViewportWidth": 1280,
+          "visualViewportHeight": 900,
+          "visualViewportScale": 1,
+          "documentScrollWidth": 1280,
+          "documentScrollHeight": 900,
+          "devicePixelRatio": 1,
+          "maxTouchPoints": 0,
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+          "mobileQueryMatches": false,
+          "width": 1280,
+          "height": 900,
+          "basis": "visualViewport"
+        }
+      },
+      "renderer": "unknown",
+      "width": 1280,
+      "height": 900,
+      "sha256": "274d6ba25f0bbf5ea9e4b652ecc7c4e0540d4d6ddbd005abfed5cd3f04b8bcee",
+      "route": {
+        "requested": "/profile",
+        "observed": "/profile/?[redacted]",
+        "heading": "Profile"
+      },
+      "context": {
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "maxTouchPoints": 0,
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "mobileMediaQuery": false,
+        "animationNote": "Reduced motion is requested; Phaser animation state is not frozen or assumed deterministic."
+      },
+      "transport": {
+        "project": "demo-gomoku-history",
+        "session": "account",
+        "mode": "native-emulators",
+        "responseSource": "owned Auth/Firestore emulators; tagged security rules; no fabricated SDK responses",
+        "rulesSha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+        "publicFixture": "Reference Player; nine published games; dated synthetic 20/12/6/2 statistics",
+        "optionalBootstrap": {
+          "policy": "blocked",
+          "resource": "https://apis.google.com/js/api.js",
+          "reason": "Hosted popup bootstrap is not needed for the restored synthetic session or public view. Aborts and attributed resource errors are retained; Google OAuth popup-flow acceptance is not established."
+        },
+        "routingAttestation": "primary transport approved the exact owned native-emulator service URLs",
+        "addressNote": "SDK service URLs are permitted only when the primary-owned adapter recognizes them and routes them through the owned proxy or emulators."
+      }
+    },
+    {
+      "screen": "replay",
+      "state": "publish",
+      "profile": {
+        "id": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "userAgentKind": "desktop Chromium default",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false
+      },
+      "status": "captured",
+      "file": "v0.6.1/desktop/replay--publish.png",
+      "errors": {
+        "console": [],
+        "page": [],
+        "expectedBootstrapBlocked": {
+          "requests": [],
+          "requestFailures": [],
+          "consoleErrors": []
+        },
+        "expectedTransportCancellations": []
+      },
+      "network": {
+        "allowed": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/replay/history-fixture-match",
+            "resourceType": "document",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-BmitjQed.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/rolldown-runtime-XKyaHtl9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/jsx-runtime-7Zlu8Y5E.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/bot_config-BQyrbE-n.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/constants-DKcsxR6O.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/saved_match-CBKVMc6K.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/firebase-V9FT05AG.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Icon-DPnlUttj.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/cloud_sync-Cy7CtTTC.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/links-dgpv3VTZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sequence_font-BHmT62ms.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-CONOe58E.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Board-ev2mndZK.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-CURdW3qw.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-Vk219O_e.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-t5fvdmwB.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-C4gCAeI2.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-k6ArHsjU.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:29099/identitytoolkit.googleapis.com/v1/accounts:lookup",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Board-BmUfhmvV.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/board_model-CZzAtTO9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_match_session-BK6rP_8r.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay-D_wNot_M.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sharing_public-odfFJhcq.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-C4dZUVh6.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/wasm_bridge-EShrKPQ_.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_validation-BVMq5CcL.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:batchGet",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:commit",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_worker-Bp4D61e0.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay_core-CMNEbifi.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          }
+        ],
+        "forbidden": [],
+        "failed": [],
+        "expectedTransportCancellations": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "expectedBootstrapBlocked": {
+          "requests": [],
+          "requestFailures": [],
+          "consoleErrors": []
+        }
+      },
+      "readiness": {
+        "heading": "Replay Analysis",
+        "fonts": {
+          "status": "loaded",
+          "faces": [
+            {
+              "family": "PixelOperator",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperatorBold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperator8Bold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            }
+          ]
+        },
+        "fixture": null,
+        "match": null,
+        "replay": {
+          "ply": 9,
+          "total": 9,
+          "black": "Reference Player",
+          "white": "Normal Bot",
+          "semanticSource": "player rows"
+        },
+        "analysis": {
+          "status": "Black has won",
+          "visible": false
+        },
+        "customSettings": null,
+        "reportView": null,
+        "proof": null,
+        "framing": null,
+        "assetPage": null,
+        "examples": null,
+        "publicProfileUid": null,
+        "publicCatalogRows": null,
+        "statsVisible": null,
+        "portableReplay": null,
+        "returnToProfile": null,
+        "returnToProfileControl": null,
+        "publicSettings": null,
+        "savedReplays": null,
+        "replayAction": {
+          "panel": "publish",
+          "previewReady": true,
+          "mutationSubmitted": false
+        },
+        "sharedReplayContext": null,
+        "matchSetup": null,
+        "pointer": "moved to 2,2 before screenshot",
+        "viewport": {
+          "innerWidth": 1280,
+          "innerHeight": 900,
+          "visualViewportWidth": 1280,
+          "visualViewportHeight": 900,
+          "visualViewportScale": 1,
+          "documentScrollWidth": 1280,
+          "documentScrollHeight": 900,
+          "devicePixelRatio": 1,
+          "maxTouchPoints": 0,
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+          "mobileQueryMatches": false,
+          "width": 1280,
+          "height": 900,
+          "basis": "visualViewport"
+        }
+      },
+      "renderer": "unknown",
+      "width": 1280,
+      "height": 900,
+      "sha256": "551a4da25599d2656ec789f638c63c931395dc9d8d0031cf496ba401a4af5d3b",
+      "route": {
+        "requested": "/replay/history-fixture-match",
+        "observed": "/replay/history-fixture-match",
+        "heading": "Replay Analysis"
+      },
+      "context": {
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "maxTouchPoints": 0,
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "mobileMediaQuery": false,
+        "animationNote": "Reduced motion is requested; Phaser animation state is not frozen or assumed deterministic."
+      },
+      "transport": {
+        "project": "demo-gomoku-history",
+        "session": "account",
+        "mode": "native-emulators",
+        "responseSource": "owned Auth/Firestore emulators; tagged security rules; no fabricated SDK responses",
+        "rulesSha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+        "publicFixture": "Reference Player; nine published games; dated synthetic 20/12/6/2 statistics",
+        "optionalBootstrap": {
+          "policy": "blocked",
+          "resource": "https://apis.google.com/js/api.js",
+          "reason": "Hosted popup bootstrap is not needed for the restored synthetic session or public view. Aborts and attributed resource errors are retained; Google OAuth popup-flow acceptance is not established."
+        },
+        "routingAttestation": "primary transport approved the exact owned native-emulator service URLs",
+        "addressNote": "SDK service URLs are permitted only when the primary-owned adapter recognizes them and routes them through the owned proxy or emulators."
+      }
+    },
+    {
+      "screen": "replay",
+      "state": "share",
+      "profile": {
+        "id": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "userAgentKind": "desktop Chromium default",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false
+      },
+      "status": "captured",
+      "file": "v0.6.1/desktop/replay--share.png",
+      "errors": {
+        "console": [],
+        "page": [],
+        "expectedBootstrapBlocked": {
+          "requests": [],
+          "requestFailures": [],
+          "consoleErrors": []
+        },
+        "expectedTransportCancellations": []
+      },
+      "network": {
+        "allowed": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/replay/history-fixture-match",
+            "resourceType": "document",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-BmitjQed.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/rolldown-runtime-XKyaHtl9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/jsx-runtime-7Zlu8Y5E.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/bot_config-BQyrbE-n.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/constants-DKcsxR6O.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/saved_match-CBKVMc6K.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/firebase-V9FT05AG.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Icon-DPnlUttj.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/cloud_sync-Cy7CtTTC.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/links-dgpv3VTZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sequence_font-BHmT62ms.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-CONOe58E.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Board-ev2mndZK.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-CURdW3qw.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-Vk219O_e.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-t5fvdmwB.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-k6ArHsjU.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:29099/identitytoolkit.googleapis.com/v1/accounts:lookup",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Board-BmUfhmvV.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/board_model-CZzAtTO9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_match_session-BK6rP_8r.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay-D_wNot_M.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sharing_public-odfFJhcq.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-C4dZUVh6.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-C4gCAeI2.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/wasm_bridge-EShrKPQ_.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_validation-BVMq5CcL.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:batchGet",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:commit",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_worker-Bp4D61e0.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay_core-CMNEbifi.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          }
+        ],
+        "forbidden": [],
+        "failed": [],
+        "expectedTransportCancellations": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "expectedBootstrapBlocked": {
+          "requests": [],
+          "requestFailures": [],
+          "consoleErrors": []
+        }
+      },
+      "readiness": {
+        "heading": "Replay Analysis",
+        "fonts": {
+          "status": "loaded",
+          "faces": [
+            {
+              "family": "PixelOperator",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperatorBold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperator8Bold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            }
+          ]
+        },
+        "fixture": null,
+        "match": null,
+        "replay": {
+          "ply": 9,
+          "total": 9,
+          "black": "Reference Player",
+          "white": "Normal Bot",
+          "semanticSource": "player rows"
+        },
+        "analysis": {
+          "status": "Black has won",
+          "visible": false
+        },
+        "customSettings": null,
+        "reportView": null,
+        "proof": null,
+        "framing": null,
+        "assetPage": null,
+        "examples": null,
+        "publicProfileUid": null,
+        "publicCatalogRows": null,
+        "statsVisible": null,
+        "portableReplay": null,
+        "returnToProfile": null,
+        "returnToProfileControl": null,
+        "publicSettings": null,
+        "savedReplays": null,
+        "replayAction": {
+          "panel": "share",
+          "portableLinkReady": true,
+          "copied": false
+        },
+        "sharedReplayContext": null,
+        "matchSetup": null,
+        "pointer": "moved to 2,2 before screenshot",
+        "viewport": {
+          "innerWidth": 1280,
+          "innerHeight": 900,
+          "visualViewportWidth": 1280,
+          "visualViewportHeight": 900,
+          "visualViewportScale": 1,
+          "documentScrollWidth": 1280,
+          "documentScrollHeight": 900,
+          "devicePixelRatio": 1,
+          "maxTouchPoints": 0,
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+          "mobileQueryMatches": false,
+          "width": 1280,
+          "height": 900,
+          "basis": "visualViewport"
+        }
+      },
+      "renderer": "unknown",
+      "width": 1280,
+      "height": 900,
+      "sha256": "e7baa4161f50aae0c34c4f240be5862b0abc382014e2b0f9886121323a575212",
+      "route": {
+        "requested": "/replay/history-fixture-match",
+        "observed": "/replay/history-fixture-match",
+        "heading": "Replay Analysis"
+      },
+      "context": {
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "maxTouchPoints": 0,
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "mobileMediaQuery": false,
+        "animationNote": "Reduced motion is requested; Phaser animation state is not frozen or assumed deterministic."
+      },
+      "transport": {
+        "project": "demo-gomoku-history",
+        "session": "account",
+        "mode": "native-emulators",
+        "responseSource": "owned Auth/Firestore emulators; tagged security rules; no fabricated SDK responses",
+        "rulesSha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+        "publicFixture": "Reference Player; nine published games; dated synthetic 20/12/6/2 statistics",
+        "optionalBootstrap": {
+          "policy": "blocked",
+          "resource": "https://apis.google.com/js/api.js",
+          "reason": "Hosted popup bootstrap is not needed for the restored synthetic session or public view. Aborts and attributed resource errors are retained; Google OAuth popup-flow acceptance is not established."
+        },
+        "routingAttestation": "primary transport approved the exact owned native-emulator service URLs",
+        "addressNote": "SDK service URLs are permitted only when the primary-owned adapter recognizes them and routes them through the owned proxy or emulators."
+      }
+    },
+    {
+      "screen": "profile",
+      "state": "public-settings",
+      "profile": {
+        "id": "portrait",
+        "viewport": {
+          "width": 412,
+          "height": 800
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "userAgentKind": "generic Android mobile; not a measured OnePlus profile",
+        "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "portraitCalibration": "generic viewport; not measured on a physical device"
+      },
+      "status": "captured",
+      "file": "v0.6.1/portrait/profile--public-settings.png",
+      "errors": {
+        "console": [],
+        "page": [],
+        "expectedBootstrapBlocked": {
+          "requests": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb961861",
+              "resourceType": "script",
+              "reason": "optional hosted popup bootstrap is blocked by capture policy"
+            }
+          ],
+          "requestFailures": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb961861",
+              "resourceType": "script",
+              "failure": "net::ERR_BLOCKED_BY_CLIENT.Inspector"
+            }
+          ],
+          "consoleErrors": [
+            {
+              "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+              "location": {
+                "url": "https://apis.google.com/js/api.js",
+                "lineNumber": 0,
+                "columnNumber": 0
+              }
+            }
+          ]
+        },
+        "expectedTransportCancellations": []
+      },
+      "network": {
+        "allowed": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/profile",
+            "resourceType": "document",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-BmitjQed.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/rolldown-runtime-XKyaHtl9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/jsx-runtime-7Zlu8Y5E.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/bot_config-BQyrbE-n.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/constants-DKcsxR6O.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/saved_match-CBKVMc6K.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/firebase-V9FT05AG.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Icon-DPnlUttj.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/cloud_sync-Cy7CtTTC.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/links-dgpv3VTZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sequence_font-BHmT62ms.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-CONOe58E.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-CURdW3qw.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/SharingPanels-DRf2sfP2.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ProfileRoute-BSvRRF2y.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ProfileRoute-BmDdtprw.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-C4gCAeI2.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay-D_wNot_M.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sharing_public-odfFJhcq.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-C4dZUVh6.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/SharingPanels.module-C2Irghdi.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:29099/identitytoolkit.googleapis.com/v1/accounts:lookup",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/wasm_bridge-EShrKPQ_.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_validation-BVMq5CcL.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:batchGet",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:commit",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          }
+        ],
+        "forbidden": [],
+        "failed": [],
+        "expectedTransportCancellations": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "expectedBootstrapBlocked": {
+          "requests": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb961861",
+              "resourceType": "script",
+              "reason": "optional hosted popup bootstrap is blocked by capture policy"
+            }
+          ],
+          "requestFailures": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb961861",
+              "resourceType": "script",
+              "failure": "net::ERR_BLOCKED_BY_CLIENT.Inspector"
+            }
+          ],
+          "consoleErrors": [
+            {
+              "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+              "location": {
+                "url": "https://apis.google.com/js/api.js",
+                "lineNumber": 0,
+                "columnNumber": 0
+              }
+            }
+          ]
+        }
+      },
+      "readiness": {
+        "heading": "Profile",
+        "fonts": {
+          "status": "loaded",
+          "faces": [
+            {
+              "family": "PixelOperator",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperatorBold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperator8Bold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            }
+          ]
+        },
+        "fixture": {
+          "displayName": "Reference Player",
+          "historyOpponent": "Normal Bot",
+          "publicSettings": {
+            "selected": "true",
+            "publicUid": "HEoiPOcrCs1PRNgTGfuoEhaKEuRk"
+          }
+        },
+        "match": null,
+        "replay": null,
+        "analysis": null,
+        "customSettings": null,
+        "reportView": null,
+        "proof": null,
+        "framing": null,
+        "assetPage": null,
+        "examples": null,
+        "publicProfileUid": null,
+        "publicCatalogRows": null,
+        "statsVisible": null,
+        "portableReplay": null,
+        "returnToProfile": null,
+        "returnToProfileControl": null,
+        "publicSettings": null,
+        "savedReplays": null,
+        "replayAction": null,
+        "sharedReplayContext": null,
+        "matchSetup": null,
+        "pointer": "moved to 2,2 before screenshot",
+        "viewport": {
+          "innerWidth": 412,
+          "innerHeight": 800,
+          "visualViewportWidth": 412,
+          "visualViewportHeight": 800,
+          "visualViewportScale": 1,
+          "documentScrollWidth": 412,
+          "documentScrollHeight": 2928,
+          "devicePixelRatio": 1,
+          "maxTouchPoints": 1,
+          "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+          "mobileQueryMatches": true,
+          "width": 412,
+          "height": 800,
+          "basis": "visualViewport"
+        }
+      },
+      "renderer": "unknown",
+      "width": 412,
+      "height": 800,
+      "sha256": "576e96f8d3600c18ed6d23de0f87c99072aec8c5a92f27322dd7e41065445abe",
+      "route": {
+        "requested": "/profile",
+        "observed": "/profile/?[redacted]",
+        "heading": "Profile"
+      },
+      "context": {
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "maxTouchPoints": 1,
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "mobileMediaQuery": true,
+        "animationNote": "Reduced motion is requested; Phaser animation state is not frozen or assumed deterministic."
+      },
+      "transport": {
+        "project": "demo-gomoku-history",
+        "session": "account",
+        "mode": "native-emulators",
+        "responseSource": "owned Auth/Firestore emulators; tagged security rules; no fabricated SDK responses",
+        "rulesSha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+        "publicFixture": "Reference Player; nine published games; dated synthetic 20/12/6/2 statistics",
+        "optionalBootstrap": {
+          "policy": "blocked",
+          "resource": "https://apis.google.com/js/api.js",
+          "reason": "Hosted popup bootstrap is not needed for the restored synthetic session or public view. Aborts and attributed resource errors are retained; Google OAuth popup-flow acceptance is not established."
+        },
+        "routingAttestation": "primary transport approved the exact owned native-emulator service URLs",
+        "addressNote": "SDK service URLs are permitted only when the primary-owned adapter recognizes them and routes them through the owned proxy or emulators."
+      }
+    },
+    {
+      "screen": "replay",
+      "state": "publish",
+      "profile": {
+        "id": "portrait",
+        "viewport": {
+          "width": 412,
+          "height": 800
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "userAgentKind": "generic Android mobile; not a measured OnePlus profile",
+        "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "portraitCalibration": "generic viewport; not measured on a physical device"
+      },
+      "status": "captured",
+      "file": "v0.6.1/portrait/replay--publish.png",
+      "errors": {
+        "console": [],
+        "page": [],
+        "expectedBootstrapBlocked": {
+          "requests": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb963684",
+              "resourceType": "script",
+              "reason": "optional hosted popup bootstrap is blocked by capture policy"
+            }
+          ],
+          "requestFailures": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb963684",
+              "resourceType": "script",
+              "failure": "net::ERR_BLOCKED_BY_CLIENT.Inspector"
+            }
+          ],
+          "consoleErrors": [
+            {
+              "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+              "location": {
+                "url": "https://apis.google.com/js/api.js",
+                "lineNumber": 0,
+                "columnNumber": 0
+              }
+            }
+          ]
+        },
+        "expectedTransportCancellations": []
+      },
+      "network": {
+        "allowed": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/replay/history-fixture-match",
+            "resourceType": "document",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-BmitjQed.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/rolldown-runtime-XKyaHtl9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/jsx-runtime-7Zlu8Y5E.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/bot_config-BQyrbE-n.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/constants-DKcsxR6O.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/saved_match-CBKVMc6K.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/firebase-V9FT05AG.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Icon-DPnlUttj.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/cloud_sync-Cy7CtTTC.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/links-dgpv3VTZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sequence_font-BHmT62ms.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-CONOe58E.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Board-ev2mndZK.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-CURdW3qw.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-Vk219O_e.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-C4gCAeI2.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-t5fvdmwB.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-k6ArHsjU.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Board-BmUfhmvV.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/board_model-CZzAtTO9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_match_session-BK6rP_8r.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay-D_wNot_M.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sharing_public-odfFJhcq.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-C4dZUVh6.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:29099/identitytoolkit.googleapis.com/v1/accounts:lookup",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/wasm_bridge-EShrKPQ_.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_validation-BVMq5CcL.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:batchGet",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:commit",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_worker-Bp4D61e0.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay_core-CMNEbifi.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          }
+        ],
+        "forbidden": [],
+        "failed": [],
+        "expectedTransportCancellations": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "expectedBootstrapBlocked": {
+          "requests": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb963684",
+              "resourceType": "script",
+              "reason": "optional hosted popup bootstrap is blocked by capture policy"
+            }
+          ],
+          "requestFailures": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb963684",
+              "resourceType": "script",
+              "failure": "net::ERR_BLOCKED_BY_CLIENT.Inspector"
+            }
+          ],
+          "consoleErrors": [
+            {
+              "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+              "location": {
+                "url": "https://apis.google.com/js/api.js",
+                "lineNumber": 0,
+                "columnNumber": 0
+              }
+            }
+          ]
+        }
+      },
+      "readiness": {
+        "heading": "Replay Analysis",
+        "fonts": {
+          "status": "loaded",
+          "faces": [
+            {
+              "family": "PixelOperator",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperatorBold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperator8Bold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            }
+          ]
+        },
+        "fixture": null,
+        "match": null,
+        "replay": {
+          "ply": 9,
+          "total": 9,
+          "black": "Reference Player",
+          "white": "Normal Bot",
+          "semanticSource": "player rows"
+        },
+        "analysis": {
+          "status": "Black has won",
+          "visible": false
+        },
+        "customSettings": null,
+        "reportView": null,
+        "proof": null,
+        "framing": null,
+        "assetPage": null,
+        "examples": null,
+        "publicProfileUid": null,
+        "publicCatalogRows": null,
+        "statsVisible": null,
+        "portableReplay": null,
+        "returnToProfile": null,
+        "returnToProfileControl": null,
+        "publicSettings": null,
+        "savedReplays": null,
+        "replayAction": {
+          "panel": "publish",
+          "previewReady": true,
+          "mutationSubmitted": false
+        },
+        "sharedReplayContext": null,
+        "matchSetup": null,
+        "pointer": "moved to 2,2 before screenshot",
+        "viewport": {
+          "innerWidth": 412,
+          "innerHeight": 800,
+          "visualViewportWidth": 412,
+          "visualViewportHeight": 800,
+          "visualViewportScale": 1,
+          "documentScrollWidth": 412,
+          "documentScrollHeight": 1156,
+          "devicePixelRatio": 1,
+          "maxTouchPoints": 1,
+          "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+          "mobileQueryMatches": true,
+          "width": 412,
+          "height": 800,
+          "basis": "visualViewport"
+        }
+      },
+      "renderer": "unknown",
+      "width": 412,
+      "height": 800,
+      "sha256": "377a3605495f368d9bf8edb5ac5c31957d2ba0f9a5b2c20b8edaac5f1884888a",
+      "route": {
+        "requested": "/replay/history-fixture-match",
+        "observed": "/replay/history-fixture-match",
+        "heading": "Replay Analysis"
+      },
+      "context": {
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "maxTouchPoints": 1,
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "mobileMediaQuery": true,
+        "animationNote": "Reduced motion is requested; Phaser animation state is not frozen or assumed deterministic."
+      },
+      "transport": {
+        "project": "demo-gomoku-history",
+        "session": "account",
+        "mode": "native-emulators",
+        "responseSource": "owned Auth/Firestore emulators; tagged security rules; no fabricated SDK responses",
+        "rulesSha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+        "publicFixture": "Reference Player; nine published games; dated synthetic 20/12/6/2 statistics",
+        "optionalBootstrap": {
+          "policy": "blocked",
+          "resource": "https://apis.google.com/js/api.js",
+          "reason": "Hosted popup bootstrap is not needed for the restored synthetic session or public view. Aborts and attributed resource errors are retained; Google OAuth popup-flow acceptance is not established."
+        },
+        "routingAttestation": "primary transport approved the exact owned native-emulator service URLs",
+        "addressNote": "SDK service URLs are permitted only when the primary-owned adapter recognizes them and routes them through the owned proxy or emulators."
+      }
+    },
+    {
+      "screen": "replay",
+      "state": "share",
+      "profile": {
+        "id": "portrait",
+        "viewport": {
+          "width": 412,
+          "height": 800
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "userAgentKind": "generic Android mobile; not a measured OnePlus profile",
+        "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "portraitCalibration": "generic viewport; not measured on a physical device"
+      },
+      "status": "failed",
+      "file": "v0.6.1/portrait/replay--share.png",
+      "errors": {
+        "console": [],
+        "page": [],
+        "expectedBootstrapBlocked": {
+          "requests": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb409010",
+              "resourceType": "script",
+              "reason": "optional hosted popup bootstrap is blocked by capture policy"
+            }
+          ],
+          "requestFailures": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb409010",
+              "resourceType": "script",
+              "failure": "net::ERR_BLOCKED_BY_CLIENT.Inspector"
+            }
+          ],
+          "consoleErrors": [
+            {
+              "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+              "location": {
+                "url": "https://apis.google.com/js/api.js",
+                "lineNumber": 0,
+                "columnNumber": 0
+              }
+            }
+          ]
+        }
+      },
+      "network": {
+        "allowed": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/replay/history-fixture-match",
+            "resourceType": "document",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-BmitjQed.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/rolldown-runtime-XKyaHtl9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/jsx-runtime-7Zlu8Y5E.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/bot_config-BQyrbE-n.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/constants-DKcsxR6O.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/saved_match-CBKVMc6K.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/firebase-V9FT05AG.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Icon-DPnlUttj.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/cloud_sync-Cy7CtTTC.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/links-dgpv3VTZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sequence_font-BHmT62ms.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/index-CONOe58E.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Board-ev2mndZK.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-CURdW3qw.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-Vk219O_e.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-C4gCAeI2.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-t5fvdmwB.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayRoute-k6ArHsjU.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:29099/identitytoolkit.googleapis.com/v1/accounts:lookup",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/Board-BmUfhmvV.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/board_model-CZzAtTO9.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_match_session-BK6rP_8r.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay-D_wNot_M.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/sharing_public-odfFJhcq.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/ReplayLibraryPanel-C4dZUVh6.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/wasm_bridge-EShrKPQ_.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_validation-BVMq5CcL.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:batchGet",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "http://127.0.0.1:28081/v1/projects/demo-gomoku-history/databases/(default)/documents:commit",
+            "resourceType": "xhr",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/replay_analysis_worker-Bp4D61e0.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/gomoku_wasm_bg-BoxtaFCG.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47223/assets/local_replay_core-CMNEbifi.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          }
+        ],
+        "forbidden": [],
+        "failed": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "failure": "net::ERR_ABORTED",
+            "responseStatus": 200,
+            "responseReceivedAfterMs": 212,
+            "failureObservedAfterMs": 213,
+            "requestTiming": {
+              "startTime": 1792969064790.809,
+              "domainLookupStart": 0.079,
+              "domainLookupEnd": 0.083,
+              "connectStart": 0.083,
+              "secureConnectionStart": -1,
+              "connectEnd": 0.156,
+              "requestStart": 0.18,
+              "responseStart": 0.918,
+              "responseEnd": 24.952
+            }
+          }
+        ],
+        "expectedTransportCancellations": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "expectedBootstrapBlocked": {
+          "requests": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb409010",
+              "resourceType": "script",
+              "reason": "optional hosted popup bootstrap is blocked by capture policy"
+            }
+          ],
+          "requestFailures": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb409010",
+              "resourceType": "script",
+              "failure": "net::ERR_BLOCKED_BY_CLIENT.Inspector"
+            }
+          ],
+          "consoleErrors": [
+            {
+              "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+              "location": {
+                "url": "https://apis.google.com/js/api.js",
+                "lineNumber": 0,
+                "columnNumber": 0
+              }
+            }
+          ]
+        }
+      },
+      "readiness": {
+        "heading": "Replay Analysis",
+        "fonts": {
+          "status": "loaded",
+          "faces": [
+            {
+              "family": "PixelOperator",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperatorBold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperator8Bold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            }
+          ]
+        },
+        "fixture": null,
+        "match": null,
+        "replay": {
+          "ply": 9,
+          "total": 9,
+          "black": "Reference Player",
+          "white": "Normal Bot",
+          "semanticSource": "player rows"
+        },
+        "analysis": {
+          "status": "Black has won",
+          "visible": false
+        },
+        "customSettings": null,
+        "reportView": null,
+        "proof": null,
+        "framing": null,
+        "assetPage": null,
+        "examples": null,
+        "publicProfileUid": null,
+        "publicCatalogRows": null,
+        "statsVisible": null,
+        "portableReplay": null,
+        "returnToProfile": null,
+        "returnToProfileControl": null,
+        "publicSettings": null,
+        "savedReplays": null,
+        "replayAction": {
+          "panel": "share",
+          "portableLinkReady": true,
+          "copied": false
+        },
+        "sharedReplayContext": null,
+        "matchSetup": null,
+        "pointer": "moved to 2,2 before screenshot",
+        "viewport": {
+          "innerWidth": 412,
+          "innerHeight": 800,
+          "visualViewportWidth": 412,
+          "visualViewportHeight": 800,
+          "visualViewportScale": 1,
+          "documentScrollWidth": 412,
+          "documentScrollHeight": 1201,
+          "devicePixelRatio": 1,
+          "maxTouchPoints": 1,
+          "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+          "mobileQueryMatches": true,
+          "width": 412,
+          "height": 800,
+          "basis": "visualViewport"
+        }
+      },
+      "renderer": "unknown",
+      "width": 412,
+      "height": 800,
+      "sha256": "928a648b401b455a2076c539868c08810de0de7d88457f121187c5b56179fca5",
+      "route": {
+        "requested": "/replay/history-fixture-match",
+        "observed": "/replay/history-fixture-match",
+        "heading": "Replay Analysis"
+      },
+      "context": {
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "maxTouchPoints": 1,
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "mobileMediaQuery": true,
+        "animationNote": "Reduced motion is requested; Phaser animation state is not frozen or assumed deterministic."
+      },
+      "transport": {
+        "project": "demo-gomoku-history",
+        "session": "account",
+        "mode": "native-emulators",
+        "responseSource": "owned Auth/Firestore emulators; tagged security rules; no fabricated SDK responses",
+        "rulesSha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+        "publicFixture": "Reference Player; nine published games; dated synthetic 20/12/6/2 statistics",
+        "optionalBootstrap": {
+          "policy": "blocked",
+          "resource": "https://apis.google.com/js/api.js",
+          "reason": "Hosted popup bootstrap is not needed for the restored synthetic session or public view. Aborts and attributed resource errors are retained; Google OAuth popup-flow acceptance is not established."
+        },
+        "routingAttestation": "primary transport approved the exact owned native-emulator service URLs",
+        "addressNote": "SDK service URLs are permitted only when the primary-owned adapter recognizes them and routes them through the owned proxy or emulators."
+      },
+      "failureContext": {
+        "route": "/replay/history-fixture-match",
+        "testIds": [
+          {
+            "id": "replay-analysis-status",
+            "text": "Black has won"
+          },
+          {
+            "id": "replay-analysis-detail",
+            "text": "Lethal sequence"
+          },
+          {
+            "id": "replay-rule",
+            "text": "Freestyle"
+          },
+          {
+            "id": "replay-move-count",
+            "text": "Move 9 / 9"
+          },
+          {
+            "id": "replay-player-row-black",
+            "text": "Reference Player"
+          },
+          {
+            "id": "replay-player-row-white",
+            "text": "Normal Bot"
+          },
+          {
+            "id": "replay-timeline",
+            "text": ""
+          },
+          {
+            "id": "replay-timeline-analyzed",
+            "text": ""
+          },
+          {
+            "id": "replay-timeline-escape",
+            "text": ""
+          },
+          {
+            "id": "replay-step-controls",
+            "text": ""
+          }
+        ]
+      },
+      "error": "v0.6.1/portrait/replay--share: Unexpected failed network requests observed: [{\"method\":\"GET\",\"url\":\"http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel\",\"resourceType\":\"fetch\",\"failure\":\"net::ERR_ABORTED\",\"responseStatus\":200,\"responseReceivedAfterMs\":212,\"failureObservedAfterMs\":213,\"requestTiming\":{\"startTime\":1792969064790.809,\"domainLookupStart\":0.079,\"domainLookupEnd\":0.083,\"connectStart\":0.083,\"secureConnectionStart\":-1,\"connectEnd\":0.156,\"requestStart\":0.18,\"responseStart\":0.918,\"responseEnd\":24.952}}]; observed={\"route\":\"/replay/history-fixture-match\",\"testIds\":[{\"id\":\"replay-analysis-status\",\"text\":\"Black has won\"},{\"id\":\"replay-analysis-detail\",\"text\":\"Lethal sequence\"},{\"id\":\"replay-rule\",\"text\":\"Freestyle\"},{\"id\":\"replay-move-count\",\"text\":\"Move 9 / 9\"},{\"id\":\"replay-player-row-black\",\"text\":\"Reference Player\"},{\"id\":\"replay-player-row-white\",\"text\":\"Normal Bot\"},{\"id\":\"replay-timeline\",\"text\":\"\"},{\"id\":\"replay-timeline-analyzed\",\"text\":\"\"},{\"id\":\"replay-timeline-escape\",\"text\":\"\"},{\"id\":\"replay-step-controls\",\"text\":\"\"}]}"
+    }
+  ],
+  "errors": [
+    {
+      "message": "v0.6.1/portrait/replay--share: Unexpected failed network requests observed: [{\"method\":\"GET\",\"url\":\"http://127.0.0.1:28081/google.firestore.v1.Firestore/Listen/channel\",\"resourceType\":\"fetch\",\"failure\":\"net::ERR_ABORTED\",\"responseStatus\":200,\"responseReceivedAfterMs\":212,\"failureObservedAfterMs\":213,\"requestTiming\":{\"startTime\":1792969064790.809,\"domainLookupStart\":0.079,\"domainLookupEnd\":0.083,\"connectStart\":0.083,\"secureConnectionStart\":-1,\"connectEnd\":0.156,\"requestStart\":0.18,\"responseStart\":0.918,\"responseEnd\":24.952}}]; observed={\"route\":\"/replay/history-fixture-match\",\"testIds\":[{\"id\":\"replay-analysis-status\",\"text\":\"Black has won\"},{\"id\":\"replay-analysis-detail\",\"text\":\"Lethal sequence\"},{\"id\":\"replay-rule\",\"text\":\"Freestyle\"},{\"id\":\"replay-move-count\",\"text\":\"Move 9 / 9\"},{\"id\":\"r"
+    }
+  ],
+  "failedAt": "2026-10-25T22:57:45.702Z"
+}

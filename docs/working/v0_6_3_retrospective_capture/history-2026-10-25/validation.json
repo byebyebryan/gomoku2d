@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "validatedAt": "2026-10-25T23:31:49.313428+00:00",
+  "scope": "Local UI-history implementation and static developer preview; no publication",
+  "catalog": {
+    "releases": 25,
+    "milestones": 24,
+    "screens": 15,
+    "changes": 89,
+    "snapshots": 137,
+    "selectedImages": 274,
+    "selectedManifests": 41,
+    "archivedCompleteRuns": 43,
+    "retainedFailedRuns": 19
+  },
+  "sourceInputs": [
+    {
+      "path": "gomoku-web/src/developer/HistoryRoutes.tsx",
+      "sha256": "1643aa8f9a280d334f3df305dfebedb37815c18a1d06e570739fa1a32278291d"
+    },
+    {
+      "path": "gomoku-web/src/developer/history.css",
+      "sha256": "b62dcb18525dcc727ee57d5a639827c8de9c1be09f6b4a939917bbedd023046a"
+    },
+    {
+      "path": "gomoku-web/src/developer/history.json",
+      "sha256": "c50ea144ee3e5ce73aa68a1c85425b73351660d9e54f2243143cc49808ff8834"
+    },
+    {
+      "path": "gomoku-web/src/developer/history_record.ts",
+      "sha256": "d0aebc681b9c6b06d7f56ddb56d72b9761cfecdfa63a30c220e1eea1d6e79885"
+    },
+    {
+      "path": "gomoku-web/src/developer/ReviewComparison.tsx",
+      "sha256": "3691f941a48e1b57e433b6c970e454b1bc29332470ee4b80a1c65b5b8d30a79c"
+    },
+    {
+      "path": "gomoku-web/scripts/history_catalog.mjs",
+      "sha256": "87bc7f96300d05719cbef66381e44dfef98312662d8a4ee3da60d5bed1e7dd18"
+    },
+    {
+      "path": "gomoku-web/scripts/capture_history_ui.mjs",
+      "sha256": "063fa3a6266a31101da51904178704c80b007f49608d2fe38ce7992a6e6cb862"
+    },
+    {
+      "path": "gomoku-web/scripts/history_capture_adapters.mjs",
+      "sha256": "12dbaee8fa44d4990396cd6d8af4e68a5fbb972be9d876273e482ade59ca1d45"
+    },
+    {
+      "path": "gomoku-web/scripts/history_capture_transport.mjs",
+      "sha256": "430595703dfec74f6c318fce2d56efe03eceb423fafaf291e9b29c6745228e43"
+    }
+  ],
+  "checks": {
+    "typecheck": "app, scripts, tools passed",
+    "webUnit": {
+      "files": 54,
+      "tests": 540,
+      "passed": true
+    },
+    "captureTools": {
+      "tests": 28,
+      "passed": true
+    },
+    "build": "passed, independent source/manifest/PNG graph verified",
+    "browserJourneys": {
+      "existingDeveloper": 30,
+      "history": 15,
+      "engines": [
+        "Chromium",
+        "Firefox",
+        "WebKit"
+      ],
+      "passed": true,
+      "finalHistoryRerunAfterPresentationRefinement": 15
+    },
+    "mediaAudit": {
+      "milestoneLayoutVisits": 48,
+      "matchedScaleAndNoUpsampling": true,
+      "overflow": 0,
+      "imageDecodeErrors": 0
+    },
+    "accessibility": {
+      "auditedViews": 7,
+      "automatedViolations": 0,
+      "incomplete": [
+        {
+          "view": "source-mobile-enlarged",
+          "checks": [
+            {
+              "id": "color-contrast",
+              "nodes": 95
+            }
+          ]
+        }
+      ],
+      "manualJudgment": "open"
+    },
+    "standaloneExport": {
+      "engines": [
+        "Chromium",
+        "Firefox",
+        "WebKit"
+      ],
+      "pngs": 16,
+      "passed": true,
+      "scope": "Existing endpoint pilot, actual nested export prefix, native/full/history, no external/private/engine requests"
+    },
+    "rawLabData": {
+      "unchanged": true,
+      "botSha256": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43",
+      "analysisSha256": "3b8399fc1bbf5e797c7c56b52df5e7a579bf099e317cbc22e6297ea069391ca5"
+    },
+    "historicalMedia": "Existing references/pilot unchanged; new captures only"
+  },
+  "delivery": {
+    "checkedAt": "2026-10-25T23:29:19.039151+00:00",
+    "baseUrl": "http://127.0.0.1:46862/",
+    "host": "starship",
+    "files": 544,
+    "verified": 544,
+    "mismatches": [],
+    "totalBytes": 21867151,
+    "inventorySha256": "6605ab415b07bfdf88c2ccdd856e51a0d566bad199503ad280b3536b1400564c",
+    "tailscaleInterfaceDirectEntries": 3,
+    "carbon": "pending: SSH timed out; peer offline since 23:10Z. Earlier tunnel HTTP200 predates final build."
+  },
+  "cleanup": {
+    "at": "2026-10-25T23:26:23.376102+00:00",
+    "ownedWorktreesRemoved": 25,
+    "sourceRootRemoved": true,
+    "ownedServiceStopped": "gomoku2d-history-builds-rkw_xmyh.service",
+    "ownedProcessesStopped": [
+      2959627,
+      2964154
+    ],
+    "ownedPortsClosed": [
+      47200,
+      47201,
+      47202,
+      47203,
+      47204,
+      47205,
+      47206,
+      47207,
+      47208,
+      47209,
+      47210,
+      47211,
+      47212,
+      47213,
+      47214,
+      47215,
+      47216,
+      47217,
+      47218,
+      47219,
+      47220,
+      47221,
+      47222,
+      47223,
+      47224,
+      46930,
+      28081,
+      29099,
+      29151,
+      24401,
+      24501,
+      29443,
+      29444
+    ],
+    "preservedPortsBeforeAndAfter": {
+      "8001": false,
+      "8013": true,
+      "18081": true,
+      "19099": true,
+      "46862": true
+    },
+    "foreignWorktreePreserved": "/home/bryan/.codex/worktrees/beaf/gomoku2d",
+    "userBrowserTabsOpened": 0
+  },
+  "openAcceptance": [
+    "Bryan visual/design review",
+    "Physical phone viewport/DPR/browser-chrome calibration",
+    "Screen-reader and incomplete contrast judgment",
+    "Final Carbon byte parity when the peer is online"
+  ],
+  "publication": {
+    "push": false,
+    "versionBump": false,
+    "release": false,
+    "productionDeployment": false
+  },
+  "roles": {
+    "primary": "Design, framing contracts, source builds/transport, integration and acceptance",
+    "lunaMax": "Source/state audit, guarded capture adapters/execution and independent review/export checks"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "probe": "v0.6.1 COLD account replay/share, 65 seconds for SDK idle-stream lifecycle; no screenshot",
+  "privateProfileInitiallyAbsent": true,
+  "source": {
+    "tag": "v0.6.1",
+    "expectedCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+    "baseUrl": "http://127.0.0.1:47223/"
+  },
+  "profile": {
+    "id": "desktop",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "locale": "en-US",
+    "timezoneId": "UTC",
+    "reducedMotion": "reduce"
+  },
+  "transport": {
+    "mode": "native-emulators",
+    "session": "account",
+    "project": "demo-gomoku-history",
+    "uid": "9aAlIM0ffvB3F3GT5c0J4WmqrrzV"
+  },
+  "elapsedMs": 66277,
+  "targetRequests": [
+    {
+      "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+      "method": "GET",
+      "resourceType": "fetch",
+      "requestedAtMs": 249,
+      "phase": "active",
+      "response": {
+        "status": 200,
+        "ok": true,
+        "responseAtMs": 257,
+        "timing": {
+          "startTime": 1792968508989.59,
+          "requestStart": 1.771,
+          "responseStart": 3.005,
+          "responseEnd": -1
+        },
+        "headers": {
+          "date": "Sun, 25 Oct 2026 22:48:28 GMT",
+          "contentType": "text/plain; charset=utf-8"
+        }
+      },
+      "failure": {
+        "atMs": 45269,
+        "errorText": "net::ERR_ABORTED",
+        "responseStatusFromRequest": 200,
+        "timing": {
+          "startTime": 1792968508989.59,
+          "requestStart": 1.771,
+          "responseStart": 3.005,
+          "responseEnd": 45020.062
+        }
+      }
+    },
+    {
+      "url": "http://127.0.0.1:28081/google.firestore.v1.Firestore/Write/channel",
+      "method": "GET",
+      "resourceType": "fetch",
+      "requestedAtMs": 45269,
+      "phase": "active",
+      "response": {
+        "status": 200,
+        "ok": true,
+        "responseAtMs": 45272,
+        "timing": {
+          "startTime": 1792968554010.374,
+          "requestStart": 0.206,
+          "responseStart": 1.483,
+          "responseEnd": -1
+        },
+        "headers": {
+          "date": "Sun, 25 Oct 2026 22:49:14 GMT",
+          "contentType": "text/plain; charset=utf-8"
+        }
+      },
+      "failure": {
+        "atMs": 60272,
+        "errorText": "net::ERR_ABORTED",
+        "responseStatusFromRequest": 200,
+        "timing": {
+          "startTime": 1792968554010.374,
+          "requestStart": 0.206,
+          "responseStart": 1.483,
+          "responseEnd": 15002.277
+        }
+      }
+    }
+  ],
+  "forbiddenBlocked": [],
+  "page": {
+    "path": "/replay/history-fixture-match",
+    "heading": "Replay Analysis",
+    "bodyText": "SAVED MATCH\n\nReplay Analysis\nPROFILE\nHOME\nUse arrow keys to explore the board. Home and End move to the ends of a row. This board is read only.\nBlack wins. Last move L8.\nBACK TO REPLAY\nShare replay\n\nOPEN AT\n\nMOVE 9\nFINAL MOVE\n\nPLAYER NAMES\n\nAS PLAYED\nGENERIC NAMES\nProfile links\nNOT INCLUDED\nIN THE LINK\nMove 9 / 9\nBlack:\nReference Player\nWhite:\nNormal Bot\n\nFULL GAME · ANYONE WITH LINK\n\nCOPY LINK\nREPLAY LINK"
+  }
+}

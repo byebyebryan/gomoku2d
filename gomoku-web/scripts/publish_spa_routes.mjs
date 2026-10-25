@@ -34,14 +34,19 @@ async function copyIndexToRoute(route) {
   await copyFile(indexPath, targetPath);
 }
 
-const reviews=await readReviewCatalog();
-staticRoutes.push(...reviews.map(record=>`dev/reviews/${record.id}`));
+const reviews = await readReviewCatalog();
+staticRoutes.push(...reviews.map((record) => `dev/reviews/${record.id}`));
 const history = await readHistoryCatalog();
-staticRoutes.push("dev/reviews/history", ...history.screens.map(screen => `dev/reviews/history/${screen.id}`));
+staticRoutes.push(
+  "dev/reviews/history",
+  ...history.screens.map((screen) => `dev/reviews/history/${screen.id}`),
+);
 
 await Promise.all([
   copyFile(indexPath, join(distRoot, "404.html")),
   ...staticRoutes.map(copyIndexToRoute),
 ]);
 
-console.log(`Published SPA route entries for ${staticRoutes.map((route) => `/${route}`).join(", ")}.`);
+console.log(
+  `Published SPA route entries for ${staticRoutes.map((route) => `/${route}`).join(", ")}.`,
+);

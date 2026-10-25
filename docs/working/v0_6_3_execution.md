@@ -303,3 +303,27 @@ opened. The work is committed locally, with no push or production publication.
 Bryan's presentation review and phone calibration remain open before more
 history is added. Desktop Profile clipping and long-name Match truncation are
 recorded product follow-ups, with the tagged captures left intact.
+
+## UI history implementation, October 25
+
+Bryan selected the C milestone overview and B individual screen trails, then
+authorized the full source-backed history implementation with primary ownership
+of design. The [implementation record](v0_6_3_history_implementation.md) and
+[qualified capture set](v0_6_3_retrospective_capture/history-2026-10-25/README.md)
+own decisions, original media, checks and the local handoff.
+
+The source now covers 25 release identities, 24 meaningful UI milestones, 15
+screen histories and 274 selected desktop/portrait images. Introductions,
+retirements and the Lab merge use real single captures rather than empty
+comparison columns. Existing cases, the endpoint pilot and current references
+remain unchanged and addressable. The viewer remains static public content,
+with no player/Auth/private-history/Phaser/Wasm initialization.
+
+Type checks, 540 unit tests, 28 capture checks, three-engine history/developer
+journeys, standalone export compatibility and the 48-layout media audit pass.
+The Starship preview has full 544-file served-byte parity. Carbon went offline
+before the final-build last-hop recheck; its forward remains configured. That
+check and human/physical-device acceptance stay open. The original manual
+services and foreign worktree remain in place; all 25 temporary tagged worktrees
+and capture services were cleaned up. Work is committed locally without release
+or production publication.

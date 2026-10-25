@@ -42,6 +42,7 @@ so reference typography does not change player screens.
 | Assets | `AssetPreviewRoute`, `IconInspector`, `SpriteInspector` | Actual CSS classes/tokens, canonical SVGs and source sprite inventory |
 | Lab | Existing report loaders, report panels and DOM proof boards | Unchanged `reports/lab/` JSON, recorded revisions/budgets and bounded analysis semantics |
 | UI review | `reviews.json`, `review_record.ts`, `ReviewCase.tsx`, `ReviewChecklist.tsx` | Screen references, historical comparisons, the actual screenshot-review checklist and separate technical/human status |
+| UI history | `history.json`, `history_record.ts`, `HistoryRoutes.tsx` | Release provenance, meaningful milestones, stable screen identities, named states and qualified retrospective captures |
 
 Lab keeps `tab=ranking|search|analysis` and `match` deep links. Its detailed
 metrics and opponent/game drill-down remain available; secondary ranking metrics
@@ -121,6 +122,49 @@ Their dimensions and hashes must not be changed to imply device validation.
 A new Android reference should use a separately captured set with measured usable
 viewport, browser/display mode, pixel ratio and source identity. Bryan's OnePlus
 is the proposed real-device reference; its exact viewport remains unmeasured.
+
+## Milestones and screen histories
+
+`/dev/reviews/history/` groups meaningful UI releases from 0.2 through 0.6 in
+a milestone rail and lists every changed screen/state for the selected release.
+On narrow layouts the rail is an operable disclosure. Current screens, UI history
+and Design reviews remain direct sibling entries; existing case URLs and the
+endpoint pilot remain valid.
+
+`/dev/reviews/history/<screen-id>/` shows a chronological trail for a named
+screen state and an inspection of the selected change. Screen/view links remain
+visible. `version`, `state` and `layout=desktop|portrait` survive reload and
+history. Going back to the originating milestone restores its scroll region,
+focused change and open source disclosures. Invalid selections fall back safely;
+unknown screens offer a recovery link.
+
+Updates pair neighbouring relevant source versions. Introductions show one new
+capture; removals show the last real capture with the later retirement label.
+Bot Report and Analysis Report merge into Lab at 0.5.1. Visuals retains one
+identity across its static-to-React update. URL migrations alone do not create
+new screen identities. Unrecorded capture coverage never means a screen was absent.
+
+The catalog explicitly allowlists releases, screens/states, snapshots and
+milestone transitions. Browser and publisher validate references, lifecycle
+cardinality, chronological source versions and safe paths. The publisher also
+checks original manifest identity/status, PNG dimensions/digests and absence of
+unexpected capture errors. Selected media and manifests publish under `/history/`;
+only allowlisted screen routes receive direct-entry HTML. No player state or
+backend is needed to browse them.
+
+The overview uses compact captions, with image inspection controls below each
+comparison and detailed provenance in disclosures. Screen inspection keeps the
+full captions and controls. Snapshot identities bind their original manifest;
+public image filenames include their content digest so a later qualified
+recapture receives a different URL.
+
+The [history implementation record](../../working/v0_6_3_history_implementation.md)
+owns the accepted design and qualification results. The
+[tag inventory](../../working/v0_6_3_history_inventory.md) and change matrix keep
+source evidence separate from actual captures. These are recreated tagged
+applications in a modern runtime, with synthetic local/emulator data and an
+unmeasured generic Android touch profile. Capture provenance and technical
+success do not establish original-period or physical-device acceptance.
 
 ## Reusable standalone export
 

@@ -6,10 +6,16 @@ export function ReviewComparison({
   comparison,
   root,
   firstId,
+  navigationState,
+  controlsPosition = "before",
+  compactCaption = false,
 }: {
   comparison: Comparison;
   root: string;
   firstId: string;
+  navigationState?: unknown;
+  controlsPosition?: "before" | "after";
+  compactCaption?: boolean;
 }) {
   const [params, setParams] = useSearchParams();
   const active = (params.get("pair") ?? firstId) === comparison.id;
@@ -26,43 +32,54 @@ export function ReviewComparison({
       if (value === null) next.delete(key);
       else next.set(key, value);
     }
-    setParams(next, { preventScrollReset: true });
+    setParams(next, { preventScrollReset: true, state: navigationState });
   }
-  const largestWidth = Math.max(...comparison.media.map((media) => media.width));
+  const largestWidth = Math.max(
+    ...comparison.media.map((media) => media.width),
+  );
   const layout = {
-    "--review-columns": comparison.media.map((media) => `minmax(0, ${media.width}fr)`).join(" "),
+    "--review-columns": comparison.media
+      .map((media) => `minmax(0, ${media.width}fr)`)
+      .join(" "),
     "--review-max-width": `${comparison.media.reduce((sum, media) => sum + media.width, 0) + 24 * (comparison.media.length - 1)}px`,
   } as CSSProperties;
+  const controls = (
+    <div className="dev-tools">
+      <button
+        className="dev-tool"
+        aria-pressed={!native}
+        onClick={() => update({ native: null })}
+      >
+        Matched scale
+      </button>
+      <button
+        className="dev-tool"
+        aria-pressed={native}
+        onClick={() => update({ native: "1" })}
+      >
+        Native pixels
+      </button>
+      <button
+        className="dev-tool"
+        aria-pressed={full}
+        onClick={() => update({ full: full ? "0" : null })}
+      >
+        Full captures
+      </button>
+      {comparison.media.length > 1 && (!full || native) && (
+        <button
+          className="dev-tool"
+          aria-pressed={sync}
+          onClick={() => update({ sync: sync ? "off" : null })}
+        >
+          Scroll together {sync ? "on" : "off"}
+        </button>
+      )}
+    </div>
+  );
   return (
     <>
-      <div className="dev-tools">
-        <button
-          className="dev-tool"
-          aria-pressed={!native}
-          onClick={() => update({ native: null })}
-        >
-          Matched scale
-        </button>
-        <button className="dev-tool" aria-pressed={native} onClick={() => update({ native: "1" })}>
-          Native pixels
-        </button>
-        <button
-          className="dev-tool"
-          aria-pressed={full}
-          onClick={() => update({ full: full ? "0" : null })}
-        >
-          Full captures
-        </button>
-        {comparison.media.length > 1 && (!full || native) && (
-          <button
-            className="dev-tool"
-            aria-pressed={sync}
-            onClick={() => update({ sync: sync ? "off" : null })}
-          >
-            Scroll together {sync ? "on" : "off"}
-          </button>
-        )}
-      </div>
+      {controlsPosition === "before" && controls}
       <div
         className={`review-pair ${full ? "review-full" : ""} ${native ? "review-native" : ""}`}
         data-count={comparison.media.length}
@@ -79,9 +96,12 @@ export function ReviewComparison({
           >
             <figcaption>
               <strong>{media.label}</strong>
-              <span>
-                {media.kind} · {media.width} × {media.height} · {media.revision}
-              </span>
+              {!compactCaption && (
+                <span>
+                  {media.kind} · {media.width} × {media.height} ·{" "}
+                  {media.revision}
+                </span>
+              )}
             </figcaption>
             <div
               className="review-capture"
@@ -101,10 +121,14 @@ export function ReviewComparison({
                     x = source.scrollWidth - source.clientWidth;
                   target.scrollTop =
                     y > 0
-                      ? (source.scrollTop / y) * (target.scrollHeight - target.clientHeight)
+                      ? (source.scrollTop / y) *
+                        (target.scrollHeight - target.clientHeight)
                       : 0;
                   target.scrollLeft =
-                    x > 0 ? (source.scrollLeft / x) * (target.scrollWidth - target.clientWidth) : 0;
+                    x > 0
+                      ? (source.scrollLeft / x) *
+                        (target.scrollWidth - target.clientWidth)
+                      : 0;
                 }
                 requestAnimationFrame(() => {
                   busy.current = false;
@@ -125,6 +149,7 @@ export function ReviewComparison({
           </figure>
         ))}
       </div>
+      {controlsPosition === "after" && controls}
     </>
   );
 }

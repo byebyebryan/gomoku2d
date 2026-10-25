@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-25T20:58:37.514907+00:00",
+  "tag": "v0.2.2",
+  "sourceCommit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+  "sourceTree": "6afda8f4a53376d73222c9899a564aa54bc40685",
+  "applicationTree": "1cc07b132fb1b6279309189eb7c73310b98f98cc",
+  "packageVersion": "0.1.0",
+  "packageLockSha256": "2d0c347122f0d6b482ef8e18c8ffd22ed16239d7f2aca152038b5cb6d8af4066",
+  "cargoLock": {
+    "kind": "generated-external",
+    "sha256": "e7cc7afb68e2dacc0591dc5f7aae47deda250b2072f4ee485d945021a53bfbc0"
+  },
+  "wasmSha256": "c003ad463a9cbd28266dea52c86f76f0a932bf654483ef0fdcb7da0ef990d539",
+  "distSha256": "127dce53fd172960235eb33fa9408f5506cca28ba482709d8112eeb4c4f6206c",
+  "indexSha256": "584d6f309ce749711eddecdcb7a03ac5fa7b003a073833a3802e0e51152a7963",
+  "files": [
+    {
+      "path": "404.html",
+      "sha256": "584d6f309ce749711eddecdcb7a03ac5fa7b003a073833a3802e0e51152a7963"
+    },
+    {
+      "path": "assets/Board-D_UmlfbT.js",
+      "sha256": "1779d967409317f6d0f72bdc28f39b20a67ffe1b37149f32534fcf1d47fea2f1"
+    },
+    {
+      "path": "assets/Board-OItv2DWK.css",
+      "sha256": "3e717433fc1597de3b7f09a5638c26f31913e027111adec5e5b699d0435777fa"
+    },
+    {
+      "path": "assets/LocalMatchRoute-Cc8ioH3k.css",
+      "sha256": "6041528ddc5662060ab27f41c35d05b069f497ace63a681a061aa70e6993cec0"
+    },
+    {
+      "path": "assets/LocalMatchRoute-CgqdzB20.js",
+      "sha256": "b2bbe23e3bce299de5afdf2107c74518a0e48860b2981a33e3d0c208e1352d0f"
+    },
+    {
+      "path": "assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+      "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+    },
+    {
+      "path": "assets/PixelOperator-C4gCAeI2.ttf",
+      "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+    },
+    {
+      "path": "assets/PixelOperator8-Bold-DdofeDmZ.fnt",
+      "sha256": "764a1e3ef60af68cfe68aebfab399be21eff4196b33f09040aebc9b54a19b796"
+    },
+    {
+      "path": "assets/ProfileRoute-D4AwfQd3.css",
+      "sha256": "8f5df2835595d8c1fbfc0a3d7c032be87dea1ff77f8a7878f8735594a017cef6"
+    },
+    {
+      "path": "assets/ProfileRoute-nyNoqFqd.js",
+      "sha256": "0b6bc485b94a6ab88f7ebb86ca5b5c65a4027a06dfe81ad3d15e67862c4dbbd1"
+    },
+    {
+      "path": "assets/ReplayRoute-DncElTqz.js",
+      "sha256": "fd6bf8f1138125634bc4eb604b0f671bc86b6341d7f413c22e4b1ec17d295084"
+    },
+    {
+      "path": "assets/ReplayRoute-ezonhvi6.css",
+      "sha256": "a7563138aa5e5aef207be80fd441efce885e1b7ed6e257f4508af44a842cd854"
+    },
+    {
+      "path": "assets/bot_worker-DY1BgBX_.js",
+      "sha256": "3455220204e953dc130b5ccc50008b9ab9a523b4a5213aac65595a27a6e52c37"
+    },
+    {
+      "path": "assets/gomoku_wasm_bg-BNUacn0L.wasm",
+      "sha256": "c003ad463a9cbd28266dea52c86f76f0a932bf654483ef0fdcb7da0ef990d539"
+    },
+    {
+      "path": "assets/gomoku_wasm_bg.wasm",
+      "sha256": "ced48030f841466d20ce6bffb4b6571cf562f1c0dbadeebfe51e230ab4b0782d"
+    },
+    {
+      "path": "assets/index-B-j6obSj.js",
+      "sha256": "91c739084d67f89de0380c62e3322810e8a0a037a274ec48ead2d2be0c269258"
+    },
+    {
+      "path": "assets/index-BNvpgUsZ.css",
+      "sha256": "f8dc1e4d181eee2c6c8b86dd1d65aec951d436347dabe4902c4650a1a6bce935"
+    },
+    {
+      "path": "assets/jsx-runtime-Bm8B5LeD.js",
+      "sha256": "2ad2e118c03dde27560b6cd475615984c1fdc7a8cfdfa399e69ad49c2d0b65f8"
+    },
+    {
+      "path": "assets/local_replay-tRitl4bh.js",
+      "sha256": "d7c8e27c4d5558b087e7e1c4a56265a99878cb37bb124be6718b96af8e27cfb8"
+    },
+    {
+      "path": "assets/sprites/PixelOperator8-Bold.fnt",
+      "sha256": "764a1e3ef60af68cfe68aebfab399be21eff4196b33f09040aebc9b54a19b796"
+    },
+    {
+      "path": "assets/sprites/PixelOperator8-Bold.png",
+      "sha256": "f79f0605041c255cf25cf1491cacb3e3c35e22ec65d10cb11a1031964e7b9099"
+    },
+    {
+      "path": "assets/sprites/button.png",
+      "sha256": "01c705645618f52ea88af5976d461cd2d8d87f834152f3b1ba38455319b20920"
+    },
+    {
+      "path": "assets/sprites/pointer.png",
+      "sha256": "c6957154cf95e1a800256a664c87737b2845dc33fb55a4796fe0b615a3ae8064"
+    },
+    {
+      "path": "assets/sprites/stone.png",
+      "sha256": "7ef202f693ad04b0dc318d6fa7d595cdbe2bca7c379a2eaf9b7ebf835fdee0dc"
+    },
+    {
+      "path": "assets/sprites/warning.png",
+      "sha256": "3535a106dd660e3d2b2f521a6117d7c6405c26731cad5720c45a950cd9793afd"
+    },
+    {
+      "path": "assets/wasm_bridge-BjI84_TI.js",
+      "sha256": "a0abf4ad0879f0aa97c89193deb98ab835a8f4f31c18ea4d1ee0f35c8e7bd7ca"
+    },
+    {
+      "path": "index.html",
+      "sha256": "584d6f309ce749711eddecdcb7a03ac5fa7b003a073833a3802e0e51152a7963"
+    }
+  ],
+  "reportInputs": [],
+  "environment": {
+    "node": "v26.12.1",
+    "npm": "12.2.1",
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27) (Arch Linux rust 1:1.99.1-1)",
+    "wasmPack": "wasm-pack 0.14.0",
+    "firebaseMode": "unconfigured-local-guest",
+    "firebaseEnvironment": {},
+    "wasmBuild": "wasm-pack release --target bundler; generated Cargo resolution recorded separately",
+    "npmInstall": "npm ci --no-audit --no-fund; host npm default install-script policy"
+  },
+  "commands": [
+    {
+      "args": [
+        "/home/bryan/.cargo/bin/wasm-pack",
+        "build",
+        "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_2_2/gomoku-bot-lab/gomoku-wasm",
+        "--target",
+        "bundler"
+      ],
+      "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_2_2"
+    },
+    {
+      "args": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_2_2/gomoku-web"
+    },
+    {
+      "args": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_2_2/gomoku-web"
+    }
+  ],
+  "buildLogSha256": "ecb4b8fdc43945ec04aa34306dfbe2bc324edd0cdeae8e4a93d579ec81141b75",
+  "applicationInputsClean": true
+}

@@ -1,0 +1,76 @@
+{"command": ["/home/bryan/.cargo/bin/wasm-pack", "build", "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_3_3/gomoku-bot-lab/gomoku-wasm", "--target", "bundler", "--", "--locked"], "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_3_3"}
+[INFO]: 🎯  Checking for the Wasm target...
+[INFO]: 🌀  Compiling to Wasm...
+   Compiling gomoku-core v0.1.0 (/tmp/gomoku2d-history-rkw_xmyh/sources/v0_3_3/gomoku-bot-lab/gomoku-core)
+   Compiling gomoku-bot v0.1.0 (/tmp/gomoku2d-history-rkw_xmyh/sources/v0_3_3/gomoku-bot-lab/gomoku-bot)
+   Compiling gomoku-wasm v0.1.0 (/tmp/gomoku2d-history-rkw_xmyh/sources/v0_3_3/gomoku-bot-lab/gomoku-wasm)
+    Finished `release` profile [optimized] target(s) in 0.85s
+[INFO]: ⬇️  Installing wasm-bindgen...
+[INFO]: found wasm-opt at "/usr/bin/wasm-opt"
+[INFO]: Optimizing wasm binaries with `wasm-opt`...
+[INFO]: Optional fields missing from Cargo.toml: 'description', 'repository', and 'license'. These are not necessary, but recommended
+[INFO]: ✨   Done in 1.04s
+[INFO]: 📦   Your wasm pkg is ready to publish at /tmp/gomoku2d-history-rkw_xmyh/sources/v0_3_3/gomoku-bot-lab/gomoku-wasm/pkg.
+[WARN]: ⚠️   There's a newer version of wasm-pack available, the new version is: 0.15.0, you are using: 0.14.0. To update, navigate to: https://drager.github.io/wasm-pack/installer/
+{"command": ["npm", "ci", "--no-audit", "--no-fund"], "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_3_3/gomoku-web"}
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'superstatic@10.0.0',
+npm warn EBADENGINE   required: { node: '20 || 22 || 24' },
+npm warn EBADENGINE   current: { node: 'v26.12.1', npm: '12.2.1' }
+npm warn EBADENGINE }
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated json-ptr@3.1.1: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 884 packages in 4s
+npm warn install-scripts 5 packages had install scripts blocked because they are not covered by allowScripts:
+npm warn install-scripts   @firebase/util@1.15.0 (postinstall: node ./postinstall.js)
+npm warn install-scripts   @swc/core@1.15.26 (postinstall: node postinstall.js)
+npm warn install-scripts   esbuild@0.28.0 (postinstall: node install.js)
+npm warn install-scripts   protobufjs@7.5.5 (postinstall: node scripts/postinstall)
+npm warn install-scripts   re2@1.24.0 (install: install-from-cache --artifact build/Release/re2.node --host-var RE2_DOWNLOAD_MIRROR --skip-path-var RE2_DOWNLOAD_SKIP_PATH --skip-ver-var RE2_DOWNLOAD_SKIP_VER || node-gyp -j max rebuild)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+{"command": ["npm", "run", "build"], "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_3_3/gomoku-web"}
+npm notice run gomoku-web@0.3.3 build
+npm notice run tsc && vite build
+vite v8.0.10 building client environment for production...
+[2Ktransforming...✓ 105 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                   3.05 kB │ gzip:   1.02 kB
+dist/assets/bot_worker-Cd-_7LPX.js               10.73 kB
+dist/assets/PixelOperator-Bold-CLeLR2Kg.ttf      16.98 kB
+dist/assets/PixelOperator-C4gCAeI2.ttf           17.27 kB
+dist/assets/PixelOperator8-Bold-DQXNZxi5.ttf     18.62 kB
+dist/assets/gomoku_wasm_bg-2TyEkrXj.wasm         72.42 kB │ gzip:  32.60 kB
+dist/assets/Board-OItv2DWK.css                    0.24 kB │ gzip:   0.16 kB
+dist/assets/LocalMatchRoute-DaZmqEWj.css          6.23 kB │ gzip:   1.67 kB
+dist/assets/index-akACsKMq.css                    6.41 kB │ gzip:   1.99 kB
+dist/assets/ReplayRoute-D7qVckNb.css              6.64 kB │ gzip:   1.78 kB
+dist/assets/ProfileRoute-BTLrqgMx.css            11.55 kB │ gzip:   2.60 kB
+dist/assets/sequence_font-BJ1tkihl.js             0.28 kB │ gzip:   0.20 kB
+dist/assets/active_history-DVK0sy2t.js            0.45 kB │ gzip:   0.30 kB
+dist/assets/local_replay_core-BXgckfYm.js         0.63 kB │ gzip:   0.35 kB
+dist/assets/chunk-CilyBKbf.js                     0.69 kB │ gzip:   0.42 kB
+dist/assets/cloud_sync-VIwy-YK3.js                4.79 kB │ gzip:   1.67 kB
+dist/assets/saved_match-DknXy9P2.js               5.82 kB │ gzip:   2.29 kB
+dist/assets/wasm_bridge-v2pd5g2O.js              14.95 kB │ gzip:   3.77 kB
+dist/assets/ProfileRoute-BWbFVMku.js             17.66 kB │ gzip:   4.76 kB
+dist/assets/ReplayRoute-BapKtC_N.js              25.16 kB │ gzip:   3.62 kB
+dist/assets/LocalMatchRoute-D7sbEM8M.js          35.71 kB │ gzip:   6.24 kB
+dist/assets/Icon-sPlocBzY.js                    107.75 kB │ gzip:  22.88 kB
+dist/assets/local_replay-BlJQA13V.js            370.73 kB │ gzip: 112.54 kB
+dist/assets/index-BfypGtlh.js                   374.29 kB │ gzip:  70.47 kB
+dist/assets/Board-DchNZkJK.js                 1,381.66 kB │ gzip: 363.59 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.59s
+npm notice run gomoku-web@0.3.3 postbuild
+npm notice run node scripts/publish_asset_previews.mjs && node scripts/publish_spa_routes.mjs
+Published asset previews to dist/assets/.
+Published SPA route entries for /match/local, /profile.

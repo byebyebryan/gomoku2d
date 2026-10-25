@@ -38,6 +38,9 @@ The 0.6.3 source now implements a shared developer area. Its
 [contract](reference/app/developer_area.md) owns route, source and review-record
 semantics; the [execution record](working/v0_6_3_execution.md) owns local
 validation. This does not change the published-release statement above.
+The [UI history implementation](working/v0_6_3_history_implementation.md) extends
+that area with a milestone overview and individual screen trails, backed by
+qualified recaptures from tagged sources.
 
 Markdown is detailed agent/maintainer context. The developer area prepares
 selected design references, inspectors, review comparisons and the screenshot checklist

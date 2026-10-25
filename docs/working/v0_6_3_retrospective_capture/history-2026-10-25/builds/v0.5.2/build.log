@@ -1,0 +1,98 @@
+{"command": ["/home/bryan/.cargo/bin/wasm-pack", "build", "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2/gomoku-bot-lab/gomoku-wasm", "--target", "bundler", "--", "--locked"], "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2"}
+[INFO]: 🎯  Checking for the Wasm target...
+[INFO]: 🌀  Compiling to Wasm...
+   Compiling gomoku-core v0.1.0 (/tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2/gomoku-bot-lab/gomoku-core)
+   Compiling gomoku-bot v0.1.0 (/tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2/gomoku-bot-lab/gomoku-bot)
+   Compiling gomoku-analysis v0.1.0 (/tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2/gomoku-bot-lab/gomoku-analysis)
+   Compiling gomoku-wasm v0.1.0 (/tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2/gomoku-bot-lab/gomoku-wasm)
+    Finished `release` profile [optimized] target(s) in 2.44s
+[INFO]: ⬇️  Installing wasm-bindgen...
+[INFO]: found wasm-opt at "/usr/bin/wasm-opt"
+[INFO]: Optimizing wasm binaries with `wasm-opt`...
+[INFO]: Optional fields missing from Cargo.toml: 'description', 'repository', and 'license'. These are not necessary, but recommended
+[INFO]: ✨   Done in 3.00s
+[INFO]: 📦   Your wasm pkg is ready to publish at /tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2/gomoku-bot-lab/gomoku-wasm/pkg.
+[WARN]: ⚠️   There's a newer version of wasm-pack available, the new version is: 0.15.0, you are using: 0.14.0. To update, navigate to: https://drager.github.io/wasm-pack/installer/
+{"command": ["npm", "ci", "--no-audit", "--no-fund"], "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2/gomoku-web"}
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'superstatic@10.0.0',
+npm warn EBADENGINE   required: { node: '20 || 22 || 24' },
+npm warn EBADENGINE   current: { node: 'v26.12.1', npm: '12.2.1' }
+npm warn EBADENGINE }
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated json-ptr@3.1.1: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 882 packages in 4s
+npm warn install-scripts 5 packages had install scripts blocked because they are not covered by allowScripts:
+npm warn install-scripts   @firebase/util@1.15.0 (postinstall: node ./postinstall.js)
+npm warn install-scripts   @swc/core@1.15.26 (postinstall: node postinstall.js)
+npm warn install-scripts   esbuild@0.28.0 (postinstall: node install.js)
+npm warn install-scripts   protobufjs@7.5.8 (postinstall: node scripts/postinstall)
+npm warn install-scripts   re2@1.24.0 (install: install-from-cache --artifact build/Release/re2.node --host-var RE2_DOWNLOAD_MIRROR --skip-path-var RE2_DOWNLOAD_SKIP_PATH --skip-ver-var RE2_DOWNLOAD_SKIP_VER || node-gyp -j max rebuild)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+{"command": ["npm", "run", "build"], "cwd": "/tmp/gomoku2d-history-rkw_xmyh/sources/v0_5_2/gomoku-web"}
+npm notice run gomoku-web@0.5.2 build
+npm notice run tsc && vite build
+vite v8.0.10 building client environment for production...
+[2Ktransforming...✓ 136 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                     3.54 kB │ gzip:   1.13 kB
+dist/assets/replay_analysis_worker-tGHad2j0.js     11.90 kB
+dist/assets/bot_worker-MT5Duuv6.js                 12.10 kB
+dist/assets/PixelOperator-Bold-CLeLR2Kg.ttf        16.98 kB
+dist/assets/PixelOperator-C4gCAeI2.ttf             17.27 kB
+dist/assets/PixelOperator8-Bold-DQXNZxi5.ttf       18.62 kB
+dist/assets/gomoku_wasm_bg-DaEFSa8a.wasm          645.69 kB │ gzip: 244.11 kB
+dist/assets/Board-OItv2DWK.css                      0.24 kB │ gzip:   0.16 kB
+dist/assets/GuideRoute-gqcdZzyt.css                 4.27 kB │ gzip:   1.22 kB
+dist/assets/RulesRoute-dEl8LpLV.css                 4.53 kB │ gzip:   1.28 kB
+dist/assets/SettingsRoute-B6QpVmf-.css              5.20 kB │ gzip:   1.41 kB
+dist/assets/LocalMatchRoute-jEMs5th3.css            6.05 kB │ gzip:   1.61 kB
+dist/assets/index-BHCgACjx.css                      6.68 kB │ gzip:   2.07 kB
+dist/assets/AssetPreviewRoute-BOwZmLHk.css          7.73 kB │ gzip:   2.20 kB
+dist/assets/ReplayRoute-xbLUEdZF.css                8.53 kB │ gzip:   2.19 kB
+dist/assets/ProfileRoute-DxZiWOou.css              11.06 kB │ gzip:   2.53 kB
+dist/assets/BotReportRoute-C45Pg1wH.css            26.51 kB │ gzip:   5.15 kB
+dist/assets/sequence_font-BsmRDlqV.js               0.28 kB │ gzip:   0.20 kB
+dist/assets/local_replay_core-srsrFt8Z.js           0.60 kB │ gzip:   0.33 kB
+dist/assets/chunk-CilyBKbf.js                       0.69 kB │ gzip:   0.42 kB
+dist/assets/ready_queue_worker-CGdmUqsq.js          1.08 kB │ gzip:   0.39 kB
+dist/assets/board_model-Az9C-P8v.js                 1.18 kB │ gzip:   0.42 kB
+dist/assets/use_active_history-DU_7q2ye.js          1.22 kB │ gzip:   0.63 kB
+dist/assets/local_replay-CA59ORWm.js                1.28 kB │ gzip:   0.61 kB
+dist/assets/cloud_sync-CMzFRGAW.js                  1.76 kB │ gzip:   0.70 kB
+dist/assets/bot_config-DdPukzi5.js                  2.41 kB │ gzip:   0.92 kB
+dist/assets/constants-BGnJIZVb.js                   2.71 kB │ gzip:   1.11 kB
+dist/assets/cloud_promotion_store-BmmSKSFm.js       3.01 kB │ gzip:   1.21 kB
+dist/assets/saved_match-DS_0bTY-.js                 3.77 kB │ gzip:   1.45 kB
+dist/assets/jsx-runtime-snnniYfl.js                 7.88 kB │ gzip:   2.98 kB
+dist/assets/RulesRoute-DtMQG4v9.js                 10.91 kB │ gzip:   2.32 kB
+dist/assets/GuideRoute-D8naXt6u.js                 13.07 kB │ gzip:   3.09 kB
+dist/assets/ProfileRoute-z_o6-dkF.js               15.07 kB │ gzip:   4.04 kB
+dist/assets/local_match_session-BRIIq2YQ.js        15.57 kB │ gzip:   3.83 kB
+dist/assets/AssetPreviewRoute-Dvkcn12J.js          16.16 kB │ gzip:   4.52 kB
+dist/assets/wasm_bridge-nuDG8-Qv.js                18.95 kB │ gzip:   4.26 kB
+dist/assets/LocalMatchRoute-DOKUQXpe.js            28.11 kB │ gzip:   4.13 kB
+dist/assets/SettingsRoute-DD6WoRSd.js              42.42 kB │ gzip:   3.91 kB
+dist/assets/BotReportRoute-CogSU94P.js             44.60 kB │ gzip:  12.33 kB
+dist/assets/ReplayRoute-DkaV_ewJ.js                45.77 kB │ gzip:   8.89 kB
+dist/assets/chunk-EVOBXE3Y-CJsaZMTm.js             67.98 kB │ gzip:  17.53 kB
+dist/assets/index-B0jB2Dpo.js                     387.09 kB │ gzip:  72.08 kB
+dist/assets/Icon-CC5w_MRI.js                      397.32 kB │ gzip: 115.25 kB
+dist/assets/Board-LjuGaRw1.js                   1,393.79 kB │ gzip: 367.59 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.84s
+npm notice run gomoku-web@0.5.2 postbuild
+npm notice run node scripts/publish_visual_design_assets.mjs && node scripts/publish_bot_reports.mjs && node scripts/publish_analysis_reports.mjs && node scripts/publish_spa_routes.mjs
+Published visual design asset source files to dist/assets/.
+Published bot reports to dist/bot-report/.
+Published analysis reports to dist/analysis-report/.
+Published SPA route entries for /guide, /lab, /match/local, /profile, /rules, /settings, /visuals.

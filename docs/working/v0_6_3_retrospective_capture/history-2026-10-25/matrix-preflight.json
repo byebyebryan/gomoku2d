@@ -1,0 +1,170 @@
+[
+  {
+    "tag": "v0.3.0",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.3.0-guest.log"
+  },
+  {
+    "tag": "v0.3.0",
+    "session": "account",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.3.0-account.log"
+  },
+  {
+    "tag": "v0.3.1",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.3.1-guest.log"
+  },
+  {
+    "tag": "v0.3.1",
+    "session": "account",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.3.1-account.log"
+  },
+  {
+    "tag": "v0.3.2",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.3.2-guest.log"
+  },
+  {
+    "tag": "v0.3.2",
+    "session": "account",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.3.2-account.log"
+  },
+  {
+    "tag": "v0.3.3",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.3.3-guest.log"
+  },
+  {
+    "tag": "v0.3.3",
+    "session": "account",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.3.3-account.log"
+  },
+  {
+    "tag": "v0.4.0",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.0-guest.log"
+  },
+  {
+    "tag": "v0.4.1",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.1-guest.log"
+  },
+  {
+    "tag": "v0.4.2",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.2-guest.log"
+  },
+  {
+    "tag": "v0.4.3",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.3-guest.log"
+  },
+  {
+    "tag": "v0.4.4",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.4-guest.log"
+  },
+  {
+    "tag": "v0.4.5",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.5-guest.log"
+  },
+  {
+    "tag": "v0.4.6",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.6-guest.log"
+  },
+  {
+    "tag": "v0.4.7",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.7-guest.log"
+  },
+  {
+    "tag": "v0.4.8",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.4.8-guest.log"
+  },
+  {
+    "tag": "v0.5.0",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.5.0-guest.log"
+  },
+  {
+    "tag": "v0.5.1",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.5.1-guest.log"
+  },
+  {
+    "tag": "v0.5.2",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.5.2-guest.log"
+  },
+  {
+    "tag": "v0.5.3",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.5.3-guest.log"
+  },
+  {
+    "tag": "v0.5.4",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.5.4-guest.log"
+  },
+  {
+    "tag": "v0.5.4",
+    "session": "account",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.5.4-account.log"
+  },
+  {
+    "tag": "v0.5.5",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.5.5-guest.log"
+  },
+  {
+    "tag": "v0.6.1",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.6.1-guest.log"
+  },
+  {
+    "tag": "v0.6.1",
+    "session": "account",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.6.1-account.log"
+  },
+  {
+    "tag": "v0.6.2",
+    "session": "guest",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.6.2-guest.log"
+  },
+  {
+    "tag": "v0.6.2",
+    "session": "account",
+    "code": 0,
+    "log": "/tmp/gomoku2d-history-rkw_xmyh/configs/validate-v0.6.2-account.log"
+  }
+]

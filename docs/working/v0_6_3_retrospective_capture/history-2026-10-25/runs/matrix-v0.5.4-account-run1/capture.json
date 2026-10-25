@@ -1,0 +1,1368 @@
+{
+  "schemaVersion": 1,
+  "kind": "historical-ui-capture",
+  "status": "complete",
+  "capturedAt": "2026-10-25T22:22:15.127Z",
+  "captureTool": {
+    "filename": "capture_history_ui.mjs",
+    "sha256": "e1b56aef2d8befb7415cc925d047983a9358b8a48253fecedf2eba2089ac82b3",
+    "version": 1
+  },
+  "tools": {
+    "node": "v24.14.1",
+    "platform": "linux",
+    "architecture": "x64",
+    "browser": {
+      "name": "Chromium",
+      "version": "156.0.8078.4"
+    }
+  },
+  "sources": [
+    {
+      "tag": "v0.5.4",
+      "commit": "b09ac7ff56f1452bccdf63334ce38415b92fdbd8",
+      "sourceTree": "7ac16fd7692abfb966287543c03266ce140d0152",
+      "applicationTree": "40a4bb5959c51290b812a78e90a07aa330b6a0ab",
+      "adapter": "local-v5",
+      "packageVersion": "0.5.4",
+      "packageLockSha256": "3f5ca3c1ebc38e5781edfeb402223ff220bcf0c617ef22a06b7bbd7c0af2491a",
+      "cargoLock": {
+        "kind": "tracked",
+        "sha256": "ebde978a24230e1506066d5c0a245ba7e084abf86783e5aed4142b8415a9a9de"
+      },
+      "wasmSha256": "41a9e56ed685c1c620c53afd3e5d616a6284be3ed2c544187469123abada6c78",
+      "distSha256": "984d9adf689a8ddcd929ce08e5aaafff6abfb20225b98d3666b3b0364d4e7092",
+      "indexSha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e",
+      "reportInputs": [],
+      "buildReceipt": {
+        "recordedAt": "2026-10-25T21:01:52.404259+00:00",
+        "environment": {
+          "node": "v26.12.1",
+          "npm": "12.2.1",
+          "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+          "cargo": "cargo 1.99.1 (5f94df478 2026-08-27) (Arch Linux rust 1:1.99.1-1)",
+          "wasmPack": "wasm-pack 0.14.0",
+          "firebaseMode": "legacy-proxy",
+          "firebaseEnvironment": {
+            "VITE_FIREBASE_API_KEY": "[synthetic key redacted]",
+            "VITE_FIREBASE_APP_ID": "1:123:web:history",
+            "VITE_FIREBASE_AUTH_DOMAIN": "127.0.0.1",
+            "VITE_FIREBASE_MESSAGING_SENDER_ID": "123",
+            "VITE_FIREBASE_PROJECT_ID": "demo-gomoku-history",
+            "VITE_FIREBASE_STORAGE_BUCKET": "unused"
+          },
+          "wasmBuild": "wasm-pack release --target bundler -- --locked",
+          "npmInstall": "npm ci --no-audit --no-fund; host npm default install-script policy",
+          "firebaseModeDescription": "synthetic-demo-loopback-proxy"
+        },
+        "assumption": null
+      },
+      "previewOrigin": "http://127.0.0.1:47221",
+      "distFiles": [
+        {
+          "path": "404.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "analysis-report/report.json",
+          "sha256": "3b8399fc1bbf5e797c7c56b52df5e7a579bf099e317cbc22e6297ea069391ca5"
+        },
+        {
+          "path": "assets/AssetPreviewRoute-B9p8d-8D.css",
+          "sha256": "a58b954a0e909a09c30a92466d1777844813a11886154549ce8276b0f8c6f717"
+        },
+        {
+          "path": "assets/AssetPreviewRoute-CyCRy4A9.js",
+          "sha256": "6acfb47593846f278d0147adb7e02182883accb6b47cdbd600d3236eb775dc1e"
+        },
+        {
+          "path": "assets/Board-B_01EpPy.js",
+          "sha256": "ac6647bd957a787744bf9f7250bb20bb305caaf411d4c637c6dd4bdd1dcb3382"
+        },
+        {
+          "path": "assets/Board-OItv2DWK.css",
+          "sha256": "3e717433fc1597de3b7f09a5638c26f31913e027111adec5e5b699d0435777fa"
+        },
+        {
+          "path": "assets/GuideRoute-gqcdZzyt.css",
+          "sha256": "b0437227a063bb990b3ab41dc89840ab85051e4035f4f6c024a7fe7e9558470f"
+        },
+        {
+          "path": "assets/GuideRoute-nvqNaC2L.js",
+          "sha256": "810b6025c0c221b629b503197ce680e036504fb0b72f560d43e9042a5fce9180"
+        },
+        {
+          "path": "assets/Icon-T9e1FqYP.js",
+          "sha256": "99cf7c08288d8a09684e962be4065fce0c7dcfe2bbed8a6068eb42e894f04833"
+        },
+        {
+          "path": "assets/LabReportRoute-CB0ftOJE.css",
+          "sha256": "95dac7cbeebabd80782b8db43c74048ef57a2905e0c39b239958a21a29d88a9a"
+        },
+        {
+          "path": "assets/LabReportRoute-Ct7hxnym.js",
+          "sha256": "5299dbd2800b0d106f7ac4aaedf0f2a51fb1b7fe7b11aeddab322decedb79067"
+        },
+        {
+          "path": "assets/LocalMatchRoute-Die-DvP4.js",
+          "sha256": "22b44c91a21366f8a0accf8db2d2a53e1bd5057cb1de6d57a3a05b76fb6c8adb"
+        },
+        {
+          "path": "assets/LocalMatchRoute-jEMs5th3.css",
+          "sha256": "c8d68c4ffac7e8c20b5e1aa91788ab60f8feea4dae7a296ed9287477c9ce68a2"
+        },
+        {
+          "path": "assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+          "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+        },
+        {
+          "path": "assets/PixelOperator-C4gCAeI2.ttf",
+          "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+        },
+        {
+          "path": "assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+          "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+        },
+        {
+          "path": "assets/PolicyRoute-BUWHcaC0.js",
+          "sha256": "392d5ce70c3514f74e25d03b7502461636de6885303e7d0d5fd5304f6e8878fa"
+        },
+        {
+          "path": "assets/PolicyRoute-BwlW-aSm.css",
+          "sha256": "8c04758445645cb6182ee332a318d3d6747f614a3b247b5238caf56ec09ecdae"
+        },
+        {
+          "path": "assets/ProfileRoute-57d5w14w.css",
+          "sha256": "0680518eda95c96bfa901b1f831b3ccf52f01768377f6da0f2118e6e6291202e"
+        },
+        {
+          "path": "assets/ProfileRoute-B-g0rpqa.js",
+          "sha256": "dfa95d71d8df1a5cbc845a1ed97d2a7c17fe51f359f7b8744302a183cc102dd6"
+        },
+        {
+          "path": "assets/README.md",
+          "sha256": "c0e0aa88a1b2989d4ef2e54378859e091e12b403f0722569b202d1448a998c43"
+        },
+        {
+          "path": "assets/ReplayRoute-xbLUEdZF.css",
+          "sha256": "1384f21381ef2edee8d949a8ce2d4dddab33d4e2bf8a9b2508d8145cdacc60a2"
+        },
+        {
+          "path": "assets/ReplayRoute-z9AaFmbj.js",
+          "sha256": "119c340e8e69e21d370ef12554a57dc993d27c67cbe1f3cac0ef270f410c9a40"
+        },
+        {
+          "path": "assets/RulesRoute-CFv2IhEM.js",
+          "sha256": "ea8719187fc339f9dcdded9b03a9c0a9c80b88fbfa41fbcb2ec24d5926c9f8f0"
+        },
+        {
+          "path": "assets/RulesRoute-dEl8LpLV.css",
+          "sha256": "d6262d1ef4bd4cd3e42e1447ebaad68df5bea3272da0634956634c74f405c07b"
+        },
+        {
+          "path": "assets/SettingsRoute-B6QpVmf-.css",
+          "sha256": "092673101938100bbff978d4c20a2761e396f580ef854d54448fdc5679a2f0d9"
+        },
+        {
+          "path": "assets/SettingsRoute-wfjV1sZu.js",
+          "sha256": "b95f770c2340da4b40cd78eb618fd1d4c99da5f34ac19916eaa044e9bf7d4af0"
+        },
+        {
+          "path": "assets/asset_manifest.json",
+          "sha256": "0d71a947651a53748a3f7d2e490fc1a2d6ece2c711cc1296e08ad534f736a47c"
+        },
+        {
+          "path": "assets/board_model-CZzAtTO9.js",
+          "sha256": "bf02c04acda5989da400e8cebfbc5e8d170fd7b2adfe1573f25c02bfb1c48ea3"
+        },
+        {
+          "path": "assets/bot_config-BQyrbE-n.js",
+          "sha256": "0dc9fccf06ce9b390c7123745d6a597c0b22bee6d07d0e86a8cac81a505ab663"
+        },
+        {
+          "path": "assets/bot_worker-DNuNqASR.js",
+          "sha256": "c3d36acd8267e3db70248edae5b9365d39b01afbefee645c3674f36cc8a77d1a"
+        },
+        {
+          "path": "assets/cloud_promotion_store-CzuxpxPc.js",
+          "sha256": "d0b8dff99cc8f087ed724267047fbb73b8c837bc3394544edf4b7a714c3863d8"
+        },
+        {
+          "path": "assets/cloud_sync-BumaeNAZ.js",
+          "sha256": "2b0648b322c1cb315e5254123379baa28891de78240c2272796b28f2509951d3"
+        },
+        {
+          "path": "assets/constants-DKcsxR6O.js",
+          "sha256": "6c98ff34ef26e8e4e8dc4aa3841abf5433a48525f611019ab0621d771356b64e"
+        },
+        {
+          "path": "assets/favicon.png",
+          "sha256": "22e8d958e7d4d67a1547bddb42000282e33b343b6d4b8cf2e0a7197f26c6ee82"
+        },
+        {
+          "path": "assets/fonts/LICENSE.txt",
+          "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+        },
+        {
+          "path": "assets/fonts/PixelOperator-Bold.ttf",
+          "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+        },
+        {
+          "path": "assets/fonts/PixelOperator.ttf",
+          "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+        },
+        {
+          "path": "assets/fonts/PixelOperator8-Bold.ttf",
+          "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+        },
+        {
+          "path": "assets/fonts/PixelOperator8.ttf",
+          "sha256": "5cccb9ef6cf18977b6e5721d49a1a6e78dd6a6f1c4f69537470f7dc1dc829ffc"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorHB.ttf",
+          "sha256": "fba7efcd1595f795e7ced3dd88bcac890a4fd00a3d7a2212ec0ba67f9d7bff49"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorHB8.ttf",
+          "sha256": "3569a5481727cc277be02ffa72348d40bf3ad9f03b9687b0da3b19fb717d00c8"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorHBSC.ttf",
+          "sha256": "0d1092e620659d122285c310dfeed531df2d8f7d6bb112dddf6f93a776da8216"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMono-Bold.ttf",
+          "sha256": "7b8a5f6cfd5fdb06ddac7d976935babf05afa5ef7bf6b8c1b8cf919b481d33e1"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMono.ttf",
+          "sha256": "e171000f12d196e7a8a1a91c1a429ef3264a0ff007d5f62fa3dc44ef8df51226"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMono8-Bold.ttf",
+          "sha256": "11704bf2bddcde0996909166ad9d10a7ff38eb311a59cb07991f63e5f0185f76"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMono8.ttf",
+          "sha256": "b627505e178c0c51b0ce7d432f2974fdc2064339f17fb5242b7237becad3c467"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMonoHB.ttf",
+          "sha256": "ae7eda40c2fb15e3672a79dee3860d13ab62b3e25f0cccee770b3f45b84c4955"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorMonoHB8.ttf",
+          "sha256": "6cc07440ab17ad773fb2814c028d8fe70ecab835f2a577c081a3d226b256be92"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorSC-Bold.ttf",
+          "sha256": "41d6116e70a8118de331b60166be488b40d6cb93717eb4e87a9630aa2843a0b8"
+        },
+        {
+          "path": "assets/fonts/PixelOperatorSC.ttf",
+          "sha256": "9cfa8dd81cf88ceb340d1aac09492a8d6197dcef70c377129225745dd5e7cfa1"
+        },
+        {
+          "path": "assets/fonts/README.md",
+          "sha256": "cace7c1415d758e931da358831db10eea12769282fe152cc0950a204df8930c1"
+        },
+        {
+          "path": "assets/gomoku_wasm_bg-uSdx3j64.wasm",
+          "sha256": "41a9e56ed685c1c620c53afd3e5d616a6284be3ed2c544187469123abada6c78"
+        },
+        {
+          "path": "assets/icons/README.md",
+          "sha256": "3e43d2b2b1ebfe774547c66a3d5880fc1c38096749b7c6439fe949f208af609a"
+        },
+        {
+          "path": "assets/icons/back.svg",
+          "sha256": "4c2a22cddbf822b695d4fc21a010bb25c55dea123ad3062da70b2a91be7311b9"
+        },
+        {
+          "path": "assets/icons/bot.svg",
+          "sha256": "4a34511e787565ba8a79a114f82f5fe4a51ebe1ab4e130aa0c4c134f75c43394"
+        },
+        {
+          "path": "assets/icons/circle.svg",
+          "sha256": "71b87dd626554b0cf0d51b413f3e068f68a1b58b415f849100c4c4a140c6f3d1"
+        },
+        {
+          "path": "assets/icons/close.svg",
+          "sha256": "59c5ea4b2f4dbb25457cce923f50e7879f1802d8eddda56761f9a9cad6121f5c"
+        },
+        {
+          "path": "assets/icons/confirm.svg",
+          "sha256": "8ccc3e89114d76f318c62ea3ec722f2a376424cb3b468df7e8b21827b4f1d420"
+        },
+        {
+          "path": "assets/icons/double_next.svg",
+          "sha256": "3d0411ae3f255c537a40dc80afea75467cbb34d26a149a3d85d7228614f77ebf"
+        },
+        {
+          "path": "assets/icons/double_prev.svg",
+          "sha256": "626c6aa296e2580c6128e219e9e81596ff85dbc3d6a4c6416ba7bbe7b2369882"
+        },
+        {
+          "path": "assets/icons/fast_forward.svg",
+          "sha256": "d5d1673b824b51799ae3ec2f73cbfd258227535048493e329cb983ce4ee58eba"
+        },
+        {
+          "path": "assets/icons/fast_rewind.svg",
+          "sha256": "fc94846feff9ef2182ea6b51b7d2616d0f9d5296866229f0421c04b5432a2e54"
+        },
+        {
+          "path": "assets/icons/filled_circle.svg",
+          "sha256": "72111880939558a0b3b2ee37191d2cedb7499eae7c1c633e5f2953aee77acdbb"
+        },
+        {
+          "path": "assets/icons/first.svg",
+          "sha256": "f7d8118cd60faa5bcd93970a1ec3bb8575157cc327fa1cd6ba22006892afe6a8"
+        },
+        {
+          "path": "assets/icons/forbidden.svg",
+          "sha256": "c466d59f23152be77f8103e58a132d11c63db30dc33a71215714ccdf6f7683c1"
+        },
+        {
+          "path": "assets/icons/forward.svg",
+          "sha256": "69b4d0febd28d1f861b8767e54ecf664af857e4cb72b568095fdda3f000d2a93"
+        },
+        {
+          "path": "assets/icons/grid.svg",
+          "sha256": "84f82b7ebc7e7d5454838ea69bb5570a69604f680d7dcef37de81bc8aa3db0d8"
+        },
+        {
+          "path": "assets/icons/help.svg",
+          "sha256": "961bb8ed79f9eeb383646fe4e838960d9a4e22b21805630e9dee8f6cd528ed07"
+        },
+        {
+          "path": "assets/icons/home.svg",
+          "sha256": "ca5e95cf5ac1c890dde79b921d2dbc795fc09e4b9d2d69639b8c20ab7a619803"
+        },
+        {
+          "path": "assets/icons/human.svg",
+          "sha256": "ce5acbddbab188c01d71ea338a10d6edf3c8c1d81b2dc2d4024a80a9202725c4"
+        },
+        {
+          "path": "assets/icons/icon_sheet.png",
+          "sha256": "efeeda45ea4a527c773ab14c3542d5796bb28f740df81b76ded88835c20487c3"
+        },
+        {
+          "path": "assets/icons/info.svg",
+          "sha256": "4c3a6ff37fdf8e568e3e4a69f26740f5f0f348d2fd62aea54f8ee5cf6f0adc63"
+        },
+        {
+          "path": "assets/icons/last.svg",
+          "sha256": "af787afc604a2ce1199bf8fdb73ab77e0ae87f00391c2389d688bde456ead388"
+        },
+        {
+          "path": "assets/icons/manifest.json",
+          "sha256": "daee7032b465f21e0edceae885491da71f291a1b984c2adca93e56848606b89e"
+        },
+        {
+          "path": "assets/icons/minus.svg",
+          "sha256": "7d0134ce50235e77f8c8677b1333a2f92134f5b7468c9ca9cb9fcb4ee15f3646"
+        },
+        {
+          "path": "assets/icons/next.svg",
+          "sha256": "f484707f11db046123a00a2bdee4693756e05d5c541e3133731a98463f2776e5"
+        },
+        {
+          "path": "assets/icons/pause.svg",
+          "sha256": "ff829869d67520ab584d63d16e41501fb5aa18c8671bc8f2d5fd6f786f7f8153"
+        },
+        {
+          "path": "assets/icons/play.svg",
+          "sha256": "a74f5b8cf5d3d06792df593b0840aa6d34f1e0439da76c54a59256a5b117d63d"
+        },
+        {
+          "path": "assets/icons/play_reverse.svg",
+          "sha256": "69a62c1cdbaceb555670ae739f635954a486eae4b8716702a00921c8ddb235cf"
+        },
+        {
+          "path": "assets/icons/plus.svg",
+          "sha256": "bbefc5a5de699504baa34a18464f826ad37bf4a92a7d15d185f3e7161732492e"
+        },
+        {
+          "path": "assets/icons/prev.svg",
+          "sha256": "9a265cc02412d8ecf178a26245e30d88cce41d689f34f0fa58aba47604f8c9b5"
+        },
+        {
+          "path": "assets/icons/profile.svg",
+          "sha256": "d120b65d2f46d8362903f52b61a595f507e2cf03b7b5ee01ecffaf1e0cab73be"
+        },
+        {
+          "path": "assets/icons/replay.svg",
+          "sha256": "94939ab786718d418e16aaefcc1fc3dfa5f7965744f111f9dc36b4fd10754ee9"
+        },
+        {
+          "path": "assets/icons/reset.svg",
+          "sha256": "985bdf8109e8cd7cab1ea917b433c263aeb91b3a45353e6393de7b0f885de5c2"
+        },
+        {
+          "path": "assets/icons/settings.svg",
+          "sha256": "e15afda087e8d5ea0571a015a210c44fd4fd213f31a38ab2f59c3104402a3f80"
+        },
+        {
+          "path": "assets/icons/undo.svg",
+          "sha256": "03c56730a2e3373de689e5125051708f32b551220af5424b94f780ffc2132f58"
+        },
+        {
+          "path": "assets/icons/win.svg",
+          "sha256": "950a76ac976a9cd3487971f55b39e0b8f17a8f789d776562f39362f8cf9cd1a8"
+        },
+        {
+          "path": "assets/index-BHCgACjx.css",
+          "sha256": "e4ebff3a05c65b38367feb6486a90955204899fdb7d03f5eee31d279c0792deb"
+        },
+        {
+          "path": "assets/index-CFHryp1Z.js",
+          "sha256": "5a42c03bc338780aaec03b6c8cfab4523881a4d3cf69fe878fb68e097788fffe"
+        },
+        {
+          "path": "assets/jsx-runtime-DHpRwWgL.js",
+          "sha256": "7208d0c769ee550d3af57c7664de5fb7f1f126295f70ac29fc51142d3b72fcc8"
+        },
+        {
+          "path": "assets/links-dgpv3VTZ.js",
+          "sha256": "807abd7b62d3aa47f9e05d87d2a59da7b91b22619ab6f7e3cf83273e9b046713"
+        },
+        {
+          "path": "assets/local_match_session-d5ZUWQei.js",
+          "sha256": "f53890a496f36f0c6890a25d9ba08e706475d960741e984ff1f089417c979fa6"
+        },
+        {
+          "path": "assets/local_replay-DPM-3bM0.js",
+          "sha256": "1ff7e03fd92133721ae9b1a342c5326a225e560761fe8ab861d3d072c07b7d74"
+        },
+        {
+          "path": "assets/local_replay_core-2aOhXLlY.js",
+          "sha256": "1484c95ef16390b859ec3b4d7efdfc44b3f3d2068f2784ee90ba2f3d2bc646ea"
+        },
+        {
+          "path": "assets/og_source.png",
+          "sha256": "1fd435fc86abdbb014842baa2c0a69efc95bc4db72fa2a5ac942448d7a2214e4"
+        },
+        {
+          "path": "assets/ready_queue_worker-noOmBvq3.js",
+          "sha256": "d04a2ce38346baa58f29fe0cee2b09800c0a3af56679a3f8b3c2d78e793d157d"
+        },
+        {
+          "path": "assets/replay_analysis_cache-CMrWLplo.js",
+          "sha256": "da30fe8ff0d53f14ee2f668fab3bc89b79c5d9a76dd9eaa3f7658323d0c71d77"
+        },
+        {
+          "path": "assets/replay_analysis_worker-DcNKa-Ow.js",
+          "sha256": "a6e5af8772653cbdb871df4c19e71780c56261767c0a186bb9615f6a792b046e"
+        },
+        {
+          "path": "assets/rolldown-runtime-QTnfLwEv.js",
+          "sha256": "5db5ba82eef00d1dee7e86e663098c9427d01183a88d357437daff295aec3e75"
+        },
+        {
+          "path": "assets/saved_match-BBH_1WDD.js",
+          "sha256": "118b3d5841ef7545fcec4f70b7a9cb7cdf282ff1e3b3bb752bc08b1543285acd"
+        },
+        {
+          "path": "assets/sequence_font-DtQC01YS.js",
+          "sha256": "e974b32662fec2e17f2162b58cbb13034ef88e7f7a0fbf6880d21c8e9421b7a1"
+        },
+        {
+          "path": "assets/sprites/README.md",
+          "sha256": "6f1997209492232b9e8af72d64e79b12013dc1c9aaf1f6012744104b519a5607"
+        },
+        {
+          "path": "assets/sprites/caution.png",
+          "sha256": "d303a195993c640f9524a86cc262223e261c9bf2bc718ebbc0e9cdd1ffd51f49"
+        },
+        {
+          "path": "assets/sprites/highlighter.png",
+          "sha256": "61a6798e4b17af416aba25af261ede8e7af1e0bab37dcf00c52434580a28bad5"
+        },
+        {
+          "path": "assets/sprites/hover.png",
+          "sha256": "4b938017d74b92b5f74c5a39036b1564bfa4ab00d16b56733d33a40175cbdfba"
+        },
+        {
+          "path": "assets/sprites/marker.png",
+          "sha256": "862a4746ca27a0a3e25cfab61a9bed94b2d27c9c0dd4b0aa5e208a8343949bbd"
+        },
+        {
+          "path": "assets/sprites/pointer.png",
+          "sha256": "bda6179bae6d9e213948e5e10f6f65fd267779b1fc50188e936262c961f09136"
+        },
+        {
+          "path": "assets/sprites/stone.png",
+          "sha256": "7bda65543e1fa51342f10924952ea34a89cc5856965c09c189b7070b1865135b"
+        },
+        {
+          "path": "assets/sprites/transform.png",
+          "sha256": "24b75a897b8032a4b737f3e1039a59e765b4154c1f18959e495f5228c33f0ffa"
+        },
+        {
+          "path": "assets/wasm_bridge-CVKAV1Pr.js",
+          "sha256": "0128c98f8b484a7da17c14941adc1ee2e76b564815e59f09ea22e6c28901a2e4"
+        },
+        {
+          "path": "bot-report/report.json",
+          "sha256": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43"
+        },
+        {
+          "path": "favicon-16x16.png",
+          "sha256": "338a4bccccb366e72667a3451da2180bfdc27a412cb3c47c2046ad3ae98442e6"
+        },
+        {
+          "path": "favicon-32x32.png",
+          "sha256": "e8f05658fa438c3db17319eff98b392e5c4a53a657d490eca7bca049d74a712d"
+        },
+        {
+          "path": "favicon.ico",
+          "sha256": "ab9a0b0c6f1dc07c9526ac1a7fdaf9b776dc8d6a2e25384f8469846504b074e5"
+        },
+        {
+          "path": "guide/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "lab/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "match/local/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "og.png",
+          "sha256": "1fd435fc86abdbb014842baa2c0a69efc95bc4db72fa2a5ac942448d7a2214e4"
+        },
+        {
+          "path": "privacy/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "profile/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "rules/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "settings/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "terms/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        },
+        {
+          "path": "visuals/index.html",
+          "sha256": "c4b2162d2a1224a9d2ae9d75499ca69503eb602f0c2a8debb56a29f78ea1736e"
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "sourceClean": true,
+        "exactTagCommit": true,
+        "servedIndexMatches": true,
+        "servedDistFiles": 126,
+        "allServedFilesMatchReceipt": true,
+        "sourceCleanAfterCapture": true,
+        "servedDistFilesAfter": 126
+      }
+    }
+  ],
+  "fixture": {
+    "id": "missed_defense_closed_four",
+    "identity": "Reference Player",
+    "profileId": "history-fixture-profile",
+    "matchId": "history-fixture-match",
+    "savedAt": "2026-10-24T00:00:00.000Z",
+    "ruleset": "freestyle",
+    "mode": "local human Black vs tagged default bot White",
+    "botName": "Normal Bot",
+    "status": "completed; Black win",
+    "moveCells": [
+      112,
+      111,
+      113,
+      0,
+      114,
+      15,
+      115,
+      1,
+      116
+    ],
+    "moveCount": 9,
+    "localStorageKey": "gomoku2d.local-profile.v5",
+    "additionalLocalStorageKeys": [],
+    "localStorageSchema": "local-v5",
+    "additionalProfileStates": [],
+    "matchCapture": "Replay final ply 9, Previous once to ply 8, Play From Here; Black human idle"
+  },
+  "profiles": [
+    {
+      "id": "desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false,
+      "userAgentKind": "desktop Chromium default"
+    },
+    {
+      "id": "portrait",
+      "viewport": {
+        "width": 412,
+        "height": 800
+      },
+      "deviceScaleFactor": 1,
+      "isMobile": true,
+      "hasTouch": true,
+      "userAgentKind": "generic Android mobile; not a measured OnePlus profile"
+    }
+  ],
+  "transport": {
+    "mode": "legacy-proxy",
+    "session": "account",
+    "scope": "synthetic demo Auth/Firestore only; no real accounts or production data"
+  },
+  "limitations": [
+    "These screenshots recreate the tagged source layout; they do not recover the historical browser or device runtime.",
+    "Portrait is a generic Android touch context at 412×800 DPR1, not a measured OnePlus viewport.",
+    "Reduced motion is requested; Phaser animation is not frozen or assumed deterministic."
+  ],
+  "captures": [
+    {
+      "screen": "profile",
+      "state": "reset",
+      "profile": {
+        "id": "desktop",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "userAgentKind": "desktop Chromium default",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false
+      },
+      "status": "captured",
+      "file": "v0.5.4/desktop/profile--reset.png",
+      "errors": {
+        "console": [],
+        "page": [],
+        "expectedBootstrapBlocked": {
+          "requests": [],
+          "requestFailures": [],
+          "consoleErrors": []
+        }
+      },
+      "network": {
+        "allowed": [
+          {
+            "method": "GET",
+            "url": "https://history-capture.invalid/__history_transport_probe__",
+            "resourceType": "document",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/profile",
+            "resourceType": "document",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/index-CFHryp1Z.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/rolldown-runtime-QTnfLwEv.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/jsx-runtime-DHpRwWgL.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/bot_config-BQyrbE-n.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/constants-DKcsxR6O.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/saved_match-BBH_1WDD.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/Icon-T9e1FqYP.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/cloud_promotion_store-CzuxpxPc.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/cloud_sync-BumaeNAZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/links-dgpv3VTZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/sequence_font-DtQC01YS.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/index-BHCgACjx.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/ProfileRoute-B-g0rpqa.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/local_replay-DPM-3bM0.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/replay_analysis_cache-CMrWLplo.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/wasm_bridge-CVKAV1Pr.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/ProfileRoute-57d5w14w.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/PixelOperator-C4gCAeI2.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/gomoku_wasm_bg-uSdx3j64.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "https://identitytoolkit.googleapis.com/v1/accounts:lookup",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          }
+        ],
+        "forbidden": [],
+        "failed": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "expectedBootstrapBlocked": {
+          "requests": [],
+          "requestFailures": [],
+          "consoleErrors": []
+        }
+      },
+      "readiness": {
+        "heading": "Profile",
+        "fonts": {
+          "status": "loaded",
+          "faces": [
+            {
+              "family": "PixelOperator",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperatorBold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperator8Bold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            }
+          ]
+        },
+        "fixture": {
+          "displayName": "Reference Player",
+          "historyOpponent": "Normal Bot",
+          "resetConfirmation": {
+            "copy": "Reset profile data here and in the cloud? This clears settings, games, and local replay analyses.",
+            "confirmAction": "RESET",
+            "cancelAction": true,
+            "activated": false
+          }
+        },
+        "match": null,
+        "replay": null,
+        "analysis": null,
+        "customSettings": null,
+        "reportView": null,
+        "proof": null,
+        "assetPage": null,
+        "examples": null,
+        "publicProfileUid": null,
+        "publicCatalogRows": null,
+        "statsVisible": null,
+        "portableReplay": null,
+        "returnToProfile": null,
+        "publicSettings": null,
+        "savedReplays": null,
+        "replayAction": null,
+        "matchSetup": null,
+        "pointer": "moved to 2,2 before screenshot",
+        "viewport": {
+          "innerWidth": 1280,
+          "innerHeight": 900,
+          "visualViewportWidth": 1280,
+          "visualViewportHeight": 900,
+          "visualViewportScale": 1,
+          "documentScrollWidth": 1280,
+          "documentScrollHeight": 900,
+          "devicePixelRatio": 1,
+          "maxTouchPoints": 0,
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+          "mobileQueryMatches": false,
+          "width": 1280,
+          "height": 900,
+          "basis": "visualViewport"
+        }
+      },
+      "renderer": "unknown",
+      "width": 1280,
+      "height": 900,
+      "sha256": "c38b759ea96255c0910828f9b544419cde502ff1ec714a2fb05f7baa4cf0e947",
+      "route": {
+        "requested": "/profile",
+        "observed": "/profile/",
+        "heading": "Profile"
+      },
+      "context": {
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "deviceScaleFactor": 1,
+        "isMobile": false,
+        "hasTouch": false,
+        "maxTouchPoints": 0,
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "mobileMediaQuery": false,
+        "animationNote": "Reduced motion is requested; Phaser animation state is not frozen or assumed deterministic."
+      },
+      "transport": {
+        "project": "demo-gomoku-history",
+        "session": "account",
+        "mode": "legacy-proxy",
+        "responseSource": "owned Auth/Firestore emulators; tagged security rules; no fabricated SDK responses",
+        "rulesSha256": "cf125b43445b87af94b3bec8b04237706ef7e1095c14badee43e2c365a6b202a",
+        "publicFixture": null,
+        "optionalBootstrap": {
+          "policy": "blocked",
+          "resource": "https://apis.google.com/js/api.js",
+          "reason": "Hosted popup bootstrap is not needed for the restored synthetic session or public view. Aborts and attributed resource errors are retained; Google OAuth popup-flow acceptance is not established."
+        },
+        "routingAttestation": "primary transport returned successfully after the reserved .invalid browser-proxy probe; probe is intercepted and not forwarded",
+        "addressNote": "SDK service URLs are permitted only when the primary-owned adapter recognizes them and routes them through the owned proxy or emulators."
+      }
+    },
+    {
+      "screen": "profile",
+      "state": "reset",
+      "profile": {
+        "id": "portrait",
+        "viewport": {
+          "width": 412,
+          "height": 800
+        },
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "userAgentKind": "generic Android mobile; not a measured OnePlus profile",
+        "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "portraitCalibration": "generic viewport; not measured on a physical device"
+      },
+      "status": "captured",
+      "file": "v0.5.4/portrait/profile--reset.png",
+      "errors": {
+        "console": [],
+        "page": [],
+        "expectedBootstrapBlocked": {
+          "requests": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb758003",
+              "resourceType": "script",
+              "reason": "optional hosted popup bootstrap is blocked by capture policy"
+            }
+          ],
+          "requestFailures": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb758003",
+              "resourceType": "script",
+              "failure": "net::ERR_BLOCKED_BY_CLIENT.Inspector"
+            }
+          ],
+          "consoleErrors": [
+            {
+              "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+              "location": {
+                "url": "https://apis.google.com/js/api.js",
+                "lineNumber": 0,
+                "columnNumber": 0
+              }
+            }
+          ]
+        }
+      },
+      "network": {
+        "allowed": [
+          {
+            "method": "GET",
+            "url": "https://history-capture.invalid/__history_transport_probe__",
+            "resourceType": "document",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/profile",
+            "resourceType": "document",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/index-CFHryp1Z.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/rolldown-runtime-QTnfLwEv.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/jsx-runtime-DHpRwWgL.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/bot_config-BQyrbE-n.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/constants-DKcsxR6O.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/saved_match-BBH_1WDD.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/Icon-T9e1FqYP.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/cloud_promotion_store-CzuxpxPc.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/cloud_sync-BumaeNAZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/links-dgpv3VTZ.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/sequence_font-DtQC01YS.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/index-BHCgACjx.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/PixelOperator8-Bold-DQXNZxi5.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/ProfileRoute-B-g0rpqa.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/local_replay-DPM-3bM0.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/replay_analysis_cache-CMrWLplo.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/wasm_bridge-CVKAV1Pr.js",
+            "resourceType": "script",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/ProfileRoute-57d5w14w.css",
+            "resourceType": "stylesheet",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/PixelOperator-C4gCAeI2.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/gomoku_wasm_bg-uSdx3j64.wasm",
+            "resourceType": "fetch",
+            "reason": "tagged-preview-read"
+          },
+          {
+            "method": "POST",
+            "url": "https://identitytoolkit.googleapis.com/v1/accounts:lookup",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "POST",
+            "url": "https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel",
+            "resourceType": "fetch",
+            "reason": "synthetic-transport"
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:47221/assets/PixelOperator-Bold-CLeLR2Kg.ttf",
+            "resourceType": "font",
+            "reason": "tagged-preview-read"
+          }
+        ],
+        "forbidden": [],
+        "failed": [],
+        "consoleErrors": [],
+        "pageErrors": [],
+        "expectedBootstrapBlocked": {
+          "requests": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb758003",
+              "resourceType": "script",
+              "reason": "optional hosted popup bootstrap is blocked by capture policy"
+            }
+          ],
+          "requestFailures": [
+            {
+              "method": "GET",
+              "url": "https://apis.google.com/js/api.js?onload=__iframefcb758003",
+              "resourceType": "script",
+              "failure": "net::ERR_BLOCKED_BY_CLIENT.Inspector"
+            }
+          ],
+          "consoleErrors": [
+            {
+              "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector",
+              "location": {
+                "url": "https://apis.google.com/js/api.js",
+                "lineNumber": 0,
+                "columnNumber": 0
+              }
+            }
+          ]
+        }
+      },
+      "readiness": {
+        "heading": "Profile",
+        "fonts": {
+          "status": "loaded",
+          "faces": [
+            {
+              "family": "PixelOperator",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperatorBold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            },
+            {
+              "family": "PixelOperator8Bold",
+              "loadedFaceCount": 1,
+              "loaded": true,
+              "status": "loaded"
+            }
+          ]
+        },
+        "fixture": {
+          "displayName": "Reference Player",
+          "historyOpponent": "Normal Bot",
+          "resetConfirmation": {
+            "copy": "Reset profile data here and in the cloud? This clears settings, games, and local replay analyses.",
+            "confirmAction": "RESET",
+            "cancelAction": true,
+            "activated": false
+          }
+        },
+        "match": null,
+        "replay": null,
+        "analysis": null,
+        "customSettings": null,
+        "reportView": null,
+        "proof": null,
+        "assetPage": null,
+        "examples": null,
+        "publicProfileUid": null,
+        "publicCatalogRows": null,
+        "statsVisible": null,
+        "portableReplay": null,
+        "returnToProfile": null,
+        "publicSettings": null,
+        "savedReplays": null,
+        "replayAction": null,
+        "matchSetup": null,
+        "pointer": "moved to 2,2 before screenshot",
+        "viewport": {
+          "innerWidth": 412,
+          "innerHeight": 800,
+          "visualViewportWidth": 412,
+          "visualViewportHeight": 800,
+          "visualViewportScale": 1,
+          "documentScrollWidth": 412,
+          "documentScrollHeight": 800,
+          "devicePixelRatio": 1,
+          "maxTouchPoints": 1,
+          "userAgent": "Mozilla/5.0 (Linux; Android 15; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+          "mobileQueryMatches": true,
+          "width": 412,
+          "height": 800,
+          "basis": "visualViewport"
+        }
+      },
+      "renderer": "unknown",
+      "width": 412,
+      "height": 800,
+      "sha256": "3cc7e6ef9b04cac351d8aaa0bc24517d012c6c75409d999be185e645a3b05a27",
+      "route": {
+        "requested": "/profile",
+        "observed": "/profile/",
+        "heading": "Profile"
+      },
+      "context": {
+        "locale": "en-US",
+        "timezoneId": "UTC",
+        "deviceScaleFactor": 1,
+        "isMobile": true,
+        "hasTouch": true,
+        "maxTouchPoints": 1,
+        "reducedMotion": "reduce",
+        "screenshotScale": "css",
+        "fullPage": false,
+        "mobileMediaQuery": true,
+        "animationNote": "Reduced motion is requested; Phaser animation state is not frozen or assumed deterministic."
+      },
+      "transport": {
+        "project": "demo-gomoku-history",
+        "session": "account",
+        "mode": "legacy-proxy",
+        "responseSource": "owned Auth/Firestore emulators; tagged security rules; no fabricated SDK responses",
+        "rulesSha256": "cf125b43445b87af94b3bec8b04237706ef7e1095c14badee43e2c365a6b202a",
+        "publicFixture": null,
+        "optionalBootstrap": {
+          "policy": "blocked",
+          "resource": "https://apis.google.com/js/api.js",
+          "reason": "Hosted popup bootstrap is not needed for the restored synthetic session or public view. Aborts and attributed resource errors are retained; Google OAuth popup-flow acceptance is not established."
+        },
+        "routingAttestation": "primary transport returned successfully after the reserved .invalid browser-proxy probe; probe is intercepted and not forwarded",
+        "addressNote": "SDK service URLs are permitted only when the primary-owned adapter recognizes them and routes them through the owned proxy or emulators."
+      }
+    }
+  ],
+  "errors": [],
+  "completedAt": "2026-10-25T22:22:19.553Z"
+}
