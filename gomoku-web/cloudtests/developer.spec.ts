@@ -86,8 +86,9 @@ test("D02: a pending private snapshot survives game-to-developer navigation", as
   const gate = new Promise<void>((resolve) => {
     release = resolve;
   });
+  const firestoreRoute = `http://127.0.0.1:${cloudTestPorts.firestore}/**`;
   let intercepted = false;
-  await context.route(`http://127.0.0.1:${cloudTestPorts.firestore}/**`, async (route) => {
+  const holdWrite = async (route: import("@playwright/test").Route) => {
     if (
       route.request().method() === "POST" &&
       /Write\/channel|:commit/.test(route.request().url())
@@ -96,13 +97,15 @@ test("D02: a pending private snapshot survives game-to-developer navigation", as
       await gate;
     }
     await route.continue();
-  });
+  };
+  await context.route(firestoreRoute, holdWrite);
+  let hasPrimaryFailure = false;
   try {
     await page.getByRole("link", { name: "Settings", exact: true }).click();
     await page.getByRole("button", { name: "Renju", exact: true }).click();
     await expect.poll(() => intercepted).toBe(true);
     await page.getByRole("link", { name: "Home", exact: true }).click();
-    await page.getByRole("link", { name: "Developer", exact: true }).click();
+    await page.getByRole("link", { name: "Dev site", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
     release();
     await expect
@@ -117,8 +120,15 @@ test("D02: a pending private snapshot survives game-to-developer navigation", as
       "aria-pressed",
       "true",
     );
+  } catch (error) {
+    hasPrimaryFailure = true;
+    throw error;
   } finally {
     release();
-    await context.unroute(`http://127.0.0.1:${cloudTestPorts.firestore}/**`);
+    try {
+      await context.unroute(firestoreRoute, holdWrite);
+    } catch (cleanupFailure) {
+      if (!hasPrimaryFailure) throw cleanupFailure;
+    }
   }
 });
