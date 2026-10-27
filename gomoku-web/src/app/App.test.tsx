@@ -177,7 +177,7 @@ describe("App", () => {
     expect(screen.getByText(/black to move/i)).toBeInTheDocument();
   });
 
-  it("surfaces lab links on the home screen", async () => {
+  it("surfaces developer links on the home screen", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
@@ -189,6 +189,10 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: /^visual design$/i })).toHaveAttribute(
       "href",
       "/visuals/",
+    );
+    expect(screen.getByRole("link", { name: /^ui design$/i })).toHaveAttribute(
+      "href",
+      "/dev/reviews/",
     );
     expect(screen.getByRole("link", { name: /^bot lab$/i })).toHaveAttribute(
       "href",

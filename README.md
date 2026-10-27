@@ -10,9 +10,12 @@ analysis, and practice from earlier positions.
 
 [Rules](https://gomoku2d.byebyebryan.com/rules/) ·
 [Guide](https://gomoku2d.byebyebryan.com/guide/) ·
-[Bot lab](https://gomoku2d.byebyebryan.com/lab/) ·
-[Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
 [Docs](docs/README.md)
+
+[Developer](https://gomoku2d.byebyebryan.com/dev/) ·
+[Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
+[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/) ·
+[Bot lab](https://gomoku2d.byebyebryan.com/lab/)
 
 Developer-area source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).
 Its 0.6.3 implementation is local until the next authorized release; the public

@@ -6,9 +6,16 @@ facts, and replay analysis.
 
 **Live app:** https://gomoku2d.byebyebryan.com/
 
+**Developer:** [Overview](https://gomoku2d.byebyebryan.com/dev/) ·
+[Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
+[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/) ·
+[Bot lab](https://gomoku2d.byebyebryan.com/lab/).
+The developer-area changes are local 0.6.3 source until release;
+[the contract](../docs/reference/app/developer_area.md) records their scope.
+
 ## Responsibilities
 
-- Home, local match, replay, profile, settings, rules, guide, lab, visuals,
+- Home, local match, replay, profile, settings, rules, guide, developer references,
   privacy, and terms routes.
 - Local-first guest play with browser-persisted profile/settings/history.
 - Optional Google sign-in for private cloud-backed profile/history continuity.
@@ -25,10 +32,10 @@ facts, and replay analysis.
   touch placement.
 - Replay Analysis in the browser: progressive wasm analysis, timeline markers,
   board overlays, local result caching, and "Play From Here" branching.
-- The unified `/lab/` report viewer, rendered from curated JSON artifacts under
+- Bot lab at `/lab/`, rendered from curated JSON artifacts under
   `../reports/lab/`.
-- The `/visuals/` guide generated from source icons, sprites, fonts, and design
-  tokens.
+- Visual design at `/visuals/` for source icons, sprites, fonts and design tokens,
+  and UI design at `/dev/reviews/` for current screens, history and design reviews.
 
 ## Core Boundary
 

@@ -140,7 +140,7 @@ test("public navigation, keyboard entry and unknown-route recovery work", async 
   await expect(page.getByRole("heading", { name: "Design reviews", exact: true })).toBeVisible();
   await expect(
     page.getByRole("navigation", { name: "Developer sections" }).getByRole("link"),
-  ).toHaveCount(4);
+  ).toHaveText(["Overview", "Visual design", "UI design", "Bot lab"]);
   await page.goBack();
   await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
   await page.goto("/dev/not-a-page/");

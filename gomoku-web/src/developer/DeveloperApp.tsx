@@ -1,8 +1,8 @@
-import { Component, Suspense, lazy, useEffect, useRef, type ReactNode } from "react";
+import { Component, Fragment, Suspense, lazy, useEffect, useRef, type ReactNode } from "react";
 import { Link, Navigate, NavLink, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { Icon } from "../ui/Icon";
 import { useDocumentTitle } from "../app/useDocumentTitle";
-import { PROJECT_SOURCE_URL } from "../app/links";
+import { DEVELOPER_SECTIONS, PROJECT_SOURCE_URL } from "../app/links";
 import { DeveloperOverview } from "./DeveloperPages";
 import "./developer.css";
 
@@ -16,10 +16,8 @@ const Reviews = lazy(async () => ({
   default: (await import("./ReviewRoutes")).ReviewRoutes,
 }));
 const sections = [
-  ["/dev/", "Overview"],
-  ["/visuals/", "Visual design"],
-  ["/lab/", "Bot lab"],
-  ["/dev/reviews/", "UI design"],
+  { to: "/dev/", label: "Overview" },
+  ...DEVELOPER_SECTIONS,
 ];
 
 class DeveloperRecovery extends Component<{ children: ReactNode; standalone: boolean }, { failed: boolean }> {
@@ -92,7 +90,7 @@ function DeveloperFrame({ standalone }: { standalone: boolean }) {
           </nav>
         </header>
         <nav className="dev-nav" aria-label="Developer sections">
-          {sections.map(([to, label]) => (
+          {sections.map(({ to, label }) => (
             <NavLink key={to} to={to} end={to === "/dev/"}>
               {label}
             </NavLink>
@@ -108,7 +106,11 @@ function DeveloperFrame({ standalone }: { standalone: boolean }) {
         <footer className="dev-footer">
           <span>Gomoku2D · the work behind the game</span>
           <span>
-            <Link to="/dev/reviews/">UI design</Link> ·{" "}
+            {DEVELOPER_SECTIONS.map(({ to, label }) => (
+              <Fragment key={to}>
+                <Link to={to}>{label}</Link> ·{" "}
+              </Fragment>
+            ))}
             <a href={`${import.meta.env.BASE_URL}assets/fonts/LICENSE.txt`}>Font license</a>
           </span>
         </footer>

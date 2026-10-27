@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { Icon } from "../ui/Icon";
+import { DEVELOPER_SECTIONS } from "../app/links";
 
 export function DeveloperOverview() {
   useDocumentTitle("Developer");
@@ -12,33 +13,12 @@ export function DeveloperOverview() {
         <p className="dev-lead">Design, experiments and the checks that shape the game.</p>
       </div>
       <div className="dev-feature-list">
-        {(
-          [
-            [
-              "/visuals/",
-              "settings",
-              "Visual design",
-              "The visual language, actual controls and the pixels behind them.",
-            ],
-            [
-              "/lab/",
-              "bot",
-              "Bot lab",
-              "Inspect recorded experiments, search costs and where games turned.",
-            ],
-            [
-              "/dev/reviews/",
-              "replay",
-              "UI design",
-              "Inspect screen references, compare layout changes and review the findings.",
-            ],
-          ] as const
-        ).map(([to, icon, title, copy]) => (
+        {DEVELOPER_SECTIONS.map(({ to, icon, label, description }) => (
           <Link className="dev-feature" to={to} key={to}>
             <Icon name={icon} />
             <span>
-              <h2>{title}</h2>
-              <p>{copy}</p>
+              <h2>{label}</h2>
+              <p>{description}</p>
             </span>
             <Icon name="next" />
           </Link>

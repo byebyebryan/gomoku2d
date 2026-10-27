@@ -28,8 +28,8 @@ The reference has three sections:
 - [icons](./icons/): DOM shell icon source sheet, manifest, and exported SVGs
 - [fonts](./fonts/): PixelOperator source fonts and license
 
-The shared developer frame links these references to Lab, curated reviews and
-Process. Visuals accepts `view=style|icons|sprites`; icon/animation selections are
+The shared developer frame orders Visual design, UI design and Bot lab.
+Visual design accepts `view=style|icons|sprites`; icon/animation selections are
 URL driven. Palette values are read from runtime CSS; the publisher derives the
 exported manifest values from those tokens. SVG/font/PNG source bytes remain
 unchanged. Sprite previews use the board's pure RGB multiplication operation and

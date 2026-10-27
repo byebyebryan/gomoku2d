@@ -38,11 +38,16 @@ so reference typography does not change player screens.
 
 | Surface | Owner | Source contract |
 |---|---|---|
-| Overview | `src/developer/DeveloperPages.tsx` | Direct entry to Visual design, Bot lab and UI design; no automatically rendered Markdown |
+| Overview | `src/developer/DeveloperPages.tsx` | Direct entry to Visual design, UI design and Bot lab; no automatically rendered Markdown |
 | Visual design | `AssetPreviewRoute`, `IconInspector`, `SpriteInspector` | Actual CSS classes/tokens, canonical SVGs and source sprite inventory |
-| Bot lab | Existing report loaders, report panels and DOM proof boards | Unchanged `reports/lab/` JSON, recorded revisions/budgets and bounded analysis semantics |
 | UI design | `reviews.json`, `review_record.ts`, `ReviewCase.tsx`, `ReviewChecklist.tsx` | Screen references, historical comparisons, the actual screenshot-review checklist and separate technical/human status |
 | UI history | `history.json`, `history_record.ts`, `HistoryRoutes.tsx` | Release provenance, meaningful milestones, stable screen identities, named states and qualified retrospective captures |
+| Bot lab | Existing report loaders, report panels and DOM proof boards | Unchanged `reports/lab/` JSON, recorded revisions/budgets and bounded analysis semantics |
+
+`src/app/links.ts` owns the shared section labels, destinations and order:
+Visual design, UI design, Bot lab. Developer navigation and footer links,
+overview cards and Home consume that definition. README and documentation
+link lists use the same labels/order, with Developer as their overview entry.
 
 Visual design covers the visual system and its source assets; UI design covers
 screens, layout, interaction and their evolution. UI design retains Current
@@ -239,7 +244,7 @@ own publication facts. Keep the process record current as procedures improve;
 retrospective journey articles are later work.
 
 The developer navigation focuses on working tools: Overview, Visual design,
-Bot lab and UI design. The earlier prose Process page is removed; `/dev/process/`
+UI design and Bot lab. The earlier prose Process page is removed; `/dev/process/`
 redirects to `/dev/reviews/` without initializing the player tree. The review
 index and cases expose the screenshot-review checklist alongside real references
 and findings, rather than presenting a generic development manifesto.

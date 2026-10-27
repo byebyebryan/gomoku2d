@@ -68,12 +68,16 @@ documentation tree:
 - [Rules](https://gomoku2d.byebyebryan.com/rules/) — basic Gomoku and Renju rules
 - [Guide](https://gomoku2d.byebyebryan.com/guide/) — tactics, replay/sharing help
   and account-free example replays
-- [Lab](https://gomoku2d.byebyebryan.com/lab/) — bot tournament and replay-analysis reports
-- [Visuals](https://gomoku2d.byebyebryan.com/visuals/) — visual guide and asset language
+- [Developer](https://gomoku2d.byebyebryan.com/dev/) — overview of the work behind the game
+- [Visual design](https://gomoku2d.byebyebryan.com/visuals/) — visual system and asset inspection
+- [UI design](https://gomoku2d.byebyebryan.com/dev/reviews/) — current screens, UI history and design reviews
+- [Bot lab](https://gomoku2d.byebyebryan.com/lab/) — bot tournament and replay-analysis reports
 - [Privacy](https://gomoku2d.byebyebryan.com/privacy/) and
   [Terms](https://gomoku2d.byebyebryan.com/terms/) — public policy pages
 
-The root [`README`](../README.md) is the public repo landing page.
+Developer-area links describe the local 0.6.3 source; the release status above
+owns production availability. The root [`README`](../README.md) is the public
+repo landing page.
 
 ## Buckets
 

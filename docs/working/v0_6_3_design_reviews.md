@@ -158,3 +158,19 @@ The production build, 56 targeted unit tests and 18 browser checks across
 Chromium, Firefox and WebKit passed. Desktop and portrait inspection confirmed
 that the new labels fit; the existing reflow checks include 320px and 200% text.
 This is a local naming follow-up, with production publication still separate.
+
+Bryan then selected the order **Visual design → UI design → Bot lab** and
+requested reconciliation beyond the developer frame. A shared section definition
+now supplies the app's navigation, overview cards, developer footer and Home
+links. Home, the root/web READMEs and the docs index include UI design alongside
+the other two sections; the current asset docs also drop the retired Process
+entry. Historical plans, captures and quoted past names keep their original
+identity.
+
+The reconciliation passed the production build, 33 App unit tests and 12 focused
+browser tests across Chromium, Firefox and WebKit. Direct inspection checked
+section/card/footer order and Home links in all three engines, including 320px
+and 200% text; primary review inspected desktop, portrait and both footers.
+The three Markdown link lists match names, destinations and order, and their
+local documentation links resolve. UI history, review records and Lab data are
+unchanged by this follow-up.
