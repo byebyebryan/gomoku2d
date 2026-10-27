@@ -1,7 +1,7 @@
 # Dependency Maintenance Notes
 
 Owner: manual maintenance passes. Recheck these notes when updating Firebase
-or preparing a release. Last reviewed: 2026-10-23 for `0.6.1` release preparation.
+or preparing a release. Last reviewed: 2026-10-27 for the `0.6.3` readiness review.
 
 ## Overrides
 
@@ -19,8 +19,9 @@ plugin-specific override have been removed.
 
 ## Firebase CLI Audit Limits
 
-The current `firebase-tools` 15.34.0 development dependency still carries one
-upstream issue. These packages are outside the production dependency tree.
+The retained exception in the `firebase-tools` 15.34.0 development tree is the
+OpenTelemetry issue below. The 0.6.3 readiness audit adds other actionable dev
+findings in its later section. These packages are outside the production tree.
 
 | Chain | Finding | Follow-up |
 |---|---|---|
@@ -59,3 +60,23 @@ reports only the three moderate development-only entries described above.
 The 0.6.1 version bump changes no dependency ranges or resolved versions.
 Raw reports are retained under ignored
 `gomoku-bot-lab/outputs/release-prep/0.6.1/`.
+
+## 0.6.3 Readiness Audit — Follow-up Required
+
+At `98d60f5`, fresh production npm and Rust audits pass with zero findings or
+Rust warnings. The full npm audit reports five development-only affected package
+entries (one high, four moderate), adding the following to the previously
+recorded OpenTelemetry/Firebase CLI exception:
+
+| Locked dependency | Finding and compatible patched line |
+|---|---|
+| `body-parser` 1.20.8 and nested 2.3.0 | [Compressed-body DoS](https://github.com/advisories/GHSA-27r3-jxmh-p828), high; patched in 1.20.9 and 2.4.0. |
+| `fast-uri` 3.1.8 | [Scheme decoding](https://github.com/advisories/GHSA-w74x-v6f9-j3xg) and related URI-normalization advisories; the affected 3.x line is patched in 3.1.9. |
+
+Both packages are development dependencies; the dependency lock is unchanged
+from 0.6.2. Apply a narrow compatible resolution refresh and validate the affected
+tooling before closing this follow-up. Do not use the audit's suggested major
+Firebase CLI downgrade to dispose of the retained OpenTelemetry issue.
+No dependencies were installed or updated in this review. The
+[release-readiness review](v0_6_3_release_review.md) owns the findings and raw
+evidence pointers.

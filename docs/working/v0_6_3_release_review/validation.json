@@ -1,0 +1,565 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T07:38:56.155272+00:00",
+  "sourceCommit": "98d60f537d3574491f3d0352047529f217a12bcb",
+  "baselineTag": "v0.6.2",
+  "baselineCommit": "4052d946a14b235742b12bc3e8fa4d753b480516",
+  "verdict": "Two bounded corrective items before release preparation; broad cloud gate remains failed. No new dev-site presentation or game-engine defect established.",
+  "scope": [
+    "Release-wide source/contract review from v0.6.2",
+    "Developer/player lifecycle and privacy boundary",
+    "UI/history/case/control async and navigation paths",
+    "Source and frozen media/catalog identities",
+    "Publisher/direct-route/export and docs contracts",
+    "Dependency audits, core/rules, full ordinary and cloud regression",
+    "Release metadata, remote and hosted-CI state"
+  ],
+  "findings": [
+    {
+      "id": "RR1",
+      "priority": "P2",
+      "area": "cloud validation / account readiness",
+      "status": "open",
+      "source": [
+        "gomoku-web/cloudtests/sharing.spec.ts:550",
+        "gomoku-web/cloudtests/sharing.spec.ts:572",
+        "gomoku-web/src/routes/ProfileRoute.tsx:300",
+        "gomoku-web/src/routes/ProfileRoute.tsx:433"
+      ],
+      "evidence": "Full cloud: Firefox fails before Reset confirmation. Five-per-engine C14: WebKit fails before Delete Cloud. Both trace inputs show cloud identity checking at the Reset click and a local-only confirmation. Final error contexts show a signed-in Profile with the confirmation closed.",
+      "next": "Wait for restored sign-in at both signed-in test boundaries; consider disabling the misleading initial trigger while Auth loads. Preserve the UID-change confirmation safeguard. Verify repetitions and full cloud after a correction.",
+      "qualification": "These files are unchanged from v0.6.2. This demonstrates a readiness race, not destructive data loss."
+    },
+    {
+      "id": "RR2",
+      "priority": "P2",
+      "area": "development dependency maintenance",
+      "status": "open",
+      "source": [
+        "gomoku-web/package-lock.json:2332",
+        "gomoku-web/package-lock.json:4370",
+        "gomoku-web/package-lock.json:6252"
+      ],
+      "locked": [
+        {
+          "package": "body-parser",
+          "versions": [
+            "1.20.8",
+            "2.3.0"
+          ],
+          "devOnly": true,
+          "patchedLines": [
+            "1.20.9",
+            "2.4.0"
+          ]
+        },
+        {
+          "package": "fast-uri",
+          "versions": [
+            "3.1.8"
+          ],
+          "devOnly": true,
+          "patchedLines": [
+            "3.1.9"
+          ]
+        }
+      ],
+      "evidence": "Fresh full audit adds one high and one moderate affected dependency entry beyond the three previously recorded OpenTelemetry/Firebase CLI entries. Production npm audit remains clean.",
+      "next": "Narrow compatible lock refresh and affected tooling validation; do not force a major Firebase CLI downgrade.",
+      "qualification": "Dependency lock is unchanged from v0.6.2; this review installs or updates no dependencies."
+    },
+    {
+      "id": "RR3",
+      "priority": "P3",
+      "area": "continuous coverage",
+      "status": "non-blocking follow-up",
+      "source": [
+        ".github/workflows/ci.yml:92",
+        "gomoku-web/vite.config.ts:69"
+      ],
+      "evidence": "CI runs Vitest src/**/*.test.* but no Node command for the capture/export/audit helper tests.",
+      "next": "Add the existing 44-check Node command as a small CI step when practical."
+    }
+  ],
+  "freshValidation": {
+    "native": {
+      "commands": [
+        {
+          "check": "fmt",
+          "command": "cargo fmt --all --check",
+          "exitCode": 0
+        },
+        {
+          "check": "clippy",
+          "command": "cargo clippy --workspace --all-targets -- -D warnings",
+          "exitCode": 0
+        },
+        {
+          "check": "rust-tests",
+          "command": "cargo test --workspace",
+          "exitCode": 0
+        }
+      ],
+      "testTargets": 16,
+      "passed": 348,
+      "failed": 0,
+      "ignored": 0
+    },
+    "dependencyAudits": {
+      "productionNpm": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "rust": {
+        "database": {
+          "advisory-count": 1378,
+          "last-commit": "3279c99911354c400e1d41e47c7d60e39258b147",
+          "last-updated": "2026-10-26T22:32:25+01:00"
+        },
+        "vulnerabilities": {
+          "found": false,
+          "count": 0,
+          "list": []
+        },
+        "warnings": {}
+      },
+      "allNpm": {
+        "info": 0,
+        "low": 0,
+        "moderate": 4,
+        "high": 1,
+        "critical": 0,
+        "total": 5
+      },
+      "allNpmAffectedPackages": [
+        "@google-cloud/pubsub",
+        "@opentelemetry/core",
+        "body-parser",
+        "fast-uri",
+        "firebase-tools"
+      ],
+      "installedTree": "npm ls --all --json exits 0; no install or update performed"
+    },
+    "productionBuild": {
+      "source": "98d60f5",
+      "base": "/",
+      "configuration": "public Firebase configuration from the checked-in Pages workflow",
+      "output": "gomoku-web/test-results/v063-release-review-20261027/dist",
+      "commands": [
+        [
+          "node",
+          "node_modules/vite/bin/vite.js",
+          "build",
+          "--outDir",
+          "/home/bryan/code/gomoku2d/gomoku-web/test-results/v063-release-review-20261027/dist"
+        ],
+        [
+          "node",
+          "scripts/publish_visual_design_assets.mjs",
+          "/home/bryan/code/gomoku2d/gomoku-web/test-results/v063-release-review-20261027/dist"
+        ],
+        [
+          "node",
+          "scripts/publish_reports.mjs",
+          "/home/bryan/code/gomoku2d/gomoku-web/test-results/v063-release-review-20261027/dist"
+        ],
+        [
+          "node",
+          "scripts/publish_reviews.mjs",
+          "/home/bryan/code/gomoku2d/gomoku-web/test-results/v063-release-review-20261027/dist"
+        ],
+        [
+          "node",
+          "scripts/publish_spa_routes.mjs",
+          "/home/bryan/code/gomoku2d/gomoku-web/test-results/v063-release-review-20261027/dist"
+        ]
+      ],
+      "result": "pass"
+    },
+    "ordinaryBrowser": {
+      "command": "PLAYWRIGHT_BASE_URL=http://127.0.0.1:47438 Playwright test --browser=all --output=test-results/v063-release-review-20261027/browser",
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "passed": 297,
+      "failed": 0,
+      "skipped": 6,
+      "skipQualification": "Intentional Firefox/WebKit WebGL-colour qualification skips; forced Canvas runs in all engines.",
+      "log": "browser.log"
+    },
+    "rules": {
+      "result": {
+        "command": [
+          "rtk",
+          "proxy",
+          "node",
+          "node_modules/firebase-tools/lib/bin/firebase.js",
+          "emulators:exec",
+          "--project",
+          "demo-gomoku2d-rules-test",
+          "--only",
+          "firestore",
+          "--config",
+          "/home/bryan/code/gomoku2d/gomoku-web/test-results/v063-release-review-20261027/rules-firebase.json",
+          "rtk proxy node node_modules/vitest/vitest.mjs run --config vitest.rules.config.ts"
+        ],
+        "exitCode": 0,
+        "ports": {
+          "firestore": 24080,
+          "websocket": 25152,
+          "hub": 20401,
+          "logging": 20501
+        },
+        "project": "demo-gomoku2d-rules-test"
+      },
+      "testFiles": 2,
+      "passed": 49,
+      "failed": 0,
+      "log": "rules.log"
+    },
+    "cloud": {
+      "command": "GOMOKU_CLOUD_PORT_OFFSET=5000 npm run test:cloud -- --container --output=test-results/v063-release-review-20261027/cloud",
+      "passed": 59,
+      "failed": 1,
+      "failedEngine": "firefox",
+      "failedTest": "C14",
+      "D01D02": "6/6 pass included in full lane",
+      "log": "cloud.log"
+    },
+    "cloudC14Repeat": {
+      "command": "GOMOKU_CLOUD_PORT_OFFSET=5000 npm run test:cloud -- --container --grep C14 --repeat-each=5 --output=test-results/v063-release-review-20261027/cloud-c14-repeat",
+      "passed": 14,
+      "failed": 1,
+      "failedEngine": "webkit",
+      "failedTest": "C14 second Profile navigation before Delete Cloud",
+      "log": "cloud-c14-repeat.log"
+    },
+    "sourceLinks": {
+      "links": 151,
+      "pinnedChecks": 151,
+      "failures": [],
+      "qualification": "Local committed objects/paths. Final remote checks follow authorized push/publication."
+    },
+    "servedCandidate": {
+      "source": "98d60f5",
+      "files": 585,
+      "bytes": 22833886,
+      "sha256Parity": true,
+      "directDeveloperEntries": 31,
+      "reviewMediaBindings": 76,
+      "historyManifestValidation": "passed by publisher",
+      "recordedLabReportsUnchanged": true
+    },
+    "publicationHygiene": {
+      "files": 585,
+      "bytes": 22833886,
+      "unexpectedPrivatePaths": [],
+      "internalReportHostDependencies": [],
+      "credentialPatternMatchesInStaticData": []
+    }
+  },
+  "reusedValidation": {
+    "receipt": "docs/working/v0_6_3_review_fixes/validation.json",
+    "receiptSha256": "7b843644cbd1c73860aa95479d8cc7803410169e791e1ee019e8529a72cd741d",
+    "implementationCommit": "c1c3af6e7439e37027f881a870759a7c2be64855",
+    "verifiedSourceIdentity": "git diff c1c3af6 HEAD -- gomoku-web gomoku-bot-lab firestore.rules firestore.indexes.json .github is empty; all 12 recorded changed-input hashes match.",
+    "typecheck": "App/scripts/tools pass retained",
+    "units": 556,
+    "nodeToolTests": 44,
+    "uiAudit": {
+      "views": 60,
+      "violations": 0,
+      "inconclusiveContrastChecks": 7
+    },
+    "maintainedHelper": {
+      "views": 66,
+      "violations": 0,
+      "inconclusiveContrastChecks": 9
+    },
+    "exportAndSnap": "Standalone/full browser inspection and 489-file SHA-256 parity retained from the same source",
+    "qualification": "Reused evidence, not represented as a fresh rerun or human/device acceptance."
+  },
+  "releaseState": {
+    "metadata": {
+      "reviewedSource": "98d60f5",
+      "packageVersion": "0.6.2",
+      "lockVersion": "0.6.2",
+      "releaseSection063Exists": false,
+      "unreleasedEmpty": true
+    },
+    "remoteMain": "4052d946a14b235742b12bc3e8fa4d753b480516",
+    "remote063Tags": [],
+    "remoteCI": [
+      {
+        "conclusion": "success",
+        "databaseId": 40133140530,
+        "headSha": "4052d946a14b235742b12bc3e8fa4d753b480516",
+        "name": "CI",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 40130988854,
+        "headSha": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+        "name": "CI",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 40032987167,
+        "headSha": "84f1c1ff59cdb0d9ee9f387d6b49e4bff67c03a9",
+        "name": "CI",
+        "status": "completed"
+      }
+    ],
+    "checkCommand": "bash scripts/release.sh --check 0.6.3",
+    "checkExitCode": 1,
+    "checkOutput": "Local main has unpushed commits; push main before releasing.",
+    "checkQualification": "Clean-tree read-only check stopped at unpushed main before later version/changelog gates.",
+    "authorization": "Review only. No push, tag, version change, release or production change."
+  },
+  "unchangedFromBaseline": [
+    "Rust engine and Cargo locks",
+    "npm dependency lock",
+    "Firestore rules/index/schema inputs",
+    "deployment workflows",
+    "recorded reports/lab JSON",
+    "ProfileRoute and sharing cloud-test source"
+  ],
+  "notPerformed": [
+    "New dependency installation or native Wasm rebuild; exact-source CI must do these after preparation",
+    "C4/C6/C7 five-per-engine repetition on this already failing candidate; required for the corrected final gate",
+    "New capture campaign or Rust tournament for presentation-only changes",
+    "Real-account writes, production changes or human/physical-device acceptance"
+  ],
+  "cleanup": {
+    "stoppedPreview": {
+      "pid": 1685104,
+      "port": 47438,
+      "command": "/usr/bin/node node_modules/vite/bin/vite.js preview --outDir test-results/v063-release-review-20261027/dist --host 127.0.0.1 --port 47438 --strictPort "
+    },
+    "ownedCloudAndRulesPortsClear": [
+      13013,
+      24099,
+      23081,
+      24151,
+      19401,
+      19501,
+      24080,
+      25152,
+      20401,
+      20501
+    ],
+    "preserved": [
+      {
+        "pid": 165197,
+        "port": 46862
+      },
+      {
+        "pid": 23164,
+        "port": 8787
+      }
+    ],
+    "userTabsOpened": 0,
+    "worktreesCreatedOrRemoved": 0
+  },
+  "rawEvidenceRoot": "gomoku-web/test-results/v063-release-review-20261027",
+  "failureObservation": {
+    "test": "C14 private reset and Delete Cloud",
+    "engine": "firefox",
+    "failure": "Reset confirmation text never became visible after clicking Reset Profile",
+    "stage": "Before the Reset confirmation or Delete Cloud actions; later assertions not reached",
+    "tracePath": "gomoku-web/test-results/v063-release-review-20261027/cloud/sharing-C14-private-reset--a3298-rs-and-reviews-local-copies-firefox/trace.zip",
+    "traceSha256": "b4de6de976c50a3d0072e5d21a167ec217c2743f5a8481b831051ff7715d9253",
+    "click": [
+      {
+        "type": "before",
+        "callId": "sdve@11058",
+        "startTime": 235543.24,
+        "class": "Frame",
+        "method": "click",
+        "params": {
+          "selector": "internal:role=button[name=\"Reset Profile\"s]",
+          "strict": true
+        }
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235545.355,
+        "message": "waiting for getByRole('button', { name: 'Reset Profile', exact: true })"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235837.488,
+        "message": "  locator resolved to <button type=\"button\" class=\"uiAction uiActionNeutral _resetTrigger_1u6pw_72\">\u2026</button>"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235837.87,
+        "message": "attempting click action"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235837.884,
+        "message": "  waiting for element to be visible, enabled and stable"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235842.544,
+        "message": "  element is visible, enabled and stable"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235842.548,
+        "message": "  scrolling into view if needed"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235842.716,
+        "message": "  done scrolling"
+      },
+      {
+        "type": "input",
+        "callId": "sdve@11058",
+        "point": {
+          "x": 204,
+          "y": 467
+        },
+        "box": {
+          "x": 40,
+          "y": 443.1666564941406,
+          "width": 328,
+          "height": 48
+        }
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235848.096,
+        "message": "  performing click action"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235865.216,
+        "message": "  click action done"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235865.221,
+        "message": "  waiting for scheduled navigations to finish"
+      },
+      {
+        "type": "log",
+        "callId": "sdve@11058",
+        "time": 235865.269,
+        "message": "  navigations have finished"
+      },
+      {
+        "type": "after",
+        "callId": "sdve@11058",
+        "endTime": 235865.297
+      }
+    ],
+    "snapshots": [
+      {
+        "time": 235847.302,
+        "checkingCloud": true,
+        "resetTriggerPresent": true,
+        "confirmationPresent": false
+      },
+      {
+        "time": 235866.568,
+        "checkingCloud": false,
+        "resetTriggerPresent": false,
+        "confirmationPresent": true
+      },
+      {
+        "time": 235867.905,
+        "checkingCloud": false,
+        "resetTriggerPresent": false,
+        "confirmationPresent": false
+      }
+    ],
+    "sourceObservation": "ProfileRoute.tsx clears confirmation on cloudAuth.user.uid changes. The reset button is enabled while Auth is loading. C14 does not wait for restored sign-in after its page.goto at line 550. These two source files are unchanged from v0.6.2.",
+    "interpretation": "The observed click occurs while cloud sign-in is still checking. A confirmation appears briefly, then is cleared during account restoration. This establishes a readiness race, not a destructive-reset data failure.",
+    "snapshotQualification": "Trace snapshots contain incremental references. Listed flags indicate literal string presence only; absence does not prove a missing element. Error-context snapshots and assertion failures establish the final closed confirmation.",
+    "localConfirmationText": "Reset this profile? This clears settings, games, saved replays and replay analyses on this device.",
+    "secondFailure": {
+      "engine": "webkit",
+      "stage": "After private reset succeeded; before Delete Cloud entry",
+      "failure": "Delete Cloud button absent until the test timeout",
+      "traceSha256": "8012cef7b4ff75f55ae7715b71e19b28511a471f67972ac26b999b91744923e7",
+      "tracePath": "gomoku-web/test-results/v063-release-review-20261027/cloud-c14-repeat/sharing-C14-private-reset--a3298-rs-and-reviews-local-copies-webkit/trace.zip",
+      "resetClick": {
+        "type": "before",
+        "callId": "tjsr@879",
+        "startTime": 118944.063,
+        "class": "Frame",
+        "method": "click",
+        "params": {
+          "selector": "internal:role=button[name=\"Reset Profile\"s]",
+          "strict": true
+        }
+      },
+      "textObservations": [
+        {
+          "timestamp": 119286.304,
+          "text": "Checking cloud sync...\"]], [\"BUTTON\", {\"aria-label\": \"Checking\", \"class\": \"uiAction uiActionSecondary\", \"disabled\": \"\", \"type\": \"button\"}, [\"SPAN\", {\""
+        },
+        {
+          "timestamp": 119293.291,
+          "text": "Reset this profile? This clears settings, games, saved replays and replay analyses on this device.\"], [\"DIV\", {\"class\": \"_resetConfirmActions_1u6pw_10"
+        }
+      ]
+    }
+  },
+  "advisorySources": [
+    "https://github.com/advisories/GHSA-27r3-jxmh-p828",
+    "https://github.com/advisories/GHSA-333x-w4r6-6crp",
+    "https://github.com/advisories/GHSA-8988-4f7v-96qf",
+    "https://github.com/advisories/GHSA-w74x-v6f9-j3xg",
+    "https://github.com/advisories/GHSA-wjr9-j795-jxcr",
+    "https://github.com/advisories/GHSA-xhq7-xmqj-769h"
+  ],
+  "rawArtifactSha256": {
+    "browser.log": "7710f4f152e8949ce305743bdb3db898331d2bc7baad8b1f7cf1551af86f4f76",
+    "cloud.log": "5dbb2d3a5c0048f7d251c7d680b33b85f9604939ddeb2da2425863a416cd1ffb",
+    "cloud-c14-repeat.log": "c1f180d70d40102ae63ab90a9b1b4e9870f7106e9ec091d28445f417e0ebbae1",
+    "native-checks.json": "430a56c3b5e6634c8b578fc2214ef0bfa1c3594a3bf195b067624bbff37942db",
+    "rust-tests.log": "adf89abff63b3673e15bbc000201dd98a69026ec289a321ac726a7c600a7bedc",
+    "clippy.log": "81c462b390452d1df820284043ef260e0b41faf8c75bbbd408cee0ecd4b3a000",
+    "fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rules.log": "b390e50afeeca94c60faf03699354d3c17ae164542d1b48a7bedf3d72e7b4f39",
+    "rules.json": "ee5a9daa053319ba39fca7fb17cb742ad2fb603ed9b351feaaa7f52c89425633",
+    "npm-audit.json": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35",
+    "npm-audit-all.json": "9a56cbc9fc9757ebda26a82e29dcbaa369b606ff8d2534399a381cf3fad14f88",
+    "cargo-audit.json": "4d0e80837941b8430fe05bf8990bf86e9e5eb33e78759757cde4d87621e63417",
+    "installed-dependencies.json": "58b88ea3500c85214c941f62d8603a924325cfa8b709c6a7eeef41ded874c708",
+    "dev-dependency-paths.json": "faabb599abdc8457d87c16e5b5eb7c8456c1ef1bac1a191626dbf473c3b26c4c",
+    "source-links.json": "cff0553067a360f05509e94349223ab62f8d53f4d5bb3a076c8d609263465ced",
+    "served-parity.json": "24ab95a678d3100690a06e9ede3233cced1b5eab16963ed7fe657ab4a3bc0f24",
+    "publication-hygiene.json": "a55f72d1eb59404396314543d9f13da1ef9d60886283356722e9c4ebab315df3",
+    "production-build.log": "8633326fa07dcc2dfadbf6487f2e1742a314e4265a62eea5be5b675c13cd2ae9",
+    "release-check.log": "4c49ba1487c3200f4ea33851318535d7316f58e7695852f196c376c0aa4ed7b1",
+    "metadata.json": "a47cb19944b908fd82ba3d387b0c94d1f29cd44b8d63c3c889447e6c362072f5",
+    "remote-ci.json": "c5a90c51443918cae78382f7e3302bd8331cd59a0e1381a3b86a97b565dba84d",
+    "C14-observation.json": "8eb60df28ce2590ba59dfc58b88ebb7c16a35625cf26d31f5fab9284ece8ee37",
+    "cleanup.json": "789102e6e425e94d9c943f104330cfbf97f10101534802dde0e813941eca670a"
+  },
+  "productOrTestOrToolSourceEditedByReview": false
+}

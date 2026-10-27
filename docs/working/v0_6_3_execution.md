@@ -14,6 +14,11 @@ The corrected portable preview is delivered and verified from Snap. Changes
 remain local; release and human/device acceptance remain separate. The
 checkpoints below retain their dated scope and evidence.
 
+The subsequent [October 27 release-wide review](v0_6_3_release_review.md), at
+`98d60f5`, keeps R1–R5 resolved but identifies a C14 account-restoration readiness
+race and development-dependency audit additions. The full browser, native and
+rules lanes pass; the cloud release gate remains open until that follow-up.
+
 ## Integration checkpoint C–D
 
 The root entry now selects a lazy public developer tree or the player tree.
