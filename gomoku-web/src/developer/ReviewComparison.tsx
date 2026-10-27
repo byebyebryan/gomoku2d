@@ -9,6 +9,7 @@ export function ReviewComparison({
   navigationState,
   controlsPosition = "before",
   compactCaption = false,
+  showOrigin = false,
 }: {
   comparison: Comparison;
   root: string;
@@ -16,6 +17,7 @@ export function ReviewComparison({
   navigationState?: unknown;
   controlsPosition?: "before" | "after";
   compactCaption?: boolean;
+  showOrigin?: boolean;
 }) {
   const [params, setParams] = useSearchParams();
   const active = (params.get("pair") ?? firstId) === comparison.id;
@@ -96,10 +98,14 @@ export function ReviewComparison({
           >
             <figcaption>
               <strong>{media.label}</strong>
-              {!compactCaption && (
+              {(!compactCaption || showOrigin) && (
                 <span>
-                  {media.kind} · {media.width} × {media.height} ·{" "}
-                  {media.revision}
+                  {media.captureType === "retrospective"
+                    ? "Retrospective capture"
+                    : media.captureType === "historical"
+                      ? "Original capture"
+                      : media.kind}
+                  {!compactCaption && <> · {media.width} × {media.height} · {media.revision}</>}
                 </span>
               )}
             </figcaption>

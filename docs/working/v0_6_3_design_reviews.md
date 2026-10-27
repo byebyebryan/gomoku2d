@@ -72,8 +72,9 @@ replace selected media, use real accounts or start cloud services.
   viewer, publisher, documentation and existing browser coverage.
 - The audit binds 39 source entries to exact document blobs, with 34 text
   excerpts and five JSON observations. Primary review corrected a conflation of
-  release IDs and later changelog revisions; source existence alone was also
-  insufficient when a later changelog omitted the claimed older entry.
+  release IDs and later document revisions. A later warning that the retained
+  changelogs omitted older entries was rejected after checking the complete raw
+  Git blobs; the initial review output was incomplete.
 - Four original active Replay images were recovered, and five frozen profile
   mockups rendered. The primary inspected all nine images and independently
   checked their hashes/dimensions and the audit's exact excerpts/pointers.

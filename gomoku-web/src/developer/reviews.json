@@ -311,6 +311,9 @@
         "label": "Release and acceptance evidence",
         "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/archive/v0_6_2_release.md"
       }
+    ],
+    "versions": [
+      "0.6.2"
     ]
   },
   {
@@ -385,6 +388,9 @@
         "label": "Raster evidence",
         "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/working/publish_icon_review/render.json"
       }
+    ],
+    "versions": [
+      "0.6.1"
     ]
   },
   {
@@ -522,22 +528,112 @@
         "label": "0.6.2 release",
         "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/archive/v0_6_2_release.md"
       }
+    ],
+    "versions": [
+      "0.6.2"
     ]
   },
   {
     "schema": 1,
     "id": "public-player-062",
-    "title": "A public player page with a useful record",
+    "title": "A useful public player page",
     "scope": "0.6.2 / Public profile presentation",
     "date": "2026-10-24",
-    "revision": "152674c public-player checkpoint",
+    "revision": "0.6.2 design sequence \u00b7 152674c implementation checkpoint",
     "question": "How can a public player page feel like part of the game and expose meaningful data?",
-    "summary": "A two-column record view keeps identity and link controls on the left, optional statistics and a paged replay list on the right. These are dated implementation captures, not the initial mockup.",
+    "summary": "A/B/C studies led to a two-column player card, with optional statistics above a paged game list. The review follows the selection, refinement and implementation.",
     "disposition": "historical checkpoint",
     "comparisons": [
       {
+        "id": "options-a-b",
+        "title": "Options A / B",
+        "conditions": "Frozen study mockups, newly rendered at 1280px wide. Full-page fictional Juniper profile with 32 games and shared statistics.",
+        "media": [
+          {
+            "file": "profile-mockup-a.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/profile-mockup-a.png",
+            "sha256": "b92053cd7b7eb857399c0244a2813dd0b9283b407960036348a8de3ed2fcb2e9",
+            "width": 1280,
+            "height": 1198,
+            "label": "A \u00b7 Wide record",
+            "alt": "Design option A: a wide shared-record strip above the fictional Juniper game list.",
+            "kind": "design mockup",
+            "revision": "Frozen 0.6.2 study \u00b7 report 29c15594"
+          },
+          {
+            "file": "profile-mockup-b.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/profile-mockup-b.png",
+            "sha256": "7c8c0bda9f781010977a64b08916d25e0b57e616bbd13dd625b8bcf6af6ed94d",
+            "width": 1280,
+            "height": 1060,
+            "label": "B \u00b7 Profile columns",
+            "alt": "Design option B: fictional Juniper identity and record in a left rail, with games in a right panel.",
+            "kind": "design mockup",
+            "revision": "Frozen 0.6.2 study \u00b7 report 29c15594"
+          }
+        ]
+      },
+      {
+        "id": "options-b-c",
+        "title": "Options B / C",
+        "conditions": "Frozen study mockups, newly rendered at 1280px wide. Full-page fictional Juniper profile with 32 games and shared statistics.",
+        "media": [
+          {
+            "file": "profile-mockup-b.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/profile-mockup-b.png",
+            "sha256": "7c8c0bda9f781010977a64b08916d25e0b57e616bbd13dd625b8bcf6af6ed94d",
+            "width": 1280,
+            "height": 1060,
+            "label": "B \u00b7 Profile columns",
+            "alt": "Design option B: fictional Juniper identity and record in a left rail, with games in a right panel.",
+            "kind": "design mockup",
+            "revision": "Frozen 0.6.2 study \u00b7 report 29c15594"
+          },
+          {
+            "file": "profile-mockup-c.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/profile-mockup-c.png",
+            "sha256": "ec542031c20ca7f67c66b50e3ee42a7b333cec959401f8e5e360e937ca3c16ea",
+            "width": 1280,
+            "height": 1227,
+            "label": "C \u00b7 Compact record",
+            "alt": "Design option C: fictional Juniper identity, statistics and games within one contained panel.",
+            "kind": "design mockup",
+            "revision": "Frozen 0.6.2 study \u00b7 report 29c15594"
+          }
+        ]
+      },
+      {
+        "id": "player-card-refinement",
+        "title": "Player card refinement",
+        "conditions": "Two frozen refinements at 1280px wide, using the same fictional content. The left panel gains existing public information.",
+        "media": [
+          {
+            "file": "profile-mockup-minimal-two-column.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/profile-mockup-minimal-two-column.png",
+            "sha256": "ddaec4b3a0c6a9022b89cc5629ba7c01dfaaadc494976c1b75b96a44d54bbb88",
+            "width": 1280,
+            "height": 1191,
+            "label": "First refinement \u00b7 Minimal identity",
+            "alt": "The combined two-column mockup: a short name and Copy link panel on the left, with shared record above games on the right.",
+            "kind": "design mockup",
+            "revision": "Frozen 0.6.2 study \u00b7 report 80e6a234"
+          },
+          {
+            "file": "profile-mockup-compact-player-card.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/profile-mockup-compact-player-card.png",
+            "sha256": "e0ebac957019f1b8e6e43894cb029efeddf2ffe7e70c6b4523603af0e7a4fa2f",
+            "width": 1280,
+            "height": 1121,
+            "label": "Selected refinement \u00b7 Player card",
+            "alt": "The compact player-card mockup adds shared-game count, profile address and record disclosure to the left panel.",
+            "kind": "design mockup",
+            "revision": "Frozen 0.6.2 study \u00b7 report 9a6b8fe6"
+          }
+        ]
+      },
+      {
         "id": "responsive",
-        "title": "Desktop and portrait at the same checkpoint",
+        "title": "Desktop and portrait",
         "conditions": "Synthetic public fixture, 18 replay rows. Desktop and portrait are different viewport conditions, not a before/after claim. Browser and text-scale details are retained in original evidence where available.",
         "media": [
           {
@@ -579,10 +675,11 @@
     ],
     "technical": [
       "Original implementation evidence records route, responsive and catalog/error-state checks.",
-      "The later mobile checkpoint and release record contain follow-up results; these captures keep their original source identity."
+      "The later mobile checkpoint and release record contain follow-up results; these captures keep their original source identity.",
+      "Expanded 2026-10-26 with five new renders from the original immutable A/B/C, minimal-column and player-card report snapshots. Report IDs, source file inventories, supported URL state, browser, image digests and unchanged-source checks are recorded in docs/working/v0_6_3_design_reviews/media_manifest.json."
     ],
-    "human": "Bryan chose the record-style direction with two columns and requested more substance on the left. Later mobile feedback was broadly positive; physical-phone acceptance remains separate.",
-    "followUp": "Follow the mobile-records review for responsive refinements and the release record for shipped source/results.",
+    "human": "Bryan selected A\u2019s record treatment with B\u2019s columns, requested more substance in the left panel, and accepted the compact player-card direction. This records the design selection; the original implementation images retain their dated checkpoint identity.",
+    "followUp": "The mobile-records case records the responsive follow-up. Current screens shows the released 0.6.2 reference; these study images remain design mockups.",
     "sources": [
       {
         "label": "Implementation evidence",
@@ -595,6 +692,36 @@
       {
         "label": "0.6.2 release",
         "url": "https://github.com/byebyebryan/gomoku2d/blob/4052d94/docs/archive/v0_6_2_release.md"
+      }
+    ],
+    "versions": [
+      "0.6.2"
+    ],
+    "process": [
+      {
+        "id": "alternatives",
+        "title": "Compare three ways to show the record",
+        "detail": "A led with a wide record and game list. B borrowed private Profile\u2019s columns. C kept identity, record and games inside one contained panel. These were alternatives for the same content; the initial study recommended A without recording a selection.",
+        "comparisons": [
+          "options-a-b",
+          "options-b-c"
+        ]
+      },
+      {
+        "id": "refinement",
+        "title": "Combine the useful parts, then rebalance",
+        "detail": "Bryan chose A\u2019s record treatment with B\u2019s columns, placing statistics above games on the right. The first refinement left only name and Copy link on the left. After review, the player card gained the existing shared-game count, profile address and record disclosure.",
+        "comparisons": [
+          "player-card-refinement"
+        ]
+      },
+      {
+        "id": "implementation",
+        "title": "Review the implementation",
+        "detail": "The selected composition was implemented using the existing public catalog and optional statistics. These desktop and portrait images retain the original 152674c checkpoint. Later mobile work and the 0.6.2 release record qualify the shipped result.",
+        "comparisons": [
+          "responsive"
+        ]
       }
     ]
   },
@@ -892,6 +1019,761 @@
       {
         "label": "Capture workflow and qualification",
         "url": "https://github.com/byebyebryan/gomoku2d/blob/main/docs/working/v0_6_3_retrospective_capture.md"
+      }
+    ],
+    "versions": [
+      "0.2.4",
+      "0.6.2"
+    ]
+  },
+  {
+    "schema": 1,
+    "id": "board-first-shell-022",
+    "title": "A shell that keeps the board in charge",
+    "scope": "0.2 / Shell and visual language",
+    "date": "2026-10-26",
+    "revision": "Documented decisions \u00b7 reconstructed release layouts",
+    "versions": [
+      "0.2.1",
+      "0.2.2"
+    ],
+    "question": "How could the interface gain structure while keeping the character of a pixel game?",
+    "summary": "The React shell separated play, replay and records. A flatter visual pass then reduced the surrounding chrome and strengthened the role of the board and controls.",
+    "disposition": "retrospective review",
+    "comparisons": [
+      {
+        "id": "home",
+        "title": "A direct way into play",
+        "conditions": "Tagged builds recaptured at 1280 \u00d7 900 CSS pixels, DPR 1, using synthetic guest state and each version\u2019s own bot default.",
+        "media": [
+          {
+            "file": "home-default-021-desktop-745fd564b2d1.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/v0.2.1/desktop/home--default.png",
+            "sha256": "745fd564b2d1bb87fc8a97bff20927c7354762b00988ef983b972389a50cd4eb",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.1 \u00b7 Desktop",
+            "alt": "Home: Home and navigation in v0.2.1, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.1 \u00b7 add1953",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "home-default-022-desktop-1823d92d63f5.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/desktop/home--default.png",
+            "sha256": "1823d92d63f523da94050789f67adf5f86891355538f88c37a3d8ca8aa7be2a9",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.2 \u00b7 Desktop",
+            "alt": "Home: Home and navigation in v0.2.2, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.2 \u00b7 a0a87e2",
+            "captureType": "retrospective"
+          }
+        ]
+      },
+      {
+        "id": "match",
+        "title": "The board and its HUD",
+        "conditions": "Tagged builds recaptured at 1280 \u00d7 900 CSS pixels, DPR 1, using synthetic guest state and each version\u2019s own bot default. The 0.2.1 Match is a new board; 0.2.2 is a branch at move 8. Compare composition, rather than board contents.",
+        "media": [
+          {
+            "file": "match-default-021-desktop-4dfacd839287.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/v0.2.1/desktop/match--default.png",
+            "sha256": "4dfacd839287a6c981a4cb536fc50187e445907a46872d7835e0c38d3739f921",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.1 \u00b7 Desktop",
+            "alt": "Local Match: Local match in v0.2.1, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.1 \u00b7 add1953",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "match-default-022-desktop-b994d102b588.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/desktop/match--default.png",
+            "sha256": "b994d102b58884f38f1c03b2f2ca67c22c4ff9ce878c2dde6290d4efa2a66ac0",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.2 \u00b7 Desktop",
+            "alt": "Local Match: Local match in v0.2.2, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.2 \u00b7 a0a87e2",
+            "captureType": "retrospective"
+          }
+        ]
+      },
+      {
+        "id": "profile",
+        "title": "A separate player record",
+        "conditions": "Tagged builds recaptured at 1280 \u00d7 900 CSS pixels, DPR 1, using synthetic guest state and each version\u2019s own bot default.",
+        "media": [
+          {
+            "file": "profile-default-021-desktop-e8b576a0d1c3.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/v0.2.1/desktop/profile--default.png",
+            "sha256": "e8b576a0d1c33c24497e5baa6fbd3e9c891ac874f3c976396699917fe6187300",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.1 \u00b7 Desktop",
+            "alt": "Profile: Profile overview in v0.2.1, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.1 \u00b7 add1953",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "profile-default-022-desktop-fd0f95654d43.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/desktop/profile--default.png",
+            "sha256": "fd0f95654d43efaa97e0e1f982f425bc2cdaf227c68bb935befcfae8f2fee7a3",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.2 \u00b7 Desktop",
+            "alt": "Profile: Profile overview in v0.2.2, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.2 \u00b7 a0a87e2",
+            "captureType": "retrospective"
+          }
+        ]
+      }
+    ],
+    "process": [
+      {
+        "id": "structure",
+        "title": "Separate the screens",
+        "detail": "The early review liked the original game\u2019s retro tone and board dominance, but found too much of the interface bound to one scene. Home, Match, Replay and Profile gave the DOM shell clear responsibilities and room to grow.",
+        "comparisons": [
+          "home"
+        ]
+      },
+      {
+        "id": "hierarchy",
+        "title": "Keep the shell quiet",
+        "detail": "The next critique found the new structure useful but still too app-like. The 0.2.2 pass flattened panels, clarified button roles and used less framing around the board. The goal was a game HUD with a clear hierarchy.",
+        "comparisons": [
+          "match",
+          "profile"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "recorded",
+        "title": "Structure and character were separate problems",
+        "detail": "Moving the interface into React solved ownership and scrolling. It still needed a visual pass to recover the original game\u2019s punch."
+      },
+      {
+        "state": "recorded",
+        "title": "Hierarchy became a durable rule",
+        "detail": "Board first, status second, controls third and metadata last gave later Match and Replay work a consistent direction."
+      }
+    ],
+    "technical": [
+      "The existing qualified history captures are reused without changing their pixels. Their source paths, SHA-256, PNG dimensions and exact tagged sources remain recorded.",
+      "History builds used modern toolchains and Chromium with synthetic state, UTC/en-US and reduced motion. These are reconstructed release layouts, not original release binaries or physical-phone checks."
+    ],
+    "human": "The retained screenshot-review text supplies the critique. This case was assembled later; the retrospective images do not establish original-period visual approval.",
+    "followUp": "The following portrait and polish review develops the same shell for touch and narrow screens.",
+    "sources": [
+      {
+        "label": "Retained screenshot critiques: 0.1\u20130.2.2",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/0b93fed092975c172959343a45decc9c8c89fe2e/docs/ui_screenshot_review.md#v021"
+      },
+      {
+        "label": "Board-first UI brief",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/docs/archive/v0_2_ui.md"
+      },
+      {
+        "label": "0.2.2 release and visual changes",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "id": "portrait-play-024",
+    "title": "Making portrait play deliberate",
+    "scope": "0.2 / Portrait play and control density",
+    "date": "2026-10-26",
+    "revision": "Documented decisions \u00b7 reconstructed release layouts",
+    "versions": [
+      "0.2.2",
+      "0.2.3",
+      "0.2.4"
+    ],
+    "question": "What needed to change when the game was played with a finger on a narrow screen?",
+    "summary": "Portrait gained its own layouts and a cursor-and-place interaction. The next pass tightened the existing HUD, replay transport and player record.",
+    "disposition": "retrospective review",
+    "comparisons": [
+      {
+        "id": "match-portrait",
+        "title": "Portrait Match",
+        "conditions": "Tagged builds recaptured at 412 \u00d7 800 CSS pixels, DPR 1. Generic touch layout reference; handset dimensions are not measured.",
+        "media": [
+          {
+            "file": "match-default-022-portrait-de9863a3df33.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/portrait/match--default.png",
+            "sha256": "de9863a3df33ed481546fb90c8c76cd277149d1d8a10cd1c807172cb63023658",
+            "width": 412,
+            "height": 800,
+            "label": "v0.2.2 \u00b7 Portrait",
+            "alt": "Local Match: Local match in v0.2.2, portrait retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.2 \u00b7 a0a87e2",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "match-default-023-portrait-972700654885.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.3-run1/v0.2.3/portrait/match--default.png",
+            "sha256": "97270065488554e1580c32976dfa6d8df69104952be237a658c2c38e6b3ea577",
+            "width": 412,
+            "height": 800,
+            "label": "v0.2.3 \u00b7 Portrait",
+            "alt": "Local Match: Local match in v0.2.3, portrait retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.3 \u00b7 95b9707",
+            "captureType": "retrospective"
+          }
+        ]
+      },
+      {
+        "id": "replay-portrait",
+        "title": "Portrait Replay",
+        "conditions": "Tagged builds recaptured at 412 \u00d7 800 CSS pixels, DPR 1. Generic touch layout reference; handset dimensions are not measured.",
+        "media": [
+          {
+            "file": "replay-default-022-portrait-50308a7111f2.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/portrait/replay--default.png",
+            "sha256": "50308a7111f29953bb1b405dbaddc3035b336bcd1eb33df1a338ea5c7ffa06f2",
+            "width": 412,
+            "height": 800,
+            "label": "v0.2.2 \u00b7 Portrait",
+            "alt": "Replay: Final board in v0.2.2, portrait retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.2 \u00b7 a0a87e2",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "replay-default-023-portrait-6cc3845dcb97.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.3-run1/v0.2.3/portrait/replay--default.png",
+            "sha256": "6cc3845dcb971ac7507cd69c8652c251e62842c475c5d5134dec6dbb15470679",
+            "width": 412,
+            "height": 800,
+            "label": "v0.2.3 \u00b7 Portrait",
+            "alt": "Replay: Final board in v0.2.3, portrait retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.3 \u00b7 95b9707",
+            "captureType": "retrospective"
+          }
+        ]
+      },
+      {
+        "id": "profile-polish",
+        "title": "The next desktop polish pass",
+        "conditions": "Tagged builds recaptured at 1280 \u00d7 900 CSS pixels, DPR 1, using synthetic guest state and each version\u2019s own bot default.",
+        "media": [
+          {
+            "file": "profile-default-023-desktop-62e968bae25b.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.3-run1/v0.2.3/desktop/profile--default.png",
+            "sha256": "62e968bae25bb79d215079555c5642adee4cf771a630901b195e4b3cf91d9741",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.3 \u00b7 Desktop",
+            "alt": "Profile: Profile overview in v0.2.3, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.3 \u00b7 95b9707",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "profile-default-024-desktop-2448ae94dfbc.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.4-run2/v0.2.4/desktop/profile--default.png",
+            "sha256": "2448ae94dfbcdb84aea18545a6f831e922a29b157ad4275cee3a3e78f82f8cd6",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.2.4 \u00b7 Desktop",
+            "alt": "Profile: Profile overview in v0.2.4, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.2.4 \u00b7 d9a3476",
+            "captureType": "retrospective"
+          }
+        ]
+      }
+    ],
+    "process": [
+      {
+        "id": "touch",
+        "title": "Give placement an explicit action",
+        "detail": "The 0.2.3 review treated touch as an interaction problem. Portrait Match gained cursor movement and a separate Place action, so positioning a finger did not have to commit a move immediately.",
+        "comparisons": [
+          "match-portrait"
+        ]
+      },
+      {
+        "id": "portrait",
+        "title": "Arrange controls for the screen",
+        "detail": "Match, Replay and Profile received deliberate portrait layouts. Replay transport became a compact group below the board, keeping playback and branching in the normal flow of the page.",
+        "comparisons": [
+          "replay-portrait"
+        ]
+      },
+      {
+        "id": "polish",
+        "title": "Tighten the established shell",
+        "detail": "The 0.2.4 notes explicitly kept the layout and touch model. The pass quieted labels, standardized icons at 24px, tightened spacing and made the player record more prominent than identity settings.",
+        "comparisons": [
+          "profile-polish"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "recorded",
+        "title": "Input and layout needed different changes",
+        "detail": "A responsive grid alone could not resolve accidental touch placement. The explicit placement action and the portrait composition addressed different parts of the problem."
+      },
+      {
+        "state": "recorded",
+        "title": "Polish had a clear stopping point",
+        "detail": "The follow-up focused on spacing and hierarchy, while preserving the already chosen mobile control model."
+      }
+    ],
+    "technical": [
+      "The existing qualified history captures are reused without changing their pixels. Their source paths, SHA-256, PNG dimensions and exact tagged sources remain recorded.",
+      "History builds used modern toolchains and Chromium with synthetic state, UTC/en-US and reduced motion. These are reconstructed release layouts, not original release binaries or physical-phone checks."
+    ],
+    "human": "The original review records what improved and what remained uneven. The generic touch captures show those layouts; they are not a new phone usability test.",
+    "followUp": "The original watch points were Profile density and restrained secondary controls. Later 0.6 mobile reviews revisit those same pressures.",
+    "sources": [
+      {
+        "label": "Retained portrait and polish review",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/0b93fed092975c172959343a45decc9c8c89fe2e/docs/ui_screenshot_review.md#v023"
+      },
+      {
+        "label": "Original polish notes and stopping rules",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/d9a3476d11dcb24e1c3fa67374a27b867a781da1/docs/archive/v0_2_4_ui_polish_notes.md"
+      },
+      {
+        "label": "0.2.3\u20130.2.4 release changes",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "id": "replay-analysis-048",
+    "title": "Showing where a game turned",
+    "scope": "0.4 / Replay-analysis presentation",
+    "date": "2026-10-26",
+    "revision": "Original review images \u00b7 documented 0.4 refinements",
+    "versions": [
+      "0.4.6",
+      "0.4.7",
+      "0.4.8"
+    ],
+    "question": "How could a replay explain a turning point while leaving the board and playback easy to use?",
+    "summary": "Analysis moved into Replay through a compact status, a marked timeline and a small board vocabulary. Later refinements separated the stages of a loss and exposed earlier missed decisions.",
+    "disposition": "retrospective review",
+    "comparisons": [
+      {
+        "id": "timeline-desktop",
+        "title": "Desktop \u00b7 Last-escape frame",
+        "conditions": "Original Renju review images at move 17 of 27, with different desktop PNG sizes. Browser, DPR and exact runtime builds are unrecorded.",
+        "media": [
+          {
+            "file": "replay-046-active-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/replay-046-active-desktop.png",
+            "sha256": "8fb0ade3cb9a4e85366e43f75553dadd60fbd54ee3ac5fbcc22f3e8de80c0b79",
+            "width": 1440,
+            "height": 960,
+            "label": "v0.4.6 \u00b7 Last-escape frame",
+            "alt": "Original 0.4.6 desktop Replay review image, showing Renju at move 17 of 27 with two escape markers and the analysis timeline.",
+            "kind": "application capture",
+            "revision": "v0.4.6 review image \u00b7 build unrecorded",
+            "captureType": "historical"
+          },
+          {
+            "file": "replay-047-active-desktop.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/replay-047-active-desktop.png",
+            "sha256": "67a299ab97dd84b1c30cf9b6462f40bb0c98a107ddd1c060524db45f19aac5cd",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.4.7 \u00b7 Last-escape frame",
+            "alt": "Original 0.4.7 desktop Replay review image, showing Renju at move 17 of 27 with two escape markers and the analysis timeline.",
+            "kind": "application capture",
+            "revision": "v0.4.7 review image \u00b7 build unrecorded",
+            "captureType": "historical"
+          }
+        ]
+      },
+      {
+        "id": "analysis-portrait",
+        "title": "Portrait \u00b7 Last-escape frame",
+        "conditions": "Original 390 \u00d7 844 PNGs at move 17 of 27. Browser, DPR, capture date and physical-device conditions are unrecorded.",
+        "media": [
+          {
+            "file": "replay-046-active-mobile.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/replay-046-active-mobile.png",
+            "sha256": "e32fdf2c05c36ffa2eb90cb7a7dfadd56d733d4d114fb1911dfa0b306015a8fd",
+            "width": 390,
+            "height": 844,
+            "label": "v0.4.6 \u00b7 Last-escape frame",
+            "alt": "Original 0.4.6 mobile Replay review image, showing Renju at move 17 of 27 with two escape markers and the analysis timeline.",
+            "kind": "application capture",
+            "revision": "v0.4.6 review image \u00b7 build unrecorded",
+            "captureType": "historical"
+          },
+          {
+            "file": "replay-047-active-mobile.png",
+            "sourcePath": "docs/working/v0_6_3_design_reviews/media/replay-047-active-mobile.png",
+            "sha256": "546114f130898979ef06068d765c0a62f0cc8eb528a72ba502ca501ce473077f",
+            "width": 390,
+            "height": 844,
+            "label": "v0.4.7 \u00b7 Last-escape frame",
+            "alt": "Original 0.4.7 mobile Replay review image, showing Renju at move 17 of 27 with two escape markers and the analysis timeline.",
+            "kind": "application capture",
+            "revision": "v0.4.7 review image \u00b7 build unrecorded",
+            "captureType": "historical"
+          }
+        ]
+      }
+    ],
+    "process": [
+      {
+        "id": "product",
+        "title": "Bring the useful result into Replay",
+        "detail": "The 0.4.6 plan kept detailed proof inspection in the analysis report. Replay gained status for the selected move, whole-turn navigation, a corridor on the timeline and a last-escape marker. Playback remained usable while analysis ran.",
+        "comparisons": [
+          "timeline-desktop"
+        ]
+      },
+      {
+        "id": "clarity",
+        "title": "Distinguish the stages of a loss",
+        "detail": "The next review separated traceback progress, setup corridor, lethal onset and the forced tail. Mobile retained the board, transport and branch action instead of adding a large proof panel. The 0.4.8 work extended analysis to earlier missed decisions; its release notes document that next step.",
+        "comparisons": [
+          "analysis-portrait"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "recorded",
+        "title": "Player and workbench views needed different detail",
+        "detail": "The report could expose proof evidence and model context. The player-facing view used a smaller set of markers and compact status near the game."
+      },
+      {
+        "state": "recorded",
+        "title": "The explanation layer remained a review target",
+        "detail": "The original critique kept marker legibility and the amount of mobile explanation under review. A richer analyzer did not automatically justify more symbols on the board."
+      }
+    ],
+    "technical": [
+      "Four original PNGs were recovered byte-for-byte from their Git blobs in 0b93fed092975c172959343a45decc9c8c89fe2e. Blob OIDs, SHA-256 and dimensions are recorded in the media manifest.",
+      "The retained screenshot review identifies the images as last-escape frames at move 17 of a 27-move Renju game. Their exact browser, runtime build, capture date, DPR and physical-device conditions were not recorded.",
+      "The images document static presentation in 0.4.6 and 0.4.7. The 0.4.8 release notes document the following mistake-analysis work; these images are not labelled as 0.4.8 captures."
+    ],
+    "human": "The original review text and its four active-frame images supply the design evidence. This case was assembled later; original-period human approval is not established by the preserved file.",
+    "followUp": "The original review left marker legibility and the amount of mobile explanation under review. The 0.4.8 source notes extend this sequence; no original-period active-frame image for that release was recovered.",
+    "sources": [
+      {
+        "label": "Original Replay review",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/0b93fed092975c172959343a45decc9c8c89fe2e/docs/ui_screenshot_review.md#v046"
+      },
+      {
+        "label": "Original Replay UI and annotation plan",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/2ec50c02f29deb02c14295d07929e9f7e835fd2b/docs/archive/v0_4_6_replay_analysis_plan.md#replay-ui"
+      },
+      {
+        "label": "Mistake-aware replay changes",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/ea188acaf3e98b0b0b0952c05993391bc8a8a1ef/CHANGELOG.md"
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "id": "product-pages-052",
+    "title": "Bringing the Lab into the game",
+    "scope": "0.5 / Lab, Visuals and supporting pages",
+    "date": "2026-10-26",
+    "revision": "Documented decisions \u00b7 reconstructed release layouts",
+    "versions": [
+      "0.5.0",
+      "0.5.1",
+      "0.5.2"
+    ],
+    "question": "How could the reports and asset references become useful parts of the product?",
+    "summary": "Separate generated reports became a unified Lab, and the asset preview became Visuals. Shared navigation and concise teaching pages made that work easier to explore.",
+    "disposition": "retrospective review",
+    "comparisons": [
+      {
+        "id": "lab",
+        "title": "From a report page to the Lab",
+        "conditions": "Retrospective tagged-build captures at 1280 \u00d7 900 CSS pixels, DPR 1. Each release uses its own bundled report data; this compares presentation, not a rerun of the experiment.",
+        "media": [
+          {
+            "file": "bot-report-default-050-desktop-423f4f19df0f.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.0-guest-run1/v0.5.0/desktop/bot-report--default.png",
+            "sha256": "423f4f19df0f5f1845c0d9ffd2c1aae2b2cf4d96eb5eed055b1175542f91e0f1",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.5.0 \u00b7 Desktop",
+            "alt": "Bot Report: Ranking results in v0.5.0, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.5.0 \u00b7 678a69a",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "lab-default-051-desktop-ea4a9efa7408.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.1-guest-run3/v0.5.1/desktop/lab--default.png",
+            "sha256": "ea4a9efa7408bd9bdff1c108952d76346935078186f03635969b7a081f82dde8",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.5.1 \u00b7 Desktop",
+            "alt": "Lab: Lab overview in v0.5.1, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.5.1 \u00b7 bf861f5",
+            "captureType": "retrospective"
+          }
+        ]
+      },
+      {
+        "id": "visuals",
+        "title": "A product home for the assets",
+        "conditions": "Retrospective tagged-build captures at 1280 \u00d7 900 CSS pixels, DPR 1. These are each release\u2019s actual icon-reference views.",
+        "media": [
+          {
+            "file": "visuals-icons-050-desktop-8725abcb967a.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.0-guest-run1/v0.5.0/desktop/visuals--icons.png",
+            "sha256": "8725abcb967a0fcfb741fd7f483922b4f97ce4c0eefb97542d07a5bd3c2b896e",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.5.0 \u00b7 Desktop",
+            "alt": "Visuals: Icons in v0.5.0, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.5.0 \u00b7 678a69a",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "visuals-icons-051-desktop-18e54d8b9cd8.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.1-guest-run3/v0.5.1/desktop/visuals--icons.png",
+            "sha256": "18e54d8b9cd8d2bb0124078ee5c03487e42278dd0f468a5eb6cc7675dea371ac",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.5.1 \u00b7 Desktop",
+            "alt": "Visuals: Icons in v0.5.1, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.5.1 \u00b7 bf861f5",
+            "captureType": "retrospective"
+          }
+        ]
+      },
+      {
+        "id": "guide",
+        "title": "A concise explanation beside the game",
+        "conditions": "Two layouts of the same 0.5.2 Guide: desktop 1280 \u00d7 900 and generic touch portrait 412 \u00d7 800, DPR 1. This is a responsive reference, not a before/after pair.",
+        "media": [
+          {
+            "file": "guide-default-052-desktop-901e3ae4434c.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/desktop/guide--default.png",
+            "sha256": "901e3ae4434c8a577a24413b73c57c6e3fe6210021eca0de181cba636db52c26",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.5.2 \u00b7 Desktop",
+            "alt": "Guide: Guide overview in v0.5.2, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.5.2 \u00b7 71793b0",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "guide-default-052-portrait-98e797376fc8.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/portrait/guide--default.png",
+            "sha256": "98e797376fc86ea1f2978ee135da840ec30f8e347337098ad6b936a57db5bf51",
+            "width": 412,
+            "height": 800,
+            "label": "v0.5.2 \u00b7 Portrait",
+            "alt": "Guide: Guide overview in v0.5.2, portrait retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.5.2 \u00b7 71793b0",
+            "captureType": "retrospective"
+          }
+        ]
+      }
+    ],
+    "process": [
+      {
+        "id": "reports",
+        "title": "Make presentation a product responsibility",
+        "detail": "The 0.5 plan treated the reports as useful product surfaces. Rust continued to emit structured evidence; the web app took responsibility for navigation, tables and detail views. The two report destinations became one Lab.",
+        "comparisons": [
+          "lab"
+        ]
+      },
+      {
+        "id": "assets",
+        "title": "Use the same visual language",
+        "detail": "Visuals replaced the separate asset-preview pages with a React view for sprites, icons, colours and typography. Shared controls and navigation connected the reference material to the game it explained.",
+        "comparisons": [
+          "visuals"
+        ]
+      },
+      {
+        "id": "teaching",
+        "title": "Keep player explanations focused",
+        "detail": "Rules and Guide added an explanation layer inside the app. Concrete examples and board diagrams helped explain rules, markers and replay analysis. Players could use that reference alongside the deeper project documents.",
+        "comparisons": [
+          "guide"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "recorded",
+        "title": "Generated data and authored presentation had different owners",
+        "detail": "Compact report data remained inspectable without carrying a second generated website alongside the application."
+      },
+      {
+        "state": "recorded",
+        "title": "The supporting pages needed the same care as the board",
+        "detail": "Navigation, typography and spacing could make Lab and Visuals feel part of Gomoku2D while preserving their distinct jobs."
+      }
+    ],
+    "technical": [
+      "The existing qualified history captures are reused without changing their pixels. Their source paths, SHA-256, PNG dimensions and exact tagged sources remain recorded.",
+      "History builds used modern toolchains and Chromium with synthetic state, UTC/en-US and reduced motion. These are reconstructed release layouts, not original release binaries or physical-phone checks."
+    ],
+    "human": "The release plan records the intended ownership and product direction. This assembled review uses later qualified captures of the tagged pages; original-period human approval is not established here.",
+    "followUp": "The 0.6.3 developer area builds on this shared shell with source-backed asset inspection and reusable review tools.",
+    "sources": [
+      {
+        "label": "Productized reports and explanation-page plan",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/docs/working/v0_5_public_release_plan.md#productize-reports"
+      },
+      {
+        "label": "0.5.1\u20130.5.2 product-page changes",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/71793b0f21adf408b5b714514937d979ecffc944/CHANGELOG.md"
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "id": "replay-sidebar-061",
+    "title": "Sharing through the replay sidebar",
+    "scope": "0.6.1 / Share and Publish replay",
+    "date": "2026-10-26",
+    "revision": "Documented decisions \u00b7 reconstructed release layouts",
+    "versions": [
+      "0.6.1"
+    ],
+    "question": "How could sharing feel like a replay action while leaving enough room for its controls?",
+    "summary": "Share replay takes over the existing sidebar. Publish follows the same pattern, with distinct icons, a compact preview and the same route back to playback.",
+    "disposition": "retrospective review",
+    "comparisons": [
+      {
+        "id": "share",
+        "title": "Share replay",
+        "conditions": "The shipped 0.6.1 Share pane, recaptured with a synthetic local game. Desktop 1280 \u00d7 900 and generic touch portrait 412 \u00d7 800, DPR 1. These are responsive views of the result, not an earlier draft.",
+        "media": [
+          {
+            "file": "replay-share-061-desktop-e7baa4161f50.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-share-run1/v0.6.1/desktop/replay--share.png",
+            "sha256": "e7baa4161f50aae0c34c4f240be5862b0abc382014e2b0f9886121323a575212",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.6.1 \u00b7 Desktop",
+            "alt": "Replay: Share replay in v0.6.1, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.6.1 \u00b7 b1a67d3",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "replay-share-061-portrait-ee8b2a6524a9.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-share-run1/v0.6.1/portrait/replay--share.png",
+            "sha256": "ee8b2a6524a9b0d4ad141512bf6c6847fe089a8f3a1fcc368a15df90fe3b180a",
+            "width": 412,
+            "height": 800,
+            "label": "v0.6.1 \u00b7 Portrait",
+            "alt": "Replay: Share replay in v0.6.1, portrait retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.6.1 \u00b7 b1a67d3",
+            "captureType": "retrospective"
+          }
+        ]
+      },
+      {
+        "id": "publish",
+        "title": "Publish replay",
+        "conditions": "The shipped 0.6.1 Publish pane. Matching layouts and the same synthetic game; an isolated emulator supplies the synthetic owner. The review snapshot itself has no account or cloud connection.",
+        "media": [
+          {
+            "file": "replay-publish-061-desktop-551a4da25599.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-publish-run1/v0.6.1/desktop/replay--publish.png",
+            "sha256": "551a4da25599d2656ec789f638c63c931395dc9d8d0031cf496ba401a4af5d3b",
+            "width": 1280,
+            "height": 900,
+            "label": "v0.6.1 \u00b7 Desktop",
+            "alt": "Replay: Publish replay in v0.6.1, desktop retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.6.1 \u00b7 b1a67d3",
+            "captureType": "retrospective"
+          },
+          {
+            "file": "replay-publish-061-portrait-cf882631bce5.png",
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-publish-run1/v0.6.1/portrait/replay--publish.png",
+            "sha256": "cf882631bce54fa791aa3c0d03d6946f7c3125afe06749a5d88232ae2d8f92dc",
+            "width": 412,
+            "height": 800,
+            "label": "v0.6.1 \u00b7 Portrait",
+            "alt": "Replay: Publish replay in v0.6.1, portrait retrospective capture.",
+            "kind": "application capture",
+            "revision": "v0.6.1 \u00b7 b1a67d3",
+            "captureType": "retrospective"
+          }
+        ]
+      }
+    ],
+    "process": [
+      {
+        "id": "space",
+        "title": "Give sharing the whole control area",
+        "detail": "An expansion below the replay controls made the bottom of the sidebar crowded. Replacing the sidebar gave the preview, player labels and share action a clear place. Opening the pane pauses playback; closing it returns to the replay controls.",
+        "comparisons": [
+          "share"
+        ]
+      },
+      {
+        "id": "reuse",
+        "title": "Apply the pattern to publishing",
+        "detail": "Publish replay initially introduced another expansion. It was brought into the same full-sidebar interaction. A separate Publish icon makes its public-profile role distinct from sharing a self-contained link.",
+        "comparisons": [
+          "publish"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "recorded",
+        "title": "A repeated interaction reduced new UI",
+        "detail": "Share and Publish use the same pane transition, close control and preview structure. Their different destinations remain explicit."
+      },
+      {
+        "state": "recorded",
+        "title": "The action needed to belong to the game",
+        "detail": "Compact preview content, authored icons and the existing control styles replaced the feel of a generic web form attached below Replay."
+      }
+    ],
+    "technical": [
+      "The existing qualified history captures are reused without changing their pixels. Their source paths, SHA-256, PNG dimensions and exact tagged sources remain recorded.",
+      "History builds used modern toolchains and Chromium with synthetic state, UTC/en-US and reduced motion. These are reconstructed release layouts, not original release binaries or physical-phone checks.",
+      "The iteration and human-feedback sequence is transcribed from the supplied development conversation. The later UI contract documents the result, rather than independently recording those requests. The selected images show the shipped panes; no image of the first expansion was recovered."
+    ],
+    "human": "Bryan\u2019s development conversation, supplied as context for this review, records the Share request and acceptance, followed by the request to apply the same interaction to Publish with its own icon. Original turn dates are unavailable. The release contract corroborates the resulting design.",
+    "followUp": "The pane pattern is established. Later changes should preserve the compact controls and keep Share link and Publish to profile understandable as separate actions.",
+    "sources": [
+      {
+        "label": "Accepted public-profile and Publish UI contract",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/b1a67d32feee5b57275e3d04c684e27bcd1a571f/docs/working/v0_6_1_public_profile.md"
+      },
+      {
+        "label": "Conversation-derived review context and its limits",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/565cb8f6fdc9f8fe815c8ba7648fd72ab79fa114/docs/working/v0_6_3_design_reviews.md#reconstructed-share-review-context"
       }
     ]
   }

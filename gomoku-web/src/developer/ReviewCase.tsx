@@ -32,7 +32,15 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
     ? first.conditions
     : null;
   const root = mediaRoot ?? `${import.meta.env.BASE_URL}reviews/${record.id}/`;
-  function renderComparison(pair: ReviewRecord["comparisons"][number]) {
+  const mediaIdentities = Array.from(
+    new Map(record.comparisons.flatMap((pair) => pair.media).map((media) => [media.file, media])).values(),
+  );
+  const versions = record.versions;
+  const period = versions?.length
+    ? `v${versions[0]}${versions.length > 1 ? `–${versions[versions.length - 1]}` : ""}`
+    : record.scope;
+  function renderComparison(pair: ReviewRecord["comparisons"][number], nested = false) {
+    const Heading = nested ? "h3" : "h2";
     return (
       <section
         className="review-comparison"
@@ -45,25 +53,38 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
           else sections.current.delete(pair.id);
         }}
       >
-        <h2 id={`review-${record.id}-${pair.id}`}>{pair.title}</h2>
+        <Heading id={`review-${record.id}-${pair.id}`}>{pair.title}</Heading>
         {pair.conditions !== commonConditions && (
           <p className="dev-meta dev-readable">{pair.conditions}</p>
         )}
-        <ReviewComparison comparison={pair} root={root} firstId={first.id} />
+        <ReviewComparison
+          comparison={pair}
+          root={root}
+          firstId={first.id}
+          controlsPosition={record.process ? "after" : "before"}
+          compactCaption={!!record.process}
+          showOrigin={!!record.process}
+        />
       </section>
     );
   }
   return (
-    <article className="review-case">
+    <article className={`review-case${record.process ? " review-structured" : ""}`}>
       <header className="dev-heading">
-        <p className="dev-eyebrow">Review / {record.scope}</p>
+        <p className="dev-eyebrow">
+          {record.process ? `Design review · ${period}` : `Review / ${record.scope}`}
+        </p>
         <h1>{record.title}</h1>
         <p className="dev-lead">{record.question}</p>
         <p className="dev-meta">
-          {record.disposition === "retrospective comparison" ? "Recaptured " : ""}
-          {record.date} · {record.revision} · {record.disposition}
+          {record.disposition === "retrospective comparison"
+            ? "Recaptured "
+            : record.disposition === "retrospective review"
+              ? "Assembled "
+              : ""}
+          {record.date} · {!record.process && `${record.revision} · `}{record.disposition}
         </p>
-        <p className="dev-readable">{record.summary}</p>
+        {!record.process && <p className="dev-readable">{record.summary}</p>}
       </header>
       <nav className="dev-views" aria-label="Screens in this review">
         {primary.map((pair) => {
@@ -84,11 +105,21 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
         })}
       </nav>
       {commonConditions && <p className="dev-meta dev-readable">{commonConditions}</p>}
-      <div className="review-gallery">{primary.map(renderComparison)}</div>
+      <div className="review-gallery">
+        {record.process ? record.process.map((step) => (
+          <section className="review-process-step" key={step.id} data-review-step={step.id} aria-labelledby={`review-step-${record.id}-${step.id}`}>
+            <header className="dev-readable">
+              <h2 id={`review-step-${record.id}-${step.id}`}>{step.title}</h2>
+            </header>
+            {step.comparisons.map((id) => renderComparison(primary.find((pair) => pair.id === id)!, true))}
+            <p className="review-step-copy dev-readable">{step.detail}</p>
+          </section>
+        )) : primary.map((pair) => renderComparison(pair))}
+      </div>
       {checks.length > 0 && (
         <details className="dev-disclosure review-layout-checks" ref={checkDetails}>
           <summary>Layout checks: landscape & large text</summary>
-          <div>{checks.map(renderComparison)}</div>
+          <div>{checks.map((pair) => renderComparison(pair))}</div>
         </details>
       )}
       <ReviewChecklist />
@@ -120,6 +151,7 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
       <details className="dev-disclosure">
         <summary>Technical evidence, sources and media identity</summary>
         <div>
+          <p className="dev-meta">{record.scope} · {record.revision}</p>
           <ul>
             {record.technical.map((line, index) => (
               <li key={index}>{line}</li>
@@ -132,11 +164,11 @@ export function ReviewCase({ record, mediaRoot }: { record: ReviewRecord; mediaR
               </li>
             ))}
           </ul>
-          {record.comparisons
-            .flatMap((pair) => pair.media)
-            .map((media) => (
+          {mediaIdentities.map((media) => (
               <p key={media.file} className="dev-meta">
                 {media.label}
+                <br />
+                {media.kind} · {media.width} × {media.height} · {media.revision}
                 <br />
                 <code>{media.sourcePath}</code>
                 <br />

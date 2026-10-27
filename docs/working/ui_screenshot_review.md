@@ -84,7 +84,10 @@ Markdown keeps detailed maintainer/agent context and deeper evidence.
    -- <id> test-results/review-exports/<new-name>` in `gomoku-web`. The new directory
    includes selected media, fonts/license and source context. Check it under its
    actual served prefix before sending a review link through the shared report
-   publisher. Never export the whole working-notes tree.
+   publisher. For the complete developer preview, use `npm run developer:export
+   -- test-results/developer-exports/<new-name>` instead. Its hash routes and
+   runtime asset base work under the immutable report prefix, without a separate
+   preview port or device-specific forwarding. Never export the whole working-notes tree.
 6. Record acceptance and later corrections explicitly. Do not redraw old pixels
    from new sources or convert an automated pass into a human-approved badge.
    Curated public publication goes through the ordinary separately authorized

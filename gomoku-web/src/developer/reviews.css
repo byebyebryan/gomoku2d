@@ -10,8 +10,12 @@
   padding: 22px 0;
   border-bottom: 1px solid var(--border);
 }
-.dev-page .review-index article h2 {
+.dev-page .review-index article h2,
+.dev-page .review-index article h3 {
   margin-bottom: 10px;
+}
+.dev-page .review-index article h3 {
+  font-size: 1.7rem;
 }
 .dev-page .review-index article p {
   max-width: 70ch;
@@ -152,6 +156,32 @@
 }
 .dev-page .review-layout-checks {
   margin-top: 30px;
+}
+.dev-page .review-process-step {
+  margin-top: 38px;
+}
+.dev-page .review-structured > .dev-heading {
+  margin-bottom: 18px;
+}
+.dev-page .review-structured > .dev-heading h1 {
+  font-size: clamp(2.3rem, 4.5vw, 3rem);
+}
+.dev-page .review-structured > .dev-views {
+  margin-bottom: 14px;
+}
+.dev-page .review-gallery > .review-process-step:first-child {
+  margin-top: 24px;
+}
+.dev-page .review-step-copy {
+  margin-top: 18px;
+  color: var(--text-muted);
+}
+.dev-page .review-process-step .review-comparison {
+  margin-top: 18px;
+  padding-top: 16px;
+}
+.dev-page .review-reference-links {
+  margin-top: 36px;
 }
 .dev-page .dev-disclosure li {
   overflow-wrap: anywhere;

@@ -74,11 +74,22 @@ Each typed/validated record includes:
 - Local media filename, source path, SHA-256, dimensions, kind and source revision.
 - Findings with fixed/deferred/open/recorded disposition.
 - Technical evidence, actual human review, follow-up and public source links.
+- Optional source `versions` in ascending order and an authored `process` that
+  groups normal comparison IDs into design steps. Each normal comparison appears
+  in exactly one step; layout checks stay in their separate disclosure.
 
-The current screen gallery stays first. A `retrospective comparison` disposition
-places recreated historical layouts under UI evolution, with an explicit
-“Recaptured” date and visible-change observations. Existing dated design/review
-records remain directly addressable. The
+`versions` identifies the product releases covered by a case. Original notes,
+later compiled release histories and each image retain their own document/build
+revisions; a release revision must not be used as the revision of a later document.
+
+The index leads with Design reviews, grouped by source minor line and ordered
+latest first. Current screens and UI history remain direct sibling links;
+reference galleries, including the endpoint pilot, remain available from the
+index. A `retrospective review` is a newly assembled account of documented design
+work and requires source versions and process steps. Its "Assembled" date is
+distinct from the original decision or capture date. A `retrospective comparison`
+retains its explicit "Recaptured" date and visible-change observations. Existing
+dated design/review records remain directly addressable. The
 [retrospective pilot](../../working/v0_6_3_retrospective_capture.md) owns the
 capture protocol and its v0.2.4 / v0.6.2 qualification; it does not imply a
 complete version archive or original-period acceptance.
@@ -95,6 +106,12 @@ and 200%-text QA cases live in a closed “Layout checks” disclosure. Legacy
 `pair` deep links still jump to/focus their section; QA links open that disclosure.
 Inspection query settings apply to the focused pair and never synchronize scroll
 between unrelated screen sections.
+
+Structured design cases place the relevant comparisons beneath each authored
+step. Their comparison IDs and inspection query behaviour remain unchanged.
+Optional `captureType: historical|retrospective` applies only to application
+captures and labels their actual origin. Design mockups and asset renders keep
+their own kinds; unrecorded legacy capture conditions are not inferred.
 
 Each comparison defaults to complete captures at one shared scale. Columns are
 proportional to source-image widths: a 1280px desktop capture gets a wider pane
@@ -167,7 +184,7 @@ applications in a modern runtime, with synthetic local/emulator data and an
 unmeasured generic Android touch profile. Capture provenance and technical
 success do not establish original-period or physical-device acceptance.
 
-## Reusable standalone export
+## Reusable standalone exports
 
 The site and an ad-hoc export use the same `ReviewRecord` contract, React
 `ReviewCase` component and styles. From `gomoku-web`:
@@ -181,10 +198,26 @@ overwrite source, the ordinary build or a prior export. The selected media,
 fonts/license, record, source context, styles and comparison controls are bundled
 with relative URLs. No private store, auth, game engine or backend is included.
 
+For the whole developer area, including cases, history, asset inspection and Lab:
+
+```sh
+rtk proxy npm run developer:export -- test-results/developer-exports/dev-preview-01
+```
+
+This also requires a new directory. It uses the actual `DeveloperApp` with hash
+routing and a runtime asset base, so an immutable report prefix can be assigned
+after building. Play links to the public game. The publishers copy only their
+selected public assets/data; no player entrypoint or backend is included.
+`export.json` records source qualification, observed tools, counts and a payload
+file inventory. A clean source tree identifies a commit; it does not claim a
+fresh locked dependency installation or a production release.
+
 Publish only that prepared export with the shared report publisher for private
 review. Adding a record to the public catalog remains a deliberate source change
 and goes through the normal release process. Ordinary Pages publishing uses the
 same repo/package/artifact and custom domain; no new host or credentials.
+Use the shared report host's browser URL across viewing machines. A static
+review does not need a per-project preview port or per-device SSH forwarding.
 
 `publish_reviews.mjs` and the asset/report/SPA publishers accept an optional build
 directory. The cloud harness publishes the same static inputs into its owned

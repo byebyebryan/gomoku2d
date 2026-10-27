@@ -102,11 +102,12 @@ describe("App", () => {
 
   it.each([
     ["/dev/", "Inside Gomoku2D"], ["/DEV/", "Inside Gomoku2D"],
-    ["/%64ev/", "Inside Gomoku2D"], ["/dev/process/", "UI review"],
+    ["/%64ev/", "Inside Gomoku2D"], ["/dev/process/", "Design reviews"],
     ["/dev/unknown/", "Reference not found"], ["/visuals/", "Visuals"], ["/lab/", "Lab Report"],
   ])("renders public developer entry %s without starting auth or private controllers",async(path,heading)=>{
     render(<MemoryRouter initialEntries={[path]}><App/></MemoryRouter>);
-    expect(await screen.findByRole("heading",{name:heading})).toBeInTheDocument();
+    // Allow the cold lazy module transform to finish under parallel test load.
+    expect(await screen.findByRole("heading", { name: heading }, { timeout: 3_000 })).toBeInTheDocument();
     expect(CloudAuthController).not.toHaveBeenCalled();
     expect(CloudSessionController).not.toHaveBeenCalled();
   });

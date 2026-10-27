@@ -102,7 +102,7 @@ function captureNavigationOrigin(origin: Origin) {
   rememberOrigin(origin);
 }
 
-export function ReviewNavigation() {
+export function ReviewNavigation({ designReview = false }: { designReview?: boolean }) {
   const { pathname } = useLocation();
   return (
     <nav className="history-review-nav" aria-label="UI review views">
@@ -125,7 +125,7 @@ export function ReviewNavigation() {
       <Link
         to="/dev/reviews/"
         aria-current={
-          pathname.replace(/\/$/, "") === "/dev/reviews" ? "page" : undefined
+          designReview || pathname.replace(/\/$/, "") === "/dev/reviews" ? "page" : undefined
         }
       >
         Design reviews

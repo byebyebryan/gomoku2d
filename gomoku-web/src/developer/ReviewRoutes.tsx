@@ -10,9 +10,39 @@ import {
   historyRouteTitle,
 } from "./HistoryRoutes";
 
-const catalog: ReviewRecord[] = records.filter(isReviewRecord);
+const rawRecords: unknown[] = records;
+const catalog: ReviewRecord[] = rawRecords.filter(isReviewRecord);
 if (catalog.length !== records.length)
   throw new Error("Unsupported review catalog");
+
+function latestVersion(record: ReviewRecord) {
+  return record.versions?.[record.versions.length - 1] ?? "";
+}
+function versionLabel(record: ReviewRecord) {
+  const versions = record.versions;
+  if (!versions?.length) return record.scope;
+  return versions.length === 1
+    ? `v${versions[0]}`
+    : `v${versions[0]}–${versions[versions.length - 1]}`;
+}
+function phaseOf(record: ReviewRecord) {
+  return latestVersion(record).split(".").slice(0, 2).join(".");
+}
+const designReviews = catalog
+  .filter(
+    (record) =>
+      record.disposition !== "screen reference" &&
+      record.disposition !== "retrospective comparison",
+  )
+  .sort(
+    (a, b) =>
+      latestVersion(b).localeCompare(latestVersion(a), "en", { numeric: true }) ||
+      b.date.localeCompare(a.date) || a.title.localeCompare(b.title),
+  );
+const phases = Array.from(
+  new Set(designReviews.map(phaseOf)),
+);
+
 export function ReviewRoutes() {
   const { pathname } = useLocation();
   const path = decodeURIComponent(pathname).replace(/\/+$/, "");
@@ -24,7 +54,7 @@ export function ReviewRoutes() {
         ? historyRouteTitle(
             id === "history" ? undefined : id.slice("history/".length),
           )
-        : "UI review"),
+        : "Design reviews"),
   );
   if (id === "history" || id.startsWith("history/"))
     return (
@@ -45,10 +75,12 @@ export function ReviewRoutes() {
   if (record)
     return (
       <>
-        <ReviewNavigation />
-        <Link className="review-index-link" to="/dev/reviews/">
-          ← Review index
-        </Link>
+        <ReviewNavigation designReview={record.disposition !== "screen reference" && record.disposition !== "retrospective comparison"} />
+        {!record.process && (
+          <Link className="review-index-link" to="/dev/reviews/">
+            ← Review index
+          </Link>
+        )}
         <ReviewCase key={record.id} record={record} />
       </>
     );
@@ -56,65 +88,26 @@ export function ReviewRoutes() {
     <>
       <ReviewNavigation />
       <header className="dev-heading">
-        <p className="dev-eyebrow">Screens, comparisons & findings</p>
-        <h1>UI review</h1>
+        <p className="dev-eyebrow">Choices, revisions & findings</p>
+        <h1>Design reviews</h1>
         <p className="dev-lead">
-          Inspect the screens. Compare the changes. Follow up on what still
-          needs work.
+          Inspect the choices and revisions behind the interface.
         </p>
       </header>
       <ReviewChecklist />
-      {[
-        {
-          title: "Current screens",
-          records: catalog.filter(
-            (item) => item.disposition === "screen reference",
-          ),
-        },
-        {
-          title: "UI evolution",
-          records: catalog.filter(
-            (item) => item.disposition === "retrospective comparison",
-          ),
-        },
-        {
-          title: "Design & layout reviews",
-          records: catalog.filter(
-            (item) =>
-              item.disposition !== "screen reference" &&
-              item.disposition !== "retrospective comparison",
-          ),
-        },
-      ]
-        .filter((group) => group.records.length > 0)
-        .map((group) => (
-          <section className="dev-section" key={group.title}>
-            <h2>{group.title}</h2>
-            {group.title === "UI evolution" && (
-              <div className="history-index-entry">
-                <p className="dev-muted">
-                  Browse the milestones, inspect neighbouring changes and follow
-                  individual screens through their history.
-                </p>
-                <Link
-                  className="uiAction uiActionNeutral"
-                  to="/dev/reviews/history/"
-                >
-                  Open UI history
-                </Link>
-              </div>
-            )}
+      {phases.map((phase) => (
+          <section className="dev-section review-phase" key={phase || "other"}>
+            <h2>{phase || "Other reviews"}</h2>
             <div className="review-index">
-              {group.records.map((item) => (
-                <article key={item.id}>
+              {designReviews.filter((item) => phaseOf(item) === phase).map((item) => (
+                <article key={item.id} data-review={item.id}>
                   <div>
-                    <h2>{item.title}</h2>
+                    <p className="dev-meta">{versionLabel(item)}</p>
+                    <h3>{item.title}</h3>
                     <p className="dev-muted">{item.summary}</p>
                     <p className="dev-meta">
-                      {item.disposition === "retrospective comparison"
-                        ? "Recaptured "
-                        : ""}
-                      {item.date} · {item.scope} · {item.disposition}
+                      {item.disposition === "retrospective review" ? "Assembled " : ""}
+                      {item.date} · {item.disposition}
                     </p>
                   </div>
                   <Link
@@ -129,6 +122,21 @@ export function ReviewRoutes() {
             </div>
           </section>
         ))}
+      <details className="dev-disclosure review-reference-links">
+        <summary>Reference galleries</summary>
+        <div>
+          <ul className="dev-record-list">
+            {catalog.filter((record) => record.disposition === "screen reference" || record.disposition === "retrospective comparison").map((record) => (
+              <li key={record.id}>
+                <Link to={`/dev/reviews/${record.id}/`} aria-label={`Review: ${record.title}`}>
+                  {record.title}
+                </Link>
+                <small>{record.summary}</small>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </details>
     </>
   );
 }

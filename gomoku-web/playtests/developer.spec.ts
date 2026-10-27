@@ -25,6 +25,13 @@ test("developer direct entries keep private state and engine imports untouched",
     "/lab/",
     "/dev/process/",
     "/dev/reviews/",
+    "/dev/reviews/ui-evolution-024-062/",
+    "/dev/reviews/board-first-shell-022/",
+    "/dev/reviews/portrait-play-024/",
+    "/dev/reviews/replay-analysis-048/",
+    "/dev/reviews/product-pages-052/",
+    "/dev/reviews/replay-sidebar-061/",
+    "/dev/reviews/public-player-062/",
     "/dev/unknown/",
   ]) {
     await page.goto(path);
@@ -36,6 +43,9 @@ test("developer direct entries keep private state and engine imports untouched",
     expect(reads.filter((key) => /gomoku|firebase|auth/i.test(key))).toEqual([]);
     expect(await page.evaluate(() => localStorage.length)).toBe(1);
   }
+  expect(
+    requests.filter((url) => !["127.0.0.1", "localhost"].includes(new URL(url).hostname)),
+  ).toEqual([]);
   expect(
     requests.filter((url) =>
       /\/assets\/(PlayerApp-|firebase-|cloud_|Board-|wasm_bridge-|bot_worker-|replay_analysis_worker-)|\.wasm(?:$|\?)/.test(
@@ -127,7 +137,7 @@ test("public navigation, keyboard entry and unknown-route recovery work", async 
     .getByRole("link", { name: "UI review", exact: true })
     .click();
   await expect(page.locator("#developer-content")).toBeFocused();
-  await expect(page.getByRole("heading", { name: "UI review", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Design reviews", exact: true })).toBeVisible();
   await expect(
     page.getByRole("navigation", { name: "Developer sections" }).getByRole("link"),
   ).toHaveCount(4);
@@ -232,18 +242,25 @@ test("responsive review captures share a scale and show their full frames", asyn
   for (const [width, height, font] of [
     [1280, 900, "100%"],
     [844, 390, "100%"],
-    [390, 844, "100%"],
+    [412, 800, "100%"],
     [320, 800, "200%"],
   ] as const) {
     await page.setViewportSize({ width, height });
     for (const path of ["/dev/reviews/core-screens-062/", "/dev/reviews/public-player-062/"]) {
       await page.goto(path);
-      const pair = page.locator(".review-gallery > .review-comparison").first();
+      const pair = path.endsWith("public-player-062/")
+        ? page.locator('[data-comparison="responsive"]')
+        : page.locator('[data-comparison="home"]');
       await pair.getByRole("button", { name: "Matched scale", exact: true }).waitFor();
       await page.evaluate((size) => (document.documentElement.style.fontSize = size), font);
+      await page.evaluate(() => document.fonts.ready);
       for (const image of await pair.locator(".review-capture img").all()) {
         await image.scrollIntoViewIfNeeded();
-        await image.evaluate((element) => (element as HTMLImageElement).decode());
+        await image.evaluate(async (element) => {
+          const selectedImage = element as HTMLImageElement;
+          selectedImage.loading = "eager";
+          await selectedImage.decode();
+        });
       }
       const captures = await pair.locator(".review-capture img").evaluateAll((images) =>
         images.map((element) => {
@@ -409,18 +426,21 @@ test("native icon rasters and published sources retain canonical pixels", async 
   }
 });
 
-test("retrospective UI evolution keeps versions paired and current screens first", async ({
+test("legacy UI evolution stays reachable through Reference galleries", async ({
   page,
 }) => {
   await page.goto("/dev/reviews/");
-  await expect(page.locator("#developer-content > section.dev-section > h2")).toHaveText([
-    "Current screens",
-    "UI evolution",
-    "Design & layout reviews",
-  ]);
-  await page
+  await expect(
+    page.getByRole("heading", { name: "Design reviews", exact: true }),
+  ).toBeVisible();
+  const referenceGalleries = page.locator(".review-reference-links");
+  await expect(referenceGalleries).not.toHaveAttribute("open");
+  await referenceGalleries.locator("summary").click();
+  await expect(referenceGalleries).toHaveAttribute("open", "");
+  await referenceGalleries
     .getByRole("link", { name: "Review: From local play to replay analysis", exact: true })
     .click();
+  await expect(page).toHaveURL(/\/dev\/reviews\/ui-evolution-024-062\/$/);
   await expect(
     page.getByRole("heading", { name: "From local play to replay analysis", exact: true }),
   ).toBeVisible();
