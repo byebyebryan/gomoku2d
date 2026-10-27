@@ -30,7 +30,9 @@ Neither test uses production accounts.
 
 The developer frame owns one scroll region (`.dev-page`). Header/navigation
 remain in normal flow and wrap. Skip-to-content and section changes move focus
-to public content; reload/history restore query state. Unknown developer pages
+to public content. Section changes reset the frame to the top and focus content
+with `preventScroll`, keeping the site header/navigation visible. The explicit
+skip link still scrolls to content; reload/history restore query state. Unknown developer pages
 and records offer public recovery. CSS is scoped to `.dev-page` or report modules
 so reference typography does not change player screens.
 

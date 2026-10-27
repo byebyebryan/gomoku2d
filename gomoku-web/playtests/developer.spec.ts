@@ -125,29 +125,34 @@ test("developer pages and inspector detail views reflow with enlarged text", asy
     }
 });
 
-test("public navigation, keyboard entry and unknown-route recovery work", async ({ page }) => {
-  await page.goto("/dev/");
-  await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
-  await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "Skip to content", exact: true })).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(page.locator("#developer-content")).toBeFocused();
-  await page
-    .getByRole("navigation", { name: "Developer sections" })
-    .getByRole("link", { name: "UI design", exact: true })
-    .click();
-  await expect(page.locator("#developer-content")).toBeFocused();
-  await expect(page.getByRole("heading", { name: "Design reviews", exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("navigation", { name: "Developer sections" }).getByRole("link"),
-  ).toHaveText(["Overview", "Visual design", "UI design", "Bot lab"]);
-  await page.goBack();
-  await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
-  await page.goto("/dev/not-a-page/");
-  await expect(page.getByRole("heading", { name: "Reference not found" })).toBeVisible();
-  await page.getByRole("link", { name: "Developer overview", exact: true }).click();
-  await expect(page).toHaveURL(/\/dev\/$/);
-});
+for (const width of [1440, 412]) {
+  test(`public navigation, keyboard entry and unknown-route recovery work at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/dev/");
+    await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("link", { name: "Skip to content", exact: true })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#developer-content")).toBeFocused();
+    await page
+      .getByRole("navigation", { name: "Developer sections" })
+      .getByRole("link", { name: "UI design", exact: true })
+      .click();
+    await expect(page.locator("#developer-content")).toBeFocused();
+    await expect(page.getByRole("heading", { name: "Design reviews", exact: true })).toBeVisible();
+    await expect.poll(() => page.locator(".dev-page").evaluate((node) => node.scrollTop)).toBe(0);
+    await expect(page.locator(".dev-header")).toBeInViewport();
+    await expect(
+      page.getByRole("navigation", { name: "Developer sections" }).getByRole("link"),
+    ).toHaveText(["Overview", "Visual design", "UI design", "Bot lab"]);
+    await page.goBack();
+    await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
+    await page.goto("/dev/not-a-page/");
+    await expect(page.getByRole("heading", { name: "Reference not found" })).toBeVisible();
+    await page.getByRole("link", { name: "Developer overview", exact: true }).click();
+    await expect(page).toHaveURL(/\/dev\/$/);
+  });
+}
 
 test("curated reviews retain frozen media and comparison controls", async ({ page }) => {
   await page.goto("/dev/reviews/mobile-records-062/");

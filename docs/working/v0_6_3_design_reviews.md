@@ -174,3 +174,19 @@ and 200% text; primary review inspected desktop, portrait and both footers.
 The three Markdown link lists match names, destinations and order, and their
 local documentation links resolve. UI history, review records and Lab data are
 unchanged by this follow-up.
+
+## Section-navigation scroll fix
+
+Bryan reported that entering UI design jumped past the site header. The previous
+shared preview reproduced a 140px scroll at 412px in Chromium and WebKit; Firefox
+and the inspected desktop size remained at the top. Section navigation reset
+the frame, then its unqualified content-focus call could scroll it again.
+Focus now uses `preventScroll`, keeping keyboard focus on main content while
+retaining the header. Explicit skip/comparison/history inspection still scrolls
+to its requested target.
+
+The production build and 12 focused browser checks passed across all three
+engines. Navigation checks now cover desktop and portrait, asserting top scroll
+and a visible header; the suite also retains case inspection/reload/Back and
+history focus/scroll/disclosure restoration. The starting subview is independent
+of this scroll correction.

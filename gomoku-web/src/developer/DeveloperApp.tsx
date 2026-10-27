@@ -50,7 +50,7 @@ function DeveloperFrame({ standalone }: { standalone: boolean }) {
   useEffect(() => {
     if (previous.current !== location.pathname) {
       scroll.current?.scrollTo(0, 0);
-      content.current?.focus();
+      content.current?.focus({ preventScroll: true });
     }
     previous.current = location.pathname;
   }, [location.pathname]);
