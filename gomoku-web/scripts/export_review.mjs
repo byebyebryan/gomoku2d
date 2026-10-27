@@ -2,18 +2,24 @@ import { build } from "vite";
 import { copyFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { resolve, relative } from "node:path";
 import { readReviewCatalog, webRoot, repoRoot } from "./review_catalog.mjs";
+import { createIgnoredExportDirectory } from "./export_output_guard.mjs";
 const [id, directory] = process.argv.slice(2);
 if (!id || !directory)
   throw new Error("Usage: node scripts/export_review.mjs <curated-id> <new-export-directory>");
 const records = await readReviewCatalog(),
   record = records.find((item) => item.id === id);
 if (!record) throw new Error(`Unknown curated review ${id}`);
-const output = resolve(directory);
-// Export only to the dedicated ignored output area, never overwrite source/dist.
-if (!relative(resolve(webRoot, "test-results/review-exports"), output).match(/^[^.][^]*$/))
+const outputRoot = resolve(webRoot, "test-results/review-exports");
+const requestedOutput = resolve(directory);
+// Preserve relative and absolute CLI paths beneath the dedicated ignored root.
+if (!relative(outputRoot, requestedOutput).match(/^[^.][^]*$/))
   throw new Error("Use a new directory under gomoku-web/test-results/review-exports/");
-await mkdir(resolve(webRoot, "test-results/review-exports"), { recursive: true });
-await mkdir(output, { recursive: false });
+const { outputDirectory: output } = await createIgnoredExportDirectory({
+  outputDirectory: requestedOutput,
+  exportRoot: outputRoot,
+  webRoot,
+  repoRoot,
+});
 await build({
   root: webRoot,
   publicDir: false,

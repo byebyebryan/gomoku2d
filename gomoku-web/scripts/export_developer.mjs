@@ -1,12 +1,9 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
-  lstat,
-  mkdir,
   readFile,
   readdir,
   rename,
-  realpath,
   writeFile,
 } from "node:fs/promises";
 import { promisify } from "node:util";
@@ -15,6 +12,7 @@ import { build } from "vite";
 import { publishReviews } from "./publish_reviews.mjs";
 import { readReviewCatalog, webRoot, repoRoot } from "./review_catalog.mjs";
 import { readHistoryCatalog } from "./history_catalog.mjs";
+import { createIgnoredExportDirectory } from "./export_output_guard.mjs";
 
 const execFileAsync = promisify(execFile);
 const exportPrefix = "test-results/developer-exports/";
@@ -50,48 +48,20 @@ async function runRtk(args, cwd = repoRoot) {
   return stdout.trim();
 }
 
-/** @param {string} path */
-async function ensureDirectory(path) {
-  try {
-    const info = await lstat(path);
-    if (!info.isDirectory() || info.isSymbolicLink())
-      throw new Error(`Expected a real directory at ${path}`);
-  } catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
-      await mkdir(path);
-      return;
-    }
-    throw error;
-  }
-}
-
-const physicalWebRoot = await realpath(webRoot);
-const physicalRepoRoot = await realpath(repoRoot);
-const exportParent = resolve(physicalWebRoot, "test-results");
-const exportRoot = resolve(exportParent, "developer-exports");
-await ensureDirectory(exportParent);
-await ensureDirectory(exportRoot);
-if ((await realpath(exportRoot)) !== exportRoot)
-  throw new Error("The developer export root cannot resolve through a symlink.");
-const outputDirectory = resolve(exportRoot, exportName);
-const outputRelativeToRepo = relative(physicalRepoRoot, outputDirectory).split(sep).join("/");
-if (!outputRelativeToRepo || outputRelativeToRepo.startsWith("../") || isAbsolute(outputRelativeToRepo))
-  throw new Error("The developer export path leaves the repository.");
-
-try {
-  await runRtk(["git", "check-ignore", "--quiet", "--", outputRelativeToRepo], physicalRepoRoot);
-} catch {
-  throw new Error("Developer exports must stay under the ignored test-results root.");
-}
-
-try {
-  await lstat(outputDirectory);
-  throw new Error("Refusing to overwrite an existing developer export directory.");
-} catch (error) {
-  if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT"))
-    throw error;
-}
-await mkdir(outputDirectory);
+const physicalWebRoot = resolve(webRoot);
+const exportRoot = resolve(physicalWebRoot, "test-results/developer-exports");
+const requestedExportDirectory = resolve(exportRoot, exportName);
+const {
+  physicalRepoRoot,
+  physicalWebRoot: verifiedWebRoot,
+  outputDirectory,
+  outputRelativeToRepo,
+} = await createIgnoredExportDirectory({
+  outputDirectory: requestedExportDirectory,
+  exportRoot,
+  webRoot,
+  repoRoot,
+});
 
 const status = await runRtk(
   ["git", "status", "--porcelain", "--untracked-files=normal"],
@@ -102,29 +72,29 @@ const statusLines = status ? status.split(/\r?\n/) : [];
 const trackedSourceDirty = statusLines.some((line) => line && !line.startsWith("??"));
 const workingTreeClean = statusLines.length === 0;
 const viteInfo = JSON.parse(
-  await readFile(resolve(physicalWebRoot, "node_modules/vite/package.json"), "utf8"),
+  await readFile(resolve(verifiedWebRoot, "node_modules/vite/package.json"), "utf8"),
 );
-const npmVersion = await runRtk(["npm", "--version"], physicalWebRoot);
+const npmVersion = await runRtk(["npm", "--version"], verifiedWebRoot);
 
 await build({
-  configFile: resolve(physicalWebRoot, "vite.config.ts"),
-  root: physicalWebRoot,
+  configFile: resolve(verifiedWebRoot, "vite.config.ts"),
+  root: verifiedWebRoot,
   base: "./",
   publicDir: false,
   define: { "import.meta.env.BASE_URL": "globalThis.__GOMOKU_REPORT_BASE__" },
   build: {
     outDir: outputDirectory,
     emptyOutDir: false,
-    rolldownOptions: { input: resolve(physicalWebRoot, "developer.html") },
+    rolldownOptions: { input: resolve(verifiedWebRoot, "developer.html") },
   },
 });
 
 await rename(resolve(outputDirectory, "developer.html"), resolve(outputDirectory, "index.html"));
 await runRtk(
   ["node", "scripts/publish_visual_design_assets.mjs", targetArgument],
-  physicalWebRoot,
+  verifiedWebRoot,
 );
-await runRtk(["node", "scripts/publish_reports.mjs", targetArgument], physicalWebRoot);
+await runRtk(["node", "scripts/publish_reports.mjs", targetArgument], verifiedWebRoot);
 /** @type {Array<{ comparisons: Array<{ media: unknown[] }> }>} */
 const reviews = await readReviewCatalog();
 /** @type {{ milestones: unknown[]; snapshots: Array<{ media: Record<string, unknown> }> }} */
