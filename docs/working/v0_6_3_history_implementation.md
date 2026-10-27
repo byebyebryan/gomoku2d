@@ -22,7 +22,8 @@ emulators; the resulting reference viewer may not.
 ## Primary design decisions
 
 - `/dev/reviews/history/` opens C. `version` selects a milestone; the default is
-  the latest curated milestone. The desktop rail groups releases by minor line.
+  the latest curated milestone. The desktop rail groups releases by minor line,
+  with the latest minor line and latest release first.
   On mobile it becomes a labelled disclosure, closing after selection and
   reopening appropriately when crossing back to desktop.
 - `/dev/reviews/history/<screen-id>/` opens B. Visible screen links include
@@ -43,7 +44,7 @@ emulators; the resulting reference viewer may not.
 - Replacements/merges/splits are relationships between actual screen identities.
   URL renames do not automatically create a new screen. Missing capture coverage
   means unrecorded, never absent/removed. Retired trails remain discoverable.
-- B shows a chronological trail for the selected screen state, storing each
+- B shows a latest-first trail for the selected screen state, storing each
   snapshot once. The chosen change can open the same comparison controls used
   by existing reviews. Inspect change is the generic navigation action.
 - Use current fonts, tokens, controls and scoped CSS. Keep full captures and

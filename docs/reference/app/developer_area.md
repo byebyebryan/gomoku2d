@@ -127,11 +127,12 @@ is the proposed real-device reference; its exact viewport remains unmeasured.
 
 `/dev/reviews/history/` groups meaningful UI releases from 0.2 through 0.6 in
 a milestone rail and lists every changed screen/state for the selected release.
+The rail lists minor lines and their milestones latest first.
 On narrow layouts the rail is an operable disclosure. Current screens, UI history
 and Design reviews remain direct sibling entries; existing case URLs and the
 endpoint pilot remain valid.
 
-`/dev/reviews/history/<screen-id>/` shows a chronological trail for a named
+`/dev/reviews/history/<screen-id>/` shows a latest-first capture trail for a named
 screen state and an inspection of the selected change. Screen/view links remain
 visible. `version`, `state` and `layout=desktop|portrait` survive reload and
 history. Going back to the originating milestone restores its scroll region,

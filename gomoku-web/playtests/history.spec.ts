@@ -16,6 +16,15 @@ test("milestones distinguish updates, introductions and report retirement", asyn
   await page.goto(root);
   await expect(page).toHaveTitle(/UI history/);
   await expect(page.locator(".history-milestone-link")).toHaveCount(24);
+  await expect(page.locator(".history-milestone-link").first()).toContainText(
+    "v0.6.2",
+  );
+  await expect(page.locator(".history-milestone-link").nth(1)).toContainText(
+    "v0.6.1",
+  );
+  await expect(page.locator(".history-milestone-link").last()).toContainText(
+    "v0.2.1",
+  );
   await expect(
     page.locator('.history-milestone-link[aria-current="page"]'),
   ).toContainText("v0.6.2");
@@ -126,8 +135,11 @@ test("screen trails keep named views, source revisions and retirement without du
   await expect(
     page.locator("#history-inspect .review-capture img"),
   ).toHaveCount(1);
-  await expect(page.locator(".history-trail-entry").last()).toContainText(
+  await expect(page.locator(".history-trail-entry").first()).toContainText(
     "v0.5.0",
+  );
+  await expect(page.locator(".history-trail-entry").last()).toContainText(
+    "v0.4.0",
   );
   await page.goto(root + "replay/?version=0.6.1&state=share");
   await expect(

@@ -739,7 +739,7 @@ export function HistoryRoutes({ screenId }: { screenId?: string }) {
               { "--history-source-width": `${largestWidth}px` } as CSSProperties
             }
           >
-            {trail.map((entry) => {
+            {trail.reverse().map((entry) => {
               const media = entry.snapshot.media[layout];
               return (
                 <section
@@ -865,11 +865,12 @@ export function HistoryRoutes({ screenId }: { screenId?: string }) {
                     m.version.split(".").slice(0, 2).join("."),
                   ),
                 ),
-              ).map((phase) => (
+              ).reverse().map((phase) => (
                 <section key={phase}>
                   <h2>{phase}</h2>
                   {catalog.milestones
                     .filter((m) => m.version.startsWith(phase + "."))
+                    .reverse()
                     .map((m) => (
                       <Link
                         key={m.version}
