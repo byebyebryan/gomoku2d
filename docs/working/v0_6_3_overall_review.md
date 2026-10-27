@@ -6,6 +6,10 @@ Bot lab, history/case navigation, public/private initialization boundaries,
 capture/export tooling and the recent branding/navigation refinements.
 Product and tool source are unchanged by this review.
 
+**Follow-up, October 26–27:** all five findings below are resolved in the
+[fix checkpoint](v0_6_3_review_fixes.md), tested at `c1c3af6`. This original review,
+its before image and validation receipt remain a snapshot of `d5a602d`.
+
 [Open the prepared browser report](http://starship:8787/reports/847af48528c8e6eb3ac7bf37c817ee97049b9fbad75ce0de2d46eeec532ffbd7/)
 for the findings, validation and the phone-layout capture.
 

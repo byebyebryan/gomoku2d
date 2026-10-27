@@ -12,7 +12,7 @@ belong in the [reference docs](../README.md#choose-a-path).
 | [Retrospective UI capture pilot](v0_6_3_retrospective_capture.md) | Bryan; compare v0.2.4 and v0.6.2 with a reusable capture contract; generic portrait profile remains provisional pending phone measurements |
 | [UI history implementation](v0_6_3_history_implementation.md) | 24 milestones / 15 screen histories / 274 selected captures; first human pass broadly positive, latest-first ordering implemented; generic portrait remains provisional |
 | [Design-review backfill](v0_6_3_design_reviews.md) | Eight prepared cases; source/media and shared-export/Snap delivery verified; follow-up findings are tracked in the overall review below |
-| [0.6.3 overall review](v0_6_3_overall_review.md) | Source `d5a602d`; two product/accessibility findings and three tooling/validation findings open; 556 units, 291 browser journeys and cached-session checks pass |
+| [0.6.3 overall review and fixes](v0_6_3_review_fixes.md) | All five findings from the [original review](v0_6_3_overall_review.md) resolved at `c1c3af6`; 556 units, 44 tool tests, 105 affected browser tests and six cloud journeys pass; preview verified from Snap; human/release gates remain separate |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; revised sequence and retained research; replay metadata compatibility belongs to 0.6.4, curated learning later |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan

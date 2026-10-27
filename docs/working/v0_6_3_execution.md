@@ -7,8 +7,12 @@ release/deployment remain separate. The 0.6.2 manual preview, emulators, Carbon
 tunnel and demo fixtures remain owned by the existing services.
 
 The [October 26 overall review](v0_6_3_overall_review.md) records fresh results
-at `d5a602d` and five open follow-ups. The checkpoints below retain their dated
-scope and evidence; they do not supersede that later review.
+at `d5a602d`. Its five findings are resolved by the
+[October 26–27 fix checkpoint](v0_6_3_review_fixes.md), tested at `c1c3af6`:
+105 affected browser tests, six cloud journeys and both fresh UI audits pass.
+The corrected portable preview is delivered and verified from Snap. Changes
+remain local; release and human/device acceptance remain separate. The
+checkpoints below retain their dated scope and evidence.
 
 ## Integration checkpoint C–D
 

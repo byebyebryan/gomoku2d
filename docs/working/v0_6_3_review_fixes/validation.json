@@ -1,0 +1,565 @@
+{
+  "schema": 1,
+  "completedAt": "2026-10-27T07:08:11.695674+00:00",
+  "source": {
+    "implementationCommit": "c1c3af6e7439e37027f881a870759a7c2be64855",
+    "startingCommit": "5a60e3d",
+    "reviewedBaseline": "d5a602ddd077553f52f726d007cdffa3b935ad0b",
+    "qualification": "Implementation files match the committed source. The closing commit changes documentation/evidence only. Export built from this clean commit.",
+    "inputs": {
+      "gomoku-web/cloudtests/developer.spec.ts": "10a6df632ddb3ef2d979eee59699bd982a1b7b040dd7ee97bd4b26f1d4e6a449",
+      "gomoku-web/playtests/design_reviews.spec.ts": "5f948c862d728dadd5a885e82ed868dcbdae575c00e73ecfdd6a59f062f5fa43",
+      "gomoku-web/playtests/lab_responsive.spec.ts": "1281566e4b536ad3208365de7ea258f033675bed82a5d015e7e51b49a2ec2d54",
+      "gomoku-web/scripts/check_developer_visuals.mjs": "ecefc727da640062dbc312d393bc907d038b2094bf0b160ebd4eb0c793529647",
+      "gomoku-web/scripts/developer_visuals_helpers.mjs": "616ba790eb671527c2b0fee5eb75d2192606dc70d5dcbb207e4a599741ff2011",
+      "gomoku-web/scripts/export_developer.mjs": "d4cdfd474b7a8f82536d9c09555d83da3f795003401b269d74b275e21728497a",
+      "gomoku-web/scripts/export_output_guard.mjs": "ba4792ed0a50195e88f3e1d6100dc74607aa44537bb082b8f5295f4d968be451",
+      "gomoku-web/scripts/export_review.mjs": "3bd499808984b65c81c0f094bfab8671c3466e772b0ff737d018668e026155b3",
+      "gomoku-web/scripts/tests/developer_visuals_helpers.test.mjs": "0505f5bdc38227cf99c9b41060b38868fbd328f8d67deaaf815b38751cb5e72c",
+      "gomoku-web/scripts/tests/export_output_guard.test.mjs": "af83be44746b490d27cab40b33ea4e4fd03c1eed6df864b66a888e19f9f3cdea",
+      "gomoku-web/src/developer/ReviewComparison.tsx": "b7985d51ca71bf1e338403743f12e72ece8cde31619bf8b72284086989741aab",
+      "gomoku-web/src/routes/ReportRoute.module.css": "8cfd87cf701229b393e8ac35135f1e05d4c1e9af98511b9963c745d866fce275"
+    }
+  },
+  "ownership": {
+    "primary": "R1 layout and regression; accessible-name format; source/integration review; final validation and delivery",
+    "lunaMax": "R2 capture names/tests; R3 cloud fixture; R4 guard/exporters/tests; R5 visual helper/tests"
+  },
+  "findings": [
+    {
+      "id": "R1",
+      "status": "resolved"
+    },
+    {
+      "id": "R2",
+      "status": "resolved"
+    },
+    {
+      "id": "R3",
+      "status": "resolved"
+    },
+    {
+      "id": "R4",
+      "status": "resolved"
+    },
+    {
+      "id": "R5",
+      "status": "resolved"
+    }
+  ],
+  "validation": {
+    "typecheck": {
+      "command": "npm run typecheck",
+      "result": "pass",
+      "scope": "app, checked JS scripts, TypeScript tools"
+    },
+    "unit": {
+      "command": "npm test",
+      "files": 54,
+      "passed": 556,
+      "failed": 0
+    },
+    "nodeTools": {
+      "command": "node --test scripts/capture_history_ui.test.mjs scripts/capture_retrospective_ui.test.mjs scripts/tests/export_output_guard.test.mjs scripts/tests/developer_visuals_helpers.test.mjs",
+      "passed": 44,
+      "failed": 0,
+      "qualification": "34 pre-existing capture checks plus 10 new helper checks, including nested subtests"
+    },
+    "build": {
+      "command": "npm run build",
+      "result": "pass",
+      "log": "build-committed.log",
+      "qualification": "Normal build and all asset/report/review/SPA publishers, at clean implementation source"
+    },
+    "browser": {
+      "specs": [
+        "developer",
+        "history",
+        "design_reviews",
+        "lab_responsive",
+        "smoke"
+      ],
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "passed": 105,
+      "failed": 0,
+      "skipped": 0,
+      "log": "affected-browser.log"
+    },
+    "analysis": {
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "configurations": [
+        {
+          "width": 1440,
+          "height": 900,
+          "textPercent": 100
+        },
+        {
+          "width": 844,
+          "height": 390,
+          "textPercent": 100
+        },
+        {
+          "width": 768,
+          "height": 900,
+          "textPercent": 100
+        },
+        {
+          "width": 412,
+          "height": 900,
+          "textPercent": 100
+        },
+        {
+          "width": 320,
+          "height": 800,
+          "textPercent": 100
+        },
+        {
+          "width": 320,
+          "height": 800,
+          "textPercent": 200
+        }
+      ],
+      "checks": [
+        "closed pair fits; all metrics visible",
+        "expanded game fits; metric words do not split into letter columns",
+        "local proof-board scroll remains available",
+        "direct match URL fits"
+      ],
+      "passed": 3,
+      "logDirectory": "lab-browser-readable"
+    },
+    "cloud": {
+      "command": "GOMOKU_CLOUD_PORT_OFFSET=4000 npm run test:cloud -- --container --grep D0[12] --browser=all --output=test-results/v063-review-fixes-20261026/cloud-boundary",
+      "passed": 6,
+      "failed": 0,
+      "qualification": "Demo emulator data only. Run before final metric-only CSS adjustment; final D02 test file has the identical committed bytes. Final committed-source browser/portable checks verify the static public boundary.",
+      "log": "cloud-boundary.log"
+    },
+    "uiAudit": {
+      "source": "c1c3af6",
+      "engine": "chromium",
+      "views": 60,
+      "widthsAndText": [
+        [
+          1440,
+          100
+        ],
+        [
+          412,
+          100
+        ],
+        [
+          320,
+          200
+        ]
+      ],
+      "violations": 0,
+      "outerOverflows": 0,
+      "inconclusiveContrastChecks": 7,
+      "pageErrors": [],
+      "externalRequests": [],
+      "measuredLoadedPairs": 135,
+      "maximumPairScaleDifference": 5.0910841232210124e-05,
+      "maximumImageScale": 1,
+      "qualification": "Only positive natural-width and rendered-width pairs are measured; scale difference below 0.0001 is rounding.",
+      "log": "audit-ui.log"
+    },
+    "maintainedVisualHelper": {
+      "command": "DEVELOPER_CHECK_URL=http://127.0.0.1:47436/ DEVELOPER_CHECK_OUTPUT=test-results/v063-review-fixes-20261026/maintained-visual-final node scripts/check_developer_visuals.mjs",
+      "status": {
+        "schema": 1,
+        "status": "complete",
+        "complete": true,
+        "completedViews": 66,
+        "expectedViews": 66
+      },
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "violations": 0,
+      "inconclusiveContrastChecks": 9,
+      "qualification": "Final committed-source rerun after the last responsive adjustment. Contrast results overlap with the separate 60-view audit.",
+      "log": "maintained-visual-final.log"
+    },
+    "exportCLI": {
+      "singleCase": [
+        {
+          "label": "symlink-parent",
+          "output": "/home/bryan/code/gomoku2d/gomoku-web/test-results/review-exports/.v063-fix-cli-parent/escape",
+          "exitCode": 1
+        },
+        {
+          "label": "existing-target",
+          "output": "/home/bryan/code/gomoku2d/gomoku-web/test-results/review-exports/.v063-fix-cli-existing",
+          "exitCode": 1
+        },
+        {
+          "label": "source-escape",
+          "output": "/home/bryan/code/gomoku2d/gomoku-web/src/v063-owned-probe",
+          "exitCode": 1
+        },
+        {
+          "label": "dist-escape",
+          "output": "/home/bryan/code/gomoku2d/gomoku-web/dist/v063-owned-probe",
+          "exitCode": 1
+        },
+        {
+          "label": "absolute",
+          "output": "/home/bryan/code/gomoku2d/gomoku-web/test-results/review-exports/v063-fixes-absolute-20261026",
+          "exitCode": 0
+        },
+        {
+          "label": "relative",
+          "output": "test-results/review-exports/v063-fixes-relative-20261026",
+          "exitCode": 0
+        }
+      ],
+      "fullSiteExistingTarget": {
+        "exitCode": 1,
+        "existingTargetUnchanged": true,
+        "exportReceiptSha256": "240ea8349833c45871ffa396e322f6865ce2bea66f8bd442d5258b2689920763"
+      },
+      "guardTests": "Reject root/ancestor/target symlinks, existing directories/files, source/dist paths; allow new ignored physical output.",
+      "standaloneBrowser": {
+        "results": [
+          {
+            "name": "chromium",
+            "variant": "absolute",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          },
+          {
+            "name": "chromium",
+            "variant": "relative",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          },
+          {
+            "name": "firefox",
+            "variant": "absolute",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          },
+          {
+            "name": "firefox",
+            "variant": "relative",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          },
+          {
+            "name": "webkit",
+            "variant": "absolute",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          },
+          {
+            "name": "webkit",
+            "variant": "relative",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          }
+        ]
+      }
+    },
+    "servedApplicationBuild": {
+      "sourceCommit": "c1c3af6e7439e37027f881a870759a7c2be64855",
+      "files": 585,
+      "bytes": 22833886,
+      "sha256Parity": true,
+      "changedPaths": [
+        "docs/working/v0_6_3_review_fixes.md",
+        "gomoku-web/cloudtests/developer.spec.ts",
+        "gomoku-web/playtests/design_reviews.spec.ts",
+        "gomoku-web/playtests/lab_responsive.spec.ts",
+        "gomoku-web/scripts/check_developer_visuals.mjs",
+        "gomoku-web/scripts/developer_visuals_helpers.mjs",
+        "gomoku-web/scripts/export_developer.mjs",
+        "gomoku-web/scripts/export_output_guard.mjs",
+        "gomoku-web/scripts/export_review.mjs",
+        "gomoku-web/scripts/tests/developer_visuals_helpers.test.mjs",
+        "gomoku-web/scripts/tests/export_output_guard.test.mjs",
+        "gomoku-web/src/developer/ReviewComparison.tsx",
+        "gomoku-web/src/routes/ReportRoute.module.css"
+      ],
+      "recordedDataAndMediaChanged": false
+    },
+    "portable": {
+      "browserRoutesPerEngine": 34,
+      "engines": [
+        {
+          "name": "chromium",
+          "version": "156.0.8078.4",
+          "views": 34,
+          "storage": {
+            "local": [],
+            "session": []
+          },
+          "errors": [],
+          "externalRequests": []
+        },
+        {
+          "name": "firefox",
+          "version": "157.0",
+          "views": 34,
+          "storage": {
+            "local": [],
+            "session": []
+          },
+          "errors": [],
+          "externalRequests": []
+        },
+        {
+          "name": "webkit",
+          "version": "27.2",
+          "views": 34,
+          "storage": {
+            "local": [],
+            "session": []
+          },
+          "errors": [],
+          "externalRequests": []
+        }
+      ],
+      "brandAndEntry": {
+        "base": "http://starship:8787/reports/e3bfaed9db85aa1f1951ebc95a00d29952aa422498d38c4d17452e66a7d6c887/",
+        "results": [
+          {
+            "name": "chromium",
+            "passed": true,
+            "defaultCurrent": true,
+            "tabAndLinkEntry": true,
+            "legacyIndexAndHistoryActive": true,
+            "widths": [
+              1440,
+              412,
+              320
+            ],
+            "topScroll": true,
+            "errors": [],
+            "outside": []
+          },
+          {
+            "name": "firefox",
+            "passed": true,
+            "defaultCurrent": true,
+            "tabAndLinkEntry": true,
+            "legacyIndexAndHistoryActive": true,
+            "widths": [
+              1440,
+              412,
+              320
+            ],
+            "topScroll": true,
+            "errors": [],
+            "outside": []
+          },
+          {
+            "name": "webkit",
+            "passed": true,
+            "defaultCurrent": true,
+            "tabAndLinkEntry": true,
+            "legacyIndexAndHistoryActive": true,
+            "widths": [
+              1440,
+              412,
+              320
+            ],
+            "topScroll": true,
+            "errors": [],
+            "outside": []
+          }
+        ]
+      },
+      "historyReturn": {
+        "base": "http://starship:8787/reports/e3bfaed9db85aa1f1951ebc95a00d29952aa422498d38c4d17452e66a7d6c887/",
+        "results": [
+          {
+            "name": "chromium",
+            "version": "156.0.8078.4",
+            "browserBackFocusScrollDisclosure": true,
+            "crossScreenNativeReturn": true
+          },
+          {
+            "name": "firefox",
+            "version": "157.0",
+            "browserBackFocusScrollDisclosure": true,
+            "crossScreenNativeReturn": true
+          },
+          {
+            "name": "webkit",
+            "version": "27.2",
+            "browserBackFocusScrollDisclosure": true,
+            "crossScreenNativeReturn": true
+          }
+        ]
+      },
+      "source": {
+        "commit": "c1c3af6e7439e37027f881a870759a7c2be64855",
+        "trackedSourceDirty": false,
+        "workingTreeClean": true,
+        "qualification": "commit"
+      }
+    }
+  },
+  "capture": {
+    "path": "media/analysis-412.png",
+    "sha256": "3dd62d6caf55dff0537d0a0c381cf8ce0767a4b030106ea17ac8a85f42797e45",
+    "sourceFilesMatchCommit": "c1c3af6e7439e37027f881a870759a7c2be64855",
+    "viewportCss": {
+      "width": 412,
+      "height": 900,
+      "deviceScaleFactor": 1,
+      "textPercent": 100
+    },
+    "engine": "Chromium",
+    "qualification": "Local candidate in a browser, not a measured handset. Primary visually inspected this image and desktop/narrow counterparts."
+  },
+  "invariants": {
+    "historicalCatalogsMediaRecordedLabInputsChanged": false,
+    "sourceChanges": [
+      "docs/working/v0_6_3_review_fixes.md",
+      "gomoku-web/cloudtests/developer.spec.ts",
+      "gomoku-web/playtests/design_reviews.spec.ts",
+      "gomoku-web/playtests/lab_responsive.spec.ts",
+      "gomoku-web/scripts/check_developer_visuals.mjs",
+      "gomoku-web/scripts/developer_visuals_helpers.mjs",
+      "gomoku-web/scripts/export_developer.mjs",
+      "gomoku-web/scripts/export_output_guard.mjs",
+      "gomoku-web/scripts/export_review.mjs",
+      "gomoku-web/scripts/tests/developer_visuals_helpers.test.mjs",
+      "gomoku-web/scripts/tests/export_output_guard.test.mjs",
+      "gomoku-web/src/developer/ReviewComparison.tsx",
+      "gomoku-web/src/routes/ReportRoute.module.css"
+    ],
+    "originalReviewArtifactsUnchanged": {
+      "docs/working/v0_6_3_overall_review/validation.json": "ff5e56c246f45768ae448b3eb2a5931cc6860e2a97f73c6fe07d5ec163d08176",
+      "docs/working/v0_6_3_overall_review/media/analysis-412.png": "5eb391c396f55eee57ea705c5df0d40786d9e9bf26983d22bb6696fc0fdc6e66"
+    },
+    "publicStaticBoundary": "No private storage, Auth/Firestore initialization, Phaser/Wasm or external-service requests in the checked dev-site routes. Matched/native controls, IDs, URLs and selected media unchanged."
+  },
+  "delivery": {
+    "publication": {
+      "report_id": "e3bfaed9db85aa1f1951ebc95a00d29952aa422498d38c4d17452e66a7d6c887",
+      "title": "Gomoku2D 0.6.3 \u2014 review fixes",
+      "project": "gomoku2d",
+      "entrypoint": "index.html",
+      "created_at": "2026-10-27T07:00:33.944116+00:00",
+      "state": "published",
+      "schema": 1,
+      "publication": "created",
+      "origin": "starship",
+      "snapshot_path": "/home/bryan/.local/share/codex-plus/reports/public/e3bfaed9db85aa1f1951ebc95a00d29952aa422498d38c4d17452e66a7d6c887",
+      "file_count": 489,
+      "byte_count": 19623330,
+      "url": "http://starship:8787/reports/e3bfaed9db85aa1f1951ebc95a00d29952aa422498d38c4d17452e66a7d6c887/",
+      "catalog": {
+        "state": "updated"
+      },
+      "delivery": {
+        "checked_at": "2026-10-27T07:00:34.349260+00:00",
+        "checked_from": "starship",
+        "state": "verified",
+        "http_status": 200,
+        "bytes": 572,
+        "verified_url": "http://starship:8787/reports/e3bfaed9db85aa1f1951ebc95a00d29952aa422498d38c4d17452e66a7d6c887/"
+      },
+      "catalog_url": "http://starship:8787/reports/",
+      "project_url": "http://starship:8787/reports/#project=gomoku2d",
+      "server": {
+        "state": "running",
+        "session": "codex-report-server",
+        "session_id": "$0",
+        "pid": 23164,
+        "url": "http://starship:8787/reports/",
+        "version": "0.1.0-preview.10",
+        "reused": true
+      }
+    },
+    "snap": {
+      "host": "snap",
+      "hostname": "80H1VV3",
+      "url": "http://starship:8787/reports/e3bfaed9db85aa1f1951ebc95a00d29952aa422498d38c4d17452e66a7d6c887/",
+      "files": 489,
+      "bytes": 19623330,
+      "sha256Parity": true
+    }
+  },
+  "cleanup": {
+    "stopped": [
+      {
+        "pid": 1541668,
+        "command": "node /home/bryan/code/gomoku2d/gomoku-web/node_modules/.bin/vite preview --host 127.0.0.1 --port 47436 --strictPort ",
+        "action": "SIGTERM"
+      },
+      {
+        "pid": 1645371,
+        "command": "/usr/bin/python3 -m http.server 47437 --bind 127.0.0.1 --directory /home/bryan/code/gomoku2d/gomoku-web/test-results/review-exports ",
+        "action": "SIGTERM"
+      }
+    ],
+    "preserved": [
+      {
+        "pid": 165197,
+        "port": 46862,
+        "role": "existing manual preview"
+      },
+      {
+        "pid": 23164,
+        "port": 8787,
+        "role": "shared report host"
+      }
+    ],
+    "cloudOffset": 4000,
+    "cloudPortsClear": true,
+    "userTabsOpened": 0,
+    "worktreesCreatedOrRemoved": 0
+  },
+  "scopeLimits": [
+    "Local corrective pass only; no push, tag/version/release or production changes.",
+    "No real-account writes. D01/D02 use owned demo emulators.",
+    "Human measured-device and assistive-technology acceptance remain separate.",
+    "Inconclusive contrast checks remain manual review items, not automated passes.",
+    "Prior full ordinary 291-passed / 6-intentionally-skipped review is a separate baseline; this pass reran 105 affected tests."
+  ],
+  "rawEvidenceRoot": "gomoku-web/test-results/v063-review-fixes-20261026",
+  "retainedIntermediateEvidence": [
+    "lab-browser (initial 320px/enlarged expanded-summary overflow)",
+    "lab-browser-refined (fit passed before primary caught squeezed words)",
+    "maintained-visual (pre-final CSS, separate from final run)",
+    "standalone-first-probe.log (scratch validation selector typo, corrected in final probe)"
+  ],
+  "rawArtifactSha256": {
+    "affected-browser.log": "91aa2ab2ec7093dd5d9f269afbce9edb933ceea0a4f0746cb1f75297e45f8f73",
+    "cloud-boundary.log": "f53742db9dda31a734f42c8e336d34445f15c6972719c0ad4c85ddbe28bc1fb8",
+    "node-tools-final.log": "f98af91db7837a5b818fe4fc911b158fb6477a7b7a9c10025211d36c46d0a6d4",
+    "build-committed.log": "7373800ef318412de27df31d8293d00db7d1d37ce7232cdf59b36c853306d6f0",
+    "visual/audit.json": "ef3735727977a06963e84577c59161a176bab2acf2c82187c857b114a3e40ee8",
+    "maintained-visual-final/accessibility.json": "e364e6d66a13816a170c56d6479f7689b96c77b032201e8ac2cb9b323a96ff1f",
+    "maintained-visual-final/accessibility-status.json": "a090c29142d0a00f403fe3428783559c614ae7e62183694719fb6d33647c4c54",
+    "portable/receipt.json": "088f0856ac074f384c1af1ff62805dbfacce3c0efd4bbdc168b8bbd3d79510b9",
+    "brand.json": "f0a8975f5134492e2648d936d97a4c951e85d5eca5939a97e72d251b4cdc04b0",
+    "history-return.json": "6ad811c4bf64f7926752e6d3e666f0400b16ae5e8e32d4cfb0263cf323a60ee5",
+    "standalone.json": "dec652d5aaa17e4fe37811ff4159fcbda9258bfdd9e963aaa18bb6e477a53e71",
+    "export-cli.json": "8281757d51460f2d2fbc50f0ef7650e4a1be14d5e650de057ea061e594f98fc9",
+    "developer-existing-target.json": "36eacfbf200afc1f80dc461330e86f8b34f06bbed6ebcc5c2457b019db7d3301",
+    "snap-delivery.json": "6327139b99c53cd0497c6dcab2bade67599b2512b362bd6e7f95ec93e4739d97",
+    "served-parity.json": "99665e695452496cf14e54f6d8dca4bb89f61daf13f35e044ee1dde08d93af1e",
+    "cleanup.json": "79e720b9990299fc0993f20ba892bc919b163bd16b821fd3b8184117ba35e88c"
+  }
+}
