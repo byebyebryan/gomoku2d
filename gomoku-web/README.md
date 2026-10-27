@@ -8,7 +8,7 @@ facts, and replay analysis.
 
 **Developer:** [Overview](https://gomoku2d.byebyebryan.com/dev/) ·
 [Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
-[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/) ·
+[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) ·
 [Bot lab](https://gomoku2d.byebyebryan.com/lab/).
 The developer-area changes are local 0.6.3 source until release;
 [the contract](../docs/reference/app/developer_area.md) records their scope.
@@ -35,7 +35,8 @@ The developer-area changes are local 0.6.3 source until release;
 - Bot lab at `/lab/`, rendered from curated JSON artifacts under
   `../reports/lab/`.
 - Visual design at `/visuals/` for source icons, sprites, fonts and design tokens,
-  and UI design at `/dev/reviews/` for current screens, history and design reviews.
+  and UI design starting at `/dev/reviews/core-screens-062/`, with UI history
+  and design reviews alongside the current screens.
 
 ## Core Boundary
 

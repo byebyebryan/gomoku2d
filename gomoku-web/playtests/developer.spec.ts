@@ -139,7 +139,10 @@ for (const width of [1440, 412]) {
       .getByRole("link", { name: "UI design", exact: true })
       .click();
     await expect(page.locator("#developer-content")).toBeFocused();
-    await expect(page.getByRole("heading", { name: "Design reviews", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Released 0.6.2 core screens", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("navigation", { name: "UI design views" }).getByRole("link", { name: "Current screens", exact: true }),
+    ).toHaveAttribute("aria-current", "page");
     await expect.poll(() => page.locator(".dev-page").evaluate((node) => node.scrollTop)).toBe(0);
     await expect(page.locator(".dev-header")).toBeInViewport();
     await expect(

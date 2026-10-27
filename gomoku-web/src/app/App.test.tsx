@@ -192,7 +192,7 @@ describe("App", () => {
     );
     expect(screen.getByRole("link", { name: /^ui design$/i })).toHaveAttribute(
       "href",
-      "/dev/reviews/",
+      "/dev/reviews/core-screens-062/",
     );
     expect(screen.getByRole("link", { name: /^bot lab$/i })).toHaveAttribute(
       "href",

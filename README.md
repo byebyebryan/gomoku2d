@@ -14,7 +14,7 @@ analysis, and practice from earlier positions.
 
 [Developer](https://gomoku2d.byebyebryan.com/dev/) ·
 [Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
-[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/) ·
+[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) ·
 [Bot lab](https://gomoku2d.byebyebryan.com/lab/)
 
 Developer-area source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).

@@ -1,5 +1,5 @@
 import { Component, Fragment, Suspense, lazy, useEffect, useRef, type ReactNode } from "react";
-import { Link, Navigate, NavLink, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Outlet, Route, Routes, matchPath, useLocation } from "react-router-dom";
 import { Icon } from "../ui/Icon";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { DEVELOPER_SECTIONS, PROJECT_SOURCE_URL } from "../app/links";
@@ -16,7 +16,7 @@ const Reviews = lazy(async () => ({
   default: (await import("./ReviewRoutes")).ReviewRoutes,
 }));
 const sections = [
-  { to: "/dev/", label: "Overview" },
+  { to: "/dev/", match: "/dev/", label: "Overview" },
   ...DEVELOPER_SECTIONS,
 ];
 
@@ -90,10 +90,10 @@ function DeveloperFrame({ standalone }: { standalone: boolean }) {
           </nav>
         </header>
         <nav className="dev-nav" aria-label="Developer sections">
-          {sections.map(({ to, label }) => (
-            <NavLink key={to} to={to} end={to === "/dev/"}>
+          {sections.map(({ to, label, match }) => (
+            <Link key={to} to={to} aria-current={matchPath(match, location.pathname) ? "page" : undefined}>
               {label}
-            </NavLink>
+            </Link>
           ))}
         </nav>
         <main id="developer-content" tabIndex={-1} ref={content}>

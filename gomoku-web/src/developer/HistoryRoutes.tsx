@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties, type MouseEvent } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { UI_DESIGN_ENTRY_PATH } from "../app/links";
 import data from "./history.json";
 import {
   isHistoryCatalog,
@@ -107,7 +108,7 @@ export function ReviewNavigation({ designReview = false }: { designReview?: bool
   return (
     <nav className="history-review-nav" aria-label="UI design views">
       <Link
-        to="/dev/reviews/core-screens-062/"
+        to={UI_DESIGN_ENTRY_PATH}
         aria-current={
           pathname.includes("core-screens-062") ? "page" : undefined
         }

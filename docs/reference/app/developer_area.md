@@ -50,6 +50,10 @@ so reference typography does not change player screens.
 Visual design, UI design, Bot lab. Developer navigation and footer links,
 overview cards and Home consume that definition. README and documentation
 link lists use the same labels/order, with Developer as their overview entry.
+UI design opens Current screens at `UI_DESIGN_ENTRY_PATH`; its active navigation
+match covers the entire `/dev/reviews/*` section. The same entry is used by the
+portable preview. `/dev/reviews/` remains the Design reviews index, and existing
+record/history links retain their identities.
 
 Visual design covers the visual system and its source assets; UI design covers
 screens, layout, interaction and their evolution. UI design retains Current

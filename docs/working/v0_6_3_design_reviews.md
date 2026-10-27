@@ -190,3 +190,11 @@ engines. Navigation checks now cover desktop and portrait, asserting top scroll
 and a visible header; the suite also retains case inspection/reload/Back and
 history focus/scroll/disclosure restoration. The starting subview is independent
 of this scroll correction.
+
+Bryan subsequently selected **Current screens** as the UI design starting view.
+The shared UI entry, Home/cards/footer, Markdown links and portable preview now
+open the existing core-screen reference. Section matching is independent of the
+entry destination, so UI design remains active on history and all review pages.
+The Design reviews index and existing record URLs remain addressable. The build,
+33 App unit tests and 12 three-engine browser checks passed, including the
+starting subtab, top scroll, Home link and active state across all three views.
