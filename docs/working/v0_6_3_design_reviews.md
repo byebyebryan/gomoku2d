@@ -23,6 +23,9 @@ The bounded roster is:
 | Share/Publish replay sidebar | 0.6.1 | Add the missing review of the full-sidebar sharing/publishing interaction. |
 | Public-player page | 0.6.2 | Expand the existing case with recorded alternatives and their selection. |
 
+These periods identify the design work. Case version ranges also include an
+earlier comparison baseline where needed.
+
 Retain the existing action-icon and mobile-record cases, all case IDs/URLs,
 current references, endpoint pilot, immutable media and latest-first history.
 No multiplayer/profile features, report regeneration or new release belongs here.
@@ -67,4 +70,42 @@ replace selected media, use real accounts or start cloud services.
 
 - Primary confirmed a clean starting worktree and inspected the current record,
   viewer, publisher, documentation and existing browser coverage.
-- A Luna evidence audit is tracing the six candidates before media selection.
+- The audit binds 39 source entries to exact document blobs, with 34 text
+  excerpts and five JSON observations. Primary review corrected a conflation of
+  release IDs and later changelog revisions; source existence alone was also
+  insufficient when a later changelog omitted the claimed older entry.
+- Four original active Replay images were recovered, and five frozen profile
+  mockups rendered. The primary inspected all nine images and independently
+  checked their hashes/dimensions and the audit's exact excerpts/pointers.
+- Five new cases and the expanded public-player case are primary-authored.
+  Existing action-icon/mobile cases, reference/pilot URLs and capture pixels
+  remain available. Structured cases show figures before the longer step notes.
+- The portable export reuses the actual developer components, validates selected
+  publishers and records source/tool/file identity. Its preliminary nested-prefix
+  check passed all 16 history routes plus retained developer destinations in
+  Chromium, Firefox and WebKit.
+
+## Reconstructed Share review context
+
+The Share/Publish case draws its iteration sequence from the development
+conversation supplied by Bryan for this task. This is a transcription made
+October 26, 2026; the original turns' dates and exact preview revisions are not
+available here. It is separate from the contemporaneous implementation contract.
+
+The supplied conversation records this sequence:
+
+1. Share replay worked functionally, but Bryan described the section as detached
+   from the rest of the UI and resembling a generic web control.
+2. He found the expanded section crowded at the bottom and requested a button
+   that would slide/swap in the whole sidebar.
+3. After icon, text and presentation refinements, he said Share replay looked
+   good. This approves that reviewed presentation; it does not identify a
+   capture/build or establish acceptance of a later reconstruction.
+4. When Publish replay appeared, he requested the same whole-sidebar behaviour
+   and a similar pass over its text-heavy presentation.
+5. He requested a distinct Publish icon because reusing Profile was confusing.
+
+The 0.6.1 UI contract and implementation evidence corroborate the final shared
+interaction. The selected retrospective images illustrate the shipped panes;
+the initial expansion was not recovered as an image. The public case must keep
+this conversation-derived attribution and its unknown dates explicit.

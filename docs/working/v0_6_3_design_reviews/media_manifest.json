@@ -1,0 +1,2192 @@
+{
+  "schemaVersion": 1,
+  "scope": "Historical replay PNG recovery and bounded frozen public-profile mockup captures.",
+  "captureClassification": "All five new public-profile images are design mockups from frozen prototype reports, not runtime product captures or human acceptance evidence.",
+  "captureScript": "docs/working/v0_6_3_design_reviews/capture_mockups.mjs",
+  "tooling": {
+    "playwrightPackage": "playwright@1.64.1",
+    "dockerImage": "mcr.microsoft.com/playwright:v1.59.1-noble",
+    "dockerImageId": "sha256:fc1610b07935476ac20219b7911f6bbe47ac861523635845ba0bc7cc5f0277c4",
+    "browserEngine": "Chromium",
+    "browserVersion": "156.0.8078.4"
+  },
+  "historicalReplayPngs": [
+    {
+      "path": "docs/working/v0_6_3_design_reviews/media/replay-046-active-desktop.png",
+      "origin": "historical",
+      "sourceCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "sourcePath": "docs/assets/screenshot_v0_4_6_replay_desktop.png",
+      "sourceBlobOid": "6b366913a2978b189bb00276541e0309cdd1ee35",
+      "verifiedCurrentBlobOid": "6b366913a2978b189bb00276541e0309cdd1ee35",
+      "bytes": 17366,
+      "sha256": "8fb0ade3cb9a4e85366e43f75553dadd60fbd54ee3ac5fbcc22f3e8de80c0b79",
+      "width": 1440,
+      "height": 960,
+      "runtimeOrCaptureIdentity": "not inferred from Git blob metadata; source review captions qualify the active last-escape frame only"
+    },
+    {
+      "path": "docs/working/v0_6_3_design_reviews/media/replay-046-active-mobile.png",
+      "origin": "historical",
+      "sourceCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "sourcePath": "docs/assets/screenshot_v0_4_6_replay_mobile.png",
+      "sourceBlobOid": "bc9b4adda2bda9a152a2059a63b9029608aede0b",
+      "verifiedCurrentBlobOid": "bc9b4adda2bda9a152a2059a63b9029608aede0b",
+      "bytes": 8798,
+      "sha256": "e32fdf2c05c36ffa2eb90cb7a7dfadd56d733d4d114fb1911dfa0b306015a8fd",
+      "width": 390,
+      "height": 844,
+      "runtimeOrCaptureIdentity": "not inferred from Git blob metadata; source review captions qualify the active last-escape frame only"
+    },
+    {
+      "path": "docs/working/v0_6_3_design_reviews/media/replay-047-active-desktop.png",
+      "origin": "historical",
+      "sourceCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "sourcePath": "docs/assets/screenshot_v0_4_7_replay_desktop.png",
+      "sourceBlobOid": "f0b41caf0862839e4094ee63e4db3a6d85466e71",
+      "verifiedCurrentBlobOid": "f0b41caf0862839e4094ee63e4db3a6d85466e71",
+      "bytes": 16568,
+      "sha256": "67a299ab97dd84b1c30cf9b6462f40bb0c98a107ddd1c060524db45f19aac5cd",
+      "width": 1280,
+      "height": 900,
+      "runtimeOrCaptureIdentity": "not inferred from Git blob metadata; source review captions qualify the active last-escape frame only"
+    },
+    {
+      "path": "docs/working/v0_6_3_design_reviews/media/replay-047-active-mobile.png",
+      "origin": "historical",
+      "sourceCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "sourcePath": "docs/assets/screenshot_v0_4_7_replay_mobile.png",
+      "sourceBlobOid": "297cb337b483a25f65d96541ebbb7b78175f939b",
+      "verifiedCurrentBlobOid": "297cb337b483a25f65d96541ebbb7b78175f939b",
+      "bytes": 8996,
+      "sha256": "546114f130898979ef06068d765c0a62f0cc8eb528a72ba502ca501ce473077f",
+      "width": 390,
+      "height": 844,
+      "runtimeOrCaptureIdentity": "not inferred from Git blob metadata; source review captions qualify the active last-escape frame only"
+    }
+  ],
+  "sourceSnapshots": [
+    {
+      "reportKey": "original-abc",
+      "originNote": "Frozen A/B/C profile prototype report.",
+      "receiptPath": "docs/working/v0_6_2_design/evidence.json",
+      "exportPath": "gomoku-web/test-results/v062-design/export",
+      "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+      "reportUrl": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/",
+      "baselineCommit": "069eb66",
+      "sourceDate": "2026-10-23",
+      "receiptStatus": "prototype-ready-for-human-review",
+      "receiptFileCount": 16,
+      "receiptByteCount": 245173,
+      "receiptInventory": {
+        "fileCount": 16,
+        "totalBytes": 245173,
+        "files": [
+          {
+            "path": "assets/fonts/LICENSE.txt",
+            "bytes": 7169,
+            "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+          },
+          {
+            "path": "assets/fonts/PixelOperator-Bold.ttf",
+            "bytes": 16984,
+            "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+          },
+          {
+            "path": "assets/fonts/PixelOperator.ttf",
+            "bytes": 17272,
+            "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+          },
+          {
+            "path": "assets/fonts/PixelOperator8-Bold.ttf",
+            "bytes": 18624,
+            "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+          },
+          {
+            "path": "assets/global.css",
+            "bytes": 6808,
+            "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+          },
+          {
+            "path": "assets/icons.json",
+            "bytes": 32037,
+            "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+          },
+          {
+            "path": "assets/reference-owner.png",
+            "bytes": 27952,
+            "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+          },
+          {
+            "path": "assets/reference-public.png",
+            "bytes": 13832,
+            "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+          },
+          {
+            "path": "assets/reference-replay.png",
+            "bytes": 17391,
+            "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+          },
+          {
+            "path": "assets/reference-settings.png",
+            "bytes": 28412,
+            "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+          },
+          {
+            "path": "index.html",
+            "bytes": 9214,
+            "sha256": "f621fcfa083e87b24c1727f73e1b204315290b845d41478adb73afa3988ba5ea"
+          },
+          {
+            "path": "prototype.css",
+            "bytes": 18861,
+            "sha256": "6fb009e7d2eadac03acb137d3560df5a644a5432cf5c48ccd7d93e5904b67e20"
+          },
+          {
+            "path": "prototype.html",
+            "bytes": 677,
+            "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+          },
+          {
+            "path": "prototype.js",
+            "bytes": 22383,
+            "sha256": "8404edb77926ed2cf552b4ff82811b9662afe7239591618daac639923c4a63a1"
+          },
+          {
+            "path": "study.css",
+            "bytes": 4269,
+            "sha256": "47ac33e4131f07a83abb0f09fe5663829ab6182d30fd4cba4e2450c917ab21a2"
+          },
+          {
+            "path": "study.js",
+            "bytes": 3288,
+            "sha256": "34aa33cb7fe863ff47436a3802880c08e1bd5a64fd1b748ac512d2d9e38fc8d2"
+          }
+        ]
+      },
+      "before": {
+        "localExport": {
+          "fileCount": 16,
+          "totalBytes": 245173,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+            },
+            {
+              "path": "index.html",
+              "bytes": 9214,
+              "sha256": "f621fcfa083e87b24c1727f73e1b204315290b845d41478adb73afa3988ba5ea"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 18861,
+              "sha256": "6fb009e7d2eadac03acb137d3560df5a644a5432cf5c48ccd7d93e5904b67e20"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 22383,
+              "sha256": "8404edb77926ed2cf552b4ff82811b9662afe7239591618daac639923c4a63a1"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4269,
+              "sha256": "47ac33e4131f07a83abb0f09fe5663829ab6182d30fd4cba4e2450c917ab21a2"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3288,
+              "sha256": "34aa33cb7fe863ff47436a3802880c08e1bd5a64fd1b748ac512d2d9e38fc8d2"
+            }
+          ]
+        },
+        "servedSnapshot": {
+          "fileCount": 16,
+          "totalBytes": 245173,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:33 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:33 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "index.html",
+              "bytes": 9214,
+              "sha256": "f621fcfa083e87b24c1727f73e1b204315290b845d41478adb73afa3988ba5ea",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 18861,
+              "sha256": "6fb009e7d2eadac03acb137d3560df5a644a5432cf5c48ccd7d93e5904b67e20",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 22383,
+              "sha256": "8404edb77926ed2cf552b4ff82811b9662afe7239591618daac639923c4a63a1",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4269,
+              "sha256": "47ac33e4131f07a83abb0f09fe5663829ab6182d30fd4cba4e2450c917ab21a2",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3288,
+              "sha256": "34aa33cb7fe863ff47436a3802880c08e1bd5a64fd1b748ac512d2d9e38fc8d2",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            }
+          ]
+        },
+        "matchesReceipt": true,
+        "localMatchesServed": true
+      },
+      "after": {
+        "localExport": {
+          "fileCount": 16,
+          "totalBytes": 245173,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+            },
+            {
+              "path": "index.html",
+              "bytes": 9214,
+              "sha256": "f621fcfa083e87b24c1727f73e1b204315290b845d41478adb73afa3988ba5ea"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 18861,
+              "sha256": "6fb009e7d2eadac03acb137d3560df5a644a5432cf5c48ccd7d93e5904b67e20"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 22383,
+              "sha256": "8404edb77926ed2cf552b4ff82811b9662afe7239591618daac639923c4a63a1"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4269,
+              "sha256": "47ac33e4131f07a83abb0f09fe5663829ab6182d30fd4cba4e2450c917ab21a2"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3288,
+              "sha256": "34aa33cb7fe863ff47436a3802880c08e1bd5a64fd1b748ac512d2d9e38fc8d2"
+            }
+          ]
+        },
+        "servedSnapshot": {
+          "fileCount": 16,
+          "totalBytes": 245173,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:33 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:33 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "index.html",
+              "bytes": 9214,
+              "sha256": "f621fcfa083e87b24c1727f73e1b204315290b845d41478adb73afa3988ba5ea",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 18861,
+              "sha256": "6fb009e7d2eadac03acb137d3560df5a644a5432cf5c48ccd7d93e5904b67e20",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 22383,
+              "sha256": "8404edb77926ed2cf552b4ff82811b9662afe7239591618daac639923c4a63a1",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4269,
+              "sha256": "47ac33e4131f07a83abb0f09fe5663829ab6182d30fd4cba4e2450c917ab21a2",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3288,
+              "sha256": "34aa33cb7fe863ff47436a3802880c08e1bd5a64fd1b748ac512d2d9e38fc8d2",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:12:34 GMT"
+            }
+          ]
+        },
+        "matchesReceipt": true,
+        "localMatchesServed": true
+      },
+      "unchangedDuringCapture": true
+    },
+    {
+      "reportKey": "minimal-two-column",
+      "originNote": "Frozen simple identity plus record-and-games two-column refinement.",
+      "receiptPath": "docs/working/v0_6_2_design/refinement_evidence.json",
+      "exportPath": "gomoku-web/test-results/v062-design-refined/export",
+      "reportId": "80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923",
+      "reportUrl": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/",
+      "baselineCommit": "a90cd2a",
+      "sourceDate": null,
+      "receiptStatus": "refined-prototype-ready-for-visual-review",
+      "receiptFileCount": 16,
+      "receiptByteCount": 248085,
+      "receiptInventory": {
+        "fileCount": 16,
+        "totalBytes": 248085,
+        "files": [
+          {
+            "path": "assets/fonts/LICENSE.txt",
+            "bytes": 7169,
+            "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+          },
+          {
+            "path": "assets/fonts/PixelOperator-Bold.ttf",
+            "bytes": 16984,
+            "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+          },
+          {
+            "path": "assets/fonts/PixelOperator.ttf",
+            "bytes": 17272,
+            "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+          },
+          {
+            "path": "assets/fonts/PixelOperator8-Bold.ttf",
+            "bytes": 18624,
+            "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+          },
+          {
+            "path": "assets/global.css",
+            "bytes": 6808,
+            "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+          },
+          {
+            "path": "assets/icons.json",
+            "bytes": 32037,
+            "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+          },
+          {
+            "path": "assets/reference-owner.png",
+            "bytes": 27952,
+            "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+          },
+          {
+            "path": "assets/reference-public.png",
+            "bytes": 13832,
+            "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+          },
+          {
+            "path": "assets/reference-replay.png",
+            "bytes": 17391,
+            "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+          },
+          {
+            "path": "assets/reference-settings.png",
+            "bytes": 28412,
+            "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+          },
+          {
+            "path": "index.html",
+            "bytes": 9867,
+            "sha256": "971fe5834646d2fb927554c824dc9af0366add644365bdbfb3c4403e59e798a7"
+          },
+          {
+            "path": "prototype.css",
+            "bytes": 20199,
+            "sha256": "ee077f604a1e9e71bdba6aef4c4ac0f2e910ba9a5be6bbe779ad10c259c62006"
+          },
+          {
+            "path": "prototype.html",
+            "bytes": 677,
+            "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+          },
+          {
+            "path": "prototype.js",
+            "bytes": 23010,
+            "sha256": "5013de5941908fad0987d32be2464e9e7b141c4e513961af4715f0d3913a0659"
+          },
+          {
+            "path": "study.css",
+            "bytes": 4332,
+            "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295"
+          },
+          {
+            "path": "study.js",
+            "bytes": 3519,
+            "sha256": "77c000ceabd6485c0b5c4f263280895f77c307c146e41c9aba6611e181b66f3f"
+          }
+        ]
+      },
+      "before": {
+        "localExport": {
+          "fileCount": 16,
+          "totalBytes": 248085,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+            },
+            {
+              "path": "index.html",
+              "bytes": 9867,
+              "sha256": "971fe5834646d2fb927554c824dc9af0366add644365bdbfb3c4403e59e798a7"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 20199,
+              "sha256": "ee077f604a1e9e71bdba6aef4c4ac0f2e910ba9a5be6bbe779ad10c259c62006"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 23010,
+              "sha256": "5013de5941908fad0987d32be2464e9e7b141c4e513961af4715f0d3913a0659"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4332,
+              "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3519,
+              "sha256": "77c000ceabd6485c0b5c4f263280895f77c307c146e41c9aba6611e181b66f3f"
+            }
+          ]
+        },
+        "servedSnapshot": {
+          "fileCount": 16,
+          "totalBytes": 248085,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "index.html",
+              "bytes": 9867,
+              "sha256": "971fe5834646d2fb927554c824dc9af0366add644365bdbfb3c4403e59e798a7",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 20199,
+              "sha256": "ee077f604a1e9e71bdba6aef4c4ac0f2e910ba9a5be6bbe779ad10c259c62006",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 23010,
+              "sha256": "5013de5941908fad0987d32be2464e9e7b141c4e513961af4715f0d3913a0659",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4332,
+              "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3519,
+              "sha256": "77c000ceabd6485c0b5c4f263280895f77c307c146e41c9aba6611e181b66f3f",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            }
+          ]
+        },
+        "matchesReceipt": true,
+        "localMatchesServed": true
+      },
+      "after": {
+        "localExport": {
+          "fileCount": 16,
+          "totalBytes": 248085,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+            },
+            {
+              "path": "index.html",
+              "bytes": 9867,
+              "sha256": "971fe5834646d2fb927554c824dc9af0366add644365bdbfb3c4403e59e798a7"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 20199,
+              "sha256": "ee077f604a1e9e71bdba6aef4c4ac0f2e910ba9a5be6bbe779ad10c259c62006"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 23010,
+              "sha256": "5013de5941908fad0987d32be2464e9e7b141c4e513961af4715f0d3913a0659"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4332,
+              "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3519,
+              "sha256": "77c000ceabd6485c0b5c4f263280895f77c307c146e41c9aba6611e181b66f3f"
+            }
+          ]
+        },
+        "servedSnapshot": {
+          "fileCount": 16,
+          "totalBytes": 248085,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "index.html",
+              "bytes": 9867,
+              "sha256": "971fe5834646d2fb927554c824dc9af0366add644365bdbfb3c4403e59e798a7",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 20199,
+              "sha256": "ee077f604a1e9e71bdba6aef4c4ac0f2e910ba9a5be6bbe779ad10c259c62006",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 23010,
+              "sha256": "5013de5941908fad0987d32be2464e9e7b141c4e513961af4715f0d3913a0659",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4332,
+              "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3519,
+              "sha256": "77c000ceabd6485c0b5c4f263280895f77c307c146e41c9aba6611e181b66f3f",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:26:26 GMT"
+            }
+          ]
+        },
+        "matchesReceipt": true,
+        "localMatchesServed": true
+      },
+      "unchangedDuringCapture": true
+    },
+    {
+      "reportKey": "compact-player-card",
+      "originNote": "Frozen public player-card refinement with original minimal-panel comparison.",
+      "receiptPath": "docs/working/v0_6_2_design/player_card_evidence.json",
+      "exportPath": "gomoku-web/test-results/v062-player-card/export",
+      "reportId": "9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8",
+      "reportUrl": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/",
+      "baselineCommit": "c4e1351",
+      "sourceDate": null,
+      "receiptStatus": "player-card-prototype-ready-for-visual-review",
+      "receiptFileCount": 16,
+      "receiptByteCount": 252113,
+      "receiptInventory": {
+        "fileCount": 16,
+        "totalBytes": 252113,
+        "files": [
+          {
+            "path": "assets/fonts/LICENSE.txt",
+            "bytes": 7169,
+            "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+          },
+          {
+            "path": "assets/fonts/PixelOperator-Bold.ttf",
+            "bytes": 16984,
+            "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+          },
+          {
+            "path": "assets/fonts/PixelOperator.ttf",
+            "bytes": 17272,
+            "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+          },
+          {
+            "path": "assets/fonts/PixelOperator8-Bold.ttf",
+            "bytes": 18624,
+            "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+          },
+          {
+            "path": "assets/global.css",
+            "bytes": 6808,
+            "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+          },
+          {
+            "path": "assets/icons.json",
+            "bytes": 32037,
+            "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+          },
+          {
+            "path": "assets/reference-owner.png",
+            "bytes": 27952,
+            "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+          },
+          {
+            "path": "assets/reference-public.png",
+            "bytes": 13832,
+            "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+          },
+          {
+            "path": "assets/reference-replay.png",
+            "bytes": 17391,
+            "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+          },
+          {
+            "path": "assets/reference-settings.png",
+            "bytes": 28412,
+            "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+          },
+          {
+            "path": "index.html",
+            "bytes": 10353,
+            "sha256": "948555a5477940af95b7358d763f5ccd5874d7804d598a1f04fb975fd769c8df"
+          },
+          {
+            "path": "prototype.css",
+            "bytes": 22573,
+            "sha256": "1d9b5b735a0837a128b13d81f0586c1aee3c529a0d775af564aec23f250e7f84"
+          },
+          {
+            "path": "prototype.html",
+            "bytes": 677,
+            "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+          },
+          {
+            "path": "prototype.js",
+            "bytes": 24028,
+            "sha256": "306efe18c587163dad7b2aed7fdf93c6ca028bad9d5ec9e6c9faee0b272ad6c5"
+          },
+          {
+            "path": "study.css",
+            "bytes": 4332,
+            "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295"
+          },
+          {
+            "path": "study.js",
+            "bytes": 3669,
+            "sha256": "1cd77c131ae3d24cd7e6bff897184a70721fe5dacde074c3243a4df2ab12cd8b"
+          }
+        ]
+      },
+      "before": {
+        "localExport": {
+          "fileCount": 16,
+          "totalBytes": 252113,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+            },
+            {
+              "path": "index.html",
+              "bytes": 10353,
+              "sha256": "948555a5477940af95b7358d763f5ccd5874d7804d598a1f04fb975fd769c8df"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 22573,
+              "sha256": "1d9b5b735a0837a128b13d81f0586c1aee3c529a0d775af564aec23f250e7f84"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 24028,
+              "sha256": "306efe18c587163dad7b2aed7fdf93c6ca028bad9d5ec9e6c9faee0b272ad6c5"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4332,
+              "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3669,
+              "sha256": "1cd77c131ae3d24cd7e6bff897184a70721fe5dacde074c3243a4df2ab12cd8b"
+            }
+          ]
+        },
+        "servedSnapshot": {
+          "fileCount": 16,
+          "totalBytes": 252113,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:17 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "index.html",
+              "bytes": 10353,
+              "sha256": "948555a5477940af95b7358d763f5ccd5874d7804d598a1f04fb975fd769c8df",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 22573,
+              "sha256": "1d9b5b735a0837a128b13d81f0586c1aee3c529a0d775af564aec23f250e7f84",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 24028,
+              "sha256": "306efe18c587163dad7b2aed7fdf93c6ca028bad9d5ec9e6c9faee0b272ad6c5",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4332,
+              "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3669,
+              "sha256": "1cd77c131ae3d24cd7e6bff897184a70721fe5dacde074c3243a4df2ab12cd8b",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            }
+          ]
+        },
+        "matchesReceipt": true,
+        "localMatchesServed": true
+      },
+      "after": {
+        "localExport": {
+          "fileCount": 16,
+          "totalBytes": 252113,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643"
+            },
+            {
+              "path": "index.html",
+              "bytes": 10353,
+              "sha256": "948555a5477940af95b7358d763f5ccd5874d7804d598a1f04fb975fd769c8df"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 22573,
+              "sha256": "1d9b5b735a0837a128b13d81f0586c1aee3c529a0d775af564aec23f250e7f84"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 24028,
+              "sha256": "306efe18c587163dad7b2aed7fdf93c6ca028bad9d5ec9e6c9faee0b272ad6c5"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4332,
+              "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3669,
+              "sha256": "1cd77c131ae3d24cd7e6bff897184a70721fe5dacde074c3243a4df2ab12cd8b"
+            }
+          ]
+        },
+        "servedSnapshot": {
+          "fileCount": 16,
+          "totalBytes": 252113,
+          "files": [
+            {
+              "path": "assets/fonts/LICENSE.txt",
+              "bytes": 7169,
+              "sha256": "f4e7f373b9b996950337e8d41a4a2939c2d90b7725e9baf3d5084a22717ad328",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:17 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator-Bold.ttf",
+              "bytes": 16984,
+              "sha256": "c1963fa21043a357212e0a9e8ae1986bc375c1759e68bd3533c4f71b164614b0",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator.ttf",
+              "bytes": 17272,
+              "sha256": "8d805274eaf227855147153182a96a86ff395ddbc7d2d378095af8831b764a3e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/fonts/PixelOperator8-Bold.ttf",
+              "bytes": 18624,
+              "sha256": "b46a109cdac6c2f7acb4a57451dc3c8f7e2d391b871500270eadf139f0ac906e",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/global.css",
+              "bytes": 6808,
+              "sha256": "1278b19ab58f6017f0a2199d2b7c901f05beb2cc84dfc4053cfcb356a32a9549",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/icons.json",
+              "bytes": 32037,
+              "sha256": "584ed085d68de20bec8b42dcd2e1ae63d0319c2b846761288d1101cbb3ce9895",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/reference-owner.png",
+              "bytes": 27952,
+              "sha256": "1e645b5c7eaec5e3d439601c7245da5dce42028f363a197e57d96abaca9513ef",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/reference-public.png",
+              "bytes": 13832,
+              "sha256": "4250af40ec8251a5c070fe2f03e948deaa9f3f4a58df651b8f3e52de0eba5f02",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/reference-replay.png",
+              "bytes": 17391,
+              "sha256": "5368575ee65f869b3180f3ebf4dc16b13931c1a60e3126d7eca023399e94cc4b",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "assets/reference-settings.png",
+              "bytes": 28412,
+              "sha256": "18de326dc903e7db42ed218f4a3653dd59f675f9b89af7565b72186775f11643",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "index.html",
+              "bytes": 10353,
+              "sha256": "948555a5477940af95b7358d763f5ccd5874d7804d598a1f04fb975fd769c8df",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "prototype.css",
+              "bytes": 22573,
+              "sha256": "1d9b5b735a0837a128b13d81f0586c1aee3c529a0d775af564aec23f250e7f84",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "prototype.html",
+              "bytes": 677,
+              "sha256": "642cd8c673eab259b34841b0612c280aa84ea7549d96dc8641d72f0a363ba002",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "prototype.js",
+              "bytes": 24028,
+              "sha256": "306efe18c587163dad7b2aed7fdf93c6ca028bad9d5ec9e6c9faee0b272ad6c5",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "study.css",
+              "bytes": 4332,
+              "sha256": "ff7b8757c123b7ec26389bf401401f03f34cfcb1c90f7795a712e7e9ce8a9295",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            },
+            {
+              "path": "study.js",
+              "bytes": 3669,
+              "sha256": "1cd77c131ae3d24cd7e6bff897184a70721fe5dacde074c3243a4df2ab12cd8b",
+              "httpStatus": 200,
+              "lastModified": "Sat, 24 Oct 2026 02:36:18 GMT"
+            }
+          ]
+        },
+        "matchesReceipt": true,
+        "localMatchesServed": true
+      },
+      "unchangedDuringCapture": true
+    }
+  ],
+  "captures": [
+    {
+      "id": "profile-mockup-a",
+      "option": "A",
+      "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+      "reportReceiptPath": "docs/working/v0_6_2_design/evidence.json",
+      "sourceExportPath": "gomoku-web/test-results/v062-design/export",
+      "origin": "design mockup",
+      "runtimeProductCapture": false,
+      "humanAcceptanceEvidence": false,
+      "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=a&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+      "selection": {
+        "layout": "a",
+        "sidebar": null,
+        "surface": "visitor",
+        "scenario": "full",
+        "gamesInFixture": 32,
+        "sharedStats": true,
+        "labels": "normal",
+        "textScalePercent": 100,
+        "thumbnails": false,
+        "embed": true,
+        "page": 1,
+        "pageCount": 4
+      },
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "deviceScaleFactor": 1,
+        "fullPage": true,
+        "reducedMotion": "reduce",
+        "colorScheme": "dark"
+      },
+      "captureAt": "2026-10-27T00:40:25.266Z",
+      "browser": {
+        "engine": "Chromium",
+        "version": "156.0.8078.4",
+        "playwrightVersion": "1.64.1"
+      },
+      "renderedState": {
+        "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=a&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+        "title": "Gomoku2D · public-profile prototype",
+        "layoutClass": "app layout-a",
+        "studyChromeHidden": true,
+        "playerNamePresent": true,
+        "gameRowsVisible": 8,
+        "pageIndicator": "1 / 4",
+        "gameCount": "32 games",
+        "sharedStatsVisible": true,
+        "thumbnailCount": 0,
+        "longLabelFixturePresent": false,
+        "fontSize": "16px",
+        "fontsStatus": "loaded",
+        "pixelOperatorAvailable": true,
+        "imageStates": []
+      },
+      "image": {
+        "path": "docs/working/v0_6_3_design_reviews/media/profile-mockup-a.png",
+        "bytes": 40176,
+        "sha256": "b92053cd7b7eb857399c0244a2813dd0b9283b407960036348a8de3ed2fcb2e9",
+        "width": 1280,
+        "height": 1198
+      },
+      "requests": [
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=a&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+          "method": "GET",
+          "resourceType": "document",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/global.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.js",
+          "method": "GET",
+          "resourceType": "script",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/icons.json",
+          "method": "GET",
+          "resourceType": "fetch",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/fonts/PixelOperator-Bold.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/fonts/PixelOperator.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        }
+      ],
+      "blockedRequests": [],
+      "errors": {
+        "console": [],
+        "page": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "id": "profile-mockup-b",
+      "option": "B",
+      "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+      "reportReceiptPath": "docs/working/v0_6_2_design/evidence.json",
+      "sourceExportPath": "gomoku-web/test-results/v062-design/export",
+      "origin": "design mockup",
+      "runtimeProductCapture": false,
+      "humanAcceptanceEvidence": false,
+      "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=b&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+      "selection": {
+        "layout": "b",
+        "sidebar": null,
+        "surface": "visitor",
+        "scenario": "full",
+        "gamesInFixture": 32,
+        "sharedStats": true,
+        "labels": "normal",
+        "textScalePercent": 100,
+        "thumbnails": false,
+        "embed": true,
+        "page": 1,
+        "pageCount": 4
+      },
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "deviceScaleFactor": 1,
+        "fullPage": true,
+        "reducedMotion": "reduce",
+        "colorScheme": "dark"
+      },
+      "captureAt": "2026-10-27T00:40:25.898Z",
+      "browser": {
+        "engine": "Chromium",
+        "version": "156.0.8078.4",
+        "playwrightVersion": "1.64.1"
+      },
+      "renderedState": {
+        "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=b&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+        "title": "Gomoku2D · public-profile prototype",
+        "layoutClass": "app layout-b",
+        "studyChromeHidden": true,
+        "playerNamePresent": true,
+        "gameRowsVisible": 8,
+        "pageIndicator": "1 / 4",
+        "gameCount": "32 games",
+        "sharedStatsVisible": true,
+        "thumbnailCount": 0,
+        "longLabelFixturePresent": false,
+        "fontSize": "16px",
+        "fontsStatus": "loaded",
+        "pixelOperatorAvailable": true,
+        "imageStates": []
+      },
+      "image": {
+        "path": "docs/working/v0_6_3_design_reviews/media/profile-mockup-b.png",
+        "bytes": 40310,
+        "sha256": "7c8c0bda9f781010977a64b08916d25e0b57e616bbd13dd625b8bcf6af6ed94d",
+        "width": 1280,
+        "height": 1060
+      },
+      "requests": [
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=b&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+          "method": "GET",
+          "resourceType": "document",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/global.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.js",
+          "method": "GET",
+          "resourceType": "script",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/icons.json",
+          "method": "GET",
+          "resourceType": "fetch",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/fonts/PixelOperator-Bold.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/fonts/PixelOperator.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        }
+      ],
+      "blockedRequests": [],
+      "errors": {
+        "console": [],
+        "page": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "id": "profile-mockup-c",
+      "option": "C",
+      "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+      "reportReceiptPath": "docs/working/v0_6_2_design/evidence.json",
+      "sourceExportPath": "gomoku-web/test-results/v062-design/export",
+      "origin": "design mockup",
+      "runtimeProductCapture": false,
+      "humanAcceptanceEvidence": false,
+      "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=c&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+      "selection": {
+        "layout": "c",
+        "sidebar": null,
+        "surface": "visitor",
+        "scenario": "full",
+        "gamesInFixture": 32,
+        "sharedStats": true,
+        "labels": "normal",
+        "textScalePercent": 100,
+        "thumbnails": false,
+        "embed": true,
+        "page": 1,
+        "pageCount": 4
+      },
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "deviceScaleFactor": 1,
+        "fullPage": true,
+        "reducedMotion": "reduce",
+        "colorScheme": "dark"
+      },
+      "captureAt": "2026-10-27T00:40:26.514Z",
+      "browser": {
+        "engine": "Chromium",
+        "version": "156.0.8078.4",
+        "playwrightVersion": "1.64.1"
+      },
+      "renderedState": {
+        "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=c&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+        "title": "Gomoku2D · public-profile prototype",
+        "layoutClass": "app layout-c",
+        "studyChromeHidden": true,
+        "playerNamePresent": true,
+        "gameRowsVisible": 8,
+        "pageIndicator": "1 / 4",
+        "gameCount": "32 games",
+        "sharedStatsVisible": true,
+        "thumbnailCount": 0,
+        "longLabelFixturePresent": false,
+        "fontSize": "16px",
+        "fontsStatus": "loaded",
+        "pixelOperatorAvailable": true,
+        "imageStates": []
+      },
+      "image": {
+        "path": "docs/working/v0_6_3_design_reviews/media/profile-mockup-c.png",
+        "bytes": 42508,
+        "sha256": "ec542031c20ca7f67c66b50e3ee42a7b333cec959401f8e5e360e937ca3c16ea",
+        "width": 1280,
+        "height": 1227
+      },
+      "requests": [
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.html?layout=c&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+          "method": "GET",
+          "resourceType": "document",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/global.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/prototype.js",
+          "method": "GET",
+          "resourceType": "script",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/icons.json",
+          "method": "GET",
+          "resourceType": "fetch",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/fonts/PixelOperator-Bold.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7/assets/fonts/PixelOperator.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        }
+      ],
+      "blockedRequests": [],
+      "errors": {
+        "console": [],
+        "page": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "id": "profile-mockup-minimal-two-column",
+      "option": "minimal two-column refinement",
+      "reportId": "80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923",
+      "reportReceiptPath": "docs/working/v0_6_2_design/refinement_evidence.json",
+      "sourceExportPath": "gomoku-web/test-results/v062-design-refined/export",
+      "origin": "design mockup",
+      "runtimeProductCapture": false,
+      "humanAcceptanceEvidence": false,
+      "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/prototype.html?layout=split&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+      "selection": {
+        "layout": "split",
+        "sidebar": null,
+        "surface": "visitor",
+        "scenario": "full",
+        "gamesInFixture": 32,
+        "sharedStats": true,
+        "labels": "normal",
+        "textScalePercent": 100,
+        "thumbnails": false,
+        "embed": true,
+        "page": 1,
+        "pageCount": 4
+      },
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "deviceScaleFactor": 1,
+        "fullPage": true,
+        "reducedMotion": "reduce",
+        "colorScheme": "dark"
+      },
+      "captureAt": "2026-10-27T00:40:27.131Z",
+      "browser": {
+        "engine": "Chromium",
+        "version": "156.0.8078.4",
+        "playwrightVersion": "1.64.1"
+      },
+      "renderedState": {
+        "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/prototype.html?layout=split&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+        "title": "Gomoku2D · public-profile prototype",
+        "layoutClass": "app layout-split",
+        "studyChromeHidden": true,
+        "playerNamePresent": true,
+        "gameRowsVisible": 8,
+        "pageIndicator": "1 / 4",
+        "gameCount": "32 games",
+        "sharedStatsVisible": true,
+        "thumbnailCount": 0,
+        "longLabelFixturePresent": false,
+        "fontSize": "16px",
+        "fontsStatus": "loaded",
+        "pixelOperatorAvailable": true,
+        "imageStates": []
+      },
+      "image": {
+        "path": "docs/working/v0_6_3_design_reviews/media/profile-mockup-minimal-two-column.png",
+        "bytes": 42853,
+        "sha256": "ddaec4b3a0c6a9022b89cc5629ba7c01dfaaadc494976c1b75b96a44d54bbb88",
+        "width": 1280,
+        "height": 1191
+      },
+      "requests": [
+        {
+          "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/prototype.html?layout=split&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&embed=1",
+          "method": "GET",
+          "resourceType": "document",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/assets/global.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/prototype.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/prototype.js",
+          "method": "GET",
+          "resourceType": "script",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/assets/icons.json",
+          "method": "GET",
+          "resourceType": "fetch",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/assets/fonts/PixelOperator-Bold.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923/assets/fonts/PixelOperator.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        }
+      ],
+      "blockedRequests": [],
+      "errors": {
+        "console": [],
+        "page": [],
+        "requestFailures": []
+      }
+    },
+    {
+      "id": "profile-mockup-compact-player-card",
+      "option": "compact player-card refinement",
+      "reportId": "9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8",
+      "reportReceiptPath": "docs/working/v0_6_2_design/player_card_evidence.json",
+      "sourceExportPath": "gomoku-web/test-results/v062-player-card/export",
+      "origin": "design mockup",
+      "runtimeProductCapture": false,
+      "humanAcceptanceEvidence": false,
+      "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/prototype.html?layout=split&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&sidebar=card&embed=1",
+      "selection": {
+        "layout": "split",
+        "sidebar": "card",
+        "surface": "visitor",
+        "scenario": "full",
+        "gamesInFixture": 32,
+        "sharedStats": true,
+        "labels": "normal",
+        "textScalePercent": 100,
+        "thumbnails": false,
+        "embed": true,
+        "page": 1,
+        "pageCount": 4
+      },
+      "viewport": {
+        "width": 1280,
+        "height": 900,
+        "deviceScaleFactor": 1,
+        "fullPage": true,
+        "reducedMotion": "reduce",
+        "colorScheme": "dark"
+      },
+      "captureAt": "2026-10-27T00:40:27.760Z",
+      "browser": {
+        "engine": "Chromium",
+        "version": "156.0.8078.4",
+        "playwrightVersion": "1.64.1"
+      },
+      "renderedState": {
+        "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/prototype.html?layout=split&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&sidebar=card&embed=1",
+        "title": "Gomoku2D · public-profile prototype",
+        "layoutClass": "app layout-split",
+        "studyChromeHidden": true,
+        "playerNamePresent": true,
+        "gameRowsVisible": 8,
+        "pageIndicator": "1 / 4",
+        "gameCount": "32 games",
+        "sharedStatsVisible": true,
+        "thumbnailCount": 0,
+        "longLabelFixturePresent": false,
+        "fontSize": "16px",
+        "fontsStatus": "loaded",
+        "pixelOperatorAvailable": true,
+        "imageStates": []
+      },
+      "image": {
+        "path": "docs/working/v0_6_3_design_reviews/media/profile-mockup-compact-player-card.png",
+        "bytes": 45458,
+        "sha256": "e0ebac957019f1b8e6e43894cb029efeddf2ffe7e70c6b4523603af0e7a4fa2f",
+        "width": 1280,
+        "height": 1121
+      },
+      "requests": [
+        {
+          "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/prototype.html?layout=split&surface=visitor&scenario=full&stats=on&labels=normal&text=100&thumbs=off&sidebar=card&embed=1",
+          "method": "GET",
+          "resourceType": "document",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/assets/global.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/prototype.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/prototype.js",
+          "method": "GET",
+          "resourceType": "script",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/assets/icons.json",
+          "method": "GET",
+          "resourceType": "fetch",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/assets/fonts/PixelOperator-Bold.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        },
+        {
+          "url": "http://starship:8787/reports/9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8/assets/fonts/PixelOperator.ttf",
+          "method": "GET",
+          "resourceType": "font",
+          "httpStatus": 200
+        }
+      ],
+      "blockedRequests": [],
+      "errors": {
+        "console": [],
+        "page": [],
+        "requestFailures": []
+      }
+    }
+  ],
+  "acceptance": {
+    "allReportsMatchReceiptBeforeAndAfter": true,
+    "sourceFilesUnchangedAcrossCapture": true,
+    "allCapturesPassed": true,
+    "noBlockedOrExternalRequests": true,
+    "allErrorsClear": true
+  },
+  "captureCompletedAt": "2026-10-27T00:40:27.851Z"
+}

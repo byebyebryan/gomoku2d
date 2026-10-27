@@ -1,0 +1,2644 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-10-26",
+  "scope": "Factual, read-only audit of six Design review candidates. No product code, review records, UI, tests, prose documentation, screenshot assets, or original Git blobs were changed/materialized.",
+  "historyCatalog": {
+    "path": "gomoku-web/src/developer/history.json",
+    "catalogCommit": "ef7101cbc316a894a77f7e1d197b00a6e671367f",
+    "qualifiedCounts": {
+      "releaseSources": 25,
+      "milestones": 24,
+      "screens": 15,
+      "snapshots": 137,
+      "desktopPortraitPngs": 274
+    },
+    "qualificationSource": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/README.md",
+    "qualificationLimits": [
+      "Exact tagged sources were recaptured in modern Chromium 156, not their historical runtime.",
+      "Desktop is 1280×900 CSS px; portrait is generic 412×800 DPR1 touch emulation, not a measured phone.",
+      "Synthetic guest/account fixtures are used; replay screenshots show final board and settled analysis where available.",
+      "Capture success does not establish original-period human approval, physical-device acceptance, or full timeline behavior from a single frame."
+    ]
+  },
+  "sourceVersions": [
+    {
+      "version": "0.1",
+      "date": "2026-04-18",
+      "commit": "20c4c8c6cc0aeda1fe99e7f0abe50956f7165092",
+      "tag": "v0.1"
+    },
+    {
+      "version": "0.2.1",
+      "date": "2026-04-22",
+      "commit": "add1953c3228849a8d37c424d0deec971c1fc937",
+      "tag": "v0.2.1"
+    },
+    {
+      "version": "0.2.2",
+      "date": "2026-04-22",
+      "commit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+      "tag": "v0.2.2"
+    },
+    {
+      "version": "0.2.3",
+      "date": "2026-04-22",
+      "commit": "95b9707a6c01d77fa50d181bdd1ee4542047a2a2",
+      "tag": "v0.2.3"
+    },
+    {
+      "version": "0.2.4",
+      "date": "2026-04-24",
+      "commit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+      "tag": "v0.2.4"
+    },
+    {
+      "version": "0.4.5",
+      "date": "2026-05-16",
+      "commit": "b97dcff422350ebe78bb0d2cf5061ce52a408ed0",
+      "tag": "v0.4.5"
+    },
+    {
+      "version": "0.4.6",
+      "date": "2026-05-17",
+      "commit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b",
+      "tag": "v0.4.6"
+    },
+    {
+      "version": "0.4.7",
+      "date": "2026-05-19",
+      "commit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "tag": "v0.4.7"
+    },
+    {
+      "version": "0.4.8",
+      "date": "2026-05-21",
+      "commit": "ea188acaf3e98b0b0b0952c05993391bc8a8a1ef",
+      "tag": "v0.4.8"
+    },
+    {
+      "version": "0.5.0",
+      "date": "2026-05-22",
+      "commit": "678a69ac51f2b1f4fa968bf9fe03b69831b847c9",
+      "tag": "v0.5.0"
+    },
+    {
+      "version": "0.5.1",
+      "date": "2026-05-25",
+      "commit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+      "tag": "v0.5.1"
+    },
+    {
+      "version": "0.5.2",
+      "date": "2026-05-27",
+      "commit": "71793b0f21adf408b5b714514937d979ecffc944",
+      "tag": "v0.5.2"
+    },
+    {
+      "version": "0.6.1",
+      "date": "2026-10-23",
+      "commit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+      "tag": "v0.6.1"
+    },
+    {
+      "version": "0.6.2",
+      "date": "2026-10-24",
+      "commit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+      "tag": "v0.6.2"
+    }
+  ],
+  "originalScreenshotArchive": {
+    "path": "docs/ui_screenshot_review.md",
+    "commit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+    "snapshotDate": "2026-05-19",
+    "missingReferencedPngCount": 40,
+    "recoverableBlobCount": 40,
+    "materialized": false,
+    "metadataLimit": "Original references have Git blob OID/byte size only; no recorded SHA-256, dimensions, or capture manifest.",
+    "ref": "v0.4.7"
+  },
+  "cases": [
+    {
+      "id": "board-first-shell-022",
+      "candidateVersions": [
+        "0.1",
+        "0.2.1",
+        "0.2.2"
+      ],
+      "sourceEvidence": [
+        {
+          "path": "docs/ui_screenshot_review.md",
+          "commit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+          "sourceBlobOid": "4fb626ddf19d3610ba628f646d035dfe5840e214",
+          "documentDate": "2026-05-19",
+          "ref": "v0.4.7",
+          "describedReleaseVersion": "0.1",
+          "describedReleaseCommit": "20c4c8c6cc0aeda1fe99e7f0abe50956f7165092",
+          "describedReleaseDate": "2026-04-18",
+          "evidenceType": "historical review excerpt",
+          "decisionStatus": "Preserved review text; author is not named in this file.",
+          "section": "v0.1 / What v0.1 got right",
+          "lines": [
+            30,
+            30
+          ],
+          "excerpt": "- strong retro tone immediately"
+        },
+        {
+          "path": "gomoku-web/src/app/App.tsx",
+          "commit": "add1953c3228849a8d37c424d0deec971c1fc937",
+          "sourceBlobOid": "a3ddd695889bb027d24528410aafca48bf8552fa",
+          "documentDate": "2026-04-22",
+          "ref": "v0.2.1",
+          "describedReleaseVersion": "0.2.1",
+          "describedReleaseCommit": "add1953c3228849a8d37c424d0deec971c1fc937",
+          "describedReleaseDate": "2026-04-22",
+          "evidenceType": "implementation source observation",
+          "decisionStatus": "Shows implementation structure; does not establish human approval.",
+          "section": "React Router app shell / imports",
+          "lines": [
+            2,
+            2
+          ],
+          "excerpt": "import { Navigate, Route, Routes } from \"react-router-dom\";"
+        },
+        {
+          "path": "gomoku-web/src/app/App.tsx",
+          "commit": "add1953c3228849a8d37c424d0deec971c1fc937",
+          "sourceBlobOid": "a3ddd695889bb027d24528410aafca48bf8552fa",
+          "documentDate": "2026-04-22",
+          "ref": "v0.2.1",
+          "describedReleaseVersion": "0.2.1",
+          "describedReleaseCommit": "add1953c3228849a8d37c424d0deec971c1fc937",
+          "describedReleaseDate": "2026-04-22",
+          "evidenceType": "implementation source observation",
+          "decisionStatus": "Shows implementation structure; does not establish human approval.",
+          "section": "React Router app shell / lazy route modules",
+          "lines": [
+            8,
+            8
+          ],
+          "excerpt": "const LocalMatchRoute = lazy(async () => ({"
+        },
+        {
+          "path": "docs/archive/v0_2_visual.md",
+          "commit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "sourceBlobOid": "c865038231d625692dcf03411b1adfd7f99168a2",
+          "documentDate": "2026-04-22",
+          "ref": "v0.2.2",
+          "describedReleaseVersion": "0.2.2",
+          "describedReleaseCommit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "describedReleaseDate": "2026-04-22",
+          "evidenceType": "document excerpt",
+          "section": "Visual identity pillars / fewer boxes",
+          "lines": [
+            49,
+            49
+          ],
+          "excerpt": "Prefer spacing, dividers, and typography over nested bordered panels."
+        },
+        {
+          "path": "docs/archive/v0_2_visual.md",
+          "commit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "sourceBlobOid": "c865038231d625692dcf03411b1adfd7f99168a2",
+          "documentDate": "2026-04-22",
+          "ref": "v0.2.2",
+          "describedReleaseVersion": "0.2.2",
+          "describedReleaseCommit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "describedReleaseDate": "2026-04-22",
+          "evidenceType": "document excerpt",
+          "section": "Font direction",
+          "lines": [
+            100,
+            100
+          ],
+          "excerpt": "- pixel / bitmap-style display font"
+        },
+        {
+          "path": "docs/archive/v0_2_visual.md",
+          "commit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "sourceBlobOid": "c865038231d625692dcf03411b1adfd7f99168a2",
+          "documentDate": "2026-04-22",
+          "ref": "v0.2.2",
+          "describedReleaseVersion": "0.2.2",
+          "describedReleaseCommit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "describedReleaseDate": "2026-04-22",
+          "evidenceType": "document excerpt",
+          "section": "Visual identity pillars / board dominance",
+          "lines": [
+            45,
+            45
+          ],
+          "excerpt": "On game and replay screens, the board must remain the dominant visual element."
+        }
+      ],
+      "documentedDecisions": [
+        "The .2.1 App source shows a React Router app shell and lazy route modules; this is an implementation observation, not evidence of approval.",
+        "The .2.2 visual brief explicitly calls for board dominance, fewer boxes, chunky controls, sparse chrome and pixel/bitmap display type."
+      ],
+      "inferences": [
+        "Grouping .2.1 and .2.2 as one episode is editorial. Visual continuity is best shown by screenshots, not the text alone."
+      ],
+      "mediaCandidates": [
+        {
+          "snapshotId": "home-default-021-05e31e04662c",
+          "screen": "home",
+          "state": "default",
+          "sourceVersion": "0.2.1",
+          "sourceCommit": "add1953c3228849a8d37c424d0deec971c1fc937",
+          "sourceReleaseDate": "2026-04-22",
+          "captureDate": "2026-10-25T21:57:02.921Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/capture.json",
+            "sha256": "05e31e04662c39cd9b91b8da63e1b3cf0aeec774623618a33b1992a4bfe4d4e5"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/v0.2.1/desktop/home--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "745fd564b2d1bb87fc8a97bff20927c7354762b00988ef983b972389a50cd4eb",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/v0.2.1/portrait/home--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "696e208b4f4faeb596446e273dc8aa4ab20c212b7b73b29798a0460ae48adf70",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "match-default-021-05e31e04662c",
+          "screen": "match",
+          "state": "default",
+          "sourceVersion": "0.2.1",
+          "sourceCommit": "add1953c3228849a8d37c424d0deec971c1fc937",
+          "sourceReleaseDate": "2026-04-22",
+          "captureDate": "2026-10-25T21:57:02.921Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. New board (no replay branching yet).",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/capture.json",
+            "sha256": "05e31e04662c39cd9b91b8da63e1b3cf0aeec774623618a33b1992a4bfe4d4e5"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/v0.2.1/desktop/match--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "4dfacd839287a6c981a4cb536fc50187e445907a46872d7835e0c38d3739f921",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.1-run1/v0.2.1/portrait/match--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "50883ae167897946049f6a0968b4084dc254fea1bfade828c496095ca3116592",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "home-default-022-7001a1940c14",
+          "screen": "home",
+          "state": "default",
+          "sourceVersion": "0.2.2",
+          "sourceCommit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "sourceReleaseDate": "2026-04-22",
+          "captureDate": "2026-10-25T21:57:45.068Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/capture.json",
+            "sha256": "7001a1940c14ef6e3c77c04a209df2942d94035071923465932cce4c8b2d5306"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/desktop/home--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "1823d92d63f523da94050789f67adf5f86891355538f88c37a3d8ca8aa7be2a9",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/portrait/home--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "bc14bac2318f3c7ad6241cb6c309207e855495b3124deccc3e51af62a950a778",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "match-default-022-7001a1940c14",
+          "screen": "match",
+          "state": "default",
+          "sourceVersion": "0.2.2",
+          "sourceCommit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "sourceReleaseDate": "2026-04-22",
+          "captureDate": "2026-10-25T21:57:45.068Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Replay branch at ply 8 of the same nine-move finished game.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/capture.json",
+            "sha256": "7001a1940c14ef6e3c77c04a209df2942d94035071923465932cce4c8b2d5306"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/desktop/match--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "b994d102b58884f38f1c03b2f2ca67c22c4ff9ce878c2dde6290d4efa2a66ac0",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/portrait/match--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "de9863a3df33ed481546fb90c8c76cd277149d1d8a10cd1c807172cb63023658",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        }
+      ],
+      "historicalOriginalPngPaths": [
+        "docs/assets/screenshot_v0_1_match_desktop.png",
+        "docs/assets/screenshot_v0_1_settings_desktop.png",
+        "docs/assets/screenshot_v0_2_1_home_desktop.png",
+        "docs/assets/screenshot_v0_2_1_match_desktop.png",
+        "docs/assets/screenshot_v0_2_1_profile_desktop.png",
+        "docs/assets/screenshot_v0_2_1_replay_desktop.png",
+        "docs/assets/screenshot_v0_2_2_home_desktop.png",
+        "docs/assets/screenshot_v0_2_2_match_desktop.png",
+        "docs/assets/screenshot_v0_2_2_profile_desktop.png",
+        "docs/assets/screenshot_v0_2_2_replay_desktop.png"
+      ],
+      "limits": [
+        "Original images are missing from current worktree, but Git blobs are recoverable.",
+        "Old images have no SHA-256, dimensions, capture manifest, browser, viewport, or build receipt.",
+        "History captures are exact-tag app/assets rendered retrospectively on 2026-10-25."
+      ],
+      "primaryDecisionGaps": [
+        "Whether to recover the v0.1 originals for context; none were extracted."
+      ]
+    },
+    {
+      "id": "portrait-play-024",
+      "candidateVersions": [
+        "0.2.2",
+        "0.2.3",
+        "0.2.4"
+      ],
+      "sourceEvidence": [
+        {
+          "path": "docs/ui_screenshot_review.md",
+          "commit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+          "sourceBlobOid": "4fb626ddf19d3610ba628f646d035dfe5840e214",
+          "documentDate": "2026-05-19",
+          "ref": "v0.4.7",
+          "describedReleaseVersion": "0.2.3",
+          "describedReleaseCommit": "95b9707a6c01d77fa50d181bdd1ee4542047a2a2",
+          "describedReleaseDate": "2026-04-22",
+          "evidenceType": "historical review excerpt",
+          "decisionStatus": "Preserved review describes the .2.3 result; it is later review text, not an original-period approval record.",
+          "section": "v0.2.3 / What v0.2.3 improved",
+          "lines": [
+            205,
+            206
+          ],
+          "excerpt": "- match, replay, and profile now have intentional portrait layouts instead of\n  reading like desktop screens collapsing downward"
+        },
+        {
+          "path": "docs/ui_screenshot_review.md",
+          "commit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+          "sourceBlobOid": "4fb626ddf19d3610ba628f646d035dfe5840e214",
+          "documentDate": "2026-05-19",
+          "ref": "v0.4.7",
+          "describedReleaseVersion": "0.2.3",
+          "describedReleaseCommit": "95b9707a6c01d77fa50d181bdd1ee4542047a2a2",
+          "describedReleaseDate": "2026-04-22",
+          "evidenceType": "historical review excerpt",
+          "decisionStatus": "Preserved review describes the .2.3 result; it is later review text, not an original-period approval record.",
+          "section": "v0.2.3 / What v0.2.3 improved",
+          "lines": [
+            208,
+            209
+          ],
+          "excerpt": "- replay controls are denser and clearer without taking focus away from the\n  board"
+        },
+        {
+          "path": "docs/ui_screenshot_review.md",
+          "commit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+          "sourceBlobOid": "4fb626ddf19d3610ba628f646d035dfe5840e214",
+          "documentDate": "2026-05-19",
+          "ref": "v0.4.7",
+          "describedReleaseVersion": "0.2.3",
+          "describedReleaseCommit": "95b9707a6c01d77fa50d181bdd1ee4542047a2a2",
+          "describedReleaseDate": "2026-04-22",
+          "evidenceType": "historical review excerpt",
+          "decisionStatus": "Preserved review describes the .2.3 result; it is later review text, not an original-period approval record.",
+          "section": "v0.2.3 / What v0.2.3 improved",
+          "lines": [
+            210,
+            211
+          ],
+          "excerpt": "- local match on portrait has a dedicated touch-placement flow instead of\n  relying on direct tap-to-place"
+        },
+        {
+          "path": "docs/archive/v0_2_4_ui_polish_notes.md",
+          "commit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+          "sourceBlobOid": "4227e505a593ada09f280a4b5a6bfb9fdf010b9e",
+          "documentDate": "2026-04-24",
+          "ref": "v0.2.4",
+          "describedReleaseVersion": "0.2.4",
+          "describedReleaseCommit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+          "describedReleaseDate": "2026-04-24",
+          "evidenceType": "document excerpt",
+          "section": "Context / v0.2.4 scope",
+          "lines": [
+            16,
+            16
+          ],
+          "excerpt": "- `v0.2.4` is now the final small polish pass on top of the `v0.2.3` baseline"
+        },
+        {
+          "path": "docs/archive/v0_2_4_ui_polish_notes.md",
+          "commit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+          "sourceBlobOid": "4227e505a593ada09f280a4b5a6bfb9fdf010b9e",
+          "documentDate": "2026-04-24",
+          "ref": "v0.2.4",
+          "describedReleaseVersion": "0.2.4",
+          "describedReleaseCommit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+          "describedReleaseDate": "2026-04-24",
+          "evidenceType": "document excerpt",
+          "section": "Do not reduce Place prominence on mobile Match",
+          "lines": [
+            186,
+            187
+          ],
+          "excerpt": "`Place` is now part of the actual control model, not decorative chrome. It\nshould stay prominent while mobile touch placement exists."
+        }
+      ],
+      "documentedDecisions": [
+        "The preserved v0.4.7 review describes .2.3 portrait layouts, denser Replay controls and a dedicated portrait touch-placement flow.",
+        "The .2.4 working note records a final small polish pass without redesign and says Place remains part of the mobile touch model."
+      ],
+      "inferences": [
+        "A single compact-controls story across both releases is a grouping of the icon/transport and touch-placement changes."
+      ],
+      "mediaCandidates": [
+        {
+          "snapshotId": "match-default-022-7001a1940c14",
+          "screen": "match",
+          "state": "default",
+          "sourceVersion": "0.2.2",
+          "sourceCommit": "a0a87e2adaf31f50c5e45f245c9765b09eac6fbc",
+          "sourceReleaseDate": "2026-04-22",
+          "captureDate": "2026-10-25T21:57:45.068Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Replay branch at ply 8 of the same nine-move finished game.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/capture.json",
+            "sha256": "7001a1940c14ef6e3c77c04a209df2942d94035071923465932cce4c8b2d5306"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/desktop/match--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "b994d102b58884f38f1c03b2f2ca67c22c4ff9ce878c2dde6290d4efa2a66ac0",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.2-run1/v0.2.2/portrait/match--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "de9863a3df33ed481546fb90c8c76cd277149d1d8a10cd1c807172cb63023658",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "match-default-023-dd881d81b66f",
+          "screen": "match",
+          "state": "default",
+          "sourceVersion": "0.2.3",
+          "sourceCommit": "95b9707a6c01d77fa50d181bdd1ee4542047a2a2",
+          "sourceReleaseDate": "2026-04-22",
+          "captureDate": "2026-10-25T21:58:13.502Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Replay branch at ply 8 of the same nine-move finished game.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.3-run1/capture.json",
+            "sha256": "dd881d81b66fda735ea68dcb24271d16d0bbdbb8b4ffc3b7101b6b7005b5c3c8"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.3-run1/v0.2.3/desktop/match--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "fc2feaf1720b397e223752844fee0aca15209cd2517f37cfb9969b8fcdf46a76",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.3-run1/v0.2.3/portrait/match--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "97270065488554e1580c32976dfa6d8df69104952be237a658c2c38e6b3ea577",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "match-default-024-3cdc924dbd72",
+          "screen": "match",
+          "state": "default",
+          "sourceVersion": "0.2.4",
+          "sourceCommit": "d9a3476d11dcb24e1c3fa67374a27b867a781da1",
+          "sourceReleaseDate": "2026-04-24",
+          "captureDate": "2026-10-25T22:04:19.675Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Replay branch at ply 8 of the same nine-move finished game.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.4-run2/capture.json",
+            "sha256": "3cdc924dbd722484518fc6ec1489f4ba75bae3e5b9ee63e93e1b5d352864e6d4"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.4-run2/v0.2.4/desktop/match--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "827ecd50ebb9feee286f34ee51459cf1fd84e701b0d8bd98052b267f7d7e7b1c",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/local-v0.2.4-run2/v0.2.4/portrait/match--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "3f245c4d83fcdc05b1a52315ee64e8ccfea52c9a238aa91674b088bec829c50d",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        }
+      ],
+      "historicalOriginalPngPaths": [
+        "docs/assets/screenshot_v0_2_2_home_desktop.png",
+        "docs/assets/screenshot_v0_2_2_match_desktop.png",
+        "docs/assets/screenshot_v0_2_2_profile_desktop.png",
+        "docs/assets/screenshot_v0_2_2_replay_desktop.png",
+        "docs/assets/screenshot_v0_2_3_home_desktop.png",
+        "docs/assets/screenshot_v0_2_3_home_mobile.png",
+        "docs/assets/screenshot_v0_2_3_match_desktop.png",
+        "docs/assets/screenshot_v0_2_3_match_mobile.png",
+        "docs/assets/screenshot_v0_2_3_profile_desktop.png",
+        "docs/assets/screenshot_v0_2_3_profile_mobile.png",
+        "docs/assets/screenshot_v0_2_3_replay_desktop.png",
+        "docs/assets/screenshot_v0_2_3_replay_mobile.png",
+        "docs/assets/screenshot_v0_2_4_home_desktop.png",
+        "docs/assets/screenshot_v0_2_4_home_mobile.png",
+        "docs/assets/screenshot_v0_2_4_match_desktop.png",
+        "docs/assets/screenshot_v0_2_4_match_mobile.png",
+        "docs/assets/screenshot_v0_2_4_profile_desktop.png",
+        "docs/assets/screenshot_v0_2_4_profile_mobile.png",
+        "docs/assets/screenshot_v0_2_4_replay_desktop.png",
+        "docs/assets/screenshot_v0_2_4_replay_mobile.png"
+      ],
+      "limits": [
+        "Original .2.3/.2.4 mobile PNGs are missing from worktree but recoverable by Git blob.",
+        "Retrospective portrait uses generic 412×800 DPR1 touch emulation, not a measured phone."
+      ],
+      "primaryDecisionGaps": [
+        "Whether to restore the original mobile screenshots or use the qualified retrospective portrait captures; no originals were extracted."
+      ]
+    },
+    {
+      "id": "replay-analysis-048",
+      "candidateVersions": [
+        "0.4.5",
+        "0.4.6",
+        "0.4.7",
+        "0.4.8"
+      ],
+      "sourceEvidence": [
+        {
+          "path": "docs/archive/v0_4_6_replay_analysis_plan.md",
+          "commit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b",
+          "sourceBlobOid": "7ebc198a94825b8c43a97e9aaa7ec778c074d34b",
+          "documentDate": "2026-05-17",
+          "ref": "v0.4.6",
+          "describedReleaseVersion": "0.4.6",
+          "describedReleaseCommit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b",
+          "describedReleaseDate": "2026-05-17",
+          "evidenceType": "document excerpt",
+          "section": "Replay UI / Board panel",
+          "lines": [
+            154,
+            154
+          ],
+          "excerpt": "- render annotations for the currently selected frame only;"
+        },
+        {
+          "path": "docs/archive/v0_4_6_replay_analysis_plan.md",
+          "commit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b",
+          "sourceBlobOid": "7ebc198a94825b8c43a97e9aaa7ec778c074d34b",
+          "documentDate": "2026-05-17",
+          "ref": "v0.4.6",
+          "describedReleaseVersion": "0.4.6",
+          "describedReleaseCommit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b",
+          "describedReleaseDate": "2026-05-17",
+          "evidenceType": "document excerpt",
+          "section": "Timeline/playback",
+          "lines": [
+            171,
+            171
+          ],
+          "excerpt": "- fill the detected forced corridor in red;"
+        },
+        {
+          "path": "docs/ui_screenshot_review.md",
+          "commit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+          "sourceBlobOid": "4fb626ddf19d3610ba628f646d035dfe5840e214",
+          "documentDate": "2026-05-19",
+          "ref": "v0.4.7",
+          "describedReleaseVersion": "0.4.6",
+          "describedReleaseCommit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b",
+          "describedReleaseDate": "2026-05-17",
+          "evidenceType": "historical screenshot review excerpt",
+          "decisionStatus": "Caption qualifies the shown subject as the last-escape frame; it does not identify exact runtime, browser, DPR, or capture date.",
+          "section": "v0.4.6 / References and active frame",
+          "lines": [
+            430,
+            430
+          ],
+          "excerpt": "replay after browser-side analysis has resolved to the last-escape frame."
+        },
+        {
+          "path": "CHANGELOG.md",
+          "commit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+          "sourceBlobOid": "a50079274614f785c499709f62489295f36cf0a5",
+          "documentDate": "2026-05-19",
+          "ref": "v0.4.7",
+          "describedReleaseVersion": "0.4.7",
+          "describedReleaseCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+          "describedReleaseDate": "2026-05-19",
+          "evidenceType": "document excerpt",
+          "section": "0.4.7 / Web",
+          "lines": [
+            50,
+            51
+          ],
+          "excerpt": "- Updated the replay timeline to separate traceback progress, setup corridor,\n  lethal tail, last escape, and lethal onset instead of treating the whole"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "commit": "ea188acaf3e98b0b0b0952c05993391bc8a8a1ef",
+          "sourceBlobOid": "a003a408758f088e8add2c986ed35ef36c5137e5",
+          "documentDate": "2026-05-21",
+          "ref": "v0.4.8",
+          "describedReleaseVersion": "0.4.8",
+          "describedReleaseCommit": "ea188acaf3e98b0b0b0952c05993391bc8a8a1ef",
+          "describedReleaseDate": "2026-05-21",
+          "evidenceType": "document excerpt",
+          "section": "0.4.8 / Replay analysis",
+          "lines": [
+            46,
+            47
+          ],
+          "excerpt": "- Added configurable evidence overlays that highlight the stones forming\n  immediate, imminent, counter-threat, and winning-line annotations, using the"
+        },
+        {
+          "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/README.md",
+          "commit": "ef7101cbc316a894a77f7e1d197b00a6e671367f",
+          "sourceBlobOid": "0ad77cf41c0e57f78d09f4d82f44cc2b8cdf709a",
+          "documentDate": "2026-10-25",
+          "describedReleaseVersion": "0.4.8",
+          "describedReleaseCommit": "ea188acaf3e98b0b0b0952c05993391bc8a8a1ef",
+          "describedReleaseDate": "2026-05-21",
+          "evidenceType": "retrospective capture qualification",
+          "decisionStatus": "Retrospective capture note; explicitly limits timeline claims from one final-board frame.",
+          "section": "Fixtures and framing",
+          "lines": [
+            40,
+            40
+          ],
+          "excerpt": "shows the final board and settled analysis where available. Reports use their"
+        }
+      ],
+      "documentedDecisions": [
+        "The v0.4.6 plan binds board annotations to the selected replay frame and defines frame-aware status and timeline treatment.",
+        "The preserved .4.6 screenshot caption identifies the shown active frame as last escape; it does not identify exact runtime, browser, DPR, or capture date.",
+        "The .4.7 and .4.8 release records describe status/timeline refinement and mistake-aware overlays."
+      ],
+      "historyCaptureObservation": "Selected History snapshots are replay/default at final board with settled analysis. Desktop frames show status/playback range; .4.8 shows evidence overlays. No separate frame or timeline-transition snapshot exists, so these alone do not show temporal behavior.",
+      "mediaCandidates": [
+        {
+          "snapshotId": "replay-default-046-3f38ea047aa9",
+          "screen": "replay",
+          "state": "default",
+          "sourceVersion": "0.4.6",
+          "sourceCommit": "2ec50c02f29deb02c14295d07929e9f7e835fd2b",
+          "sourceReleaseDate": "2026-05-17",
+          "captureDate": "2026-10-25T22:12:57.784Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked. Nine-move final board; analysis settled where available.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.6-guest-run2/capture.json",
+            "sha256": "3f38ea047aa9b4efa66c0613f7f00588c4cb64957afbdef05d119b2afc22710e"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.6-guest-run2/v0.4.6/desktop/replay--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "a0ce764d695172e858715f25db7bf63a26630615e8ff9c9d307bd15a4e3b6785",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.6-guest-run2/v0.4.6/portrait/replay--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "262b58506b084d937f34099f5970903e50f1b8fc615f63098a03fa3004348025",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "replay-default-047-e64e2c88089a",
+          "screen": "replay",
+          "state": "default",
+          "sourceVersion": "0.4.7",
+          "sourceCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+          "sourceReleaseDate": "2026-05-19",
+          "captureDate": "2026-10-25T22:13:02.916Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked. Nine-move final board; analysis settled where available.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.7-guest-run1/capture.json",
+            "sha256": "e64e2c88089afdca4f4ac02f030c6d8a2758351b468d9726cca2189e0e2b1e08"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.7-guest-run1/v0.4.7/desktop/replay--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "fd2ba4d9b97b212e060be405cb3f1639e98f4991926bde9a4c42963e2b9c0645",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.7-guest-run1/v0.4.7/portrait/replay--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "f4f3d48d378151ccafb1ce6e518d8e4993580b57337a912d2c283030b6a27147",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "replay-default-048-c49cefce2a77",
+          "screen": "replay",
+          "state": "default",
+          "sourceVersion": "0.4.8",
+          "sourceCommit": "ea188acaf3e98b0b0b0952c05993391bc8a8a1ef",
+          "sourceReleaseDate": "2026-05-21",
+          "captureDate": "2026-10-25T22:13:07.993Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked. Nine-move final board; analysis settled where available.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.8-guest-run1/capture.json",
+            "sha256": "c49cefce2a77e03f18c209008eb92ff39507f3bb6b37276a5968937882e84b52"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.8-guest-run1/v0.4.8/desktop/replay--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "b621e88bb749e6884730846ec5668b2e2d4f260f44ab0b1c4d8040c428a669aa",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.4.8-guest-run1/v0.4.8/portrait/replay--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "92db66a40f5449188ca0cef6903db7dbb9ca1a454662d4b9f165d8aa97312c6e",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        }
+      ],
+      "historicalOriginalPngPaths": [
+        "docs/assets/screenshot_v0_4_5_home_desktop.png",
+        "docs/assets/screenshot_v0_4_5_home_mobile.png",
+        "docs/assets/screenshot_v0_4_5_match_desktop.png",
+        "docs/assets/screenshot_v0_4_5_match_mobile.png",
+        "docs/assets/screenshot_v0_4_5_profile_desktop.png",
+        "docs/assets/screenshot_v0_4_5_profile_mobile.png",
+        "docs/assets/screenshot_v0_4_5_replay_desktop.png",
+        "docs/assets/screenshot_v0_4_5_replay_mobile.png",
+        "docs/assets/screenshot_v0_4_5_settings_desktop.png",
+        "docs/assets/screenshot_v0_4_5_settings_mobile.png",
+        "docs/assets/screenshot_v0_4_6_replay_desktop.png",
+        "docs/assets/screenshot_v0_4_6_replay_mobile.png",
+        "docs/assets/screenshot_v0_4_7_replay_desktop.png",
+        "docs/assets/screenshot_v0_4_7_replay_mobile.png"
+      ],
+      "limits": [
+        "All old .4.5–.4.7 PNGs referenced by the archive are missing from current worktree, but blobs are available; .4.6/.4.7 are last-escape frames.",
+        "Original archive lacks image SHA-256, dimensions, capture manifest, browser/runtime identity, and exact viewport.",
+        "The archive predates .4.8 and has no original-period .4.8 screenshot; .4.8 media in History is retrospective final-board capture."
+      ],
+      "primaryDecisionGaps": [
+        "Whether to restore the exact existing .4.6/.4.7 active-frame blobs alongside current retrospective images.",
+        "Keep .4.8 visual claims within its retrospective screenshot and source notes."
+      ]
+    },
+    {
+      "id": "product-pages-052",
+      "candidateVersions": [
+        "0.5.0",
+        "0.5.1",
+        "0.5.2"
+      ],
+      "sourceEvidence": [
+        {
+          "path": "CHANGELOG.md",
+          "commit": "678a69ac51f2b1f4fa968bf9fe03b69831b847c9",
+          "sourceBlobOid": "1911a13540ca47cca05ab39db54eea5bb7d8fce1",
+          "documentDate": "2026-05-22",
+          "ref": "v0.5.0",
+          "describedReleaseVersion": "0.5.0",
+          "describedReleaseCommit": "678a69ac51f2b1f4fa968bf9fe03b69831b847c9",
+          "describedReleaseDate": "2026-05-22",
+          "evidenceType": "document excerpt",
+          "section": "0.5.0 / Theme",
+          "lines": [
+            17,
+            17
+          ],
+          "excerpt": "**Theme: reconcile the `0.4` lab work into a public-release foundation.**"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "commit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+          "sourceBlobOid": "9891fe9623eb75897c55e7316ba8df34b98c2bb6",
+          "documentDate": "2026-05-25",
+          "ref": "v0.5.1",
+          "describedReleaseVersion": "0.5.1",
+          "describedReleaseCommit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+          "describedReleaseDate": "2026-05-25",
+          "evidenceType": "document excerpt",
+          "section": "0.5.1 / Web",
+          "lines": [
+            26,
+            27
+          ],
+          "excerpt": "- Replaced generated bot-report and replay-analysis HTML with a unified React\n  `/lab-report/` viewer backed by compact published JSON data."
+        },
+        {
+          "path": "CHANGELOG.md",
+          "commit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+          "sourceBlobOid": "9891fe9623eb75897c55e7316ba8df34b98c2bb6",
+          "documentDate": "2026-05-25",
+          "ref": "v0.5.1",
+          "describedReleaseVersion": "0.5.1",
+          "describedReleaseCommit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+          "describedReleaseDate": "2026-05-25",
+          "evidenceType": "document excerpt",
+          "section": "0.5.1 / Web",
+          "lines": [
+            30,
+            31
+          ],
+          "excerpt": "- Rebuilt the asset preview as a React Visual Guide with sprites, icons, color,\n  typography, and UI examples in the same product shell."
+        },
+        {
+          "path": "docs/working/v0_5_public_release_plan.md",
+          "commit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "sourceBlobOid": "85612f4d9e2dde25ec73170632f1240d19dfac67",
+          "documentDate": "2026-05-27",
+          "ref": "v0.5.2",
+          "describedReleaseVersion": "0.5.2",
+          "describedReleaseCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "describedReleaseDate": "2026-05-27",
+          "evidenceType": "document excerpt",
+          "decisionStatus": "Working release plan; states product direction, not human visual approval.",
+          "section": "Productize Reports",
+          "lines": [
+            108,
+            108
+          ],
+          "excerpt": "- The report routes feel like first-class Gomoku2D pages, not lab dumps."
+        },
+        {
+          "path": "docs/working/v0_5_public_release_plan.md",
+          "commit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "sourceBlobOid": "85612f4d9e2dde25ec73170632f1240d19dfac67",
+          "documentDate": "2026-05-27",
+          "ref": "v0.5.2",
+          "describedReleaseVersion": "0.5.2",
+          "describedReleaseCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "describedReleaseDate": "2026-05-27",
+          "evidenceType": "document excerpt",
+          "decisionStatus": "Working release plan; states product direction, not human visual approval.",
+          "section": "Slice 3: Product Explanation Pages",
+          "lines": [
+            173,
+            173
+          ],
+          "excerpt": "- Productize concise rules and guide explanations inside the app."
+        },
+        {
+          "path": "CHANGELOG.md",
+          "commit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "sourceBlobOid": "fdc98be0842f8c7cd98ea595366b0602f86aa7b0",
+          "documentDate": "2026-05-27",
+          "ref": "v0.5.2",
+          "describedReleaseVersion": "0.5.2",
+          "describedReleaseCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "describedReleaseDate": "2026-05-27",
+          "evidenceType": "document excerpt",
+          "section": "0.5.2 / Web",
+          "lines": [
+            26,
+            27
+          ],
+          "excerpt": "- Added an in-app Rules page covering Freestyle, Renju restrictions, and why\n  real double-three / double-four checks matter."
+        },
+        {
+          "path": "CHANGELOG.md",
+          "commit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "sourceBlobOid": "fdc98be0842f8c7cd98ea595366b0602f86aa7b0",
+          "documentDate": "2026-05-27",
+          "ref": "v0.5.2",
+          "describedReleaseVersion": "0.5.2",
+          "describedReleaseCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "describedReleaseDate": "2026-05-27",
+          "evidenceType": "document excerpt",
+          "section": "0.5.2 / Web",
+          "lines": [
+            28,
+            29
+          ],
+          "excerpt": "- Added an in-app Guide page with board-rendered examples for immediate\n  threats, imminent threats, counter threats, combos, forced sequences, and"
+        },
+        {
+          "path": "gomoku-web/src/developer/history.json",
+          "commit": "ef7101cbc316a894a77f7e1d197b00a6e671367f",
+          "sourceBlobOid": "294300c70c87509440d4d8abba5997b0a0431d79",
+          "documentDate": "2026-10-25",
+          "describedReleaseVersion": "0.5.1",
+          "describedReleaseCommit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+          "describedReleaseDate": "2026-05-25",
+          "evidenceType": "JSON receipt observation",
+          "decisionStatus": "Retrospective catalog entry; not original-period visual approval evidence.",
+          "section": "milestones / version 0.5.1",
+          "jsonPointers": [
+            "/milestones/17/version",
+            "/milestones/17/title",
+            "/milestones/17/summary"
+          ],
+          "jsonPointerValues": {
+            "/milestones/17/version": "0.5.1",
+            "/milestones/17/title": "React Lab and Visuals",
+            "/milestones/17/summary": "Generated report pages become React Lab views and asset previews become React Visuals; the legacy reports retire into Lab."
+          },
+          "observation": "The retained retrospective catalog records the React Lab and Visuals milestone."
+        },
+        {
+          "path": "gomoku-web/src/developer/history.json",
+          "commit": "ef7101cbc316a894a77f7e1d197b00a6e671367f",
+          "sourceBlobOid": "294300c70c87509440d4d8abba5997b0a0431d79",
+          "documentDate": "2026-10-25",
+          "describedReleaseVersion": "0.5.2",
+          "describedReleaseCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "describedReleaseDate": "2026-05-27",
+          "evidenceType": "JSON receipt observation",
+          "decisionStatus": "Retrospective catalog entry; not original-period visual approval evidence.",
+          "section": "milestones / version 0.5.2",
+          "jsonPointers": [
+            "/milestones/18/version",
+            "/milestones/18/title",
+            "/milestones/18/summary"
+          ],
+          "jsonPointerValues": {
+            "/milestones/18/version": "0.5.2",
+            "/milestones/18/title": "Rules and Guide",
+            "/milestones/18/summary": "Rules and Guide add board-rendered teaching examples; Lab and Visuals adopt canonical support URLs and Replay labels update."
+          },
+          "observation": "The retained retrospective catalog records the Rules and Guide milestone."
+        },
+        {
+          "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/README.md",
+          "commit": "ef7101cbc316a894a77f7e1d197b00a6e671367f",
+          "sourceBlobOid": "0ad77cf41c0e57f78d09f4d82f44cc2b8cdf709a",
+          "documentDate": "2026-10-25",
+          "evidenceType": "document excerpt",
+          "decisionStatus": "Retrospective capture qualification; tournaments were not rerun for these images.",
+          "section": "Fixtures and framing",
+          "lines": [
+            41,
+            42
+          ],
+          "excerpt": "actual tagged recorded datasets, which can differ between releases; tournaments\nwere not rerun for screenshots."
+        }
+      ],
+      "documentedDecisions": [
+        "The .5.1 and .5.2 release records describe React Lab/Visuals and in-app Rules/Guide additions; the .5.2 plan calls for report routes to feel first-class.",
+        "The retrospective catalog preserves separate .5.1 and .5.2 milestones; this catalog is not original-period visual approval evidence."
+      ],
+      "inferences": [
+        "The .5.0 static baseline → .5.1 React Lab/Visuals → .5.2 support pages sequence is one productization episode, a grouping."
+      ],
+      "mediaCandidates": [
+        {
+          "snapshotId": "visuals-default-050-725c7952fa26",
+          "screen": "visuals",
+          "state": "default",
+          "sourceVersion": "0.5.0",
+          "sourceCommit": "678a69ac51f2b1f4fa968bf9fe03b69831b847c9",
+          "sourceReleaseDate": "2026-05-22",
+          "captureDate": "2026-10-25T22:13:23.341Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.0-guest-run1/capture.json",
+            "sha256": "725c7952fa26d3ad1cb45ca12a8a432c8681e81b257353e4f9b2854676ad1522"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.0-guest-run1/v0.5.0/desktop/visuals--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "4e92e03dc5d03e99bbd01e58e77749d335c5d90347aad3e6f5735d56aac13fc8",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.0-guest-run1/v0.5.0/portrait/visuals--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "4733d22aba25ecfbd345b43f469d4ddf3604a1392181c26c41ed5b6086ae6cb9",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "bot-report-default-050-725c7952fa26",
+          "screen": "bot-report",
+          "state": "default",
+          "sourceVersion": "0.5.0",
+          "sourceCommit": "678a69ac51f2b1f4fa968bf9fe03b69831b847c9",
+          "sourceReleaseDate": "2026-05-22",
+          "captureDate": "2026-10-25T22:13:23.341Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked. Tagged recorded report data; runs and game contents can differ by release.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.0-guest-run1/capture.json",
+            "sha256": "725c7952fa26d3ad1cb45ca12a8a432c8681e81b257353e4f9b2854676ad1522"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.0-guest-run1/v0.5.0/desktop/bot-report--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "423f4f19df0f5f1845c0d9ffd2c1aae2b2cf4d96eb5eed055b1175542f91e0f1",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.0-guest-run1/v0.5.0/portrait/bot-report--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "babab5652498dc79f0e21ab04d6c4a5ab6cc297bc4be09620b97cc5c4cea4883",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "analysis-report-proof-open-050-fdc01ec21f58",
+          "screen": "analysis-report",
+          "state": "proof-open",
+          "sourceVersion": "0.5.0",
+          "sourceCommit": "678a69ac51f2b1f4fa968bf9fe03b69831b847c9",
+          "sourceReleaseDate": "2026-05-22",
+          "captureDate": "2026-10-25T22:53:18.136Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked. First proof frame in view; legacy portrait document overflow is retained. Tagged recorded report data; runs and game contents can differ by release.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-v0.5.0-run1/capture.json",
+            "sha256": "fdc01ec21f58c80f10e583b64fe2b38324da2c398fbb903502d9d3955826a2bb"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-v0.5.0-run1/v0.5.0/desktop/analysis-report--proof-open.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "be58b0b8fc45a22350d3f4da0744f22a78866a4cfe7f30afacbff848f4a26b5f",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-v0.5.0-run1/v0.5.0/portrait/analysis-report--proof-open.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "03f305a5d30c5a1cd9c3b8e27b9726c513dbdddbf19235da42c9a8e2c6206d06",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "lab-default-051-8c493104a22f",
+          "screen": "lab",
+          "state": "default",
+          "sourceVersion": "0.5.1",
+          "sourceCommit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+          "sourceReleaseDate": "2026-05-25",
+          "captureDate": "2026-10-25T22:18:03.161Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked. Tagged recorded report data; runs and game contents can differ by release.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.1-guest-run3/capture.json",
+            "sha256": "8c493104a22f8fa42213c84a526d32a0d85094b7eee409f5e3e38981afa6bd5c"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.1-guest-run3/v0.5.1/desktop/lab--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "ea4a9efa7408bd9bdff1c108952d76346935078186f03635969b7a081f82dde8",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.1-guest-run3/v0.5.1/portrait/lab--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "8c0236239554f604171c661ac1adc25b4fe8dd08229f24a98e7318323cd8756d",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "visuals-default-051-8c493104a22f",
+          "screen": "visuals",
+          "state": "default",
+          "sourceVersion": "0.5.1",
+          "sourceCommit": "bf861f596e7a5bf03b588953f6552b9a3c4c7827",
+          "sourceReleaseDate": "2026-05-25",
+          "captureDate": "2026-10-25T22:18:03.161Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.1-guest-run3/capture.json",
+            "sha256": "8c493104a22f8fa42213c84a526d32a0d85094b7eee409f5e3e38981afa6bd5c"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.1-guest-run3/v0.5.1/desktop/visuals--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "4a60faaf5a5634744576ac38c3c2f8b5796dc45552a4ef3d3b27faa1bddb074d",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.1-guest-run3/v0.5.1/portrait/visuals--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "f618e691f55376b630ed6b27d5bd484387ccc692371aabb0fee5f314ebe64936",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "lab-default-052-a850a109aa5d",
+          "screen": "lab",
+          "state": "default",
+          "sourceVersion": "0.5.2",
+          "sourceCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "sourceReleaseDate": "2026-05-27",
+          "captureDate": "2026-10-25T22:21:23.166Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked. Tagged recorded report data; runs and game contents can differ by release.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/capture.json",
+            "sha256": "a850a109aa5d10faf73c2480bd449a24b10848945ea0e5b7587c59187d8fd3e6"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/desktop/lab--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "bf1ec18ed8b4f24d37e0d6f9f8c8d28cd042954f6c0f46acecff810aa96bd605",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/portrait/lab--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "8d769fef704d281b2812c768072578fee30356fe01e104c4d69dd77270a685bb",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "visuals-default-052-a850a109aa5d",
+          "screen": "visuals",
+          "state": "default",
+          "sourceVersion": "0.5.2",
+          "sourceCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "sourceReleaseDate": "2026-05-27",
+          "captureDate": "2026-10-25T22:21:23.166Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/capture.json",
+            "sha256": "a850a109aa5d10faf73c2480bd449a24b10848945ea0e5b7587c59187d8fd3e6"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/desktop/visuals--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "b4384cd30c178d012876e41aad2e5fe2b9716bf5bdbafaba9fcddbddeb7ef4b4",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/portrait/visuals--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "d4eef5663501b514b119c6b95035e3e4195adf9ad8fd8b38cf34b3d021f284df",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "rules-default-052-a850a109aa5d",
+          "screen": "rules",
+          "state": "default",
+          "sourceVersion": "0.5.2",
+          "sourceCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "sourceReleaseDate": "2026-05-27",
+          "captureDate": "2026-10-25T22:21:23.166Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/capture.json",
+            "sha256": "a850a109aa5d10faf73c2480bd449a24b10848945ea0e5b7587c59187d8fd3e6"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/desktop/rules--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "558ff826fe1d06a85e732664cfa7d862d2a09a00ad5578d55513f40e010a9086",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/portrait/rules--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "2ac06dd0dc0bb4ac1e6bd0ec384f60a40bc6cb98ca7755156f4cab083a9c67cc",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "guide-default-052-a850a109aa5d",
+          "screen": "guide",
+          "state": "default",
+          "sourceVersion": "0.5.2",
+          "sourceCommit": "71793b0f21adf408b5b714514937d979ecffc944",
+          "sourceReleaseDate": "2026-05-27",
+          "captureDate": "2026-10-25T22:21:23.166Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Firebase SDK uses isolated local emulators through a loopback proxy; unused hosted popup bootstrap stays blocked.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/capture.json",
+            "sha256": "a850a109aa5d10faf73c2480bd449a24b10848945ea0e5b7587c59187d8fd3e6"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/desktop/guide--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "901e3ae4434c8a577a24413b73c57c6e3fe6210021eca0de181cba636db52c26",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.5.2-guest-run3/v0.5.2/portrait/guide--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "98e797376fc86ea1f2978ee135da840ec30f8e347337098ad6b936a57db5bf51",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        }
+      ],
+      "historicalOriginalPngPaths": [],
+      "limits": [
+        "The v0.5.2 tree has no original-period .5.1/.5.2 screenshot-review PNGs; available images are retrospective.",
+        "Tagged reports keep their original datasets, which vary by release; they were not rerun for captures.",
+        "Modern runtime/device and human visual acceptance are not established."
+      ],
+      "primaryDecisionGaps": [
+        "No primary record identified in this audit documents human visual approval for this sequence."
+      ]
+    },
+    {
+      "id": "replay-sidebar-061",
+      "candidateVersions": [
+        "0.6.1"
+      ],
+      "sourceEvidence": [
+        {
+          "path": "docs/working/v0_6_1_public_profile.md",
+          "commit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "sourceBlobOid": "e48f07cde31198bbe1de689a9b8d110be6cbaa56",
+          "documentDate": "2026-10-23",
+          "ref": "v0.6.1",
+          "describedReleaseVersion": "0.6.1",
+          "describedReleaseCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "describedReleaseDate": "2026-10-23",
+          "evidenceType": "document excerpt",
+          "section": "Owner controls / Publish replay",
+          "lines": [
+            103,
+            105
+          ],
+          "excerpt": "card widths. Publish replay uses the dedicated globe icon and replaces the\nwhole replay sidebar, matching Share replay's entry animation, paused playback,\nBack/Escape dismissal and focus/scroll restoration. Its compact publication"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "commit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "sourceBlobOid": "ce2cfef27e856240a9cc6016e9d638cb04d8eb15",
+          "documentDate": "2026-10-23",
+          "ref": "v0.6.1",
+          "describedReleaseVersion": "0.6.1",
+          "describedReleaseCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "describedReleaseDate": "2026-10-23",
+          "evidenceType": "document excerpt",
+          "section": "0.6.1 / Web",
+          "lines": [
+            35,
+            36
+          ],
+          "excerpt": "- Align public-profile controls with General Settings and give replay publishing\n  the same full-sidebar interaction and compact preview as Share replay."
+        },
+        {
+          "path": "docs/working/v0_6_1_evidence/README.md",
+          "commit": "cee9075f3ddf1dabf9c5a41fe1344d91bc755cc1",
+          "sourceBlobOid": "299439245c462736c2f02c5836290a7c7cc55fc8",
+          "documentDate": "2026-10-26",
+          "describedReleaseVersion": "0.6.1",
+          "describedReleaseCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "describedReleaseDate": "2026-10-23",
+          "relatedCommits": [
+            {
+              "role": "UI refinement pass named in this working record",
+              "commit": "81922a434a8793b29c0b950bec75d0b4cdd0b79b"
+            }
+          ],
+          "evidenceType": "document excerpt",
+          "decisionStatus": "Later retained README revision documents the UI pass; source document commit/date is kept distinct from the described pass.",
+          "section": "Public-profile and publishing UI refinement",
+          "lines": [
+            369,
+            369
+          ],
+          "excerpt": "The subsequent visual pass (`81922a4`) follows General Settings' grouped label/control"
+        },
+        {
+          "path": "docs/working/v0_6_1_evidence/README.md",
+          "commit": "cee9075f3ddf1dabf9c5a41fe1344d91bc755cc1",
+          "sourceBlobOid": "299439245c462736c2f02c5836290a7c7cc55fc8",
+          "documentDate": "2026-10-26",
+          "describedReleaseVersion": "0.6.1",
+          "describedReleaseCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "describedReleaseDate": "2026-10-23",
+          "relatedCommits": [
+            {
+              "role": "tracked screenshot artifact commit identified by this README",
+              "commit": "b99fa794f98cc8683474b83f2bd967f62782a093"
+            }
+          ],
+          "evidenceType": "document excerpt",
+          "decisionStatus": "README names same-period Publish sidebar crops; it does not bind a per-image browser-build manifest.",
+          "section": "Preview and inspected captures",
+          "lines": [
+            465,
+            465
+          ],
+          "excerpt": "- [Desktop publishing sidebar](sharing-chromium-publish-replay-desktop.png) and [mobile sidebar](sharing-chromium-publish-replay.png)."
+        },
+        {
+          "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/README.md",
+          "commit": "ef7101cbc316a894a77f7e1d197b00a6e671367f",
+          "sourceBlobOid": "0ad77cf41c0e57f78d09f4d82f44cc2b8cdf709a",
+          "documentDate": "2026-10-25",
+          "describedReleaseVersion": "0.6.1",
+          "describedReleaseCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "describedReleaseDate": "2026-10-23",
+          "evidenceType": "retrospective capture qualification",
+          "section": "Visual review and framing",
+          "lines": [
+            60,
+            60
+          ],
+          "excerpt": "Guide examples and expanded Share/Publish panes. Natural fixed headers, nested"
+        }
+      ],
+      "documentedDecisions": [
+        "The .6.1 working plan and retained evidence README directly describe Publish replay replacing the full sidebar and showing a compact preview.",
+        "The retained README names same-period desktop/mobile Publish sidebar crops and identifies the earlier UI pass separately from the later README revision."
+      ],
+      "mediaCandidates": [
+        {
+          "snapshotId": "replay-share-061-1648532ce820",
+          "screen": "replay",
+          "state": "share",
+          "sourceVersion": "0.6.1",
+          "sourceCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "sourceReleaseDate": "2026-10-23",
+          "captureDate": "2026-10-25T23:05:06.559Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic account; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Isolated local Auth/Firestore emulators. Nine-move final board; analysis settled where available. Portrait view anchors the expanded action pane.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-share-run1/capture.json",
+            "sha256": "1648532ce8206ed45e2e975fd7b7a1c683127b5634417444466f5bf728d4c0f2"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-share-run1/v0.6.1/desktop/replay--share.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "e7baa4161f50aae0c34c4f240be5862b0abc382014e2b0f9886121323a575212",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-share-run1/v0.6.1/portrait/replay--share.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "ee8b2a6524a9b0d4ad141512bf6c6847fe089a8f3a1fcc368a15df90fe3b180a",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        },
+        {
+          "snapshotId": "replay-publish-061-5730618f16e2",
+          "screen": "replay",
+          "state": "publish",
+          "sourceVersion": "0.6.1",
+          "sourceCommit": "b1a67d32feee5b57275e3d04c684e27bcd1a571f",
+          "sourceReleaseDate": "2026-10-23",
+          "captureDate": "2026-10-25T23:05:25.406Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic account; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Isolated local Auth/Firestore emulators. Nine-move final board; analysis settled where available. Portrait view anchors the expanded action pane.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-publish-run1/capture.json",
+            "sha256": "5730618f16e254df83f46491e9776200538bc2979bb8932c7d8d9cde1b8cd94a"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-publish-run1/v0.6.1/desktop/replay--publish.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "551a4da25599d2656ec789f638c63c931395dc9d8d0031cf496ba401a4af5d3b",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/framing-final-v0.6.1-replay-publish-run1/v0.6.1/portrait/replay--publish.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "cf882631bce54fa791aa3c0d03d6946f7c3125afe06749a5d88232ae2d8f92dc",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        }
+      ],
+      "samePeriodReviewMedia": [
+        {
+          "path": "docs/working/v0_6_1_evidence/sharing-chromium-publish-replay-desktop.png",
+          "classification": "same-period cropped desktop Publish sidebar",
+          "sourceVersion": "0.6.1 candidate",
+          "sourceCommitOrBaseline": "capture build commit not bound; README identifies UI pass 81922a434a8793b29c0b950bec75d0b4cdd0b79b",
+          "reportId": null,
+          "width": 340,
+          "height": 720,
+          "sha256": "a15f1c78c102d3ce018bcbd7fa6df8acccd362a2335c2a399bd202771373b46b",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": true,
+          "repositoryIgnored": false,
+          "note": "Git artifact commit b99fa794f98cc8683474b83f2bd967f62782a093; not a full-page image."
+        },
+        {
+          "path": "docs/working/v0_6_1_evidence/sharing-chromium-publish-replay.png",
+          "classification": "same-period cropped mobile Publish sidebar",
+          "sourceVersion": "0.6.1 candidate",
+          "sourceCommitOrBaseline": "capture build commit not bound; README identifies UI pass 81922a434a8793b29c0b950bec75d0b4cdd0b79b",
+          "reportId": null,
+          "width": 366,
+          "height": 771,
+          "sha256": "45e39a0a0d38d4bdd33892fa5663c2837af8d9adb01f59391b91336badfc7df7",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": true,
+          "repositoryIgnored": false,
+          "note": "Git artifact commit b99fa794f98cc8683474b83f2bd967f62782a093; not a full-page image."
+        }
+      ],
+      "limits": [
+        "Same-period screenshots are sidebar crops (desktop 340×720, mobile 366×771); dimensions/digests were calculated in this audit, not recorded in the source receipt.",
+        "Per-image screenshot build commit is not bound by a manifest; README names UI pass 81922a4, and image artifact commit is b99fa7.",
+        "History full-page images are retrospective exact-tag captures with synthetic account/emulator data.",
+        "No separate pre-refinement screenshot is identified here; only a same-period Publish crop, no same-period Share crop."
+      ],
+      "primaryDecisionGaps": [
+        "Whether to use same-period cropped Publish panels, retrospective full-page Share/Publish states, or both."
+      ]
+    },
+    {
+      "id": "public-player-062",
+      "candidateVersions": [
+        "0.6.2"
+      ],
+      "sourceEvidence": [
+        {
+          "path": "docs/working/v0_6_2_design/README.md",
+          "commit": "c4e1351222addcbed720cfccfca145b668513b58",
+          "sourceBlobOid": "fdb03f775d0ec04726cac3efb380e1772aa3313a",
+          "documentDate": "2026-10-23",
+          "describedReleaseVersion": "0.6.2",
+          "describedReleaseCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "describedReleaseDate": "2026-10-24",
+          "evidenceType": "document excerpt",
+          "decisionStatus": "Dated first-party project note records a direction and says visual review is pending; it is not a visual acceptance record.",
+          "section": "Status / recorded direction",
+          "lines": [
+            4,
+            4
+          ],
+          "excerpt": "Status: Bryan prefers A's record treatment with B's columns, statistics above"
+        },
+        {
+          "path": "docs/working/v0_6_2_design/evidence.json",
+          "commit": "a90cd2a63a198eb0a184adb08066774c5bf95710",
+          "sourceBlobOid": "e5860a6ed907014412cc2c8d33135654d90ae111",
+          "documentDate": "2026-10-23",
+          "describedReleaseVersion": "0.6.2",
+          "describedReleaseCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "describedReleaseDate": "2026-10-24",
+          "evidenceType": "JSON receipt observation",
+          "decisionStatus": "Frozen study receipt; no selected layout or production implementation recorded in this initial artifact.",
+          "section": "initial A/B/C receipt",
+          "jsonPointers": [
+            "/selected_layout",
+            "/primary_recommendation",
+            "/publication/report_id",
+            "/production_implementation"
+          ],
+          "jsonPointerValues": {
+            "/selected_layout": null,
+            "/primary_recommendation": "A - Wide record",
+            "/publication/report_id": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+            "/production_implementation": false
+          },
+          "observation": "The receipt leaves selected_layout null; A is only its recommendation, and production_implementation is false."
+        },
+        {
+          "path": "docs/working/v0_6_2_design/refinement_evidence.json",
+          "commit": "c4e1351222addcbed720cfccfca145b668513b58",
+          "sourceBlobOid": "3a2a671d37cf6d80d6511c331aee31eaab16b85b",
+          "documentDate": "2026-10-23",
+          "describedReleaseVersion": "0.6.2",
+          "describedReleaseCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "describedReleaseDate": "2026-10-24",
+          "evidenceType": "JSON receipt observation",
+          "decisionStatus": "Frozen refinement receipt; captures requested direction, not final visual acceptance.",
+          "section": "two-column refinement receipt",
+          "jsonPointers": [
+            "/feedback",
+            "/report_id",
+            "/production_implementation"
+          ],
+          "jsonPointerValues": {
+            "/feedback": "A record treatment with B columns; statistics above games on right and a simple left identity panel.",
+            "/report_id": "80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923",
+            "/production_implementation": false
+          },
+          "observation": "The receipt records A record/B columns with a simple left identity panel; this refinement is not production implementation."
+        },
+        {
+          "path": "docs/working/v0_6_2_design/player_card_evidence.json",
+          "commit": "03765d3d1bde7b4d1f55643b2aad18f5dc2d6fa5",
+          "sourceBlobOid": "aa8d7973635b494323f66df963688bc4e1cfdc59",
+          "documentDate": "2026-10-23",
+          "describedReleaseVersion": "0.6.2",
+          "describedReleaseCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "describedReleaseDate": "2026-10-24",
+          "evidenceType": "JSON receipt observation",
+          "decisionStatus": "Frozen refinement receipt; recommendation is not itself a user-selected or human-accepted design.",
+          "section": "player-card refinement receipt",
+          "jsonPointers": [
+            "/feedback",
+            "/recommendation",
+            "/report_id",
+            "/production_implementation"
+          ],
+          "jsonPointerValues": {
+            "/feedback": "Left column needs more substance while keeping statistics on the right.",
+            "/recommendation": "Compact public player card with name, existing shared-game count, link/copy action and existing record disclosure.",
+            "/report_id": "9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8",
+            "/production_implementation": false
+          },
+          "observation": "The receipt recommends the compact player card and records the prototype report ID; production_implementation is false."
+        },
+        {
+          "path": "docs/working/v0_6_2_implementation.md",
+          "commit": "902af1d02f786c571734e21d855d828c085b9cdc",
+          "sourceBlobOid": "0a3095f0af2f0c38edb57635e6f8281457ce36bd",
+          "documentDate": "2026-10-23",
+          "describedReleaseVersion": "0.6.2",
+          "describedReleaseCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "describedReleaseDate": "2026-10-24",
+          "evidenceType": "document excerpt",
+          "decisionStatus": "First-party implementation checkpoint records acceptance for implementation; application visual review remains separate.",
+          "section": "Accepted design and implementation checkpoint",
+          "lines": [
+            9,
+            9
+          ],
+          "excerpt": "Bryan accepted the final [public player-card study](v0_6_2_design/README.md)"
+        },
+        {
+          "path": "docs/working/v0_6_2_implementation.md",
+          "commit": "902af1d02f786c571734e21d855d828c085b9cdc",
+          "sourceBlobOid": "0a3095f0af2f0c38edb57635e6f8281457ce36bd",
+          "documentDate": "2026-10-23",
+          "describedReleaseVersion": "0.6.2",
+          "describedReleaseCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "describedReleaseDate": "2026-10-24",
+          "evidenceType": "document excerpt",
+          "decisionStatus": "First-party implementation checkpoint explicitly separates application visual review and publication.",
+          "section": "Status / review boundary",
+          "lines": [
+            5,
+            5
+          ],
+          "excerpt": "visual review and the remaining 0.6.2 work follow. Publication is separate."
+        },
+        {
+          "path": "CHANGELOG.md",
+          "commit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "sourceBlobOid": "5c76cc8bf1fde0564afe68c54712559365618ddb",
+          "documentDate": "2026-10-24",
+          "ref": "v0.6.2",
+          "describedReleaseVersion": "0.6.2",
+          "describedReleaseCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "describedReleaseDate": "2026-10-24",
+          "evidenceType": "document excerpt",
+          "section": "0.6.2 / Web",
+          "lines": [
+            21,
+            22
+          ],
+          "excerpt": "- Give public profiles a two-column player card and record/catalog layout,\n  compact game rows, dated optional statistics and consistent recovery states."
+        }
+      ],
+      "documentedDecisions": [
+        "Initial A/B/C receipt does not select a layout. Later dated README records Bryan's A record/B columns preference and subsequent acceptance of the compact player-card direction.",
+        "Implementation checkpoint records that the accepted composition was implemented; application visual review remains separate."
+      ],
+      "inferences": [
+        "A/B/C outputs are mockup comparisons, not original-period product screenshots.",
+        "Selection is a first-party dated project note; no separate transcript or image-level acceptance artifact was found."
+      ],
+      "reportSnapshots": [
+        {
+          "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+          "receipt": "docs/working/v0_6_2_design/evidence.json",
+          "baselineCommit": "069eb6683f204bca38ce7e6621fd63b7a7f8edc7",
+          "fileCount": 16,
+          "bytes": 245173,
+          "selection": "null; A is recommendation only",
+          "localExport": "gomoku-web/test-results/v062-design/export/"
+        },
+        {
+          "reportId": "80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923",
+          "receipt": "docs/working/v0_6_2_design/refinement_evidence.json",
+          "baselineCommit": "a90cd2a63a198eb0a184adb08066774c5bf95710",
+          "fileCount": 16,
+          "bytes": 248085,
+          "selection": "A record/B columns with minimal left identity",
+          "localExport": "gomoku-web/test-results/v062-design-refined/export/"
+        },
+        {
+          "reportId": "9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8",
+          "receipt": "docs/working/v0_6_2_design/player_card_evidence.json",
+          "baselineCommit": "c4e1351222addcbed720cfccfca145b668513b58",
+          "fileCount": 16,
+          "bytes": 252113,
+          "selection": "README records compact card accepted; receipt itself is prototype-ready",
+          "localExport": "gomoku-web/test-results/v062-player-card/export/"
+        }
+      ],
+      "mockupPngCandidates": [
+        {
+          "path": "gomoku-web/test-results/v062-design/a-visitor-1280-full-on-100.png",
+          "classification": "mockup capture: A / Wide record",
+          "sourceVersion": "0.6.2 design study",
+          "sourceCommitOrBaseline": "069eb6683f204bca38ce7e6621fd63b7a7f8edc7",
+          "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+          "width": 1280,
+          "height": 1198,
+          "sha256": "b92053cd7b7eb857399c0244a2813dd0b9283b407960036348a8de3ed2fcb2e9",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": false,
+          "repositoryIgnored": true,
+          "note": "Fictional Juniper profile/game data; prototype, not runtime."
+        },
+        {
+          "path": "gomoku-web/test-results/v062-design/b-visitor-1280-full-on-100.png",
+          "classification": "mockup capture: B / Profile columns",
+          "sourceVersion": "0.6.2 design study",
+          "sourceCommitOrBaseline": "069eb6683f204bca38ce7e6621fd63b7a7f8edc7",
+          "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+          "width": 1280,
+          "height": 1060,
+          "sha256": "7c8c0bda9f781010977a64b08916d25e0b57e616bbd13dd625b8bcf6af6ed94d",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": false,
+          "repositoryIgnored": true,
+          "note": "Fictional Juniper profile/game data; prototype, not runtime."
+        },
+        {
+          "path": "gomoku-web/test-results/v062-design/c-visitor-1280-full-on-100.png",
+          "classification": "mockup capture: C / Compact record",
+          "sourceVersion": "0.6.2 design study",
+          "sourceCommitOrBaseline": "069eb6683f204bca38ce7e6621fd63b7a7f8edc7",
+          "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+          "width": 1280,
+          "height": 1227,
+          "sha256": "ec542031c20ca7f67c66b50e3ee42a7b333cec959401f8e5e360e937ca3c16ea",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": false,
+          "repositoryIgnored": true,
+          "note": "Fictional Juniper profile/game data; prototype, not runtime."
+        },
+        {
+          "path": "gomoku-web/test-results/v062-design/current-visitor-1280-full-on-100.png",
+          "classification": "mockup capture: reconstructed current structure",
+          "sourceVersion": "0.6.2 design study",
+          "sourceCommitOrBaseline": "069eb6683f204bca38ce7e6621fd63b7a7f8edc7",
+          "reportId": "29c155940e692a2afdbd03537113c7ddd1a035b7ea19d74d3a09544c075cf2c7",
+          "width": 1280,
+          "height": 1446,
+          "sha256": "21855f7f2d31bc3ccb72f4c5ace34010300630ac6f3339f8e25b9ba3ff73fb7b",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": false,
+          "repositoryIgnored": true,
+          "note": "README says current composition is reconstructed, not a real-account or pixel-exact runtime screenshot."
+        },
+        {
+          "path": "gomoku-web/test-results/v062-design-refined/split-1280-full-100.png",
+          "classification": "mockup capture: minimal two-column refinement",
+          "sourceVersion": "0.6.2 design study",
+          "sourceCommitOrBaseline": "a90cd2a63a198eb0a184adb08066774c5bf95710",
+          "reportId": "80e6a234d3a35ef8a693f84a0856412612fffb8a49e62820fb0da83d0e52c923",
+          "width": 1280,
+          "height": 1191,
+          "sha256": "ddaec4b3a0c6a9022b89cc5629ba7c01dfaaadc494976c1b75b96a44d54bbb88",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": false,
+          "repositoryIgnored": true,
+          "note": "A record treatment with B columns; minimal left identity."
+        },
+        {
+          "path": "gomoku-web/test-results/v062-player-card/split-1280-full-100.png",
+          "classification": "mockup capture: player-card refinement",
+          "sourceVersion": "0.6.2 design study",
+          "sourceCommitOrBaseline": "c4e1351222addcbed720cfccfca145b668513b58",
+          "reportId": "9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8",
+          "width": 1280,
+          "height": 1121,
+          "sha256": "e0ebac957019f1b8e6e43894cb029efeddf2ffe7e70c6b4523603af0e7a4fa2f",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": false,
+          "repositoryIgnored": true,
+          "note": "Adds existing shared-game count, profile address/Copy link, and record disclosure."
+        },
+        {
+          "path": "gomoku-web/test-results/v062-player-card/final-mobile-390.png",
+          "classification": "mockup capture: player-card mobile",
+          "sourceVersion": "0.6.2 design study",
+          "sourceCommitOrBaseline": "c4e1351222addcbed720cfccfca145b668513b58",
+          "reportId": "9a6b8fe6e58f5df5997d06998ac67390f57b5da9f840ef913096c612bd23deb8",
+          "width": 390,
+          "height": 1990,
+          "sha256": "f71b5dc7e8f3c3630805c951bf1ea3318bb5aea06a46914cc9c3a49391ebdc78",
+          "digestStatus": "computed during audit; not in report receipt",
+          "gitTracked": false,
+          "repositoryIgnored": true,
+          "note": "390px prototype image; not physical-device acceptance."
+        }
+      ],
+      "mediaCandidates": [
+        {
+          "snapshotId": "public-player-default-062-611859c934e2",
+          "screen": "public-player",
+          "state": "default",
+          "sourceVersion": "0.6.2",
+          "sourceCommit": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+          "sourceReleaseDate": "2026-10-24",
+          "captureDate": "2026-10-25T22:56:59.541Z",
+          "captureType": "retrospective",
+          "conditions": "Synthetic guest; exact tagged app/assets/Wasm; 1280×900 desktop / 412×800 generic Android touch, DPR 1; modern Chromium, en-US/UTC, reduced motion. Isolated local Auth/Firestore emulators.",
+          "manifest": {
+            "sourcePath": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.6.2-guest-run2/capture.json",
+            "sha256": "611859c934e2a1f2d1938e5aed91c76b4e4147e53296872513c3e26b54893c5d"
+          },
+          "images": [
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.6.2-guest-run2/v0.6.2/desktop/public-player--default.png",
+              "layout": "desktop",
+              "width": 1280,
+              "height": 900,
+              "sha256": "19fe5eed51c6a64fc6e399662728339f05d2b18ba701da1b4f3afcbeb217bc59",
+              "digestRecorded": true,
+              "kind": "application capture"
+            },
+            {
+              "path": "docs/working/v0_6_3_retrospective_capture/history-2026-10-25/runs/matrix-v0.6.2-guest-run2/v0.6.2/portrait/public-player--default.png",
+              "layout": "portrait",
+              "width": 412,
+              "height": 800,
+              "sha256": "8d36568d075102e4f2c485981f80fd8dd4b859ea49820e9f301f8be1c6764425",
+              "digestRecorded": true,
+              "kind": "application capture"
+            }
+          ]
+        }
+      ],
+      "limits": [
+        "Frozen exports are immutable 16-file prototype snapshots; the listed A/B/C/refinement PNGs are ignored test-results outputs, not included in report receipts.",
+        "Mockup hashes/dimensions were computed now, not listed in receipts. Game metadata is fictional and the current structure is a reconstruction.",
+        "The .6.2 public-player History image is retrospective exact-tag app capture with synthetic guest/emulator data.",
+        "The design note explicitly states selection is not human visual acceptance of the resulting application."
+      ],
+      "primaryDecisionGaps": [
+        "Whether to use ignored local PNGs or authorize bounded rendering from the identified frozen exports to make tracked media; this audit performed no rendering/copying."
+      ]
+    }
+  ],
+  "missingOriginalPngs": [
+    {
+      "path": "docs/assets/screenshot_v0_1_match_desktop.png",
+      "version": "0.1",
+      "gitBlobOid": "e29462c317db80cea238c249baa844af7e6e9081",
+      "bytes": 104414,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.1 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_1_settings_desktop.png",
+      "version": "0.1",
+      "gitBlobOid": "d46c99e02a6fdf2ebe844fe9d816417717426840",
+      "bytes": 102148,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.1 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_1_home_desktop.png",
+      "version": "0.2.1",
+      "gitBlobOid": "07f7eb516a715bd414339bb690d0d9676d9efff6",
+      "bytes": 98347,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.1 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_1_match_desktop.png",
+      "version": "0.2.1",
+      "gitBlobOid": "9a7ab26e74587876c0c7b624338fb3f39c5929a7",
+      "bytes": 138289,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.1 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_1_profile_desktop.png",
+      "version": "0.2.1",
+      "gitBlobOid": "dcdd2552f3778323caa0ed1b4039e28eb1220217",
+      "bytes": 234755,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.1 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_1_replay_desktop.png",
+      "version": "0.2.1",
+      "gitBlobOid": "cf0210195989601f26c9b6ccb6637fc8c2256c7a",
+      "bytes": 145995,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.1 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_2_home_desktop.png",
+      "version": "0.2.2",
+      "gitBlobOid": "0eb720573155b1447cc2c0dde01ae29a6696bb4b",
+      "bytes": 17766,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.2 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_2_match_desktop.png",
+      "version": "0.2.2",
+      "gitBlobOid": "2dd4857eae3afe9f428e35814365076605b1e154",
+      "bytes": 28336,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.2 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_2_profile_desktop.png",
+      "version": "0.2.2",
+      "gitBlobOid": "053b719c1d4d137714810c94f3af078734f7aa79",
+      "bytes": 40435,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.2 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_2_replay_desktop.png",
+      "version": "0.2.2",
+      "gitBlobOid": "d79929ef9fa63e32f3f704a01eb48ab99aa8c7dc",
+      "bytes": 31650,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.2 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_3_home_desktop.png",
+      "version": "0.2.3",
+      "gitBlobOid": "ffad37e3b5c477c219502b3b636f847d38883cbd",
+      "bytes": 56976,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.3 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_3_home_mobile.png",
+      "version": "0.2.3",
+      "gitBlobOid": "f791492835e9fe7e348a0e275dfdc14e5e0dbe00",
+      "bytes": 15352,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.3 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_3_match_desktop.png",
+      "version": "0.2.3",
+      "gitBlobOid": "b11734c1e85452d7eb6456fd7c95c92f1b84e086",
+      "bytes": 66953,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.3 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_3_match_mobile.png",
+      "version": "0.2.3",
+      "gitBlobOid": "27e1ee9b1f7c9d5d8d01a7c36bed088bf19c3b51",
+      "bytes": 15969,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.3 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_3_profile_desktop.png",
+      "version": "0.2.3",
+      "gitBlobOid": "65b023f8d254f549a81b972db8d35e99127e2239",
+      "bytes": 115694,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.3 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_3_profile_mobile.png",
+      "version": "0.2.3",
+      "gitBlobOid": "182c1581d0b361f98f4a87db59495f57238846a1",
+      "bytes": 26813,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.3 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_3_replay_desktop.png",
+      "version": "0.2.3",
+      "gitBlobOid": "8c432a9a5c4c6ac74b588ec8be963a5db31d2395",
+      "bytes": 67844,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.3 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_3_replay_mobile.png",
+      "version": "0.2.3",
+      "gitBlobOid": "5b06e0283ec1a126f6248f12b7cbe8211cae5a37",
+      "bytes": 16742,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.3 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_4_home_desktop.png",
+      "version": "0.2.4",
+      "gitBlobOid": "21981c8d08b69f119f6b0462455612be3d3b9757",
+      "bytes": 168548,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.4 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_4_home_mobile.png",
+      "version": "0.2.4",
+      "gitBlobOid": "279b87fd506afeaac42c3bfaecf1daa3a8cd9492",
+      "bytes": 14423,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.4 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_4_match_desktop.png",
+      "version": "0.2.4",
+      "gitBlobOid": "92ea202cbf8f579e2767a90d01f13ce79447352d",
+      "bytes": 178440,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.4 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_4_match_mobile.png",
+      "version": "0.2.4",
+      "gitBlobOid": "83b55a61772978afff8c60331302d7d7579d471d",
+      "bytes": 15762,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.4 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_4_profile_desktop.png",
+      "version": "0.2.4",
+      "gitBlobOid": "1208ac9e038dc2196e34714ddd7a4c883f35698b",
+      "bytes": 284605,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.4 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_4_profile_mobile.png",
+      "version": "0.2.4",
+      "gitBlobOid": "05162a30ad8b73fdd8c260ca6eeff8bc93536425",
+      "bytes": 26896,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.4 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_4_replay_desktop.png",
+      "version": "0.2.4",
+      "gitBlobOid": "725182e1f7e23319798028fc235feccb7fd854e2",
+      "bytes": 180713,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.4 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_2_4_replay_mobile.png",
+      "version": "0.2.4",
+      "gitBlobOid": "14ebb704003649b2cd56a8e1b49299d13d1a72dd",
+      "bytes": 17769,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.2.4 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_home_desktop.png",
+      "version": "0.4.5",
+      "gitBlobOid": "c5ad106d4e7cc3f4cc64aadb5c637e643fede66c",
+      "bytes": 11958,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_home_mobile.png",
+      "version": "0.4.5",
+      "gitBlobOid": "7ac81230c17a300b20004914e02273b076181336",
+      "bytes": 7123,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_match_desktop.png",
+      "version": "0.4.5",
+      "gitBlobOid": "8fc379060f4e1dc3b2138b7aca6afffa8a8ad885",
+      "bytes": 16378,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_match_mobile.png",
+      "version": "0.4.5",
+      "gitBlobOid": "055e807ba0e58a690c85d8edd4276ba61d3474d8",
+      "bytes": 7963,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_profile_desktop.png",
+      "version": "0.4.5",
+      "gitBlobOid": "8e422ecde1adaa81d73861b5cc8d328c875f5c91",
+      "bytes": 17998,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_profile_mobile.png",
+      "version": "0.4.5",
+      "gitBlobOid": "6d7bdc660064b87bb89e2562d262f143a4d5dfb3",
+      "bytes": 9365,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_replay_desktop.png",
+      "version": "0.4.5",
+      "gitBlobOid": "a3c75c5cc38fed35563dc50d4c2fbb69a49126e6",
+      "bytes": 15905,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_replay_mobile.png",
+      "version": "0.4.5",
+      "gitBlobOid": "469da7d85dd41e98734ea116f94ddc70add8834d",
+      "bytes": 7499,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_settings_desktop.png",
+      "version": "0.4.5",
+      "gitBlobOid": "fd3196238c0e9c9d9903196fb64bc446ab9ea1e1",
+      "bytes": 28631,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_5_settings_mobile.png",
+      "version": "0.4.5",
+      "gitBlobOid": "d0944777710f28cb461b9305085028fa89cd3deb",
+      "bytes": 12936,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.5 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_6_replay_desktop.png",
+      "version": "0.4.6",
+      "gitBlobOid": "6b366913a2978b189bb00276541e0309cdd1ee35",
+      "bytes": 17366,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.6 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_6_replay_mobile.png",
+      "version": "0.4.6",
+      "gitBlobOid": "bc9b4adda2bda9a152a2059a63b9029608aede0b",
+      "bytes": 8798,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.6 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_7_replay_desktop.png",
+      "version": "0.4.7",
+      "gitBlobOid": "f0b41caf0862839e4094ee63e4db3a6d85466e71",
+      "bytes": 16568,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.7 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    },
+    {
+      "path": "docs/assets/screenshot_v0_4_7_replay_mobile.png",
+      "version": "0.4.7",
+      "gitBlobOid": "297cb337b483a25f65d96541ebbb7b78175f939b",
+      "bytes": 8996,
+      "sourceArchive": "docs/ui_screenshot_review.md",
+      "sourceArchiveCommit": "0b93fed092975c172959343a45decc9c8c89fe2e",
+      "reviewSection": "v0.4.7 / References",
+      "worktreeStatus": "missing",
+      "recoverableByGitBlob": true,
+      "sha256": null,
+      "dimensions": null,
+      "sha256OrDimensionsRecorded": false,
+      "materializedByAudit": false,
+      "sourceArchiveRef": "v0.4.7"
+    }
+  ],
+  "unresolvedPrimaryDecisions": [
+    {
+      "caseId": "replay-analysis-048",
+      "question": "Whether to restore existing .4.6/.4.7 active-frame screenshots from Git blobs alongside retrospective final-board captures; .4.8 has no old-period image."
+    },
+    {
+      "caseId": "replay-sidebar-061",
+      "question": "Whether to use same-period cropped Publish panels, retrospective full-page Share/Publish captures, or both."
+    },
+    {
+      "caseId": "public-player-062",
+      "question": "Whether to use ignored local A/B/C/refinement screenshot outputs or authorize bounded rendering from frozen exports to create trackable images."
+    }
+  ],
+  "sourceIdentityPolicy": {
+    "path": "Every sourceEvidence.path is repository-relative as stored in its cited Git commit; a Git ref, when present, is a separate field.",
+    "commit": "sourceEvidence.commit is the exact Git commit whose tree contains the cited path; sourceBlobOid records that path blob.",
+    "documentDate": "The Git commit date for sourceEvidence.commit. describedReleaseCommit and describedReleaseDate identify the release being discussed separately.",
+    "linesAndExcerpts": "Line ranges are 1-indexed and inclusive in the exact commit:path; excerpts are copied verbatim from those lines.",
+    "jsonPointers": "For JSON evidence, jsonPointers and jsonPointerValues identify values read from the exact commit:path blob; no line range is implied.",
+    "attribution": "Historical source references do not imply human authorship, approval, or source identity unless the cited artifact states it."
+  },
+  "sourceIdentityAudit": {
+    "status": "validated",
+    "sourceEvidenceCount": 39,
+    "missingOriginalArchiveIdentitiesNormalized": 40,
+    "historicalArchiveRef": "v0.4.7",
+    "historicalArchivePath": "docs/ui_screenshot_review.md"
+  }
+}
