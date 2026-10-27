@@ -134,7 +134,7 @@ test("public navigation, keyboard entry and unknown-route recovery work", async 
   await expect(page.locator("#developer-content")).toBeFocused();
   await page
     .getByRole("navigation", { name: "Developer sections" })
-    .getByRole("link", { name: "UI review", exact: true })
+    .getByRole("link", { name: "UI design", exact: true })
     .click();
   await expect(page.locator("#developer-content")).toBeFocused();
   await expect(page.getByRole("heading", { name: "Design reviews", exact: true })).toBeVisible();

@@ -38,18 +38,23 @@ so reference typography does not change player screens.
 
 | Surface | Owner | Source contract |
 |---|---|---|
-| Overview | `src/developer/DeveloperPages.tsx` | Direct entry to asset inspection, Lab and UI review tools; no automatically rendered Markdown |
-| Assets | `AssetPreviewRoute`, `IconInspector`, `SpriteInspector` | Actual CSS classes/tokens, canonical SVGs and source sprite inventory |
-| Lab | Existing report loaders, report panels and DOM proof boards | Unchanged `reports/lab/` JSON, recorded revisions/budgets and bounded analysis semantics |
-| UI review | `reviews.json`, `review_record.ts`, `ReviewCase.tsx`, `ReviewChecklist.tsx` | Screen references, historical comparisons, the actual screenshot-review checklist and separate technical/human status |
+| Overview | `src/developer/DeveloperPages.tsx` | Direct entry to Visual design, Bot lab and UI design; no automatically rendered Markdown |
+| Visual design | `AssetPreviewRoute`, `IconInspector`, `SpriteInspector` | Actual CSS classes/tokens, canonical SVGs and source sprite inventory |
+| Bot lab | Existing report loaders, report panels and DOM proof boards | Unchanged `reports/lab/` JSON, recorded revisions/budgets and bounded analysis semantics |
+| UI design | `reviews.json`, `review_record.ts`, `ReviewCase.tsx`, `ReviewChecklist.tsx` | Screen references, historical comparisons, the actual screenshot-review checklist and separate technical/human status |
 | UI history | `history.json`, `history_record.ts`, `HistoryRoutes.tsx` | Release provenance, meaningful milestones, stable screen identities, named states and qualified retrospective captures |
 
-Lab keeps `tab=ranking|search|analysis` and `match` deep links. Its detailed
+Visual design covers the visual system and its source assets; UI design covers
+screens, layout, interaction and their evolution. UI design retains Current
+screens, UI history and Design reviews as its three views. Existing route and
+record identities remain stable; historical captures retain their original names.
+
+Bot lab keeps `tab=ranking|search|analysis` and `match` deep links. Its detailed
 metrics and opponent/game drill-down remain available; secondary ranking metrics
 live in the expanded row. An in-flight load survives switching local views.
 Do not rerun or relabel old tournaments to update presentation.
 
-Visuals uses `view=style|icons|sprites`, with the legacy default Style. `icon` or
+Visual design uses `view=style|icons|sprites`, with the legacy default Style. `icon` or
 `compare` selects canonical names (unique, maximum four); `q` filters name/category.
 `grid=off` and `surface=light` affect inspection only. Sprites accept canonical
 `animation` and named `tint`; unknown state falls back safely. Query state survives
@@ -233,8 +238,8 @@ working notes; completed snapshots stay indexed at stable paths. Release records
 own publication facts. Keep the process record current as procedures improve;
 retrospective journey articles are later work.
 
-The developer navigation focuses on working tools: Overview, Design & assets,
-Lab and UI review. The earlier prose Process page is removed; `/dev/process/`
+The developer navigation focuses on working tools: Overview, Visual design,
+Bot lab and UI design. The earlier prose Process page is removed; `/dev/process/`
 redirects to `/dev/reviews/` without initializing the player tree. The review
 index and cases expose the screenshot-review checklist alongside real references
 and findings, rather than presenting a generic development manifesto.

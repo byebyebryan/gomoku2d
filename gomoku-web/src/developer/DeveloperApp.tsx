@@ -17,9 +17,9 @@ const Reviews = lazy(async () => ({
 }));
 const sections = [
   ["/dev/", "Overview"],
-  ["/visuals/", "Design & assets"],
-  ["/lab/", "Lab"],
-  ["/dev/reviews/", "UI review"],
+  ["/visuals/", "Visual design"],
+  ["/lab/", "Bot lab"],
+  ["/dev/reviews/", "UI design"],
 ];
 
 class DeveloperRecovery extends Component<{ children: ReactNode; standalone: boolean }, { failed: boolean }> {
@@ -108,7 +108,7 @@ function DeveloperFrame({ standalone }: { standalone: boolean }) {
         <footer className="dev-footer">
           <span>Gomoku2D · the work behind the game</span>
           <span>
-            <Link to="/dev/reviews/">UI review</Link> ·{" "}
+            <Link to="/dev/reviews/">UI design</Link> ·{" "}
             <a href={`${import.meta.env.BASE_URL}assets/fonts/LICENSE.txt`}>Font license</a>
           </span>
         </footer>

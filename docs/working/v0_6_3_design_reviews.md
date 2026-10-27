@@ -145,3 +145,16 @@ The 0.6.1 UI contract and implementation evidence corroborate the final shared
 interaction. The selected retrospective images illustrate the shipped panes;
 the initial expansion was not recovered as an image. The public case must keep
 this conversation-derived attribution and its unknown dates explicit.
+
+## Naming refinement
+
+After a positive visual pass over the backfill, Bryan requested clearer section
+names: **Visual design**, **Bot lab** and **UI design**. Navigation, overview
+cards, related links and browser titles now use those names. UI design retains
+Current screens, UI history and Design reviews. Route/query identities and
+historical capture labels remain intact.
+
+The production build, 56 targeted unit tests and 18 browser checks across
+Chromium, Firefox and WebKit passed. Desktop and portrait inspection confirmed
+that the new labels fit; the existing reflow checks include 320px and 200% text.
+This is a local naming follow-up, with production publication still separate.

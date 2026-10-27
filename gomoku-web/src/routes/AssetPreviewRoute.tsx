@@ -7,7 +7,7 @@ import { SpriteInspector } from "../developer/SpriteInspector";
 import "../developer/assets.css";
 
 export function AssetPreviewRoute() {
-  useDocumentTitle("Design & assets");
+  useDocumentTitle("Visual design");
   const [params] = useSearchParams(),
     selected = params.get("view"),
     view = selected === "icons" || selected === "sprites" ? selected : "style";
@@ -29,7 +29,7 @@ export function AssetPreviewRoute() {
   return (
     <>
       <header className="dev-heading">
-        <p className="dev-eyebrow">Design & assets</p>
+        <p className="dev-eyebrow">Visual design</p>
         <h1>Pixels with a purpose</h1>
         <p className="dev-lead">
           The current visual language, from controls to the smallest source pixel.

@@ -40,9 +40,9 @@ export function HomeRoute() {
               <span aria-hidden="true">/</span>
               <Link to="/dev/">Developer</Link>
               <span aria-hidden="true">/</span>
-              <Link to="/lab/">Lab</Link>
+              <Link to="/lab/">Bot lab</Link>
               <span aria-hidden="true">/</span>
-              <Link to="/visuals/">Visuals</Link>
+              <Link to="/visuals/">Visual design</Link>
             </span>
             <span className={styles.footerLinkGroup}>
               <a href={PROJECT_SOURCE_URL} rel="noreferrer" target="_blank">

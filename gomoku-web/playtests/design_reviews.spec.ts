@@ -93,7 +93,7 @@ test("design review index keeps source versions, order, and legacy destinations"
 
   await page.goto("/dev/reviews/");
   await expect(page.getByRole("heading", { name: "Design reviews", exact: true })).toBeVisible();
-  const reviewNavigation = page.getByRole("navigation", { name: "UI review views" });
+  const reviewNavigation = page.getByRole("navigation", { name: "UI design views" });
   await expect(reviewNavigation.getByRole("link")).toHaveCount(3);
   await expect(
     reviewNavigation.getByRole("link", { name: "Current screens", exact: true }),
@@ -137,7 +137,7 @@ test("design review index keeps source versions, order, and legacy destinations"
     ["/dev/reviews/", "Design reviews"],
   ]) {
     await page.goto(path);
-    const navigation = page.getByRole("navigation", { name: "UI review views" });
+    const navigation = page.getByRole("navigation", { name: "UI design views" });
     await expect(navigation.getByRole("link")).toHaveCount(3);
     await expect(navigation.getByRole("link", { name: activeLink, exact: true })).toHaveAttribute(
       "aria-current",
@@ -181,7 +181,7 @@ test("new and expanded reviews keep process grouping and canonical media evidenc
     await expect(page.getByRole("heading", { name: record.title, exact: true })).toBeVisible();
     await expect(
       page
-        .getByRole("navigation", { name: "UI review views" })
+        .getByRole("navigation", { name: "UI design views" })
         .getByRole("link", { name: "Design reviews", exact: true }),
     ).toHaveAttribute("aria-current", "page");
     const metadata = page.locator(".review-case > .dev-heading > .dev-meta");

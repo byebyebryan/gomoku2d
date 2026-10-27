@@ -105,7 +105,7 @@ function captureNavigationOrigin(origin: Origin) {
 export function ReviewNavigation({ designReview = false }: { designReview?: boolean }) {
   const { pathname } = useLocation();
   return (
-    <nav className="history-review-nav" aria-label="UI review views">
+    <nav className="history-review-nav" aria-label="UI design views">
       <Link
         to="/dev/reviews/core-screens-062/"
         aria-current={

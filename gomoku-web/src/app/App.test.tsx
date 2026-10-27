@@ -186,11 +186,11 @@ describe("App", () => {
 
     await screen.findByRole("heading", { name: /gomoku2d/i });
 
-    expect(screen.getByRole("link", { name: /^visuals$/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^visual design$/i })).toHaveAttribute(
       "href",
       "/visuals/",
     );
-    expect(screen.getByRole("link", { name: /^lab$/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^bot lab$/i })).toHaveAttribute(
       "href",
       "/lab/",
     );

@@ -17,19 +17,19 @@ export function DeveloperOverview() {
             [
               "/visuals/",
               "settings",
-              "Design & assets",
+              "Visual design",
               "The visual language, actual controls and the pixels behind them.",
             ],
             [
               "/lab/",
               "bot",
-              "Inside the bot lab",
+              "Bot lab",
               "Inspect recorded experiments, search costs and where games turned.",
             ],
             [
               "/dev/reviews/",
               "replay",
-              "UI review",
+              "UI design",
               "Inspect screen references, compare layout changes and review the findings.",
             ],
           ] as const

@@ -10,8 +10,8 @@ analysis, and practice from earlier positions.
 
 [Rules](https://gomoku2d.byebyebryan.com/rules/) ·
 [Guide](https://gomoku2d.byebyebryan.com/guide/) ·
-[Lab](https://gomoku2d.byebyebryan.com/lab/) ·
-[Visuals](https://gomoku2d.byebyebryan.com/visuals/) ·
+[Bot lab](https://gomoku2d.byebyebryan.com/lab/) ·
+[Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
 [Docs](docs/README.md)
 
 Developer-area source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).
@@ -85,7 +85,7 @@ provenance.
 
 ![The Lab report drills into bot rankings, search telemetry, and replay analysis examples.](docs/assets/readme-lab.gif)
 
-The Visuals guide publishes the other half of the system: pixel sprites, icons,
+Visual design presents the other half of the system: pixel sprites, icons,
 source sheets, design tokens, and the layering rules used on the board.
 
 ![The Visuals guide shows the pixel-art style system, icons, sprites, and source sheets.](docs/assets/readme-visuals.gif)

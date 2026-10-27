@@ -31,7 +31,7 @@ const REPORT_VIEWS: Array<{ id: ReportView; label: string }> = [
 ];
 
 export function LabReportRoute() {
-  useDocumentTitle("Lab Report");
+  useDocumentTitle("Bot lab");
 
   const [searchParams] = useSearchParams();
   const view = parseReportView(searchParams.get("tab"));
@@ -149,7 +149,7 @@ export function LabReportRoute() {
           </p>
         )}
       </header>
-      <nav className="dev-views" aria-label="Lab views">
+      <nav className="dev-views" aria-label="Bot lab views">
         {REPORT_VIEWS.map((option) => (
           <Link
             key={option.id}

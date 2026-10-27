@@ -52,7 +52,7 @@ test("published static report routes render their current artifacts", async ({ p
   expect(analysisJson.status()).toBe(200);
 
   await page.goto("/lab/");
-  await expect(page).toHaveTitle("Lab Report | Gomoku2D");
+  await expect(page).toHaveTitle("Bot lab | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Inside the bot lab" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ranking", exact:true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Search", exact:true })).toBeVisible();
@@ -95,7 +95,7 @@ test("published visual design route renders manifest-driven assets", async ({ pa
   expect(manifest.status()).toBe(200);
 
   await page.goto("/visuals/");
-  await expect(page).toHaveTitle("Design & assets | Gomoku2D");
+  await expect(page).toHaveTitle("Visual design | Gomoku2D");
   await expect(page.getByRole("heading", { level: 1, name: "Pixels with a purpose" })).toBeVisible();
   await expect(page.getByRole("link", { name: "style", exact:true })).toBeVisible();
   await expect(page.getByRole("link", { name: "sprites", exact:true })).toBeVisible();
@@ -120,8 +120,8 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Rules" })).toHaveAttribute("href", "/rules/");
   await expect(page.getByRole("link", { name: "Guide" })).toHaveAttribute("href", "/guide/");
-  await expect(page.getByRole("link", { name: "Visuals" })).toHaveAttribute("href", "/visuals/");
-  await expect(page.getByRole("link", { name: "Lab" })).toHaveAttribute("href", "/lab/");
+  await expect(page.getByRole("link", { name: "Visual design" })).toHaveAttribute("href", "/visuals/");
+  await expect(page.getByRole("link", { name: "Bot lab" })).toHaveAttribute("href", "/lab/");
   await expect(page.getByRole("link", { name: "About" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Analysis" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Bots" })).toHaveCount(0);
