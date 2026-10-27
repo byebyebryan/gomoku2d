@@ -487,6 +487,125 @@ describe("ProfileRoute cloud state", () => {
     expect(readReplayAnalysisCache(match, replayAnalysisOptions)).toBeNull();
   });
 
+  it("keeps signed-out reset unavailable while Auth loads, then clears local data", async () => {
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.getState().renameDisplayName("Guest while Auth loads");
+    const match = localSavedMatch("auth-loading-guest-match", localProfile.id);
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([match]) });
+    cacheReplayAnalysis(match);
+    cloudAuthStore.setState({ isConfigured: true, status: "loading", user: null });
+
+    renderProfileRoute();
+
+    const resetProfile = screen.getByRole("button", { name: "Reset Profile" });
+    expect(resetProfile).toBeDisabled();
+    fireEvent.click(resetProfile);
+    expect(
+      screen.queryByText(
+        "Reset this profile? This clears settings, games, saved replays and replay analyses on this device.",
+      ),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toHaveValue("Guest while Auth loads");
+    expect(sharingMocks.loadPrivateLibrary).not.toHaveBeenCalled();
+    expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
+
+    await act(async () => {
+      cloudAuthStore.setState({ status: "signed_out", user: null });
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Reset Profile" })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    expect(
+      screen.getByText(
+        "Reset this profile? This clears settings, games, saved replays and replay analyses on this device.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toHaveValue("Guest while Auth loads");
+    expect(sharingMocks.loadPrivateLibrary).not.toHaveBeenCalled();
+    expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    await waitFor(() => expect(screen.getByLabelText("Name")).toHaveValue("Guest"));
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
+    expect(readReplayAnalysisCache(match, replayAnalysisOptions)).toBeNull();
+    expect(sharingMocks.loadPrivateLibrary).not.toHaveBeenCalled();
+    expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
+    expect(sharingMocks.clearSharingData).not.toHaveBeenCalled();
+  });
+
+  it("keeps signed-in reset blocked through Auth/profile loading and clears confirmation on UID change", async () => {
+    const resetForUser = vi.fn().mockResolvedValue(undefined);
+    const loadForUser = vi.fn();
+    const deleteForUser = vi.fn();
+    const clearForUser = vi.fn().mockResolvedValue(undefined);
+    cloudAuthStore.setState({ isConfigured: true, status: "loading", user: null });
+    cloudProfileStore.setState({
+      deleteForUser,
+      loadForUser,
+      profile: null,
+      resetForUser,
+      status: "loading",
+    });
+    cloudHistoryStore.setState({ clearForUser });
+
+    renderProfileRoute();
+
+    const resetProfile = screen.getByRole("button", { name: "Reset Profile" });
+    expect(resetProfile).toBeDisabled();
+    fireEvent.click(resetProfile);
+    expect(
+      screen.queryByText(
+        /Reset private settings, games and saved replays here and in the cloud/,
+      ),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      cloudAuthStore.setState({ status: "signed_in", user: cloudUser });
+    });
+    expect(screen.getByRole("button", { name: "Reset Profile" })).toBeDisabled();
+
+    await act(async () => {
+      cloudProfileStore.setState({ profile: cloudProfile, status: "ready" });
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Reset Profile" })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    expect(
+      screen.getByText(
+        "Reset private settings, games and saved replays here and in the cloud? Local replay analyses are cleared. Your public profile, shared statistics and publications stay unchanged; empty cloud revision markers remain.",
+      ),
+    ).toBeInTheDocument();
+    expect(sharingMocks.loadPrivateLibrary).not.toHaveBeenCalled();
+    expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
+    expect(resetForUser).not.toHaveBeenCalled();
+    expect(clearForUser).not.toHaveBeenCalled();
+
+    const nextUser = { ...cloudUser, uid: "uid-auth-loading-next" };
+    await act(async () => {
+      cloudAuthStore.setState({ status: "signed_in", user: nextUser });
+      cloudProfileStore.setState({
+        profile: { ...cloudProfile, uid: nextUser.uid },
+        status: "ready",
+      });
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Reset Profile" })).toBeVisible(),
+    );
+    expect(
+      screen.queryByText(
+        /Reset private settings, games and saved replays here and in the cloud/,
+      ),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reset" })).not.toBeInTheDocument();
+    expect(sharingMocks.loadPrivateLibrary).not.toHaveBeenCalled();
+    expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
+    expect(resetForUser).not.toHaveBeenCalled();
+    expect(deleteForUser).not.toHaveBeenCalled();
+    expect(clearForUser).not.toHaveBeenCalled();
+  });
+
   it("shows the linked cloud profile and allows sign-out", () => {
     const signOut = vi.fn().mockResolvedValue(undefined);
     cloudAuthStore.setState({

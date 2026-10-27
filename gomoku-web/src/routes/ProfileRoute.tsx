@@ -431,7 +431,10 @@ export function ProfileRoute() {
     document.getElementById(`${nextTab}-tab`)?.focus();
     event.preventDefault();
   }
-  const profileActionDisabled = profileActionBusy || (signedIn && cloudProfile.status === "loading");
+  const profileActionDisabled =
+    profileActionBusy
+    || cloudAuth.status === "loading"
+    || (signedIn && cloudProfile.status === "loading");
   const confirmationText = confirmingProfileAction === "delete"
     ? "Delete your cloud profile, history, saved replays, public name, shared statistics and publications, then sign out? Local copies stay on this device. Empty revision markers remain to block stale writes. Copied replay links still work."
     : signedIn

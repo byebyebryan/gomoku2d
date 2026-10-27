@@ -548,6 +548,7 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
   expect(JSON.parse(privateBeforeReset!.entries_json as string)).toHaveLength(1);
 
   await page.goto("/profile");
+  await readyCloud(page);
   await page.getByRole("button", { name: "Reset Profile", exact: true }).click();
   await expect(page.getByText(/Your public profile, shared statistics and publications stay unchanged/)).toBeVisible();
   await page.getByRole("button", { name: "Reset", exact: true }).click();
@@ -570,6 +571,7 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
   const privateBeforeDelete = await readFirestoreDocument(`replay_libraries/${uid}`);
   expect(JSON.parse(privateBeforeDelete?.entries_json as string)).toHaveLength(1);
   await page.goto("/profile");
+  await readyCloud(page);
   await page.getByRole("button", { name: "Reset Profile", exact: true }).click();
   await page.getByRole("button", { name: "Delete Cloud", exact: true }).click();
   await expect(page.getByText(/Delete your cloud profile, history, saved replays, public name, shared statistics and publications/)).toBeVisible();
