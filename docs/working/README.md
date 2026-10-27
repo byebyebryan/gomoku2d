@@ -11,7 +11,8 @@ belong in the [reference docs](../README.md#choose-a-path).
 | [0.6.3 developer-area brief](v0_6_3_developer_site_plan.md) | Bryan; visual study accepted; [implementation/execution](v0_6_3_execution.md) owns local integration, evidence and remaining release/manual checks |
 | [Retrospective UI capture pilot](v0_6_3_retrospective_capture.md) | Bryan; compare v0.2.4 and v0.6.2 with a reusable capture contract; generic portrait profile remains provisional pending phone measurements |
 | [UI history implementation](v0_6_3_history_implementation.md) | 24 milestones / 15 screen histories / 274 selected captures; first human pass broadly positive, latest-first ordering implemented; generic portrait remains provisional |
-| [Design-review backfill](v0_6_3_design_reviews.md) | Eight prepared cases; source/media, 556 unit tests, 57 browser tests and shared-export/Snap delivery verified; Bryan's new visual pass remains open |
+| [Design-review backfill](v0_6_3_design_reviews.md) | Eight prepared cases; source/media and shared-export/Snap delivery verified; follow-up findings are tracked in the overall review below |
+| [0.6.3 overall review](v0_6_3_overall_review.md) | Source `d5a602d`; two product/accessibility findings and three tooling/validation findings open; 556 units, 291 browser journeys and cached-session checks pass |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; revised sequence and retained research; replay metadata compatibility belongs to 0.6.4, curated learning later |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan

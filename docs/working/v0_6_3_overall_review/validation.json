@@ -1,0 +1,172 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T06:17:47.237690+00:00",
+  "sourceCommit": "d5a602ddd077553f52f726d007cdffa3b935ad0b",
+  "scope": "Local 0.6.3 source against v0.6.2, including the dev site, assets/Lab, UI histories/cases, exporters and current navigation.",
+  "productSourceEdited": false,
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P2",
+      "area": "Product",
+      "title": "Bot lab Analysis retains a desktop-width summary grid on phones",
+      "source": "gomoku-web/src/routes/ReportRoute.module.css:151",
+      "evidence": "At 412px, the page scroll width is 780px in Chromium, Firefox and WebKit, even with rows closed. At 320px/200% text, the measured overflow is 511px. The summary grid is 360px plus four 86px columns. A browser-only one-column override returns the page to 412px.",
+      "fix": "Make the Analysis summary respond at narrow widths; retain local proof-board scrolling. Add Analysis closed/open and enlarged-text reflow coverage."
+    },
+    {
+      "id": "R2",
+      "priority": "P2",
+      "area": "Accessibility",
+      "title": "Capture regions reuse accessible names across comparisons",
+      "source": "gomoku-web/src/developer/ReviewComparison.tsx:116",
+      "evidence": "Eight review records trigger axe landmark-unique at all three inspected sizes (24 rule reports). Mobile records repeats Before/After capture region names three times. A fresh-page scan confirms the same result without changing image loading. This is an axe best-practice finding, not 24 distinct WCAG violations.",
+      "fix": "Include comparison context in capture region names or associate unique headings/captions; check normal and native modes across complete cases."
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "area": "Validation",
+      "title": "The in-flight private-write cloud check still targets the old Home label",
+      "source": "gomoku-web/cloudtests/developer.spec.ts:105",
+      "evidence": "D02 Chromium times out waiting for the exact Developer link after the label became Dev site. The pending-write assertion is never reached. Cleanup masks the primary locator failure with a closed-context unroute error. D01 passes in all three engines.",
+      "fix": "Update the selector and preserve the original failure during cleanup; rerun D02 across all three engines."
+    },
+    {
+      "id": "R4",
+      "priority": "P2",
+      "area": "Tooling",
+      "title": "Single-case export output can escape the dedicated root through a symlink",
+      "source": "gomoku-web/scripts/export_review.mjs:13",
+      "evidence": "An owned probe under the ignored review-export root symlinked to an owned temporary directory. Export succeeded and created index.html outside the dedicated root. The probe was removed. No source or existing output was overwritten. The full-site exporter has stronger real-path checks.",
+      "fix": "Use physical-path containment and reject symlinked parents before creating output; retain exclusive creation and ignored-output checks."
+    },
+    {
+      "id": "R5",
+      "priority": "P3",
+      "area": "Tooling",
+      "title": "The older visual-audit helper decodes lazy images before they load",
+      "source": "gomoku-web/scripts/check_developer_visuals.mjs:43",
+      "evidence": "The helper fails in Firefox with Invalid image request before writing its final audit receipt. A focused probe reproduces the error with unloaded lazy captures; making them eager then decoding passes, with no failed image requests.",
+      "fix": "Wait for selected image identity/loading or explicitly request audit images before decode, and preserve partial results on failure."
+    }
+  ],
+  "validation": {
+    "typecheck": "App/scripts/tools passed",
+    "productionBuild": "Passed, including allowlisted publishers",
+    "units": {
+      "passed": 556,
+      "files": 54
+    },
+    "captureTools": {
+      "passed": 34
+    },
+    "ordinaryBrowser": {
+      "passed": 291,
+      "skipped": 6,
+      "engines": [
+        "Chromium",
+        "Firefox",
+        "WebKit"
+      ],
+      "skipReason": "WebGL pixel qualification is Chromium-only; forced Canvas runs in all engines."
+    },
+    "cloudD01": {
+      "passed": 3,
+      "engines": [
+        "Chromium",
+        "Firefox",
+        "WebKit"
+      ],
+      "fixture": "Owned demo emulators, offset 3000"
+    },
+    "cloudD02": {
+      "passed": false,
+      "engine": "Chromium",
+      "failure": "Old exact Developer link selector; assertion blocked"
+    },
+    "uiAudit": {
+      "engine": "Chromium",
+      "views": 60,
+      "widths": [
+        1440,
+        412,
+        320
+      ],
+      "text": [
+        "100%",
+        "100%",
+        "200%"
+      ],
+      "violationRule": "landmark-unique",
+      "ruleReports": 24,
+      "affectedRecords": 8,
+      "incomplete": 7,
+      "incompleteRules": [
+        "color-contrast"
+      ],
+      "outerOverflowViews": 2,
+      "pageErrors": [],
+      "outsideRequests": [],
+      "measuredLoadedPairs": 132,
+      "unloadedHiddenPairsExcludedFromScaleCheck": 9,
+      "loadedPairScaleFailures": []
+    },
+    "analysisOverflowConfirmedEngines": [
+      "Chromium",
+      "Firefox",
+      "WebKit"
+    ],
+    "servedParity": {
+      "source": "d5a602d",
+      "base": "http://127.0.0.1:46862/",
+      "files": 585,
+      "bytes": 22832410,
+      "sha256Parity": true
+    },
+    "sourceMediaReportParity": {
+      "checked": 168,
+      "records": 10,
+      "recordedReportsUnchanged": true
+    }
+  },
+  "tools": {
+    "node": "26.12.1",
+    "vite": "8.3.4",
+    "playwright": "1.64.1",
+    "typescript": "6.0.3",
+    "axe": "4.14.0",
+    "checkedVersionsMatchLock": true,
+    "freshDependencyInstall": false
+  },
+  "capture": {
+    "file": "media/analysis-412.png",
+    "sha256": "5eb391c396f55eee57ea705c5df0d40786d9e9bf26983d22bb6696fc0fdc6e66",
+    "width": 412,
+    "height": 900,
+    "viewportCss": "412 x 900",
+    "deviceScaleFactor": 1,
+    "text": "100%",
+    "browser": "Chromium 156.0.8078.4",
+    "url": "http://127.0.0.1:46862/lab/?tab=analysis",
+    "kind": "Current local-candidate capture; not a measured physical handset"
+  },
+  "evidenceDirectory": "gomoku-web/test-results/v063-overall-review-20261026",
+  "cloudFailureReceiptNote": "The D02 primary locator failure was extracted from the trace. Its raw trace was then replaced by the sequential D01 run in the shared cloud-3000 artifact directory; the observation is retained separately.",
+  "reviewLimits": [
+    "Source/installed-tool/local-browser evidence; no hosted CI or production release claim.",
+    "Seven automated contrast checks remain inconclusive; human assistive-technology and measured-phone acceptance remain separate.",
+    "The original historical capture/media qualification is retained; this review does not re-run historical emulators or recapture old releases."
+  ],
+  "cleanup": {
+    "symlinkProbeRemoved": true,
+    "ownedTemporaryDirectoryRemoved": true,
+    "emulatorOffset3000Stopped": true,
+    "ownedHeadlessContainersClosed": true,
+    "ordinaryPreviewPreserved": true,
+    "sharedReportServerPreserved": true,
+    "userBrowserTabsOpened": 0,
+    "worktreesCreatedOrRemoved": false
+  },
+  "publication": "No push, version bump, tag, production deployment or real-account writes."
+}

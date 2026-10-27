@@ -6,6 +6,10 @@ implementation on October 24, 2026. Scope follows the
 release/deployment remain separate. The 0.6.2 manual preview, emulators, Carbon
 tunnel and demo fixtures remain owned by the existing services.
 
+The [October 26 overall review](v0_6_3_overall_review.md) records fresh results
+at `d5a602d` and five open follow-ups. The checkpoints below retain their dated
+scope and evidence; they do not supersede that later review.
+
 ## Integration checkpoint C–D
 
 The root entry now selects a lazy public developer tree or the player tree.
