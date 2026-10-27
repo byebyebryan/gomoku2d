@@ -24,6 +24,12 @@ WebGL skips remain intentional. The local candidate is ready for release
 preparation; version/changelog, pushed exact-source CI and publication remain
 separate. Earlier checkpoints retain their dated scope and evidence.
 
+The [final review](v0_6_3_final_review.md) of `b4fdeb4` found no new blockers.
+The actual Node-24 tool-test command also passes in a fresh shallow checkout
+without RTK or existing output. Source/evidence and audits remain verified;
+only EOF whitespace was cleaned up. Proceed to version/changelog and the normal
+authorized exact-source CI/publication sequence.
+
 ## Integration checkpoint C–D
 
 The root entry now selects a lazy public developer tree or the player tree.

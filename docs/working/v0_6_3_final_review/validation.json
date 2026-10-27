@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T18:44:34.469425+00:00",
+  "candidateCommit": "b4fdeb44d281dca8dc11750c5bfa1c8f5e1deff3",
+  "testedImplementation": "e34129f91664ec3180cbfb6600f0a9a23ce8ca15",
+  "verdict": "No new functional or release-blocking findings. Proceed to release preparation.",
+  "sourceReview": [
+    "Auth-loading reset guard, UID-change invalidation and operation/account ownership",
+    "Both C14 signed-in readiness boundaries",
+    "Three-entry dependency lock scope and unchanged root ranges",
+    "Native Git output containment and Node CI wiring",
+    "Release metadata, docs authority, remote main/tag state and acceptance limits"
+  ],
+  "retainedEvidence": {
+    "candidate": "b4fdeb4",
+    "implementationSource": "e34129f91664ec3180cbfb6600f0a9a23ce8ca15",
+    "inputHashesVerified": 7,
+    "rawArtifactHashesVerified": 26,
+    "implementationUnchanged": true,
+    "retained": {
+      "units": 558,
+      "nodeTools": 44,
+      "rules": 49,
+      "browserPassed": 297,
+      "browserIntentionalSkips": 6,
+      "cloudFull": 60,
+      "cloudC14Repeated": 15,
+      "cloudRacesRepeated": 45
+    }
+  },
+  "freshChecks": {
+    "cleanCheckoutTools": {
+      "at": "2026-10-27T18:41:01.559057+00:00",
+      "candidate": "b4fdeb4",
+      "test": "npm run test:tools",
+      "qualification": "Fresh shallow source checkout; installed locked dependencies mounted read-only, not a new dependency install or hosted CI run.",
+      "status": "passed",
+      "sourceCommit": "b4fdeb44d281dca8dc11750c5bfa1c8f5e1deff3",
+      "shallow": true,
+      "testResultsAbsentBefore": true,
+      "exitCode": 0,
+      "tempCloneRemovedAfter": true,
+      "worktreesCreatedOrRemoved": 0
+    },
+    "productionNpm": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "allNpm": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 3,
+        "high": 0,
+        "critical": 0,
+        "total": 3
+      },
+      "knownExceptionPackages": [
+        "@google-cloud/pubsub",
+        "@opentelemetry/core",
+        "firebase-tools"
+      ]
+    },
+    "rust": {
+      "vulnerabilities": 0,
+      "warnings": {},
+      "database": {
+        "advisory-count": 1380,
+        "last-commit": "99670cfc0bc574433034b75876a4b791ccaa2efb",
+        "last-updated": "2026-10-27T11:02:42+01:00"
+      }
+    },
+    "releaseDiffWhitespace": "git diff --check v0.6.2 passes after EOF cleanup"
+  },
+  "releaseState": {
+    "sourceCommit": "b4fdeb44d281dca8dc11750c5bfa1c8f5e1deff3",
+    "packageVersion": "0.6.2",
+    "lockVersion": "0.6.2",
+    "versionsConsistent": true,
+    "changelog063Section": false,
+    "remoteMain": "4052d946a14b235742b12bc3e8fa4d753b480516",
+    "remote063TagExists": false,
+    "cleanup": {
+      "file": "gomoku-web/scripts/capture_history_ui.mjs",
+      "oldSha256": "063fa3a6266a31101da51904178704c80b007f49608d2fe38ce7992a6e6cb862",
+      "newSha256": "c4c40851643d9008844c827bdea6d7ffcdecd94ba48c211c7b3db2723d672131",
+      "difference": "five trailing blank lines removed",
+      "executableTextIdentical": true
+    },
+    "releaseDiffWhitespaceCheck": "pass after formatting cleanup"
+  },
+  "qualification": [
+    "The clean-checkout tool run mounts existing locked dependencies read-only; it is not a new dependency install or hosted workflow run.",
+    "The broad application/cloud/native lanes were retained after checking source/evidence identity; they were not repeated here.",
+    "The only source cleanup removes five EOF blank lines from the capture tool. Its executable text is identical; no behavioral change or new test was added.",
+    "Version/changelog/status preparation, authorized push, exact-source hosted CI and tag/deployment verification remain separate.",
+    "Existing human/account/device and inconclusive contrast acceptance limits remain explicit."
+  ],
+  "cleanup": {
+    "temporaryCloneRemoved": true,
+    "temporaryContainerRemoved": true,
+    "existingPreviewAndReportServices": "untouched",
+    "userBrowserTabsOpened": 0,
+    "foreignWorktreesTouched": 0
+  },
+  "rawEvidenceRoot": "gomoku-web/test-results/v063-final-review-20261027",
+  "rawArtifactSha256": {
+    "retained-evidence.json": "99dd9c98345db0898d73d5db40ba1b27b69ea0652d98d2e11488f9cda9cf1996",
+    "clean-clone.log": "2192764dbf5e85248561c81e38315c500266dc255f0b8ed066dafc214eaa3e9a",
+    "clean-ci-tools.log": "35fe43eeb7a7efb95dfbed18c34365e93fad63d0ea32aad9aad78041294e9186",
+    "clean-ci-tools.json": "7bd8fbb29d394a37e8ebbd0d921098e04a26fad2d71647436a39d49ea204a8f9",
+    "npm-production.json": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35",
+    "npm-all.json": "02097373d7a4bea78b4fe1b62e37157aaa20818f1ccc1f3216915e94820ec838",
+    "cargo-audit.json": "dacd47558f98bfc3ec96ea8b444243db65e3bd0497802ea995004320647e5ffa",
+    "release-state.json": "ba4a11fa60bfbd0f8a3a71b7949b312b6b1d1ccabe1d71088990593017d98fda"
+  }
+}

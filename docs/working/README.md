@@ -14,6 +14,7 @@ belong in the [reference docs](../README.md#choose-a-path).
 | [Design-review backfill](v0_6_3_design_reviews.md) | Eight prepared cases; source/media and shared-export/Snap delivery verified; follow-up findings are tracked in the overall review below |
 | [0.6.3 overall review and fixes](v0_6_3_review_fixes.md) | All five findings from the [original review](v0_6_3_overall_review.md) resolved at `c1c3af6`; 556 units, 44 tool tests, 105 affected browser tests and six cloud journeys pass; preview verified from Snap; human/release gates remain separate |
 | [0.6.3 release-readiness fixes](v0_6_3_release_fixes.md) | All findings from the [release-wide review](v0_6_3_release_review.md) resolved at `e34129f`; 558 unit, 44 tool, 297 browser, 49 rules and 120 cloud/repetition checks pass; ready for separate release preparation |
+| [0.6.3 final review](v0_6_3_final_review.md) | Candidate `b4fdeb4`; no new blockers; clean shallow-checkout Node-24 CI command passes 44/44; source/evidence and audits verified; packaging and publication are next |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; revised sequence and retained research; replay metadata compatibility belongs to 0.6.4, curated learning later |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan
