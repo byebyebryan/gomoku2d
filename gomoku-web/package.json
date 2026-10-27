@@ -20,6 +20,7 @@
     "media:readme": "node scripts/capture_readme_media.mjs",
     "media:sharing": "node scripts/capture_sharing_media.mjs",
     "test": "vitest run",
+    "test:tools": "node --test scripts/capture_history_ui.test.mjs scripts/capture_retrospective_ui.test.mjs scripts/tests/export_output_guard.test.mjs scripts/tests/developer_visuals_helpers.test.mjs",
     "typecheck": "tsc --noEmit && npm run typecheck:scripts && tsc --project tsconfig.tools.json",
     "typecheck:scripts": "tsc --allowJs --checkJs --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --types node --ignoreConfig scripts/*.mjs",
     "test:rules": "firebase emulators:exec --project demo-gomoku2d-rules-test --only firestore --config ../firebase.json \"vitest run --config vitest.rules.config.ts\"",

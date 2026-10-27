@@ -93,6 +93,10 @@ jobs:
         working-directory: gomoku-web
         run: npm test
 
+      - name: Capture, export, and audit tool tests
+        working-directory: gomoku-web
+        run: npm run test:tools
+
       - name: Firestore rules tests
         working-directory: gomoku-web
         run: npm run test:rules

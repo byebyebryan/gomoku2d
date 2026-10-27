@@ -83,7 +83,7 @@ export async function createIgnoredExportDirectory({
     throw new Error("The export path must stay under the physical repository root.");
 
   try {
-    await execFileAsync("rtk", ["git", "check-ignore", "--quiet", "--", outputRelativeToRepo], {
+    await execFileAsync("git", ["check-ignore", "--quiet", "--", outputRelativeToRepo], {
       cwd: physicalRepoRoot,
       encoding: "utf8",
     });
