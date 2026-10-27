@@ -7,6 +7,11 @@ dependencies and release procedure. Product, test, lockfile and workflow source
 are unchanged by this review. The [validation receipt](v0_6_3_release_review/validation.json)
 qualifies fresh checks and reused evidence separately.
 
+**Follow-up, October 27:** RR1/RR2 and the RR3 CI improvement are resolved by the
+[release-fix checkpoint](v0_6_3_release_fixes.md), tested at `e34129f`. The full
+cloud and repetition gates now pass. The findings and results below remain the
+original `98d60f5` review snapshot, including its retained failures.
+
 **Recommendation: finish the two bounded items below, then prepare the release.**
 The dev-site scope and presentation are coherent, and the previous five review
 findings remain resolved. The broad cloud gate is currently red; this should be

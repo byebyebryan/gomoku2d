@@ -16,8 +16,13 @@ checkpoints below retain their dated scope and evidence.
 
 The subsequent [October 27 release-wide review](v0_6_3_release_review.md), at
 `98d60f5`, keeps R1–R5 resolved but identifies a C14 account-restoration readiness
-race and development-dependency audit additions. The full browser, native and
-rules lanes pass; the cloud release gate remains open until that follow-up.
+race and development-dependency audit additions. Those findings and the CI
+coverage follow-up are now resolved in the
+[release-fix checkpoint](v0_6_3_release_fixes.md), tested at `e34129f`: 558 unit,
+44 tool, 297 browser, 49 rules and 120 cloud/repetition checks pass. Six ordinary
+WebGL skips remain intentional. The local candidate is ready for release
+preparation; version/changelog, pushed exact-source CI and publication remain
+separate. Earlier checkpoints retain their dated scope and evidence.
 
 ## Integration checkpoint C–D
 

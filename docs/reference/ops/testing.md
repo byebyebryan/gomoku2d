@@ -15,6 +15,7 @@ release or after core/rules/search work, run the full relevant lane.
 | Lethal scenarios | `(cd gomoku-bot-lab && cargo run --release -p gomoku-eval -- lethal-scenarios)` |
 | Web typecheck | `(cd gomoku-web && npm run typecheck)` |
 | Web unit tests | `(cd gomoku-web && npm test)` |
+| Capture/export/audit tool contracts | `(cd gomoku-web && npm run test:tools)` |
 | Web production dependency audit | `(cd gomoku-web && npm audit --omit=dev)` |
 | Firestore rules | `(cd gomoku-web && npm run test:rules)` |
 | Production build/direct routes | `(cd gomoku-web && GOMOKU_BASE_PATH=/ npm run build)` |
@@ -159,6 +160,10 @@ entry, module/network/storage isolation, query/history, comparisons, source
 sprites, keyboard, recovery and desktop/narrow/landscape/enlarged text.
 `cloudtests/developer.spec.ts` checks cached emulator sign-in and a held private
 write across navigation. Run these in all three engines after shared-shell work.
+
+`npm run test:tools` runs the Node capture, export-output and audit-readiness
+contracts in CI as well as locally. The output guard uses native Git, keeping
+these checks independent of an agent's command-wrapper tools.
 
 The ordinary build and cloud harness publish the same allowlisted static
 assets/reports/review records and direct-entry route inventory. Review exporters

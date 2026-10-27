@@ -1,0 +1,394 @@
+{
+  "schema": 1,
+  "completedAt": "2026-10-27T18:35:48.798559+00:00",
+  "source": {
+    "implementationCommit": "e34129f91664ec3180cbfb6600f0a9a23ce8ca15",
+    "startingCommit": "9619214",
+    "contractCommit": "f8da69f",
+    "inputs": {
+      ".github/workflows/ci.yml": "9bc263ade604ad1612ada7c48c727ca15bf3a35d01342191abf85416e49b15af",
+      "gomoku-web/cloudtests/sharing.spec.ts": "66f5e4fd84928d5ebb3bada6f52f3b1c0f93c8209f536b5a6069792997a0038e",
+      "gomoku-web/package.json": "0cfd8dbc80209f6821b7a0732a7effe274a4339531d47604411e567f7d0960b8",
+      "gomoku-web/package-lock.json": "8acdb19f37c9d033f88731392f4028a752bb48407e29c41c7ad73cdbc7537893",
+      "gomoku-web/scripts/export_output_guard.mjs": "7aec1f78d29ec07178c0c1f3df220733de52e19e0eeb330355a8266a81cd7f61",
+      "gomoku-web/src/routes/ProfileRoute.tsx": "2b4c664d40270d4d583fbe0297c33690fa997448504d7eca68f6a922ff39d2ca",
+      "gomoku-web/src/routes/ProfileRoute.test.tsx": "a2aced4c12955c03fc831096cee16546ded7f1c927fe2ba6ffc4217363d6d3e6"
+    },
+    "qualification": "All implementation/test/lock/workflow inputs remain identical to the committed candidate. Builds started on clean e34129f; later edits close docs/evidence only."
+  },
+  "findings": [
+    {
+      "id": "RR1",
+      "status": "resolved",
+      "commit": "da96c2a",
+      "behavior": "Auth loading disables profile danger actions; C14 explicitly awaits restored sign-in at both Profile entry points. Guest semantics, UID-change clearing and operation ownership are preserved."
+    },
+    {
+      "id": "RR2",
+      "status": "resolved",
+      "commit": "3562e6c",
+      "behavior": "Exactly three compatible dev resolution entries patched; root ranges, unrelated versions and release version unchanged."
+    },
+    {
+      "id": "RR3",
+      "status": "resolved",
+      "commit": "e34129f",
+      "behavior": "CI invokes all four maintained Node tool test files; ignored-output checks use native Git, with no RTK dependency."
+    }
+  ],
+  "ownership": {
+    "lunaMax": "Bounded implementation, focused tests and native-Git portability correction",
+    "primary": "Behavior decisions, diff/failure-path review, CI portability finding, clean install, integration/final gates and evidence acceptance"
+  },
+  "freshValidation": {
+    "installation": {
+      "command": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-fund --no-audit",
+      "exitCode": 0,
+      "hostNode": "v26.12.1",
+      "hostNpm": "12.2.1",
+      "installedGraph": "npm ls --all --json exits 0",
+      "installedTools": {
+        "vite": "8.3.4",
+        "typescript": "6.0.3",
+        "@playwright/test": "1.64.1",
+        "vitest": "4.1.12",
+        "firebase-tools": "15.34.0",
+        "axe-core": "4.14.0"
+      },
+      "changes": {
+        "lockEntries": [
+          {
+            "path": "node_modules/@modelcontextprotocol/sdk/node_modules/body-parser",
+            "before": "2.3.0",
+            "after": "2.4.0",
+            "dev": true
+          },
+          {
+            "path": "node_modules/body-parser",
+            "before": "1.20.8",
+            "after": "1.20.9",
+            "dev": true
+          },
+          {
+            "path": "node_modules/fast-uri",
+            "before": "3.1.8",
+            "after": "3.1.9",
+            "dev": true
+          }
+        ],
+        "generatedWasmUnchanged": true,
+        "generatedWasmFileCount": 7,
+        "rootDependencyRangesUnchanged": true
+      },
+      "qualification": "npm reported superstatic engine-range and default blocked-install-script notices. No allowScripts policy change was made; build and exercised CLI paths pass. This is a host install, not a fresh hosted Node-24/Wasm CI run.",
+      "log": "npm-ci.log"
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "result": "pass",
+      "scope": "app, checked JS scripts, tools"
+    },
+    "unit": {
+      "command": "npm test",
+      "passed": 558,
+      "files": 54,
+      "failed": 0
+    },
+    "nodeTools": {
+      "command": "node --test scripts/capture_history_ui.test.mjs scripts/capture_retrospective_ui.test.mjs scripts/tests/export_output_guard.test.mjs scripts/tests/developer_visuals_helpers.test.mjs",
+      "passed": 44,
+      "failed": 0,
+      "environment": {
+        "node": "v24.14.1",
+        "git": {
+          "version": "git version 2.43.0",
+          "exitCode": 0,
+          "error": null
+        },
+        "rtk": {
+          "version": null,
+          "exitCode": null,
+          "error": "ENOENT"
+        }
+      },
+      "coverage": {
+        "command": "node --test scripts/capture_history_ui.test.mjs scripts/capture_retrospective_ui.test.mjs scripts/tests/export_output_guard.test.mjs scripts/tests/developer_visuals_helpers.test.mjs",
+        "coveredFiles": [
+          "scripts/capture_history_ui.test.mjs",
+          "scripts/capture_retrospective_ui.test.mjs",
+          "scripts/tests/export_output_guard.test.mjs",
+          "scripts/tests/developer_visuals_helpers.test.mjs"
+        ],
+        "allMaintainedNodeTestFilesCovered": true,
+        "workflowInvokesCommand": true,
+        "node24WithoutRTK": "44/44 checks passed in Ubuntu container; native Git used for ignored-output checks"
+      },
+      "qualification": "Ubuntu image supplies Node 24.14.1 and Git, with RTK absent. CI command wiring was checked; hosted workflow execution remains a later gate."
+    },
+    "build": {
+      "result": "pass",
+      "sourceCommit": "e34129f91664ec3180cbfb6600f0a9a23ce8ca15",
+      "sourceCleanAtBuild": true,
+      "configuration": "Checked-in Pages public Firebase config; base /; owned output; all static publishers pass"
+    },
+    "ordinaryBrowser": {
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "passed": 297,
+      "failed": 0,
+      "intentionalSkips": 6,
+      "qualification": "Only non-Chromium WebGL colour qualification is skipped. Forced Canvas runs in all engines."
+    },
+    "rules": {
+      "passed": 49,
+      "failed": 0,
+      "project": "demo-gomoku2d-rules-test",
+      "ports": {
+        "firestore": 27080,
+        "websocket": 28152,
+        "hub": 23401,
+        "logging": 23501
+      }
+    },
+    "cloud": [
+      {
+        "lane": "C14 repetition",
+        "passed": 15,
+        "failed": 0,
+        "repeatEach": 5,
+        "engines": 3,
+        "offset": 6000
+      },
+      {
+        "lane": "full",
+        "passed": 60,
+        "failed": 0,
+        "engines": 3,
+        "offset": 7000
+      },
+      {
+        "lane": "C4/C6/C7 repetition",
+        "passed": 45,
+        "failed": 0,
+        "repeatEach": 5,
+        "engines": 3,
+        "offset": 8000
+      }
+    ],
+    "audits": {
+      "productionNpm": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "allNpm": {
+        "info": 0,
+        "low": 0,
+        "moderate": 3,
+        "high": 0,
+        "critical": 0,
+        "total": 3
+      },
+      "retainedExceptionPackages": [
+        "@google-cloud/pubsub",
+        "@opentelemetry/core",
+        "firebase-tools"
+      ],
+      "cargoDatabase": {
+        "advisory-count": 1380,
+        "last-commit": "99670cfc0bc574433034b75876a4b791ccaa2efb",
+        "last-updated": "2026-10-27T11:02:42+01:00"
+      },
+      "rustVulnerabilities": 0,
+      "rustWarnings": {},
+      "qualification": "Full npm exits 1 for the previously documented three moderate development-only entries; the RR2 packages are absent from its findings."
+    },
+    "exports": {
+      "standalone": {
+        "results": [
+          {
+            "name": "chromium",
+            "variant": "current",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          },
+          {
+            "name": "firefox",
+            "variant": "current",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          },
+          {
+            "name": "webkit",
+            "variant": "current",
+            "uniqueRegions": true,
+            "nativeReloadBack": true,
+            "narrow200": true
+          }
+        ]
+      },
+      "noOverwrite": [
+        {
+          "command": "review:export",
+          "exitCode": 1,
+          "existingReceiptUnchanged": true,
+          "sha256": "ecf9f34715f13f5aa045cbc61de0da5643b5888e85760fbc7fc439cd5861f6d2"
+        },
+        {
+          "command": "developer:export",
+          "exitCode": 1,
+          "existingReceiptUnchanged": true,
+          "sha256": "40d00125360c0f32265c9908197fc0a813b93b71a2ae81b652abf86e596970e0"
+        }
+      ],
+      "developerPayloadParity": {
+        "oldSource": {
+          "commit": "c1c3af6e7439e37027f881a870759a7c2be64855",
+          "trackedSourceDirty": false,
+          "workingTreeClean": true,
+          "qualification": "commit"
+        },
+        "newSource": {
+          "commit": "e34129f91664ec3180cbfb6600f0a9a23ce8ca15",
+          "trackedSourceDirty": false,
+          "workingTreeClean": true,
+          "qualification": "commit"
+        },
+        "payloadFiles": 488,
+        "filesWithChangedPayload": [],
+        "payloadByteIdentical": true,
+        "qualification": "export.json source/date receipt differs; all inventoried static payload files are compared independently."
+      }
+    },
+    "servedBuild": {
+      "sourceCommit": "e34129f91664ec3180cbfb6600f0a9a23ce8ca15",
+      "files": 585,
+      "bytes": 22833908,
+      "sha256Parity": true
+    }
+  },
+  "reusedEvidence": {
+    "native": {
+      "review": "docs/working/v0_6_3_release_review/validation.json",
+      "source": "98d60f5",
+      "testsPassed": 348,
+      "qualification": "Rust/toolchain sources unchanged; retained fmt/Clippy/workspace tests. No native rebuild/tournament needed for these changes."
+    },
+    "visualAndPortable": {
+      "review": "docs/working/v0_6_3_review_fixes/validation.json",
+      "source": "c1c3af6",
+      "uiAuditViews": 60,
+      "maintainedAuditViews": 66,
+      "violations": 0,
+      "inconclusiveContrastChecks": [
+        7,
+        9
+      ],
+      "exportRoutesPerEngine": 34,
+      "snapFiles": 489,
+      "qualification": "All 488 inventoried runtime/media payload files of the fresh dev-site export match the previously browser/Snap-verified export. export.json source/date differs. This is retained evidence, not a new UI/device/Snap run."
+    }
+  },
+  "invariants": {
+    "backendSchemasRulesUnchanged": true,
+    "recordedDataMediaUnchanged": true,
+    "generatedWasmUnchanged": true,
+    "oldReviewReceiptSha256": "f9543bd219dc6612577296383fdc667a3be66f8187a91cf58a35bebd699d19cd",
+    "qualification": "Original failed review receipt and raw artifacts are preserved; passing new runs have distinct outputs/ports."
+  },
+  "cleanup": {
+    "previewServersStopped": [
+      {
+        "pid": 2243135,
+        "command": "/usr/bin/node node_modules/vite/bin/vite.js preview --outDir test-results/v063-release-fixes-20261027/dist --host 127.0.0.1 --port 47439 --strictPort "
+      },
+      {
+        "pid": 2309803,
+        "command": "/usr/bin/python3 -m http.server 47440 --bind 127.0.0.1 --directory /home/bryan/code/gomoku2d/gomoku-web/test-results/review-exports "
+      }
+    ],
+    "ownedPortsClear": [
+      47439,
+      47440,
+      14013,
+      25099,
+      24081,
+      25151,
+      20401,
+      20501,
+      15013,
+      26099,
+      25081,
+      26151,
+      21401,
+      21501,
+      16013,
+      27099,
+      26081,
+      27151,
+      22401,
+      22501,
+      27080,
+      28152,
+      23401,
+      23501
+    ],
+    "preservedServices": [
+      {
+        "pid": 165197,
+        "port": 46862,
+        "role": "existing manual preview"
+      },
+      {
+        "pid": 23164,
+        "port": 8787,
+        "role": "shared report host"
+      }
+    ],
+    "userTabsOpened": 0,
+    "worktreesCreatedOrRemoved": 0
+  },
+  "remainingGates": [
+    "0.6.3 version/changelog/status preparation; package still 0.6.2",
+    "Separately authorized push and exact-source hosted CI including fresh Node-24 dependency/Wasm build",
+    "Tag/publication and deployed-artifact validation",
+    "Inherited human/device/account and inconclusive-contrast acceptance remains separate"
+  ],
+  "rawEvidenceRoot": "gomoku-web/test-results/v063-release-fixes-20261027",
+  "rawArtifactSha256": {
+    "npm-ci.log": "822fa6f2d6cada1376dde676a7bab5980b9fada404cadd25527fbea8f5f7b28b",
+    "installed-dependencies.json": "7369c3d53dbfcb3aa621f4005db671f95ea3700f2270aab700ed8acd60c1e3a5",
+    "dependency-change.json": "7249c42acc3e6f0741db28318a9e4bb214c4ad97734c5e5816c3bcdf2fcc04b0",
+    "generated-wasm-before.json": "625064ee39bbac92ca132e94564cc4f2b873a997cd90d6b6aff331b15a2886b6",
+    "typecheck-final.log": "04964269a569a25c3fd6ba893425ebc56ce091e919a6656ec414da2dfbc910d1",
+    "unit-final.log": "04225b4d4d6d55dafeadd46aed88f40a2447f6717f1f370e6a52f553a1945c82",
+    "tools-ci-node24.log": "8562a93e65e5ed1f3fb73edede0e67e471ba1be7ae721fc6c3e0cabd83f8cc27",
+    "ci-environment.json": "959e8cda12e418308c15b36804de6ea9f3b367ae44947fe2577ebaa8c22c7168",
+    "ci-tool-coverage.json": "0a0197bf35e0af7e582717a483b8b6a8c8feecbff1e8dcf5dcae90704b514e2a",
+    "production-build.json": "f52703c9c36700c1ca2aac5502428298b3915937e3d9a267d62c74a32439435e",
+    "production-build.log": "16f90bc9281ba5c4b448631f34e5fbf4145daa239d1bb3f3be8a2976fc7edae7",
+    "browser.log": "2b532f196fc08f228ae1c790b865320c20d89992ff119005d6544733a0477f9c",
+    "rules.log": "1bc162dc5dba979841dc38c984539501e0118a7d375730cc08bb342ec1e440a7",
+    "cloud-c14.log": "e71eca4cbdffa54ca3acfb6fbe95d1e785b3f1acf6a3d4dcab0dad1344120a2a",
+    "cloud-full.log": "f16e55535cd32919cd5983769f5d3fed865916e42c4b8cc4c47a7e1eec3c64a1",
+    "cloud-races.log": "357342b9b35ccdb594b1d97a6e13bb4a3fc2068b25d2de9adde56d1b887b6490",
+    "remaining-checks.json": "0217410601a2475bf0753a56b9c72438582f846c145634595f72d28044cb8bf8",
+    "npm-audit-production.json": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35",
+    "npm-audit-all.json": "02097373d7a4bea78b4fe1b62e37157aaa20818f1ccc1f3216915e94820ec838",
+    "cargo-audit.json": "dacd47558f98bfc3ec96ea8b444243db65e3bd0497802ea995004320647e5ffa",
+    "standalone.json": "6115d58d52b7b07805ef7d591a00d9841a3df91d5c6bc4f61ab03a328b21982f",
+    "no-overwrite.json": "e7d3c58800da1d3dfc0369ba1404a1f619ca0725dbebe9c7975d5d9d9f2c3ddd",
+    "developer-payload-parity.json": "ae132e4fc1f2646eba5831b5743bea482b8ace07c331949a4c6185cf18199381",
+    "served-parity.json": "90ae4f821626966bb8524df4fdccf7f119230628aae34e637d52582c16ccb2e2",
+    "implementation-inputs.json": "0085a46b2c56ba67b1f6476a021f90bbb78a2355f0fcc5c91898eadd45100491",
+    "cleanup.json": "0aa3674d3a5911dfe3b37e7f10ffda8ceb1b266e0a419565a18c525e6bd170f2"
+  }
+}

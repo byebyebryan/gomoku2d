@@ -3,6 +3,11 @@
 Owner: manual maintenance passes. Recheck these notes when updating Firebase
 or preparing a release. Last reviewed: 2026-10-27 for the `0.6.3` readiness review.
 
+The subsequent [release-fix checkpoint](v0_6_3_release_fixes.md), at `e34129f`,
+patches the body-parser/fast-uri findings. The current full audit retains only
+the three moderate OpenTelemetry/Firebase CLI package entries below; production
+npm and Rust audits are clean. Earlier audit sections retain their dated scope.
+
 ## Overrides
 
 - `@firebase/firestore` resolves `@grpc/grpc-js` to `^1.14.6` instead of its
@@ -61,7 +66,7 @@ The 0.6.1 version bump changes no dependency ranges or resolved versions.
 Raw reports are retained under ignored
 `gomoku-bot-lab/outputs/release-prep/0.6.1/`.
 
-## 0.6.3 Readiness Audit — Follow-up Required
+## 0.6.3 Readiness Audit — Resolved by the Fix Checkpoint
 
 At `98d60f5`, fresh production npm and Rust audits pass with zero findings or
 Rust warnings. The full npm audit reports five development-only affected package
@@ -80,3 +85,18 @@ Firebase CLI downgrade to dispose of the retained OpenTelemetry issue.
 No dependencies were installed or updated in this review. The
 [release-readiness review](v0_6_3_release_review.md) owns the findings and raw
 evidence pointers.
+
+### Corrective audit at `e34129f`
+
+The lock refresh changes exactly three development resolution entries:
+body-parser 1.20.8 → 1.20.9, nested body-parser 2.3.0 → 2.4.0, and fast-uri
+3.1.8 → 3.1.9. The nested package's dependency ranges also update within already
+satisfied resolutions. No root dependency range, unrelated tool version,
+production dependency or package release version changes.
+
+A fresh locked install and `npm ls --all` pass; the generated Wasm package's
+seven file hashes remain unchanged. The production npm audit reports zero
+findings, and the full audit retains only the known three moderate entries.
+Cargo audit reports zero vulnerabilities/warnings with database revision
+`99670cfc0bc574433034b75876a4b791ccaa2efb`. Validation and installation/tool
+qualifications are retained in the release-fix receipt.
