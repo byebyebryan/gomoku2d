@@ -10,12 +10,8 @@ analysis, and practice from earlier positions.
 
 [Rules](https://gomoku2d.byebyebryan.com/rules/) ·
 [Guide](https://gomoku2d.byebyebryan.com/guide/) ·
-[Docs](docs/README.md)
-
 [Dev site](https://gomoku2d.byebyebryan.com/dev/) ·
-[Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
-[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) ·
-[Bot lab](https://gomoku2d.byebyebryan.com/lab/)
+[Docs](docs/README.md)
 
 Dev site source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).
 Its 0.6.3 implementation is local until the next authorized release; the public
@@ -80,18 +76,22 @@ sharing help are available in Guide. Examples need no account.
 ## Inspect The System
 
 The Rust lab powers the browser bot, Replay Analysis, and the tactical
-vocabulary shared by the game. The published report lets you inspect bot
-rankings, search telemetry, and analyzed games.
+vocabulary shared by the game. [Bot lab](https://gomoku2d.byebyebryan.com/lab/)
+lets you inspect bot rankings, search telemetry, and analyzed games.
 
 The curated report data retains its historical measurement dates and source
 provenance.
 
 ![The Lab report drills into bot rankings, search telemetry, and replay analysis examples.](docs/assets/readme-lab.gif)
 
-Visual design presents the other half of the system: pixel sprites, icons,
-source sheets, design tokens, and the layering rules used on the board.
+[Visual design](https://gomoku2d.byebyebryan.com/visuals/) presents the other half
+of the system: pixel sprites, icons, source sheets, design tokens, and the
+layering rules used on the board.
 
 ![The Visuals guide shows the pixel-art style system, icons, sprites, and source sheets.](docs/assets/readme-visuals.gif)
+
+[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) brings
+together current screens, UI history and design reviews.
 
 ## How It Was Built
 

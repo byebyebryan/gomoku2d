@@ -47,9 +47,10 @@ so reference typography does not change player screens.
 | Bot lab | Existing report loaders, report panels and DOM proof boards | Unchanged `reports/lab/` JSON, recorded revisions/budgets and bounded analysis semantics |
 
 `src/app/links.ts` owns the shared section labels, destinations and order:
-Visual design, UI design, Bot lab. Developer navigation and footer links,
-overview cards and Home consume that definition. README and documentation
-link lists use the same labels/order, with Dev site as their overview entry.
+Visual design, UI design, Bot lab. Developer navigation and footer links and
+overview cards consume that definition. Home and compact README navigation use
+the single Dev site overview entry; the README's explanatory sections retain
+direct links to the relevant tools. The docs index keeps its full surface catalog.
 `DEV_SITE_LABEL` supplies the app's public name: GOMOKU2D / DEV SITE in the
 header and Dev site in external overview links and its browser title. The
 internal first tab remains Overview; implementation names and `/dev/` stay stable.

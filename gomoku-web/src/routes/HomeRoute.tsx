@@ -1,6 +1,5 @@
-import { Fragment } from "react";
 import { Link } from "react-router-dom";
-import { DEVELOPER_SECTIONS, DEV_SITE_LABEL, PROJECT_SOURCE_URL } from "../app/links";
+import { DEV_SITE_LABEL, PROJECT_SOURCE_URL } from "../app/links";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { APP_VERSION } from "../app/version";
 import { Icon } from "../ui/Icon";
@@ -40,12 +39,6 @@ export function HomeRoute() {
               <Link to="/guide/#examples">Examples</Link>
               <span aria-hidden="true">/</span>
               <Link to="/dev/">{DEV_SITE_LABEL}</Link>
-              {DEVELOPER_SECTIONS.map(({ to, label }) => (
-                <Fragment key={to}>
-                  <span aria-hidden="true">/</span>
-                  <Link to={to}>{label}</Link>
-                </Fragment>
-              ))}
             </span>
             <span className={styles.footerLinkGroup}>
               <a href={PROJECT_SOURCE_URL} rel="noreferrer" target="_blank">

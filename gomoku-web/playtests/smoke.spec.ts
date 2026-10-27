@@ -121,12 +121,16 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await expect(page.getByRole("link", { name: "Rules" })).toHaveAttribute("href", "/rules/");
   await expect(page.getByRole("link", { name: "Guide" })).toHaveAttribute("href", "/guide/");
   await expect(page.getByRole("link", { name: "Dev site", exact: true })).toHaveAttribute("href", "/dev/");
-  await expect(page.getByRole("link", { name: "Visual design" })).toHaveAttribute("href", "/visuals/");
-  await expect(page.getByRole("link", { name: "UI design", exact: true })).toHaveAttribute("href", "/dev/reviews/core-screens-062/");
-  await expect(page.getByRole("link", { name: "Bot lab" })).toHaveAttribute("href", "/lab/");
+  await expect(page.getByRole("link", { name: "Visual design" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "UI design", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Bot lab" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "About" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Analysis" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Bots" })).toHaveCount(0);
+
+  await page.getByRole("link", { name: "Dev site", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
+  await expect(page.locator(".dev-feature h2")).toHaveText(["Visual design", "UI design", "Bot lab"]);
 
   await page.goto("/rules/");
   await expect(page).toHaveTitle("Rules | Gomoku2D");

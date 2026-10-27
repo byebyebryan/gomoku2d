@@ -206,3 +206,11 @@ shared label. The internal first tab remains Overview, followed by Visual design
 UI design and Bot lab. Implementation identifiers and route identities stay
 stable. The build, 33 App unit tests and 12 three-engine browser checks passed;
 the three Markdown link groups match the accepted labels, order and destinations.
+
+Bryan then accepted compact external navigation: Home now lists Rules, Guide,
+Examples and Dev site, followed by Source, Privacy and Terms. Root/web README
+top navigation also uses only Dev site for the developer area; direct tool links
+remain in their explanatory sections. The dev site's own three-section
+navigation/cards/footer and the docs index's full surface catalog remain useful
+inside their respective contexts. The build, 33 App unit tests and nine browser
+checks passed, including Home → Dev site and access to all three overview cards.

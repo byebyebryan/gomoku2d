@@ -6,10 +6,8 @@ facts, and replay analysis.
 
 **Live app:** https://gomoku2d.byebyebryan.com/
 
-[Dev site](https://gomoku2d.byebyebryan.com/dev/) ·
-[Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
-[UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) ·
-[Bot lab](https://gomoku2d.byebyebryan.com/lab/).
+[Dev site](https://gomoku2d.byebyebryan.com/dev/)
+
 The developer-area changes are local 0.6.3 source until release;
 [the contract](../docs/reference/app/developer_area.md) records their scope.
 
@@ -32,11 +30,13 @@ The developer-area changes are local 0.6.3 source until release;
   touch placement.
 - Replay Analysis in the browser: progressive wasm analysis, timeline markers,
   board overlays, local result caching, and "Play From Here" branching.
-- Bot lab at `/lab/`, rendered from curated JSON artifacts under
-  `../reports/lab/`.
-- Visual design at `/visuals/` for source icons, sprites, fonts and design tokens,
-  and UI design starting at `/dev/reviews/core-screens-062/`, with UI history
-  and design reviews alongside the current screens.
+- [Bot lab](https://gomoku2d.byebyebryan.com/lab/) at `/lab/`, rendered from curated
+  JSON artifacts under `../reports/lab/`.
+- [Visual design](https://gomoku2d.byebyebryan.com/visuals/) at `/visuals/` for
+  source icons, sprites, fonts and design tokens, and
+  [UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/)
+  starting at `/dev/reviews/core-screens-062/`, with UI history and design reviews
+  alongside the current screens.
 
 ## Core Boundary
 
