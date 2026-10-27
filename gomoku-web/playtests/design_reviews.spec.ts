@@ -278,6 +278,78 @@ test("new and expanded reviews keep process grouping and canonical media evidenc
   }
 });
 
+test("design review capture regions have unique comparison-aware names", async ({ page }) => {
+  test.setTimeout(120_000);
+  const records = await curatedReviews();
+  const designReviews = records.filter(
+    (record) =>
+      record.disposition !== "screen reference" &&
+      record.disposition !== "retrospective comparison",
+  );
+
+  for (const record of designReviews) {
+    await page.goto(`/dev/reviews/${record.id}/`);
+    await expect(page.locator("#developer-content h1")).toHaveCount(1);
+    const expected = record.comparisons.flatMap((comparison) =>
+      comparison.media.map(
+        (media) => `${comparison.title} — ${media.label} capture`,
+      ),
+    );
+    const labels = await page
+      .locator(".review-capture[role=region]")
+      .evaluateAll((regions) =>
+        regions.map((region) => region.getAttribute("aria-label")),
+      );
+    expect(labels, `${record.id} region names`).toEqual(expected);
+    expect(new Set(labels).size, `${record.id} region names must be unique`).toBe(
+      expected.length,
+    );
+  }
+
+  const record = recordFor(records, "mobile-records-062");
+  const activeComparison = record.comparisons[0]!;
+  for (const mode of [
+    { query: "", inspect: false },
+    { query: "&full=0", inspect: true },
+    { query: "&native=1", inspect: true },
+    { query: "&full=0&native=1", inspect: true },
+  ]) {
+    await page.goto(
+      `/dev/reviews/${record.id}/?pair=${activeComparison.id}${mode.query}`,
+    );
+    await expect(
+      page.getByRole("heading", { name: record.title, exact: true }),
+    ).toBeVisible();
+    const expected = record.comparisons.flatMap((comparison) =>
+      comparison.media.map(
+        (media) =>
+          `${comparison.title} — ${media.label} capture${mode.inspect && comparison.id === activeComparison.id ? ", scroll to inspect" : ""}`,
+      ),
+    );
+    const labels = await page
+      .locator(".review-capture[role=region]")
+      .evaluateAll((regions) =>
+        regions.map((region) => region.getAttribute("aria-label")),
+      );
+    expect(labels, `mobile-records-062 ${mode.query || "full matched scale"}`).toEqual(
+      expected,
+    );
+    expect(new Set(labels).size).toBe(expected.length);
+  }
+
+  await page.goto("/dev/reviews/history/");
+  await expect(page.locator("#developer-content h1")).toHaveCount(1);
+  const historyLabels = await page
+    .locator(".review-capture[role=region]")
+    .evaluateAll((regions) =>
+      regions.map((region) => region.getAttribute("aria-label")),
+    );
+  expect(historyLabels.length).toBeGreaterThan(0);
+  expect(new Set(historyLabels).size, "current history capture regions must be unique").toBe(
+    historyLabels.length,
+  );
+});
+
 test("nested review comparisons retain deep links, control state, Back and reload", async ({
   page,
 }) => {

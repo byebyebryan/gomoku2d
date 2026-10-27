@@ -113,7 +113,7 @@ export function ReviewComparison({
               className="review-capture"
               tabIndex={!full || native ? 0 : -1}
               role="region"
-              aria-label={`${media.label} capture${!full || native ? ", scroll to inspect" : ""}`}
+              aria-label={`${comparison.title} — ${media.label} capture${!full || native ? ", scroll to inspect" : ""}`}
               ref={(element) => {
                 panes.current[index] = element;
               }}

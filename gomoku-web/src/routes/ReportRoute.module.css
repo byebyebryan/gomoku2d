@@ -1052,3 +1052,63 @@
  .developerReport .entrantWorkbench[data-view="search"] .entrantHead,.developerReport .entrantWorkbench[data-view="search"] .entrantRow summary { grid-template-columns:minmax(150px,1.4fr) repeat(7,minmax(0,1fr)); }
  .developerReport .metric { min-width:0; overflow-wrap:anywhere; }
 }
+
+@media (max-width: 900px) {
+  .analysisWorkbench > .entrantGrid > .entrantRow > summary {
+    grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+  }
+
+  .analysisWorkbench > .entrantGrid > .entrantRow > summary > .entryTitle {
+    grid-column: 1 / -1;
+  }
+
+  .analysisWorkbench .analysisPairLine {
+    flex-wrap: wrap;
+  }
+
+  .analysisWorkbench .entrantRow .match summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analysisWorkbench .match summary > .entryTitle {
+    display: grid;
+    gap: 8px;
+    justify-content: normal;
+    text-align: left;
+  }
+
+  .analysisWorkbench .analysisSideLine {
+    flex-wrap: wrap;
+  }
+
+  .analysisWorkbench .entrantRow summary .metric {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 2px 10px;
+    min-width: 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    padding: 8px 0 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .analysisWorkbench .entrantRow summary .metric::before {
+    content: none;
+  }
+
+  .analysisWorkbench .entrantRow summary .metric > span {
+    grid-column: auto;
+    text-align: left;
+  }
+
+  .analysisWorkbench .entrantRow summary .metric > strong {
+    min-width: 0;
+    text-align: right;
+  }
+
+  .analysisWorkbench .match summary .metric {
+    grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+  }
+}
