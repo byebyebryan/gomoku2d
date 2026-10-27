@@ -6,20 +6,9 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 ## Active Design
 
-The [0.6.3 release plan](v0_6_3_release_plan.md) owns the current packaging and
-publication checkpoint; the implementation and review entries below retain
-their original evidence.
-
 | Note | Owner and next review |
 |---|---|
-| [0.6.3 developer-area brief](v0_6_3_developer_site_plan.md) | Bryan; visual study accepted; [implementation/execution](v0_6_3_execution.md) owns local integration, evidence and remaining release/manual checks |
-| [Retrospective UI capture pilot](v0_6_3_retrospective_capture.md) | Bryan; compare v0.2.4 and v0.6.2 with a reusable capture contract; generic portrait profile remains provisional pending phone measurements |
-| [UI history implementation](v0_6_3_history_implementation.md) | 24 milestones / 15 screen histories / 274 selected captures; first human pass broadly positive, latest-first ordering implemented; generic portrait remains provisional |
-| [Design-review backfill](v0_6_3_design_reviews.md) | Eight prepared cases; source/media and shared-export/Snap delivery verified; follow-up findings are tracked in the overall review below |
-| [0.6.3 overall review and fixes](v0_6_3_review_fixes.md) | All five findings from the [original review](v0_6_3_overall_review.md) resolved at `c1c3af6`; 556 units, 44 tool tests, 105 affected browser tests and six cloud journeys pass; preview verified from Snap; human/release gates remain separate |
-| [0.6.3 release-readiness fixes](v0_6_3_release_fixes.md) | All findings from the [release-wide review](v0_6_3_release_review.md) resolved at `e34129f`; 558 unit, 44 tool, 297 browser, 49 rules and 120 cloud/repetition checks pass; ready for separate release preparation |
-| [0.6.3 final review](v0_6_3_final_review.md) | Candidate `b4fdeb4`; no new blockers; clean shallow-checkout Node-24 CI command passes 44/44; source/evidence and audits verified; packaging and publication are next |
-| [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; revised sequence and retained research; replay metadata compatibility belongs to 0.6.4, curated learning later |
+| [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; 0.6.2/0.6.3 published; replay metadata compatibility belongs to 0.6.4, curated learning later |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan
 checkpoints are indexed in the [implementation archive](../archive/v0_6_implementation.md).
@@ -28,10 +17,12 @@ competing active plans.
 
 ## Published v0.6 Handoff
 
-The [0.6.2 release record](../archive/v0_6_2_release.md) owns current publication,
-automated production results and open acceptance. The executed
+The [0.6.3 release record](../archive/v0_6_3_release.md) owns current publication,
+automated production results and open acceptance. Its
+[release plan](v0_6_3_release_plan.md) retains the executed preparation sequence.
+The [0.6.2 release record](../archive/v0_6_2_release.md),
 [release plan](v0_6_2_release_plan.md) and historical
-[candidate checkpoint](v0_6_2_candidate.md) retain preparation details.
+[candidate checkpoint](v0_6_2_candidate.md) retain the preceding release.
 
 The earlier [0.6.1 release record](../archive/v0_6_1_release.md) retains its
 publication evidence and original real-account handoff. Its [release plan](v0_6_1_release_plan.md) and
@@ -43,6 +34,20 @@ manual handoff. The [original design](v0_6_profiles_and_replays.md),
 implementation context. They are not the active plan for the remaining line;
 see the [implementation archive](../archive/v0_6_implementation.md) for the
 completed-note index. Their existing paths and release evidence are preserved.
+
+## Completed 0.6.3 Checkpoints
+
+These dated implementation/review records keep their source and media paths;
+the release record above owns final publication and remaining acceptance.
+
+| Record | Evidence |
+|---|---|
+| [Developer-area brief](v0_6_3_developer_site_plan.md) and [execution](v0_6_3_execution.md) | Accepted scope and local integration history |
+| [Retrospective capture](v0_6_3_retrospective_capture.md) and [UI history](v0_6_3_history_implementation.md) | Tagged-source reconstruction, 24 milestones / 15 families / 274 selected captures; portrait references remain provisional |
+| [Design reviews](v0_6_3_design_reviews.md) | Eight prepared cases, preserved sources/media and shared-export delivery |
+| [Overall review fixes](v0_6_3_review_fixes.md) | All five findings from the [original review](v0_6_3_overall_review.md) resolved at `c1c3af6` |
+| [Release-readiness fixes](v0_6_3_release_fixes.md) | Auth readiness, narrow dependency patches and Node CI coverage; source-qualified validation at `e34129f` |
+| [Final review](v0_6_3_final_review.md) | No new blockers; shallow-checkout portability, source/evidence and audits checked before packaging |
 
 ## Completed Follow-up
 
@@ -64,4 +69,4 @@ Bryan owns these design and maintenance decisions. The maintenance notes do not
 reopen the completed [October reconciliation](../archive/reconciliation_2026_10/README.md),
 which records the retained UI and deferred manual acceptance. The
 [roadmap](../reference/product/roadmap.md) and follow-up plan track the remaining
-`0.6.3`/`0.6.4` direction and later curated learning.
+`0.6.4` direction and later curated learning.

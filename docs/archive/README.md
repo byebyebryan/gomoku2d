@@ -18,6 +18,11 @@ records the later integration matrix, sync repair and fixed desktop workloads.
 
 ## Release Records
 
+The [0.6.3 release record](v0_6_3_release.md) owns the developer-site publication,
+exact-source CI, complete served-file manifest, backend readbacks and automated
+production results. The [release plan](../working/v0_6_3_release_plan.md) retains
+its pre-release snapshot. Earlier working/media paths remain intact.
+
 The [v0.6 implementation index](v0_6_implementation.md) groups completed
 sharing and 0.6.2 design/implementation checkpoints. The
 [0.6.2 release record](v0_6_2_release.md) owns its published source, CI,

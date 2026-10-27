@@ -14,8 +14,7 @@ analysis, and practice from earlier positions.
 [Docs](docs/README.md)
 
 Dev site source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).
-The 0.6.3 release is being prepared; the public site remains on the release
-identified below until publication is verified.
+The developer area is published in [v0.6.3](docs/archive/v0_6_3_release.md).
 
 [![CI](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml)
 
@@ -138,22 +137,22 @@ lists checks by area.
 
 ## Project Status
 
-`v0.6.2` is published, refining public profiles and mobile layouts, adding
-Guide examples/sharing help, and keeping profile enabling behind explicit
-confirmation. It builds on `v0.6.1` replay sharing, private saved copies and
-opt-in public profiles/statistics.
+`v0.6.3` is published with the developer site: source-based visual inspectors,
+current screen references, UI history and design reviews, alongside the Bot lab.
+It also fixes narrow Analysis layouts and keeps profile reset/delete controls
+unavailable while account identity is being restored.
 
-The [release record](docs/archive/v0_6_2_release.md) owns source, CI, deployment
-and production evidence. The inherited real signed-in sharing round trip
-remains pending; physical-device and human-accessibility limits remain recorded.
-The [0.6.3 release plan](docs/working/v0_6_3_release_plan.md) now packages the
-reviewed developer site and UI review tools for publication.
+The [release record](docs/archive/v0_6_3_release.md) owns exact-source CI,
+deployment, artifact/backend parity and automated production evidence. Real
+signed-in sharing, physical-device and human-accessibility checks retain their
+recorded pending or deferred status. Next is the
+[0.6.4 replay collection design](docs/reference/product/roadmap.md#064-replay-collection-and-study-tools).
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
-[v0.6.2 changelog](CHANGELOG.md#062---2026-10-24) ·
+[v0.6.3 changelog](CHANGELOG.md#063---2026-10-27) ·
 [Roadmap](docs/reference/product/roadmap.md)
 
-Detailed [release evidence](docs/archive/v0_6_2_release_evidence.json) retains
+Detailed [release evidence](docs/archive/v0_6_3_release_evidence.json) retains
 the distinction between automated validation and human acceptance.
 
 ## Project References

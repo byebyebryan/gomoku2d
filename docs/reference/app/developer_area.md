@@ -1,8 +1,9 @@
 # Developer area
 
-This contract describes the implemented 0.6.3 source. The published release
-remains 0.6.2 until its separately authorized release. Detailed implementation
-and validation state belongs to the [execution record](../../working/v0_6_3_execution.md).
+This contract describes the published 0.6.3 developer area. The
+[release record](../../archive/v0_6_3_release.md) owns publication and production
+evidence. Detailed implementation and local validation belong to the
+[execution record](../../working/v0_6_3_execution.md).
 The [brief](../../working/v0_6_3_developer_site_plan.md) retains design decisions;
 the [visual study](../../working/v0_6_3_design/README.md) is an accepted proposal,
 not application/deployment evidence.

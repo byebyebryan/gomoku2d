@@ -7,21 +7,18 @@ historical context belongs in [`archive/`](archive/).
 
 ## Current Status
 
-`v0.6.2` is published with public-profile/mobile refinements, replay return,
-Guide sharing help/two examples and inline profile-enable confirmation, on top
-of `v0.6.1` sharing. The [release record](archive/v0_6_2_release.md) owns source,
-CI, deployment and production evidence, the inherited pending real signed-in
-sharing check and retained human/device deferrals.
+`v0.6.3` is published with the developer site, visual inspectors, current screen
+references, UI history and design reviews. The
+[release record](archive/v0_6_3_release.md) owns exact-source CI, deployment and
+production evidence, including the inherited pending real signed-in sharing
+check and retained human/device deferrals.
 [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
-identifies the published build. The [roadmap](reference/product/roadmap.md)
-and [0.6.3 release plan](working/v0_6_3_release_plan.md) put
-the reviewed developer site and practical UI review tools into release
-preparation, followed by 0.6.4 replay collections; curated learning follows later. The
+identifies the published build. The [roadmap](reference/product/roadmap.md) puts
+0.6.4 replay collections next; curated learning follows later. The
 [follow-up research](working/v0_6_followup_plan.md) retains future scope, and
-the [implementation archive](archive/v0_6_implementation.md) indexes completed
-planning/evidence at their existing paths. The
-[candidate checkpoint](working/v0_6_2_candidate.md) is historical preparation evidence.
-The earlier [October closeout](archive/reconciliation_2026_10/README.md)
+the [implementation archive](archive/v0_6_implementation.md) indexes earlier
+sharing/profile planning and evidence at their existing paths.
+The [October closeout](archive/reconciliation_2026_10/README.md)
 retains the `0.5.x` reconciliation decisions and evidence.
 
 The v0.6 sharing work shipped in `v0.6.1`. Its
@@ -34,10 +31,10 @@ sharing demo, private library, public publishing, and release checks.
 [Execution and evidence](working/v0_6_execution.md) retain the local acceptance
 history. Multiplayer research is retained as deferred work.
 
-The 0.6.3 source now implements a shared developer area. Its
+The shared developer area is published in 0.6.3. Its
 [contract](reference/app/developer_area.md) owns route, source and review-record
 semantics; the [execution record](working/v0_6_3_execution.md) owns local
-validation. This does not change the published-release statement above.
+validation; the release record above owns production results.
 The [UI history implementation](working/v0_6_3_history_implementation.md) extends
 that area with a milestone overview and individual screen trails, backed by
 qualified recaptures from tagged sources.
@@ -75,8 +72,8 @@ documentation tree:
 - [Privacy](https://gomoku2d.byebyebryan.com/privacy/) and
   [Terms](https://gomoku2d.byebyebryan.com/terms/) — public policy pages
 
-Developer-area links describe the local 0.6.3 source; the release status above
-owns production availability. The root [`README`](../README.md) is the public
+Developer-area links describe the published 0.6.3 surfaces; the release record
+above owns exact source and production evidence. The root [`README`](../README.md) is the public
 repo landing page.
 
 ## Buckets

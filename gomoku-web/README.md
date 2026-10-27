@@ -8,8 +8,9 @@ facts, and replay analysis.
 
 [Dev site](https://gomoku2d.byebyebryan.com/dev/)
 
-The developer-area changes are local 0.6.3 source until release;
-[the contract](../docs/reference/app/developer_area.md) records their scope.
+The developer area is published in 0.6.3. Its
+[contract](../docs/reference/app/developer_area.md) records behavior, and the
+[release record](../docs/archive/v0_6_3_release.md) records production evidence.
 
 ## Responsibilities
 

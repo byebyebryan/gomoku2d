@@ -360,3 +360,9 @@ exact-source hosted CI, annotated tag publication and deployed artifact/backend/
 browser verification. Earlier entries retain their dated local evidence and
 preview limitations. Publication facts will belong to the release record;
 real-account and human/device checks remain separate.
+
+The checkpoint is now published as `v0.6.3` at `5981bda`. The
+[release record](../archive/v0_6_3_release.md) owns actual publication and
+production verification; the local evidence and preview limitations above
+remain dated records. 0.6.4 replay metadata/collection design is the next planned
+work, with inherited account/device/human acceptance still separate.

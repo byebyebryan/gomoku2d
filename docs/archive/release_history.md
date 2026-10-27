@@ -119,3 +119,14 @@ Gameplay and analysis stay in the browser, and multiplayer remains deferred.
 The [release record](v0_6_1_release.md) records the verified deployment,
 automated production acceptance, pending real signed-in sharing round trip,
 and retained human/device deferrals.
+
+`v0.6.2` refined public profiles, mobile controls and replay return, then added
+Guide sharing help and account-free examples. Its
+[release record](v0_6_2_release.md) retains the production and acceptance evidence.
+
+`v0.6.3` established the static Dev site: Visual design inspectors, current screen
+references, a milestone overview and screen histories, prepared design reviews,
+and the existing Bot lab. It presents source, review findings and actual working
+tools while preserving historical capture identities and their limits. The
+[release record](v0_6_3_release.md) separates exact-source publication and
+production automation from the still-open account/device/human checks.

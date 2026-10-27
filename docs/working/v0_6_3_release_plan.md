@@ -1,8 +1,8 @@
 # v0.6.3 release plan — October 27, 2026
 
-This plan prepares the reviewed 0.6.3 source for release. It records the
-current production boundary and the checks required before treating the new
-version as published. The [release workflow](../reference/ops/release.md) owns
+This executed plan records the reviewed 0.6.3 release preparation. The
+production state below is a preparation-time snapshot; the executed release
+and its publication record are linked at the end. The [release workflow](../reference/ops/release.md) owns
 the tag and deployment sequence; a dated archive record must own actual
 publication results.
 
@@ -79,7 +79,7 @@ Automation and local review do not close these inherited checks:
   reset checks also remain unperformed; emulator and guest checks do not close
   either gate. Use disposable test data if these checks are later performed.
 - Physical lower-powered/mobile performance and touch comfort, actual browser
-  zoom, human screen-reader use and novice/human visual feedback remain
+  zoom, human screen-reader use and novice feedback remain
   unverified. Responsive and automated accessibility checks are not physical
   device or human assistive-technology acceptance.
 - Manual contrast judgment for layered sprite/board content and offscreen
@@ -88,3 +88,11 @@ Automation and local review do not close these inherited checks:
 Carry these limits into the release decision and release record. The detailed
 manual deferrals are in the [October acceptance record](../archive/reconciliation_2026_10/README.md#deferred-acceptance)
 and the [v0.6.2 release record](../archive/v0_6_2_release.md#open-acceptance-and-recovery).
+
+## Executed release
+
+Published October 27 as annotated `v0.6.3` at `5981bda`, after exact-source CI.
+The [release record](../archive/v0_6_3_release.md) and
+[evidence](../archive/v0_6_3_release_evidence.json) own the completed workflow,
+artifact, backend and production-browser results. The preparation state above
+remains a dated snapshot. No feature or data migration was added during release.

@@ -195,3 +195,8 @@ verify the exact deployed artifact and public developer routes as well as the
 player regression. A standalone report export does not publish the web app or
 replace the normal exact-source release gate. The implementation execution
 record is local evidence; release records own publication facts.
+
+`v0.6.3` is published. Its [release record](../../archive/v0_6_3_release.md)
+retains the exact tag/CI/deployments, full served-file manifest, previous/current
+ruleset pointers and production checks. Rules bytes and all nine configured
+index fields were unchanged; no separate backend migration was needed.

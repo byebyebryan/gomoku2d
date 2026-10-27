@@ -4,29 +4,27 @@ This roadmap owns release sequencing and product scope. Current formats and
 behavior live in the reference contracts; completed work lives in
 [`release_history.md`](../../archive/release_history.md).
 
-## Current State: `v0.6.2` Published; Acceptance Follow-up Open
+## Current State: `v0.6.3` Published; Acceptance Follow-up Open
 
-`v0.6.2` was published on October 24, 2026 after `v0.6.1`. It refines public
-player/mobile presentation and replay return, adds Guide sharing help/two static
-examples and explicit enable confirmation, and refreshes documentation/media.
-Exact-source CI, publication, served-byte/backend parity and production-safe
-automated acceptance are recorded in the release evidence. No backend, schema,
-portable-format or dependency-graph change was required.
+`v0.6.3` was published on October 27, 2026 after `v0.6.2`. It establishes the
+static developer site with Visual design, UI design and Bot lab, source-based
+asset inspectors, qualified UI history and prepared design reviews. Narrow
+Analysis layout and profile Auth-readiness fixes are included. Native code,
+backend schemas/rules, portable replay format and recorded Lab data are unchanged.
 
 The real signed-in profile/statistics/game-publication round trip remains
 pending. Physical-device/touch, human accessibility, two-device private-account
 and novice-feedback checks retain their recorded open or deferred status.
-The [release record](../../archive/v0_6_2_release.md) owns these boundaries;
-planning the next releases does not close them.
+The [release record](../../archive/v0_6_3_release.md) owns these boundaries
+and the exact-source CI, deployment and production evidence.
 
 ## `0.6` Sequence
 
 Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
 site and practical UI review tools in 0.6.3, then replay collections in 0.6.4.
 Curated learning follows later, unnumbered for now.
-`0.6.2` is published; remaining human checks stay explicit. `0.6.3` is
-reviewed and in release preparation; `0.6.4` remains
-planned. No future release dates are committed.
+`0.6.2` and `0.6.3` are published; remaining human checks stay explicit.
+`0.6.4` remains planned. No future release dates are committed.
 
 | Release | Focus | Player outcome |
 |---|---|---|
@@ -87,7 +85,9 @@ accepted context and proposed page/source/implementation gates. Bryan selected
 expansion of the existing site/domain/repository and refinement of its established
 look, using React/Vite. The shared developer layout, public/private boundary,
 UI history and review tools are implemented and reviewed. The
-[release plan](../../working/v0_6_3_release_plan.md) owns the publication gate.
+[release record](../../archive/v0_6_3_release.md) owns the completed publication
+gate; the [release plan](../../working/v0_6_3_release_plan.md) retains its
+preparation snapshot.
 
 ### `0.6.4`: Replay Collection and Study Tools
 

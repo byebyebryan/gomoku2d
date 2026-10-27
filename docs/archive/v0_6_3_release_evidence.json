@@ -1,0 +1,601 @@
+{
+  "schema": 1,
+  "version": "0.6.3",
+  "completed_at_utc": "2026-10-27T20:35:43.559386+00:00",
+  "source": {
+    "preparation_commit": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+    "annotated_tag_object": "f0897e92a76f67293959fca5d99b13da21cc52f7",
+    "tag": "v0.6.3",
+    "reviewed_base": "77cf92d54fd6cb4dc5a4fd28b901af56fc30b546",
+    "implementation": "e34129f91664ec3180cbfb6600f0a9a23ce8ca15",
+    "version_preparation": {
+      "version_metadata_only": true,
+      "versions": [
+        "0.6.3",
+        "0.6.3",
+        "0.6.3"
+      ],
+      "changelog": "pass",
+      "changed_markdown_files": 8,
+      "relative_links_checked": 179,
+      "missing_targets": [],
+      "whole_release_whitespace": "pass"
+    }
+  },
+  "ci": {
+    "run_id": 40573575015,
+    "url": "https://github.com/byebyebryan/gomoku2d/actions/runs/40573575015",
+    "head_sha": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+    "conclusion": "success",
+    "counts": {
+      "rust_workspace": 348,
+      "web_units": 558,
+      "rules": 49,
+      "node_tools": 44,
+      "ordinary_browser": 297,
+      "ordinary_skips": 6,
+      "full_cloud": 60,
+      "race_repetitions": 45
+    }
+  },
+  "publication_workflows": [
+    {
+      "conclusion": "success",
+      "databaseId": 40577585699,
+      "headBranch": "v0.6.3",
+      "headSha": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+      "name": "Release",
+      "status": "completed",
+      "url": "https://github.com/byebyebryan/gomoku2d/actions/runs/40577585699"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40577585755,
+      "headBranch": "v0.6.3",
+      "headSha": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+      "name": "Deploy to GitHub Pages",
+      "status": "completed",
+      "url": "https://github.com/byebyebryan/gomoku2d/actions/runs/40577585755"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40577585712,
+      "headBranch": "v0.6.3",
+      "headSha": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+      "name": "Deploy Firestore rules",
+      "status": "completed",
+      "url": "https://github.com/byebyebryan/gomoku2d/actions/runs/40577585712"
+    }
+  ],
+  "github_release": {
+    "id": 425946019,
+    "tag_name": "v0.6.3",
+    "name": "v0.6.3 \u2014 make the work behind Gomoku2D inspectable",
+    "html_url": "https://github.com/byebyebryan/gomoku2d/releases/tag/v0.6.3",
+    "published_at": "2026-10-27T20:23:34Z",
+    "target_commitish": "main",
+    "draft": false,
+    "prerelease": false
+  },
+  "pages": {
+    "source_sha": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+    "pages_run_id": 40577585755,
+    "pages_deployment_id": 7369495285,
+    "artifact_id": 12766719431,
+    "artifact_tar_sha256": "69f00ce99d3fbe41ded351ad030c72f22f41cfdfd380ba6b119507524a777aaa",
+    "artifact_file_count": 585,
+    "verified_static_routes": 41,
+    "artifact_payload_bytes": 22840116
+  },
+  "backend": {
+    "ruleset_before": "projects/gomoku2d/rulesets/8cea8731-6760-41ac-909f-8cddd989738b",
+    "ruleset_after": "projects/gomoku2d/rulesets/4391d371-1145-44b1-8d42-58d555ad2ee3",
+    "source_files": [
+      {
+        "name": "firestore.rules",
+        "sha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288",
+        "matches_current_source": true
+      }
+    ],
+    "index_fields_verified": 9,
+    "index_fields": [
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/profiles/fields/match_history",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/__default__/fields/*"
+        }
+      },
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/profiles/fields/match_history.replay_matches",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/profiles/fields/match_history"
+        }
+      },
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/profiles/fields/match_history.summary_matches",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/profiles/fields/match_history"
+        }
+      },
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/profiles/fields/match_history.archived_stats",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/profiles/fields/match_history"
+        }
+      },
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/public_profiles/fields/display_name",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/__default__/fields/*"
+        }
+      },
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/public_profiles/fields/shared_stats",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/__default__/fields/*"
+        }
+      },
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/public_profiles/fields/catalog_page_counts",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/__default__/fields/*"
+        }
+      },
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/pages/fields/entries",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/__default__/fields/*"
+        }
+      },
+      {
+        "name": "projects/gomoku2d/databases/(default)/collectionGroups/replay_libraries/fields/entries_json",
+        "indexConfig": {
+          "ancestorField": "projects/gomoku2d/databases/(default)/collectionGroups/__default__/fields/*"
+        }
+      }
+    ],
+    "index_configuration_unchanged": true,
+    "migration": "none; tag workflow reapplied identical rules; no manual rules/index deployment"
+  },
+  "audits": {
+    "production_npm": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "cargo_vulnerabilities": 0,
+    "cargo_warnings": {},
+    "cargo_advisory_database": {
+      "advisory-count": 1380,
+      "last-commit": "99670cfc0bc574433034b75876a4b791ccaa2efb",
+      "last-updated": "2026-10-27T11:02:42+01:00"
+    },
+    "development_npm": {
+      "info": 0,
+      "low": 0,
+      "moderate": 3,
+      "high": 0,
+      "critical": 0,
+      "total": 3
+    },
+    "development_exception_packages": [
+      "@google-cloud/pubsub",
+      "@opentelemetry/core",
+      "firebase-tools"
+    ]
+  },
+  "production_browser": {
+    "stats": {
+      "startTime": "2026-10-27T20:25:43.473Z",
+      "duration": 219639.358,
+      "expected": 168,
+      "skipped": 6,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "by_engine": {
+      "chromium": {
+        "passed": 58
+      },
+      "firefox": {
+        "passed": 55,
+        "skipped": 3
+      },
+      "webkit": {
+        "passed": 55,
+        "skipped": 3
+      }
+    },
+    "scope": "Fresh guest/local contexts; ten existing spec files against deployed public origin; no account or public-catalog writes. Two localhost-only boundary tests are covered separately by the production-origin boundary script.",
+    "intentional_skips": "Six Firefox/WebKit WebGL qualifications; forced Canvas all engines, WebGL Chromium."
+  },
+  "developer_boundary": {
+    "routes": 31,
+    "engines": 3,
+    "checked_entries": 93,
+    "private_storage_reads": 0,
+    "indexeddb_opens": 0,
+    "engine_or_private_chunks": 0,
+    "external_requests": 0,
+    "page_errors": 0
+  },
+  "provenance_audit": {
+    "schema": 1,
+    "checkedAt": "2026-10-27T20:00:54Z",
+    "purpose": "Read-only provenance audit of the 0.6.3 public review and UI-history catalogs.",
+    "source": {
+      "repository": "byebyebryan/gomoku2d",
+      "localBranch": "main",
+      "localHead": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+      "publishedMain": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+      "localAndPublishedHeadMatch": true,
+      "workingTreeWasClean": true
+    },
+    "scope": {
+      "reviewRecords": 10,
+      "reviewDispositionCounts": {
+        "screen reference": 1,
+        "accepted": 1,
+        "historical checkpoint": 2,
+        "retrospective comparison": 1,
+        "retrospective review": 5
+      },
+      "publicSourceLinkOccurrences": 220,
+      "uniquePublicSourceUrls": 151,
+      "history": {
+        "releases": 25,
+        "screenFamilies": 15,
+        "milestones": 24,
+        "snapshots": 137,
+        "uniqueCaptureManifests": 41,
+        "selectedMediaItems": 274
+      },
+      "reviewMediaItems": 76
+    },
+    "localValidation": {
+      "reviewCatalogReader": "pass",
+      "historyCatalogReader": "pass",
+      "reviewMedia": "all 76 catalogued PNGs passed source path, SHA-256, PNG signature, and dimensions checks",
+      "historyMediaAndManifests": "all selected media and referenced manifests passed path, SHA-256, dimensions, release identity, complete status, and capture-manifest qualification checks",
+      "publisherOrBuildRan": false,
+      "remoteImageFetches": 0
+    },
+    "githubChecks": {
+      "requests": {
+        "graphqlObjectBatches": 5,
+        "tagList": 1,
+        "mainCommit": 1,
+        "repositoryMetadata": 1
+      },
+      "uniqueObjectsResolved": 175,
+      "objectTypes": {
+        "commit": 28,
+        "blob": 147
+      },
+      "missingObjects": 0,
+      "unexpectedObjectTypes": 0,
+      "abbreviatedSourceCommitRefsResolved": [
+        "4052d94"
+      ],
+      "publishedMain": "5981bda1a34abd07790425b6c5ec48705c8005e7",
+      "historyReleaseTags": {
+        "checked": 25,
+        "commitMatches": 25,
+        "mismatches": [],
+        "v0_6_3TagPresentAtCheck": false
+      }
+    },
+    "mutableSupportingLinks": [
+      {
+        "record": "ui-evolution-024-062",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/main/docs/working/v0_6_3_retrospective_capture/pilot-2026-10-25/capture.json",
+        "resolvesAtCheckedMain": true,
+        "qualification": "Supporting capture-manifest link uses mutable main; tagged application/release identities in the record remain pinned."
+      },
+      {
+        "record": "ui-evolution-024-062",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/main/docs/working/v0_6_3_retrospective_capture.md",
+        "resolvesAtCheckedMain": true,
+        "qualification": "Supporting capture-workflow link uses mutable main; tagged application/release identities in the record remain pinned."
+      }
+    ],
+    "acceptanceReview": {
+      "result": "No misleading acceptance claim found that blocks publication.",
+      "qualifications": [
+        "The 0.6.2 core-screen set is labelled as headless Chromium viewport references and explicitly leaves physical touch, browser chrome, screen-reader, and new human visual acceptance open.",
+        "Retrospective cases distinguish later reconstruction from original-period approval; generic Android/touch layouts are not presented as phone usability tests.",
+        "Recorded human design selections are attributed to their original review context; accepted icon work separately says physical-device acceptance was not recorded.",
+        "The history capture record identifies modern reconstruction toolchains and synthetic guest state, and does not claim original release binaries or physical-device acceptance."
+      ]
+    },
+    "result": {
+      "blockers": [],
+      "caveats": [
+        "Two supporting links in the retrospective pilot use mutable main rather than a fixed commit. They resolve at the checked published main; linked release/source identities remain pinned.",
+        "The public v0.6.3 tag is not present at this pre-tag check, as expected."
+      ]
+    }
+  },
+  "closeout_validation": {
+    "version_metadata_only": true,
+    "versions": [
+      "0.6.3",
+      "0.6.3",
+      "0.6.3"
+    ],
+    "changelog": "pass",
+    "changed_markdown_files": 13,
+    "relative_links_checked": 237,
+    "missing_targets": [],
+    "whole_release_whitespace": "pass"
+  },
+  "resource_preservation": {
+    "preserved_listeners": {
+      "46862": {
+        "before": [
+          "LISTEN 0      511                                   0.0.0.0:46862      0.0.0.0:*    users:((\"node-MainThread\",pid=165197,fd=21))"
+        ],
+        "after": [
+          "LISTEN 0      511                                   0.0.0.0:46862      0.0.0.0:*    users:((\"node-MainThread\",pid=165197,fd=21))"
+        ],
+        "same_process": true
+      },
+      "8787": {
+        "before": [
+          "LISTEN 0      5                                100.84.31.64:8787       0.0.0.0:*    users:((\"python3\",pid=23164,fd=3))"
+        ],
+        "after": [
+          "LISTEN 0      5                                100.84.31.64:8787       0.0.0.0:*    users:((\"python3\",pid=23164,fd=3))"
+        ],
+        "same_process": true
+      }
+    },
+    "docker": "96439ed5c2cc ollama ollama/ollama\n",
+    "worktree_paths": [
+      "worktree /home/bryan/code/gomoku2d",
+      "worktree /home/bryan/.codex/worktrees/beaf/gomoku2d"
+    ],
+    "owned_test_processes_remaining": [],
+    "user_browser_tabs_opened": 0,
+    "manual_dist_refreshed": false,
+    "notes": [
+      "No temporary servers, worktrees or emulators created for release.",
+      "Downloaded artifact and raw evidence remain ignored; only curated records will be committed."
+    ]
+  },
+  "retained_local_evidence": [
+    "docs/working/v0_6_3_final_review.md",
+    "docs/working/v0_6_3_release_fixes.md",
+    "docs/working/v0_6_3_review_fixes.md"
+  ],
+  "open_acceptance": {
+    "real_signed_in_sharing": "Public-profile/statistics/game-publication round trip remains pending; emulator/guest checks do not close it.",
+    "physical_and_human": "Phone/touch/lower-powered performance, native zoom/screen-reader, two-device private settings/history/reset and novice feedback retain explicit limits.",
+    "portrait_reference": "Generic viewport/touch emulation; not measured OnePlus physical-device acceptance.",
+    "contrast": "Inconclusive layered content/offscreen contrast needs manual judgment."
+  },
+  "contributions": {
+    "luna_max": "Release version/changelog/plan preparation and independent source/media/GitHub provenance audit.",
+    "primary": "Scope and copy review, integration/status reconciliation, baseline/audits, push/CI/tag/publication, actual artifact/backend/public-browser verification and final acceptance."
+  },
+  "recovery": {
+    "previous_web_tag": "v0.6.2",
+    "previous_web_source": "37a122d2bd8e899bcfc581055e685c0327f43cb4",
+    "rules_rollback_target": "projects/gomoku2d/rulesets/8cea8731-6760-41ac-909f-8cddd989738b",
+    "strategy": "Dispatch Pages at accepted tag; do not move tags. Restore/read back recorded ruleset pointer only if needed. No rollback performed."
+  },
+  "raw_directory": "gomoku-bot-lab/outputs/release-prep/0.6.3",
+  "raw_file_hashes": [
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/build_release_evidence.py",
+      "sha256": "f6d4902696a083babb4c62ffca6b9936238bde92739cdafa0f58db1287908779"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/capture_production.py",
+      "sha256": "81c1c5c37df25e0c73a92bdd406173566f93ee736f80c9650593b86e4b28f54d"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/cargo-audit.json",
+      "sha256": "dacd47558f98bfc3ec96ea8b444243db65e3bd0497802ea995004320647e5ffa"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/cargo-audit.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/check_closeout.py",
+      "sha256": "58082fbe524a4493a75f9140fa376701911c6337cee084ee47cef310d266e2f3"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/check_preparation.py",
+      "sha256": "eae43828a283cbe8182b715fbf317f8ee4b7a545f6e740ac7b7acfbbb45d9c30"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/ci-count-excerpts.json",
+      "sha256": "6f9a87e98bc012d592a969a447511d929fed18a8203ddef90623a571f011fe77"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/ci-counts.json",
+      "sha256": "033186c3ea0f0bd63900c4dd66c5ebdd6389ef14b7855f3e8485eccbc537f4b6"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/ci-final.json",
+      "sha256": "2c472599f2d1c3d8699414409b5af7693c7cd4fd3994eecfe1d760b04757ea5f"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/ci-rust.log",
+      "sha256": "7efc95f5886b2b4b809420c3c04d37e66dd42751add029ee7a49a5a55de9f53e"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/ci-watch.log",
+      "sha256": "d91dc4fa794f4029587e601037f18bc09a91c3dcdf4cd7400c6a5f58281f81e3"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/ci-web.log",
+      "sha256": "0ae6977a22c5d52c3795447e7bb7439b42a888d117fcf2ca188ebbb9bae7198a"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/cleanup.json",
+      "sha256": "4b5a177cc178fa27821a6e4803b690d6aee23e025a78a873d97b32c7dcde4dba"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/closeout-cumulative-validation.json",
+      "sha256": "e502b2ba300f08b566c84f4fa772e737d589bee3b035814d66ac85d12f2e1723"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/closeout-validation.json",
+      "sha256": "878b1ebdbc9fd97c52f007060adac032fcfc97a99f8535d21f2d945913f94eac"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/collect_ci.py",
+      "sha256": "8971cd4f98635bfebbb90e15ae9c54c53c39637ef10302f5764dfd8598adc991"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/completion-audit.json",
+      "sha256": "9cc2dc829e9167809182f4691b6631789f35358d10a6d9a34d84eeaeeb1b8005"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/firestore-rules-after.rules",
+      "sha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/firestore-rules-backend.rules",
+      "sha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/firestore-rules-before.rules",
+      "sha256": "3c48346cebfefdd30068755bdcd08050b73146389bd53a3e772472980699d288"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/firestore-workflow.json",
+      "sha256": "8b188e243c8fda692ec3a16ee40d0b9cda3430b90bd46deb2649a7368483cebf"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/luna-provenance.json",
+      "sha256": "99b4010863b5d561dcfc646aef732419347cbd9a9e1db20265f254a3717c9a74"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/npm-all.json",
+      "sha256": "02097373d7a4bea78b4fe1b62e37157aaa20818f1ccc1f3216915e94820ec838"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/npm-all.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/npm-production.json",
+      "sha256": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/npm-production.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/pages-workflow.json",
+      "sha256": "7842063bcd369610ea968fe2d248580971f677118e585f0024c09a245669c8d2"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/preparation-validation.json",
+      "sha256": "1b72a47260a968dc2e592763591d8150ef77f4f06f4aa8afeb0e024426adf475"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-after.json",
+      "sha256": "522d7c5b4855c9b4bddfeb9b9fc3c0ef372f531b3050b6119ef5dcfc89f8a384"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-backend.json",
+      "sha256": "794b55fcf32dcc7511a806fcb9e438b14a6b436f2f65dcbc55fda1309c91b6b0"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-before.json",
+      "sha256": "652e58b111a39215a8ae966ba6c176b77bf636a4bda1dfd4e31dbb62d3ab5e06"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-boundary-command.json",
+      "sha256": "c225b564892e053a5ec8c8838892bf32fbe60152ee8d901c9dd1bcc4f7ede042"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-boundary.json",
+      "sha256": "87cffdbe90b450aee7f3374a37245ce84c0e5c72fe5b95924334cc0269ae75ab"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-boundary.log",
+      "sha256": "3cf004706ac65456a9246a6f763770446f85e17945cb7132b88805d47fd6fbe3"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-browser-exit.json",
+      "sha256": "decd0095b8a3d0249ab33e95d0ffbdb160ca11c58b91326844bb955df6f531ab"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-browser-list.json",
+      "sha256": "5905abc8bd88d15bd861860ee35052cad66bd6123ac3aad9dfb783ec84150c15"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-browser-observed.json",
+      "sha256": "1f2a39a235cb99daa662e8fa9d6b53f68bd9deec9f6afa2178deaf4450925881"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production-browser.log",
+      "sha256": "eb0fed1fac424accd380e01aed04eb9898a1b03a1cb90320272fa732b84cce40"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/production_boundary.mjs",
+      "sha256": "88c78071134809cd5586b8dbc6187eee5d98a02b9d32c6999ee7ef40e84b0ee8"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/publication-progress.json",
+      "sha256": "3fffbe2d0763b68b260a78123e7d9457b4c3860b90c1a78f5a55f1d752edcf8d"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/publication-workflows.json",
+      "sha256": "3fffbe2d0763b68b260a78123e7d9457b4c3860b90c1a78f5a55f1d752edcf8d"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/release-check.log",
+      "sha256": "09ab9382cdbb9719fa20ac294922dd6216d5dc7becae3e61f5db6aa074b802f4"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/release-identity.json",
+      "sha256": "0ad2ea01b1ad171b1f21a3c9801139729c7580392056b014936cb97f388b3b07"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/release-workflow.json",
+      "sha256": "6eea281eddef46a8da4d9f1ed66fe7b29c3716707a2e411258192ec3b41e007a"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/resource-baseline.json",
+      "sha256": "5592205e8fb5377928f6e2ec4eefed82d7ddf502c71b744e160b39b8fc8e0cac"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/run_production.py",
+      "sha256": "a7087e1bd8c2a9bd7e9837caeaa457998037a23f61dfddc6644db67495309440"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/served-artifact-parity.json",
+      "sha256": "bb72194f6db1592ad0a74b68d89931ac9c53f720cad442de99edb45666719113"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/tag-create.log",
+      "sha256": "4cd5014ecfeb120172291635db1befdc8ab3789c8ca839c25007cf5ece71440f"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/tag-reviewed.json",
+      "sha256": "4f39eb27cb627021d0338404c7a6d9c3dc75dc9f59b1564a16d14d5e33075a41"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/verify_deployment.py",
+      "sha256": "73cb8558bf8ff39c905da58bbc4e63baeb08aa36e6736887f07a698fb123f886"
+    },
+    {
+      "path": "gomoku-bot-lab/outputs/release-prep/0.6.3/watch_publication.py",
+      "sha256": "1c87aa169847e15c7e30e6fbc7e3db920a83dbf9c87e6046e5bdbc68f7ae2cc6"
+    },
+    {
+      "path": "gomoku-web/test-results/v063-release/production.json",
+      "sha256": "a904787a1e3d63c3e9737271a02985b211a7a72f33f43f40055046ecc78ea766"
+    }
+  ]
+}

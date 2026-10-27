@@ -267,8 +267,8 @@ later multiplayer direction and its deferral.
 
 The [0.6.2 release](../archive/v0_6_2_release.md) is published, with exact-head
 CI/deployed results and unperformed human checks preserved. The reviewed
-[0.6.3 developer site](v0_6_3_developer_site_plan.md) is now in
-[release preparation](v0_6_3_release_plan.md).
+[0.6.3 developer site](v0_6_3_developer_site_plan.md) is now
+[published](../archive/v0_6_3_release.md).
 Settle metadata/compatibility and the thumbnail prototype before 0.6.4 work.
 Validate changed areas instead of reopening unrelated completed audits. Push,
 backend deployment, tagging, served-byte verification and human acceptance
