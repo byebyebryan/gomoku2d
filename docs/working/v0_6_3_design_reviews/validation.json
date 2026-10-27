@@ -1,0 +1,271 @@
+{
+  "schema": 1,
+  "completedAt": "2026-10-27T01:52:01.734965+00:00",
+  "scope": "Local 0.6.3 Design reviews, source/media qualification and immutable shared preview; no release or production deployment.",
+  "source": {
+    "commit": "56d041bd603d56e5729b897866f02186751de738",
+    "trackedSourceDirty": false,
+    "workingTreeClean": true,
+    "qualification": "commit"
+  },
+  "sourceInputSha256": {
+    "gomoku-web/developer.html": "3297c12cbfd5727f79623cd9e83844828bb311b32f7246c916be1dc679ba470a",
+    "gomoku-web/package.json": "cebb76449ba619dbe019d3af2694d22be435f0f0533e4015c3f85a0491496eb1",
+    "gomoku-web/scripts/export_developer.mjs": "f030ea5a7acbdc04492ed3bfc44879f5e23404e4655bdc8f6d71608eeeeec081",
+    "gomoku-web/src/developer/DeveloperApp.tsx": "2a1c196bdc3e6c0e518f258bfd84df7a7add4effb3ceeab63c12216936cbea50",
+    "gomoku-web/src/developer/developer_export.tsx": "807fa1e3b798720511d874a52c05f8818e805d19681b6fe1f4e52213732a99a2",
+    "gomoku-web/src/developer/ReviewRoutes.tsx": "57723c7e0bdd44f65c71104af60e092cde5c2736956db7a27b593574bbc0335b",
+    "gomoku-web/src/developer/ReviewCase.tsx": "0f5f287fb1476fbf75898be6b83db642535080d9e159ce7757a10c391b105ebb",
+    "gomoku-web/src/developer/ReviewComparison.tsx": "82b8dfaa731c108b4c07d702a3a1d0c9cd2b8309699fca339de7c297a2ef3acb",
+    "gomoku-web/src/developer/HistoryRoutes.tsx": "f06264f8fe533f79bf63c1d00d54d01ebb35dd2e7befeebe2e28a0a3331c01b5",
+    "gomoku-web/src/developer/review_record.ts": "8a9befb806242d86ef7807ef82b946c9625feb0632adf8cb2e5e350d076b3a1c",
+    "gomoku-web/src/developer/reviews.css": "8a5b5bf9a022f11a685eb84a2cf9ff2a3c2ae711343db0b3f73fc930121bd91c",
+    "gomoku-web/src/developer/reviews.json": "d8eb6857a859f8d1576c6520fd5e5ed4fe29042d32479573569f5ca6cb7ad93a",
+    "gomoku-web/src/app/App.test.tsx": "9567d320ed8f998c436d6fde9b4813d883f0132d2526eff3ca7195837430d51d",
+    "gomoku-web/playtests/developer.spec.ts": "95cb325110f7ea229044f127e47eb3bc75212343a82358c33a1ff3e7937d9507",
+    "gomoku-web/playtests/design_reviews.spec.ts": "7997872a7b793c786eb782fa79dc588a1454b6d79d727aa83ca50d1cbb0899e6"
+  },
+  "ownership": {
+    "primary": "Case selection, all new public copy, page design, integration, factual/visual acceptance and final delivery checks.",
+    "luna": "Source audit, exact image recovery, frozen-study renders, typed validation/export infrastructure, browser coverage and independent factual review."
+  },
+  "content": {
+    "totalRecords": 10,
+    "designCases": 8,
+    "newCases": 5,
+    "expandedCases": [
+      "public-player-062"
+    ],
+    "structuredCases": 6,
+    "comparisons": 38,
+    "mediaOccurrences": 76,
+    "newHistoricalImages": 4,
+    "newMockupImages": 5,
+    "originalSourceEntries": 39,
+    "exactTextExcerpts": 34,
+    "exactJsonObservations": 5
+  },
+  "validation": {
+    "typecheck": "App, scripts and tools passed.",
+    "build": "Production build and selected publishers passed.",
+    "unit": {
+      "tests": 556,
+      "files": 54,
+      "passed": true
+    },
+    "mainBrowser": {
+      "engines": [
+        "Chromium",
+        "Firefox",
+        "WebKit"
+      ],
+      "tests": 57,
+      "passed": true
+    },
+    "visualAccessibility": {
+      "views": 21,
+      "widths": [
+        1440,
+        412,
+        320
+      ],
+      "textScalePercent": [
+        100,
+        200
+      ],
+      "violations": 0,
+      "incomplete": 0,
+      "unexpectedRequests": 0,
+      "pageOrConsoleErrors": 0,
+      "sourceScaleMatched": true,
+      "sourceUpsampling": false
+    },
+    "gitSourceBindings": {
+      "validatedLinks": 25,
+      "rawBlobIdentityChecked": true,
+      "linkedReleaseSectionsPresent": true
+    },
+    "media": "All nine added PNG identities/dimensions verified; original blob recovery exact; frozen report sources unchanged across renders; later overwrite refused.",
+    "singleCaseExport": {
+      "base": "http://127.0.0.1:47428/design-review-public-20261026/",
+      "record": "public-player-062",
+      "results": [
+        {
+          "engine": "chromium",
+          "passed": true,
+          "selected_images": 2,
+          "history": true,
+          "reload": true,
+          "native_and_full": true,
+          "narrow_200_percent": true,
+          "errors": [],
+          "outside": []
+        },
+        {
+          "engine": "firefox",
+          "passed": true,
+          "selected_images": 2,
+          "history": true,
+          "reload": true,
+          "native_and_full": true,
+          "narrow_200_percent": true,
+          "errors": [],
+          "outside": []
+        },
+        {
+          "engine": "webkit",
+          "passed": true,
+          "selected_images": 2,
+          "history": true,
+          "reload": true,
+          "native_and_full": true,
+          "narrow_200_percent": true,
+          "errors": [],
+          "outside": []
+        }
+      ]
+    },
+    "completePublishedExport": {
+      "url": "http://starship:8787/reports/a2698af3696448d16662bc0ec896d809da9f4177fc547b7080a11ef23e75f603/",
+      "engines": [
+        {
+          "name": "chromium",
+          "version": "156.0.8078.4",
+          "views": 34,
+          "requests": 199,
+          "errors": [],
+          "outside": [],
+          "privateStorage": {
+            "local": [],
+            "session": []
+          }
+        },
+        {
+          "name": "firefox",
+          "version": "157.0",
+          "views": 34,
+          "requests": 196,
+          "errors": [],
+          "outside": [],
+          "privateStorage": {
+            "local": [],
+            "session": []
+          }
+        },
+        {
+          "name": "webkit",
+          "version": "27.2",
+          "views": 34,
+          "requests": 199,
+          "errors": [],
+          "outside": [],
+          "privateStorage": {
+            "local": [],
+            "session": []
+          }
+        }
+      ],
+      "caseInspectionReloadBack": true,
+      "narrow200Percent": true
+    },
+    "hashRouterHistoryRestore": [
+      {
+        "name": "chromium",
+        "version": "156.0.8078.4",
+        "browserBackFocusScrollDisclosure": true,
+        "crossScreenNativeReturn": true
+      },
+      {
+        "name": "firefox",
+        "version": "157.0",
+        "browserBackFocusScrollDisclosure": true,
+        "crossScreenNativeReturn": true
+      },
+      {
+        "name": "webkit",
+        "version": "27.2",
+        "browserBackFocusScrollDisclosure": true,
+        "crossScreenNativeReturn": true
+      }
+    ],
+    "preservation": {
+      "legacyRecordIdsPreserved": 5,
+      "legacyComparisonIdsAndMediaPreserved": 22,
+      "unchangedSourceHashes": {
+        "gomoku-web/src/developer/history.json": "c50ea144ee3e5ce73aa68a1c85425b73351660d9e54f2243143cc49808ff8834",
+        "reports/lab/bot-report.json": "eb58c6e54ff02930289214802f38ae9560d8d641074d77dcb39350304a8d4b43",
+        "reports/lab/analysis-report.json": "3b8399fc1bbf5e797c7c56b52df5e7a579bf099e317cbc22e6297ea069391ca5"
+      },
+      "rawPublishedReportsMatchSource": true
+    }
+  },
+  "publication": {
+    "reportId": "a2698af3696448d16662bc0ec896d809da9f4177fc547b7080a11ef23e75f603",
+    "url": "http://starship:8787/reports/a2698af3696448d16662bc0ec896d809da9f4177fc547b7080a11ef23e75f603/",
+    "sourceCommit": "56d041bd603d56e5729b897866f02186751de738",
+    "files": 489,
+    "bytes": 19621660,
+    "serverReused": true
+  },
+  "exportCounts": {
+    "files": 489,
+    "inventoriedFiles": 488,
+    "reviewRecords": 10,
+    "reviewComparisons": 38,
+    "reviewMedia": 76,
+    "historyMilestones": 24,
+    "historySnapshots": 137,
+    "historyMedia": 274,
+    "visualAssets": 84,
+    "reports": 2
+  },
+  "tools": {
+    "node": "v26.12.1",
+    "npm": "12.2.1",
+    "vite": "8.3.4"
+  },
+  "snapDelivery": {
+    "host": "snap",
+    "files": 489,
+    "bytes": 19621660,
+    "sha256Parity": true,
+    "url": "http://starship:8787/reports/a2698af3696448d16662bc0ec896d809da9f4177fc547b7080a11ef23e75f603/",
+    "checkedAt": "2026-10-27T01:42:31.705948+00:00"
+  },
+  "cleanup": {
+    "temporaryServersStopped": true,
+    "ports": {
+      "127.0.0.1:47427": false,
+      "127.0.0.1:47428": false,
+      "127.0.0.1:46862": true,
+      "starship:8787": true
+    },
+    "userBrowserTabsOpened": 0,
+    "worktreeCreationOrRemoval": false,
+    "sharedReportServerReused": true
+  },
+  "reviewCorrections": [
+    "Separated release identities from document revisions and checked exact source excerpts/JSON pointers.",
+    "Rejected a false missing-changelog warning using complete raw Git blobs; qualified the conversation-derived Share chronology and unknown dates.",
+    "Reduced case-header repetition and placed longer step notes below figures after visual review.",
+    "Updated old index/heading expectations, counted unique reused mockups, and waited for font/image readiness and cold lazy-module transformation in tests."
+  ],
+  "remainingHumanAcceptance": [
+    "Bryan visual/copy review of the newly prepared cases.",
+    "Measured handset, physical touch and human assistive-technology acceptance remain separate."
+  ],
+  "evidenceLimits": [
+    "Original Replay PNG browser/DPR/build/capture dates are unrecorded.",
+    "The Share feedback sequence is transcribed from supplied conversation context; original turn dates/revisions are unknown.",
+    "Mockups remain fictional prototype renders; retrospective captures remain later reconstructions.",
+    "The preview uses observed installed tools/dependencies; it is not a newly installed locked release artifact."
+  ],
+  "authorization": {
+    "localCommits": true,
+    "privateReportPublication": true,
+    "push": false,
+    "releaseTagOrVersionBump": false,
+    "productionDeployment": false,
+    "realAccountWrites": false
+  }
+}

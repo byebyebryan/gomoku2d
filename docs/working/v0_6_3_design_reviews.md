@@ -6,6 +6,11 @@ and the proposed backfill. The primary owns case selection, copywriting, design,
 integration and acceptance. Luna handles factual investigation, bounded media
 preparation, non-editorial implementation and independent verification.
 
+Status: local implementation and technical validation complete. The
+[shared preview](http://starship:8787/reports/a2698af3696448d16662bc0ec896d809da9f4177fc547b7080a11ef23e75f603/)
+is verified from Snap. Bryan's review of the new cases remains open; no push,
+release tag or production deployment is part of this checkpoint.
+
 ## Outcome
 
 Present actual design work as useful review cases. The unit is a coherent
@@ -85,6 +90,36 @@ replace selected media, use real accounts or start cloud services.
   publishers and records source/tool/file identity. Its preliminary nested-prefix
   check passed all 16 history routes plus retained developer destinations in
   Chromium, Firefox and WebKit.
+
+## Validation and delivery closeout
+
+The [validation receipt](v0_6_3_design_reviews/validation.json) records source
+`56d041b`, tools, input hashes, counts, preservation and delivery. The full
+source/media audit and capture manifest live in the
+[evidence directory](v0_6_3_design_reviews/README.md).
+
+- Type checks, the production build/publishers and 556 unit tests passed.
+- The main developer/history/design suites passed 57 browser tests across
+  Chromium, Firefox and WebKit. The enlarged-text/mobile audit checked 21 views,
+  with zero automated accessibility violations or incomplete checks, no overflow,
+  matched image scale and no source upsampling.
+- The published export passed 34 views per engine, including all ten case
+  records, every screen-history entry, assets and Lab. Native inspection,
+  reload/Back and 200% text passed; hash-router history also restored the
+  originating milestone's focus, scroll and disclosures after cross-screen and
+  Native-pixel navigation. No unexpected requests or private storage appeared.
+- The single-record public-player export passed its three-engine check too.
+- All five original record IDs, 22 comparison IDs and their capture bytes/identity
+  remain intact. History data and both raw Lab reports are unchanged.
+- Snap fetched all 489 published files: 19,621,660 bytes, with complete SHA-256
+  parity against the prepared export. The source was clean at export time.
+- Both owned temporary check servers were stopped. The normal preview and
+  shared report host remain available. No user browser tabs, worktrees, real
+  accounts or cloud services were opened/changed by this loop.
+
+The closeout documentation follows the tested source commit; its recorded
+application, export, data and test inputs remain unchanged. Original image
+conditions and reconstructed conversation dates keep their stated limits.
 
 ## Reconstructed Share review context
 
