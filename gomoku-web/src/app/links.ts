@@ -1,4 +1,5 @@
 export const PROJECT_SOURCE_URL = "https://github.com/byebyebryan/gomoku2d";
+export const DEV_SITE_LABEL = "Dev site";
 export const UI_DESIGN_ENTRY_PATH = "/dev/reviews/core-screens-062/";
 
 export const DEVELOPER_SECTIONS = [

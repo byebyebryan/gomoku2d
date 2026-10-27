@@ -138,7 +138,7 @@ test("design review index keeps source versions, order, and legacy destinations"
   ]) {
     await page.goto(path);
     await expect(
-      page.getByRole("navigation", { name: "Developer sections" }).getByRole("link", { name: "UI design", exact: true }),
+      page.getByRole("navigation", { name: "Dev site sections" }).getByRole("link", { name: "UI design", exact: true }),
     ).toHaveAttribute("aria-current", "page");
     const navigation = page.getByRole("navigation", { name: "UI design views" });
     await expect(navigation.getByRole("link")).toHaveCount(3);

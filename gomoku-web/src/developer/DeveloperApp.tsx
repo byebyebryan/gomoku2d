@@ -2,7 +2,7 @@ import { Component, Fragment, Suspense, lazy, useEffect, useRef, type ReactNode 
 import { Link, Navigate, Outlet, Route, Routes, matchPath, useLocation } from "react-router-dom";
 import { Icon } from "../ui/Icon";
 import { useDocumentTitle } from "../app/useDocumentTitle";
-import { DEVELOPER_SECTIONS, PROJECT_SOURCE_URL } from "../app/links";
+import { DEVELOPER_SECTIONS, DEV_SITE_LABEL, PROJECT_SOURCE_URL } from "../app/links";
 import { DeveloperOverview } from "./DeveloperPages";
 import "./developer.css";
 
@@ -34,7 +34,7 @@ class DeveloperRecovery extends Component<{ children: ReactNode; standalone: boo
           Reload
         </button>{" "}
         <a className="uiAction uiActionNeutral" href={this.props.standalone ? "#/dev/" : import.meta.env.BASE_URL + "dev/"}>
-          Developer overview
+          {DEV_SITE_LABEL} overview
         </a>
       </section>
     ) : (
@@ -70,7 +70,7 @@ function DeveloperFrame({ standalone }: { standalone: boolean }) {
       <div className="dev-shell">
         <header className="dev-header">
           <Link className="dev-brand" to="/dev/">
-            GOMOKU2D <span>/ DEVELOPER</span>
+            GOMOKU2D <span>/ {DEV_SITE_LABEL.toUpperCase()}</span>
           </Link>
           <nav className="dev-project-links" aria-label="Project links">
             {standalone ? (
@@ -89,7 +89,7 @@ function DeveloperFrame({ standalone }: { standalone: boolean }) {
             </a>
           </nav>
         </header>
-        <nav className="dev-nav" aria-label="Developer sections">
+        <nav className="dev-nav" aria-label={`${DEV_SITE_LABEL} sections`}>
           {sections.map(({ to, label, match }) => (
             <Link key={to} to={to} aria-current={matchPath(match, location.pathname) ? "page" : undefined}>
               {label}
@@ -125,7 +125,7 @@ export function DeveloperNotFound() {
       <h1>Reference not found</h1>
       <p>Choose a developer section or return to the overview.</p>
       <Link className="uiAction uiActionNeutral" to="/dev/">
-        Developer overview
+        {DEV_SITE_LABEL} overview
       </Link>
     </section>
   );

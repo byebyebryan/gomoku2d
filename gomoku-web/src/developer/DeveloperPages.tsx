@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { Icon } from "../ui/Icon";
-import { DEVELOPER_SECTIONS } from "../app/links";
+import { DEVELOPER_SECTIONS, DEV_SITE_LABEL } from "../app/links";
 
 export function DeveloperOverview() {
-  useDocumentTitle("Developer");
+  useDocumentTitle(DEV_SITE_LABEL);
   return (
     <>
       <div className="dev-heading">

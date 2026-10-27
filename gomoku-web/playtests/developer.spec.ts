@@ -135,7 +135,7 @@ for (const width of [1440, 412]) {
     await page.keyboard.press("Enter");
     await expect(page.locator("#developer-content")).toBeFocused();
     await page
-      .getByRole("navigation", { name: "Developer sections" })
+      .getByRole("navigation", { name: "Dev site sections" })
       .getByRole("link", { name: "UI design", exact: true })
       .click();
     await expect(page.locator("#developer-content")).toBeFocused();
@@ -146,13 +146,13 @@ for (const width of [1440, 412]) {
     await expect.poll(() => page.locator(".dev-page").evaluate((node) => node.scrollTop)).toBe(0);
     await expect(page.locator(".dev-header")).toBeInViewport();
     await expect(
-      page.getByRole("navigation", { name: "Developer sections" }).getByRole("link"),
+      page.getByRole("navigation", { name: "Dev site sections" }).getByRole("link"),
     ).toHaveText(["Overview", "Visual design", "UI design", "Bot lab"]);
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
     await page.goto("/dev/not-a-page/");
     await expect(page.getByRole("heading", { name: "Reference not found" })).toBeVisible();
-    await page.getByRole("link", { name: "Developer overview", exact: true }).click();
+    await page.getByRole("link", { name: "Dev site overview", exact: true }).click();
     await expect(page).toHaveURL(/\/dev\/$/);
   });
 }

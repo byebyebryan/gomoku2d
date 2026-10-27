@@ -198,3 +198,11 @@ entry destination, so UI design remains active on history and all review pages.
 The Design reviews index and existing record URLs remain addressable. The build,
 33 App unit tests and 12 three-engine browser checks passed, including the
 starting subtab, top scroll, Home link and active state across all three views.
+
+Bryan accepted **Dev site** as the public umbrella name. Header branding is now
+GOMOKU2D / DEV SITE; Home, root/web README and docs-index overview links say
+Dev site. Browser title, accessible navigation and recovery links use the same
+shared label. The internal first tab remains Overview, followed by Visual design,
+UI design and Bot lab. Implementation identifiers and route identities stay
+stable. The build, 33 App unit tests and 12 three-engine browser checks passed;
+the three Markdown link groups match the accepted labels, order and destinations.

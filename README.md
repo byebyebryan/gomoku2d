@@ -12,12 +12,12 @@ analysis, and practice from earlier positions.
 [Guide](https://gomoku2d.byebyebryan.com/guide/) ·
 [Docs](docs/README.md)
 
-[Developer](https://gomoku2d.byebyebryan.com/dev/) ·
+[Dev site](https://gomoku2d.byebyebryan.com/dev/) ·
 [Visual design](https://gomoku2d.byebyebryan.com/visuals/) ·
 [UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) ·
 [Bot lab](https://gomoku2d.byebyebryan.com/lab/)
 
-Developer-area source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).
+Dev site source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).
 Its 0.6.3 implementation is local until the next authorized release; the public
 site remains on the release identified below.
 

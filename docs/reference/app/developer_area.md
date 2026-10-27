@@ -49,7 +49,10 @@ so reference typography does not change player screens.
 `src/app/links.ts` owns the shared section labels, destinations and order:
 Visual design, UI design, Bot lab. Developer navigation and footer links,
 overview cards and Home consume that definition. README and documentation
-link lists use the same labels/order, with Developer as their overview entry.
+link lists use the same labels/order, with Dev site as their overview entry.
+`DEV_SITE_LABEL` supplies the app's public name: GOMOKU2D / DEV SITE in the
+header and Dev site in external overview links and its browser title. The
+internal first tab remains Overview; implementation names and `/dev/` stay stable.
 UI design opens Current screens at `UI_DESIGN_ENTRY_PATH`; its active navigation
 match covers the entire `/dev/reviews/*` section. The same entry is used by the
 portable preview. `/dev/reviews/` remains the Design reviews index, and existing

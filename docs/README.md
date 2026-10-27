@@ -68,7 +68,7 @@ documentation tree:
 - [Rules](https://gomoku2d.byebyebryan.com/rules/) — basic Gomoku and Renju rules
 - [Guide](https://gomoku2d.byebyebryan.com/guide/) — tactics, replay/sharing help
   and account-free example replays
-- [Developer](https://gomoku2d.byebyebryan.com/dev/) — overview of the work behind the game
+- [Dev site](https://gomoku2d.byebyebryan.com/dev/) — overview of the work behind the game
 - [Visual design](https://gomoku2d.byebyebryan.com/visuals/) — visual system and asset inspection
 - [UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) — current screens, UI history and design reviews
 - [Bot lab](https://gomoku2d.byebyebryan.com/lab/) — bot tournament and replay-analysis reports

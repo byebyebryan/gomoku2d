@@ -120,6 +120,7 @@ test("rules explanation route renders inside the app shell", async ({ page }) =>
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Rules" })).toHaveAttribute("href", "/rules/");
   await expect(page.getByRole("link", { name: "Guide" })).toHaveAttribute("href", "/guide/");
+  await expect(page.getByRole("link", { name: "Dev site", exact: true })).toHaveAttribute("href", "/dev/");
   await expect(page.getByRole("link", { name: "Visual design" })).toHaveAttribute("href", "/visuals/");
   await expect(page.getByRole("link", { name: "UI design", exact: true })).toHaveAttribute("href", "/dev/reviews/core-screens-062/");
   await expect(page.getByRole("link", { name: "Bot lab" })).toHaveAttribute("href", "/lab/");

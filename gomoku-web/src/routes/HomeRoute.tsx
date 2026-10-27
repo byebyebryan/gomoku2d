@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { Link } from "react-router-dom";
-import { DEVELOPER_SECTIONS, PROJECT_SOURCE_URL } from "../app/links";
+import { DEVELOPER_SECTIONS, DEV_SITE_LABEL, PROJECT_SOURCE_URL } from "../app/links";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { APP_VERSION } from "../app/version";
 import { Icon } from "../ui/Icon";
@@ -39,7 +39,7 @@ export function HomeRoute() {
               <span aria-hidden="true">/</span>
               <Link to="/guide/#examples">Examples</Link>
               <span aria-hidden="true">/</span>
-              <Link to="/dev/">Developer</Link>
+              <Link to="/dev/">{DEV_SITE_LABEL}</Link>
               {DEVELOPER_SECTIONS.map(({ to, label }) => (
                 <Fragment key={to}>
                   <span aria-hidden="true">/</span>
