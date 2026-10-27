@@ -22,7 +22,7 @@ const sections = [
   ["/dev/reviews/", "UI review"],
 ];
 
-class DeveloperRecovery extends Component<{ children: ReactNode }, { failed: boolean }> {
+class DeveloperRecovery extends Component<{ children: ReactNode; standalone: boolean }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
@@ -35,7 +35,7 @@ class DeveloperRecovery extends Component<{ children: ReactNode }, { failed: boo
         <button className="uiAction uiActionPrimary" onClick={() => window.location.reload()}>
           Reload
         </button>{" "}
-        <a className="uiAction uiActionNeutral" href={import.meta.env.BASE_URL + "dev/"}>
+        <a className="uiAction uiActionNeutral" href={this.props.standalone ? "#/dev/" : import.meta.env.BASE_URL + "dev/"}>
           Developer overview
         </a>
       </section>
@@ -44,7 +44,7 @@ class DeveloperRecovery extends Component<{ children: ReactNode }, { failed: boo
     );
   }
 }
-function DeveloperFrame() {
+function DeveloperFrame({ standalone }: { standalone: boolean }) {
   const location = useLocation(),
     scroll = useRef<HTMLDivElement>(null),
     content = useRef<HTMLElement>(null),
@@ -75,10 +75,17 @@ function DeveloperFrame() {
             GOMOKU2D <span>/ DEVELOPER</span>
           </Link>
           <nav className="dev-project-links" aria-label="Project links">
-            <Link className="uiAction uiActionPrimary" to="/">
-              <Icon name="play" />
-              Play
-            </Link>
+            {standalone ? (
+              <a className="uiAction uiActionPrimary" href="https://gomoku2d.byebyebryan.com/">
+                <Icon name="play" />
+                Play
+              </a>
+            ) : (
+              <Link className="uiAction uiActionPrimary" to="/">
+                <Icon name="play" />
+                Play
+              </Link>
+            )}
             <a className="uiAction uiActionNeutral" href={PROJECT_SOURCE_URL}>
               Source
             </a>
@@ -92,7 +99,7 @@ function DeveloperFrame() {
           ))}
         </nav>
         <main id="developer-content" tabIndex={-1} ref={content}>
-          <DeveloperRecovery key={location.pathname}>
+          <DeveloperRecovery key={location.pathname} standalone={standalone}>
             <Suspense fallback={<p aria-busy="true">Loading reference…</p>}>
               <Outlet />
             </Suspense>
@@ -121,10 +128,10 @@ export function DeveloperNotFound() {
     </section>
   );
 }
-export function DeveloperApp() {
+export function DeveloperApp({ standalone = false }: { standalone?: boolean }) {
   return (
     <Routes>
-      <Route element={<DeveloperFrame />}>
+      <Route element={<DeveloperFrame standalone={standalone} />}>
         <Route path="/dev" element={<DeveloperOverview />} />
         <Route path="/dev/process" element={<Navigate to="/dev/reviews/" replace />} />
         <Route path="/dev/reviews/*" element={<Reviews />} />

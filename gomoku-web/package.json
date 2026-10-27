@@ -29,6 +29,7 @@
     "profile:browser": "playwright test --config playwright.profile.config.ts",
     "playtest:smoke": "playwright test playtests/smoke.spec.ts",
     "review:export": "node scripts/export_review.mjs",
+    "developer:export": "node scripts/export_developer.mjs",
     "capture:retrospective": "node scripts/capture_retrospective_ui.mjs",
     "capture:retrospective:receipt": "node scripts/record_retrospective_build.mjs",
     "capture:history": "node scripts/capture_history_ui.mjs",
