@@ -26,7 +26,7 @@ run. No runtime, production data, dependency or infrastructure was changed.
 | [Public visitor](../../gomoku-web/src/routes/PublicPlayerRoute.tsx), [recorded mobile profile](v0_6_1_evidence/sharing-chromium-public-profile.png) and [maximum-label capture](v0_6_1_evidence/sharing-chromium-maximum-visitor.png) | Identity, five statistics tiles, disclosure and game rows form one long stack. Review hierarchy and sparse/full composition before adding more fields. |
 | [Owner controls](../../gomoku-web/src/routes/PublicProfileManager.tsx) and [recorded desktop manager](v0_6_1_evidence/sharing-chromium-profile-manager-desktop.png) | General Settings-style rows are established. Refine density and action feedback within that language. Statistics use Off/On buttons; the separate enable confirmation still uses a checkbox and needs a consistency review while preserving deliberate consent. |
 | [Replay viewer](../../gomoku-web/src/routes/ReplayRoute.tsx) and [public visitor](../../gomoku-web/src/routes/PublicPlayerRoute.tsx) | Replay's Profile action leads to the owner's record screen. Public pagination lives in route component state. Define the return to the originating public page and its list position, separately from My profile. |
-| [Saved replay panel](../../gomoku-web/src/routes/ReplayLibraryPanel.tsx) | Entries show player names, moves, rules and save time, but have no private title, note or thumbnail. New study tools belong in `0.6.3`; `0.6.2` can improve existing presentation. |
+| [Saved replay panel](../../gomoku-web/src/routes/ReplayLibraryPanel.tsx) | Entries show player names, moves, rules and save time, but have no private title, note or thumbnail. New study tools belong in `0.6.4`; `0.6.2` improved existing presentation. |
 | [Local library](../../gomoku-web/src/replay/replay_library_store.ts), [stored viewer](../../gomoku-web/src/routes/StoredReplayRoute.tsx) and [sync](../../gomoku-web/src/replay/replay_library_sync.ts) | Entries have exact keys and canonical payloads discard `viewPly`. Saved opening moments and metadata need a storage/compatibility design. The current merge policy is not a per-field note-conflict policy. |
 | [Board component](../../gomoku-web/src/components/Board/Board.tsx) | Each mounted Board creates a Phaser game. List thumbnails need a lightweight static projection instead of one game instance per row. |
 | [Portable v1](../reference/app/portable_replay.md) and [sharing data](../reference/backend/sharing_data.md) | Links contain complete legal 15×15 games; view ply is excluded from identity. Catalogs hold 32 games and private libraries 64. Reuse already fetched moves for previews. |
@@ -266,8 +266,9 @@ minimum. The [P2P research](../reference/backend/p2p_multiplayer.md) retains the
 later multiplayer direction and its deferral.
 
 The [0.6.2 release](../archive/v0_6_2_release.md) is published, with exact-head
-CI/deployed results and unperformed human checks preserved. Next,
-inventory/prototype the [0.6.3 developer site](v0_6_3_developer_site_plan.md).
+CI/deployed results and unperformed human checks preserved. The reviewed
+[0.6.3 developer site](v0_6_3_developer_site_plan.md) is now in
+[release preparation](v0_6_3_release_plan.md).
 Settle metadata/compatibility and the thumbnail prototype before 0.6.4 work.
 Validate changed areas instead of reopening unrelated completed audits. Push,
 backend deployment, tagging, served-byte verification and human acceptance

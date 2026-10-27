@@ -351,3 +351,12 @@ check and human/physical-device acceptance stay open. The original manual
 services and foreign worktree remain in place; all 25 temporary tagged worktrees
 and capture services were cleaned up. Work is committed locally without release
 or production publication.
+
+## Release checkpoint, October 27
+
+The [final review](v0_6_3_final_review.md) found no new blockers. Bryan authorized
+the [0.6.3 release loop](v0_6_3_release_plan.md): version/changelog preparation,
+exact-source hosted CI, annotated tag publication and deployed artifact/backend/
+browser verification. Earlier entries retain their dated local evidence and
+preview limitations. Publication facts will belong to the release record;
+real-account and human/device checks remain separate.

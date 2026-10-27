@@ -12,6 +12,37 @@ their own section.
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-10-27
+
+**Theme: make the work behind Gomoku2D inspectable.**
+
+### Web
+
+- Add a static developer area for Visual design, UI design and Bot lab, with
+  source-based inspection of 41 icons and curated design reviews.
+- Publish eight design cases, two references and UI history covering 24
+  milestones across 15 screen families with 274 provenance-qualified
+  retrospective captures. Keep the developer routes outside Auth, private
+  player state and cloud initialization.
+- Improve the narrow Analysis layout without changing recorded Lab reports or
+  measurements.
+- Keep profile danger actions unavailable while Auth is loading, and wait for
+  restored identity before the signed-in reset/delete flow. Resolved guest reset
+  and existing account-change safeguards remain available.
+
+### Repository
+
+- Add maintained capture, export and audit helper checks to CI: 44 Node tool
+  checks run through one command.
+- Harden standalone review exports against overwriting source or existing
+  output directories.
+- Refresh only the affected development dependency resolutions for
+  `body-parser` and `fast-uri`; retain the documented Firebase CLI/OpenTelemetry
+  audit exception.
+- Preserve native code, backend schemas/rules, portable replay format and
+  recorded Lab measurements. Keep existing historical evidence provenance and
+  identify the new retrospective captures by their tagged source and date.
+
 ## [0.6.2] - 2026-10-24
 
 **Theme: make profiles and shared replays easy to explore.**
@@ -1328,7 +1359,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.3...HEAD
+[0.6.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.5...v0.6.1
 [0.5.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.4...v0.5.5

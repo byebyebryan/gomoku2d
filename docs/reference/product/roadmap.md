@@ -25,7 +25,7 @@ Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
 site and practical UI review tools in 0.6.3, then replay collections in 0.6.4.
 Curated learning follows later, unnumbered for now.
 `0.6.2` is published; remaining human checks stay explicit. `0.6.3` is
-implemented locally and awaits visual/release acceptance; `0.6.4` remains
+reviewed and in release preparation; `0.6.4` remains
 planned. No future release dates are committed.
 
 | Release | Focus | Player outcome |
@@ -85,8 +85,9 @@ selected layout; refreshed media follows the accepted UI.
 The [developer-site plan](../../working/v0_6_3_developer_site_plan.md) owns the
 accepted context and proposed page/source/implementation gates. Bryan selected
 expansion of the existing site/domain/repository and refinement of its established
-look, using React/Vite. Review the shared developer layout and public-page
-boundary before implementation. This work is separate from the 0.6.2 release.
+look, using React/Vite. The shared developer layout, public/private boundary,
+UI history and review tools are implemented and reviewed. The
+[release plan](../../working/v0_6_3_release_plan.md) owns the publication gate.
 
 ### `0.6.4`: Replay Collection and Study Tools
 

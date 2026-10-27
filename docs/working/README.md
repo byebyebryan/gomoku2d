@@ -6,6 +6,10 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 ## Active Design
 
+The [0.6.3 release plan](v0_6_3_release_plan.md) owns the current packaging and
+publication checkpoint; the implementation and review entries below retain
+their original evidence.
+
 | Note | Owner and next review |
 |---|---|
 | [0.6.3 developer-area brief](v0_6_3_developer_site_plan.md) | Bryan; visual study accepted; [implementation/execution](v0_6_3_execution.md) owns local integration, evidence and remaining release/manual checks |

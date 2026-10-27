@@ -14,8 +14,8 @@ analysis, and practice from earlier positions.
 [Docs](docs/README.md)
 
 Dev site source and review/export workflow: [maintainer contract](docs/reference/app/developer_area.md).
-Its 0.6.3 implementation is local until the next authorized release; the public
-site remains on the release identified below.
+The 0.6.3 release is being prepared; the public site remains on the release
+identified below until publication is verified.
 
 [![CI](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml)
 
@@ -146,7 +146,8 @@ opt-in public profiles/statistics.
 The [release record](docs/archive/v0_6_2_release.md) owns source, CI, deployment
 and production evidence. The inherited real signed-in sharing round trip
 remains pending; physical-device and human-accessibility limits remain recorded.
-Next is the [0.6.3 developer site and UI review tools](docs/working/v0_6_3_developer_site_plan.md).
+The [0.6.3 release plan](docs/working/v0_6_3_release_plan.md) now packages the
+reviewed developer site and UI review tools for publication.
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
 [v0.6.2 changelog](CHANGELOG.md#062---2026-10-24) ·

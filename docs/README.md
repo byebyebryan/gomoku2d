@@ -14,9 +14,9 @@ CI, deployment and production evidence, the inherited pending real signed-in
 sharing check and retained human/device deferrals.
 [GitHub Releases](https://github.com/byebyebryan/gomoku2d/releases/latest)
 identifies the published build. The [roadmap](reference/product/roadmap.md)
-and [0.6.3 developer-site plan](working/v0_6_3_developer_site_plan.md) put
-design/assets and practical UI review tools next, followed by
-0.6.4 replay collections; curated learning follows later. The
+and [0.6.3 release plan](working/v0_6_3_release_plan.md) put
+the reviewed developer site and practical UI review tools into release
+preparation, followed by 0.6.4 replay collections; curated learning follows later. The
 [follow-up research](working/v0_6_followup_plan.md) retains future scope, and
 the [implementation archive](archive/v0_6_implementation.md) indexes completed
 planning/evidence at their existing paths. The
