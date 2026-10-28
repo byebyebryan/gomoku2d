@@ -7,6 +7,31 @@ Bryan asked the Gomoku thread to work out the presentation update, then hand
 implementation to that agent. This is the primary's recommended implementation
 direction; final wording and renders have not received a separate human pass.
 
+## Completed implementation — October 28
+
+The Devlog agent published the refresh as `f5a264503e2eb4e247703f7526ea420d15a1b25d`.
+[Pages run 40763848744](https://github.com/byebyebryan/byebyebryan.github.io/actions/runs/40763848744)
+succeeded on that exact commit. The [live portfolio](https://dev.byebyebryan.com/)
+uses the proposed copy, Play / Dev site / Code links, a populated analysis poster,
+and a 20-second 1280×720 reel covering guest play, replay/Share, neighboring UI
+versions and native/enlarged icon inspection.
+
+The silent H.264/yuv420p MP4 is 503,677 bytes, SHA-256
+`0b8cb3bc640f28868cb804a056723c3c18e229a377ee1ead8d4a6c30b598d9ef`;
+the PNG poster is SHA-256
+`e34a338c8d16a0e0d8c8f8ccaf59ca0830bbea7f723e0225ad73797513624e30`.
+Both are pinned to the unmodified released 0.6.3 artifact in the Devlog manifest.
+The owner reports successful Jekyll, responsive, keyboard, video/motion/fallback
+and byte-range checks, plus Snap parity for 18 served files including all 13
+media assets. Only the card, its two assets, manifest and license notices changed.
+
+The Gomoku primary independently confirmed the exact successful Pages SHA,
+live card copy/link order, both live media hashes and video format/duration;
+inspected the published card and reel contact sheet; and reviewed the owner's
+structural, browser and publication receipts. This closes the implementation
+handoff with agent review. It adds no human or physical-phone acceptance claim.
+The original brief below remains the dated implementation contract.
+
 ## Outcome
 
 Refresh the existing Gomoku2D homepage card so visitors can recognize both the

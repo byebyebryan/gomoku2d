@@ -9,7 +9,6 @@ belong in the [reference docs](../README.md#choose-a-path).
 | Note | Owner and next review |
 |---|---|
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; 0.6.2/0.6.3 published; replay metadata compatibility belongs to 0.6.4, curated learning later |
-| [Gomoku2D portfolio handoff](devlog_gomoku2d_handoff.md) | Devlog agent; refresh the existing card, reel and Dev site entry using the released 0.6.3 source; application scope stays separate |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan
 checkpoints are indexed in the [implementation archive](../archive/v0_6_implementation.md).
@@ -51,6 +50,11 @@ the release record above owns final publication and remaining acceptance.
 | [Final review](v0_6_3_final_review.md) | No new blockers; shallow-checkout portability, source/evidence and audits checked before packaging |
 
 ## Completed Follow-up
+
+The [Gomoku2D portfolio handoff](devlog_gomoku2d_handoff.md) was published on
+October 28 at Devlog commit `f5a2645`: refreshed card/reel, Dev site link and
+pinned provenance. The receipt distinguishes owner validation, independent
+Gomoku checks and the remaining human/device acceptance.
 
 The [v0.5 cloud and Wasm evidence](../archive/reconciliation_2026_10/v0_5_unattended_evidence.md)
 records the fixed profiling matrix, cloud repair, passing three-engine CI,
