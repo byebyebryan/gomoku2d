@@ -9,6 +9,7 @@ belong in the [reference docs](../README.md#choose-a-path).
 | Note | Owner and next review |
 |---|---|
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; 0.6.2/0.6.3 published; replay metadata compatibility belongs to 0.6.4, curated learning later |
+| [Gomoku2D portfolio handoff](devlog_gomoku2d_handoff.md) | Devlog agent; refresh the existing card, reel and Dev site entry using the released 0.6.3 source; application scope stays separate |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan
 checkpoints are indexed in the [implementation archive](../archive/v0_6_implementation.md).
