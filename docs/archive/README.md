@@ -18,6 +18,10 @@ records the later integration matrix, sync repair and fixed desktop workloads.
 
 ## Release Records
 
+The 0.6.4 release record closes the planned 0.6 line and records replay
+collections, exact-source CI, Chrome mobile layout checks and production
+readbacks. [0.6.4 release record](v0_6_4_release.md)
+
 The [0.6.3 release record](v0_6_3_release.md) owns the developer-site publication,
 exact-source CI, complete served-file manifest, backend readbacks and automated
 production results. The [release plan](../working/v0_6_3_release_plan.md) retains

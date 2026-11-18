@@ -4,12 +4,11 @@ Active design drafts and maintained procedures. Completed reviews belong in
 the [archive](../archive/README.md); current product and implementation contracts
 belong in the [reference docs](../README.md#choose-a-path).
 
-## Active Design
+## Follow-up Research
 
 | Note | Owner and next review |
 |---|---|
-| [0.6.4 replay collections](v0_6_4_implementation.md) | Local implementation and release handoff. The [approved UI review](v0_6_4_replay_collection_review.md) and [data contract](v0_6_4_replay_collection_contract.md) record the design |
-| [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; 0.6.2/0.6.3 published; replay metadata compatibility belongs to 0.6.4, curated learning later |
+| [v0.6 follow-up research](v0_6_followup_plan.md) | Planning snapshot with research for later curated learning. The roadmap tracks current scope. |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan
 checkpoints are indexed in the [implementation archive](../archive/v0_6_implementation.md).
@@ -18,8 +17,16 @@ competing active plans.
 
 ## Published v0.6 Handoff
 
-The [0.6.3 release record](../archive/v0_6_3_release.md) owns current publication,
-automated production results and open acceptance. Its
+The 0.6.4 release record closes the planned line and records production results
+and remaining acceptance. The replay implementation checkpoint and approved
+design retain the decisions and local evidence.
+[0.6.4 release record](../archive/v0_6_4_release.md) ·
+[Implementation](v0_6_4_implementation.md) ·
+[UI review](v0_6_4_replay_collection_review.md) ·
+[Data contract](v0_6_4_replay_collection_contract.md)
+
+The [0.6.3 release record](../archive/v0_6_3_release.md) records publication of
+the developer site, automated checks and outstanding human acceptance. Its
 [release plan](v0_6_3_release_plan.md) retains the executed preparation sequence.
 The [0.6.2 release record](../archive/v0_6_2_release.md),
 [release plan](v0_6_2_release_plan.md) and historical
@@ -74,5 +81,4 @@ completed review.
 Bryan owns these design and maintenance decisions. The maintenance notes do not
 reopen the completed [October reconciliation](../archive/reconciliation_2026_10/README.md),
 which records the retained UI and deferred manual acceptance. The
-[roadmap](../reference/product/roadmap.md) and follow-up plan track the remaining
-`0.6.4` direction and later curated learning.
+[roadmap](../reference/product/roadmap.md) tracks later curated learning.

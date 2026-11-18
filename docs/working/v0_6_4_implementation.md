@@ -1,6 +1,7 @@
 # Gomoku2D 0.6.4 implementation checkpoint
 
-Local implementation at `ffec605`. The published app is still 0.6.3.
+Local implementation checkpoint at `ffec605`. The release record tracks
+publication at `48822e2`. [0.6.4 release record](../archive/v0_6_4_release.md)
 [Approved UI review](v0_6_4_replay_collection_review.md) ·
 [Design and data contract](v0_6_4_replay_collection_contract.md)
 
@@ -90,4 +91,4 @@ library, its reader and cleanup path require a v2-compatible build.
 Bryan selected Chrome mobile emulation for the 0.6.4 release layout check.
 Physical phone and keyboard behavior, real Google sign-in and human
 screen-reader acceptance retain their explicit deferrals. The release record
-will identify the tested viewports, browser and interactions.
+identifies the tested viewports, browser and interactions.

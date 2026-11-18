@@ -1,12 +1,14 @@
 # Dependency Maintenance Notes
 
 Owner: manual maintenance passes. Recheck these notes when updating Firebase
-or preparing a release. Last reviewed: 2026-10-27 for the `0.6.3` readiness review.
+or preparing a release. Last reviewed: 2026-11-18 for `0.6.4`.
 
-The subsequent [release-fix checkpoint](v0_6_3_release_fixes.md), at `e34129f`,
-patches the body-parser/fast-uri findings. The current full audit retains only
-the three moderate OpenTelemetry/Firebase CLI package entries below; production
-npm and Rust audits are clean. Earlier audit sections retain their dated scope.
+The 0.6.4 lock refresh updates `re2js` to 2.10.0. Production npm and Rust
+audits are clean at the release source. The full npm audit reports 15 moderate
+development-only entries, including parent packages in the Firebase CLI tree.
+The release retains the existing CLI version after reviewing the affected
+paths and the audit's proposed downgrade. Earlier audit sections retain their
+dated scope. [0.6.4 release evidence](../archive/v0_6_4_release_evidence.json)
 
 ## Overrides
 

@@ -130,3 +130,10 @@ and the existing Bot lab. It presents source, review findings and actual working
 tools while preserving historical capture identities and their limits. The
 [release record](v0_6_3_release.md) separates exact-source publication and
 production automation from the still-open account/device/human checks.
+
+`v0.6.4` completed the planned 0.6 line with board previews at chosen openings,
+private study details and in-place edits to public replay listings. It added the
+Dev site's Replay collections case and deployed additive Firestore rules before
+publishing the web build. Chrome mobile emulation covered the release layout
+check. Curated learning remains unnumbered and multiplayer remains deferred.
+[Release record](v0_6_4_release.md)

@@ -196,7 +196,19 @@ player regression. A standalone report export does not publish the web app or
 replace the normal exact-source release gate. The implementation execution
 record is local evidence; release records own publication facts.
 
-`v0.6.3` is published. Its [release record](../../archive/v0_6_3_release.md)
+The initial Dev site publication shipped in `v0.6.3`. Its
+[release record](../../archive/v0_6_3_release.md)
 retains the exact tag/CI/deployments, full served-file manifest, previous/current
 ruleset pointers and production checks. Rules bytes and all nine configured
 index fields were unchanged; no separate backend migration was needed.
+
+## Rules-first rollout for replay library schema 2
+
+The `v0.6.4` web build writes schema 2 to the existing private library path. The
+release deployed additive rules at the exact passing source before pushing the
+tag, since the tag starts Pages and Firestore deployments independently. The
+manual workflow accepts `expected_sha` and checks it before authenticating. Both
+deployments compare the stored source bytes before activation and read back the
+live ruleset pointer after it. Keep the additive rules during web recovery, and
+use a v2-compatible build for accounts that have written schema 2.
+[0.6.4 release record](../../archive/v0_6_4_release.md)

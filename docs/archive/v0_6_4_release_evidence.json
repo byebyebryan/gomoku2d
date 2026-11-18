@@ -1,0 +1,182 @@
+{
+  "source_sha": "48822e22f3ee7e5f32753e511ab83e10528e0d59",
+  "version": "0.6.4",
+  "dependency": {
+    "name": "re2js",
+    "from": "2.8.6",
+    "to": "2.10.0",
+    "production_npm_advisories": 0,
+    "cargo_advisories": 0,
+    "development_only_moderate_entries": 15,
+    "development_only_affected_packages": [
+      "@google-cloud/pubsub",
+      "@hono/node-server",
+      "@opentelemetry/core",
+      "archiver",
+      "archiver-utils",
+      "exegesis",
+      "firebase-tools",
+      "gaxios",
+      "gcp-metadata",
+      "glob",
+      "google-gax",
+      "hono",
+      "minimatch",
+      "rimraf",
+      "zip-stream"
+    ]
+  },
+  "local_validation": {
+    "web_unit": 582,
+    "tools": 44,
+    "rules": 51,
+    "browser": 306,
+    "browser_expected_skips": 6,
+    "emulator": 69
+  },
+  "mobile_layout": {
+    "browser": "Chrome for Testing 156.0.8078.4",
+    "device_scale_factor": 3,
+    "viewports_css_px": [
+      "390x844",
+      "320x900",
+      "844x390"
+    ],
+    "mobile_and_touch_emulation": true,
+    "passed": 3,
+    "production_writes": false,
+    "limits": [
+      "no physical touch or software keyboard",
+      "no real Google sign-in",
+      "no human assistive-technology acceptance"
+    ]
+  },
+  "raw_receipt_sha256": {
+    "gomoku-web/test-results/v064-release/mobile/README.md": "26fb1409df9a043c0ccaaa9d660f29612ed01f551e7180014d07bb25671e297c",
+    "gomoku-web/test-results/v064-release/mobile/run.json": "72daef5a006d00f249100e95e59f8e358521f224aac5b17f4ed45a12daecacca",
+    "gomoku-web/test-results/v064-release/mobile/report.json": "7e015e2c80dbc6b8a331730310b364ed3236ef5183463d8908b4f1648be9d53d",
+    "gomoku-web/test-results/v064-release/browser-48822e2.log": "1caaa161c1ac92890779a77fb4619b369c1bf6d9fddcf207c6493d570b7e6b8f",
+    "gomoku-web/test-results/v064-release/cloud-48822e2.log": "b9f7065dc337be2263829664b05951ad72a08c10bc8f10d506079a04f8e60cf0",
+    "gomoku-web/test-results/v064-implementation/release-rules.log": "6b54660557b8cbbe028db7413ca4ea2c77ab98794ae24bbeed35e56525cbf4dd",
+    "gomoku-web/test-results/v064-implementation/release-audit-prod.json": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35",
+    "gomoku-web/test-results/v064-implementation/release-audit-full.json": "314d833fd4d8041f81fdfbccbd58a8f7f6131e6bf9bcdcab4f6d8ab267505787",
+    "gomoku-web/test-results/v064-implementation/release-cargo-audit.json": "f008bbe274852b5b48693bb81451fb3df95a2cdeb12fc2b1b6bdff6875ac28a9",
+    "gomoku-web/test-results/v064-release/ci-success-48822e2.log": "cd9f80bcaccacfebbc6d681e768bd6a75d05e602100821af3b9915a7266c8522",
+    "gomoku-web/test-results/v064-release/rules-pretag.log": "3afc5549d2d40297d236979273ef9a69f3c02e1dc72dbbf8d1e164fb85ff2d4c",
+    "gomoku-web/test-results/v064-release/rules-tag.log": "356e5eac5bdf661369f5a560b131a2a04028d22903be18ca9ba72597d1b715d6",
+    "gomoku-web/test-results/v064-release/production/live-playwright.json": "8c4c83a6efe911eab8a8b07a8d45c7e741e0d471c6a32a049a91969d6e1df986",
+    "gomoku-web/test-results/v064-release/production/direct-browser.json": "20c092fabcafec48d23317b6ab3155c48a88778ce9cd2c3e1aed17c48ca869ae",
+    "gomoku-web/test-results/v064-release/production/direct-routes.json": "3371d2f0921610be2d01a687d87b8c83d6c27a2287a26a89827d95e0b32d8b94"
+  },
+  "tag": {
+    "name": "v0.6.4",
+    "annotation_sha": "d531df4efc7e6b777cefd719ee3c9398063757f9",
+    "peeled_sha": "48822e22f3ee7e5f32753e511ab83e10528e0d59"
+  },
+  "ci": {
+    "run_id": 44413002128,
+    "passing_attempt": 2,
+    "web_job_id": 135193167543,
+    "rust_job_id": 135193170160,
+    "source_sha": "48822e22f3ee7e5f32753e511ab83e10528e0d59",
+    "rust_workspace_tests": 348,
+    "web_unit_tests": 582,
+    "tool_checks": 44,
+    "firestore_rules_checks": 51,
+    "browser_passes": 306,
+    "browser_expected_skips": 6,
+    "auth_firestore_emulator_passes": 69,
+    "repeated_emulator_race_passes": 45,
+    "first_attempt": "Canceled the slow web job during Ubuntu mirror package installation. Retried at the same SHA with the successful Rust result retained."
+  },
+  "release": {
+    "run_id": 44419634582,
+    "published_at_utc": "2026-11-18T23:18:58Z",
+    "url": "https://github.com/byebyebryan/gomoku2d/releases/tag/v0.6.4"
+  },
+  "firestore": {
+    "pre_tag": {
+      "run_id": 44419547738,
+      "previous_ruleset": "projects/gomoku2d/rulesets/4391d371-1145-44b1-8d42-58d555ad2ee3",
+      "live_ruleset": "projects/gomoku2d/rulesets/f00b05a4-2cca-4985-9e05-67868dba4b36",
+      "source_ref": "refs/heads/main",
+      "source_sha": "48822e22f3ee7e5f32753e511ab83e10528e0d59",
+      "rules_sha256": "430c9c56dd1bc63e26d206b840b513933cf9331864cafd1ebe16928d6abde95c"
+    },
+    "tag": {
+      "run_id": 44419634352,
+      "previous_ruleset": "projects/gomoku2d/rulesets/f00b05a4-2cca-4985-9e05-67868dba4b36",
+      "live_ruleset": "projects/gomoku2d/rulesets/f3668f76-a550-4e53-9fe2-5ac1bffcd2f0",
+      "source_ref": "refs/tags/v0.6.4",
+      "source_sha": "48822e22f3ee7e5f32753e511ab83e10528e0d59",
+      "rules_sha256": "430c9c56dd1bc63e26d206b840b513933cf9331864cafd1ebe16928d6abde95c"
+    },
+    "index_deployment": false,
+    "production_account_writes": false
+  },
+  "pages": {
+    "origin": "https://gomoku2d.byebyebryan.com",
+    "run_id": 44419634328,
+    "deployment_id": 7899082893,
+    "artifact_id": 14480862217,
+    "status": "success",
+    "matched_artifact_files": 596,
+    "artifact_payload_bytes": 23050409,
+    "matched_direct_entry_routes": 10,
+    "manifest": "v0_6_4_release_manifest.json",
+    "manifest_sha256": "cb18e89a6da7b11919f59fcdf5207822d8e9b015e474a25761cad6a0382e0fdf"
+  },
+  "production_browser": {
+    "engine_checks": [
+      {
+        "engine": "chromium",
+        "version": "156.0.8078.4",
+        "home_version": "v0.6.4",
+        "review_captures_decoded": 7,
+        "external_requests": 0,
+        "page_errors": 0
+      },
+      {
+        "engine": "firefox",
+        "version": "157.0",
+        "home_version": "v0.6.4",
+        "review_captures_decoded": 7,
+        "external_requests": 0,
+        "page_errors": 0
+      },
+      {
+        "engine": "webkit",
+        "version": "27.2",
+        "home_version": "v0.6.4",
+        "review_captures_decoded": 7,
+        "external_requests": 0,
+        "page_errors": 0
+      }
+    ],
+    "playwright_stats": {
+      "startTime": "2026-11-18T23:21:48.832Z",
+      "duration": 29219.193,
+      "expected": 18,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "production_account_writes": false,
+    "test_scope": [
+      "home and local bot play",
+      "shared link direct entry",
+      "private detail editing and portable export",
+      "continuation and local attribution",
+      "review index and design case media"
+    ]
+  },
+  "acceptance_limits": [
+    "Real Google sign-in and the live profile/statistics/publication round trip remain pending.",
+    "Chrome emulation is the accepted 0.6.4 layout gate. Physical touch, OS keyboard, and lower-powered hardware behavior remain deferred.",
+    "Human screen-reader and native zoom, two-device continuity, and novice feedback retain their previous limits."
+  ],
+  "routing": {
+    "luna": "Chrome mobile emulation and mobile evidence with disposable emulators.",
+    "primary": "Dependency fix, integration and CI review, deployment and readback, browser verification and release closeout."
+  }
+}

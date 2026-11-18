@@ -60,8 +60,8 @@ a possible escape still needs verification. It is not a full-game solution.
 ## Keep And Share
 
 - Send a complete replay as a link, opening at a chosen move.
-- Keep private study copies in Saved replays; completed continuations remain
-  ordinary My games.
+- Keep private study copies in Saved replays with a title, note and opening
+  position. Completed continuations appear in My games.
 - Publish selected own games and an optional dated statistics snapshot on a
   public player profile.
 
@@ -137,23 +137,18 @@ lists checks by area.
 
 ## Project Status
 
-`v0.6.3` is published with the developer site: source-based visual inspectors,
-current screen references, UI history and design reviews, alongside the Bot lab.
-It also fixes narrow Analysis layouts and keeps profile reset/delete controls
-unavailable while account identity is being restored.
+`v0.6.4` completes the planned 0.6 line. Replay collections show board previews
+at the chosen opening move, and publishers can edit a listed game's title and
+opening in place. The Dev site documents those changes in the
+[Replay collections review](https://gomoku2d.byebyebryan.com/dev/reviews/replay-collections-064/).
 
-The [release record](docs/archive/v0_6_3_release.md) owns exact-source CI,
-deployment, artifact/backend parity and automated production evidence. Real
-signed-in sharing, physical-device and human-accessibility checks retain their
-recorded pending or deferred status. Next is the
-[0.6.4 replay collection design](docs/reference/product/roadmap.md#064-replay-collection-and-study-tools).
+Release validation includes Chrome mobile layout emulation. Real signed-in
+sharing, physical-device and human-accessibility checks retain their recorded
+pending or deferred status. [Release record](docs/archive/v0_6_4_release.md)
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
-[v0.6.3 changelog](CHANGELOG.md#063---2026-10-27) ·
+[v0.6.4 changelog](CHANGELOG.md#064---2026-11-18) ·
 [Roadmap](docs/reference/product/roadmap.md)
-
-Detailed [release evidence](docs/archive/v0_6_3_release_evidence.json) retains
-the distinction between automated validation and human acceptance.
 
 ## Project References
 

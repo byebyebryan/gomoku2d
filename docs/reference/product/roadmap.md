@@ -4,27 +4,24 @@ This roadmap owns release sequencing and product scope. Current formats and
 behavior live in the reference contracts; completed work lives in
 [`release_history.md`](../../archive/release_history.md).
 
-## Current State: `v0.6.3` Published; Acceptance Follow-up Open
+## `v0.6.4` Published
 
-`v0.6.3` was published on October 27, 2026 after `v0.6.2`. It establishes the
-static developer site with Visual design, UI design and Bot lab, source-based
-asset inspectors, qualified UI history and prepared design reviews. Narrow
-Analysis layout and profile Auth-readiness fixes are included. Native code,
-backend schemas/rules, portable replay format and recorded Lab data are unchanged.
+`v0.6.4` was published on November 18, 2026 and completes the planned 0.6 line.
+It adds position previews, private study details, and edits to existing public
+listings. The static Dev site now includes the replay-collection design review.
 
 The real signed-in profile/statistics/game-publication round trip remains
-pending. Physical-device/touch, human accessibility, two-device private-account
-and novice-feedback checks retain their recorded open or deferred status.
-The [release record](../../archive/v0_6_3_release.md) owns these boundaries
-and the exact-source CI, deployment and production evidence.
+pending. Chrome emulation covers the 0.6.4 mobile layout gate. Physical-device,
+human accessibility, two-device private-account and novice-feedback checks
+retain their recorded open or deferred status.
+[Release record](../../archive/v0_6_4_release.md)
 
 ## `0.6` Sequence
 
 Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
 site and practical UI review tools in 0.6.3, then replay collections in 0.6.4.
-Curated learning follows later, unnumbered for now.
-`0.6.2` and `0.6.3` are published; remaining human checks stay explicit.
-`0.6.4` is in local candidate validation. No future release dates are committed.
+The sequence is complete. Curated learning follows later, with version and
+timing open.
 
 | Release | Focus | Player outcome |
 |---|---|---|
@@ -109,10 +106,10 @@ v1 links and fingerprints; no silent metadata loss during an old-client write
 or merge. Folders, multiple per-move annotations, public comments, arbitrary
 catalog reordering and featured games are outside the planned minimum.
 
-The [implementation checkpoint](../../working/v0_6_4_implementation.md) records
-the local candidate, compatibility and release handoff. The
-[design and contract pass](../../working/v0_6_4_design_contract_plan.md) retains
-the design decisions and prototype evidence.
+The implementation checkpoint records compatibility and local verification.
+The design and contract pass retains decisions and prototype evidence.
+[Implementation checkpoint](../../working/v0_6_4_implementation.md) ·
+[Design and contract pass](../../working/v0_6_4_design_contract_plan.md)
 
 ### Later: Curated Learning Through Replays
 
