@@ -12,6 +12,29 @@ their own section.
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-11-18
+
+**Theme: keep the positions worth studying.**
+
+### Web
+
+- Show the chosen opening position as a board thumbnail in Saved replays and
+  public profiles. Draw the preview from the existing replay data in the browser.
+- Give a saved replay a private title, note and opening move in Replay Analysis.
+  Let publishers edit a listed title and opening in place. Previously copied
+  links continue to open at their original move.
+- Upgrade private replay libraries to schema 2 at their existing Firestore path.
+  Read older collections and require explicit choices for competing private
+  details. If Firestore rejects a stale merge, the device keeps its original copy.
+- Add the Replay collections design review with seven captures of the candidate
+  and reproducible evidence for the replay editor and conflict flow.
+
+### Repository
+
+- Update the bundled Firestore dependency `re2js` to 2.10.0 to address
+  `GHSA-gg6h-894w-4m9c`.
+- Verify exact Firestore rules source bytes before updating the live rules pointer.
+
 ## [0.6.3] - 2026-10-27
 
 **Theme: make the work behind Gomoku2D inspectable.**
@@ -1359,7 +1382,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.3...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.4...HEAD
+[0.6.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/byebyebryan/gomoku2d/compare/v0.5.5...v0.6.1

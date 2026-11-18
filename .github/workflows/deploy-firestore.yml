@@ -4,6 +4,11 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact source commit for a rules-first release
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -19,6 +24,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
+      - name: Verify requested source
+        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          if [[ "$GITHUB_SHA" != "$EXPECTED_SHA" ]]; then
+            echo "::error::The dispatched source has moved. Review main before deploying rules."
+            exit 1
+          fi
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -48,6 +63,16 @@ jobs:
             echo "::error::Ruleset creation failed: ${RULESET_RESPONSE}"
             exit 1
           fi
+
+          RULESET_READBACK=$(curl -fsS \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "https://firebaserules.googleapis.com/v1/${RULESET_NAME}")
+          if ! jq -ej '.source.files | select(length == 1 and .[0].name == "firestore.rules") | .[0].content' \
+            <<< "${RULESET_READBACK}" | cmp -s firestore.rules -; then
+            echo "::error::Created ruleset source differs from the checked-out firestore.rules"
+            exit 1
+          fi
+          RULES_SHA256=$(sha256sum firestore.rules | cut -d ' ' -f 1)
 
           PREVIOUS_RESPONSE=$(curl -fsS \
             -H "Authorization: Bearer ${TOKEN}" \
@@ -80,4 +105,5 @@ jobs:
             echo "- Release: \`projects/gomoku2d/releases/cloud.firestore\`"
             echo "- Source ref: \`${GITHUB_REF}\`"
             echo "- Source SHA: \`${GITHUB_SHA}\`"
-          } >> "${GITHUB_STEP_SUMMARY}"
+            echo "- Verified rules source SHA-256: \`${RULES_SHA256}\`"
+          } | tee -a "${GITHUB_STEP_SUMMARY}"
