@@ -24,8 +24,9 @@ New roots write `shared_stats: null` and `catalog_page_counts: [0, 0, 0, 0]`.
 Readers accept legacy roots with only the original required fields and current
 roots with either or both known optional fields; other fields are rejected.
 Legacy roots without a catalog manifest remain readable. Their first catalog
-mutation reads the four page markers, validates their generations, and writes
-derived counts with the changed page. It performs no separate migration write.
+mutation that adds or removes a publication reads the four page markers,
+validates their generations, and writes derived counts with the changed page.
+Editing the title or opening of an existing row preserves an absent manifest.
 A mismatch between a manifest and its page is an error that requires reload or
 repair, not an empty catalog.
 
@@ -61,6 +62,14 @@ writes two. The rules validate manifest/page agreement, prevent removal of an
 existing manifest, and reject page-only writes that would desynchronize it.
 Empty page documents are retained; pages and profiles cannot be deleted.
 
+An existing-publication edit preserves the physical page, entry order,
+fingerprint and participant snapshots. For legacy rows, the portable payload's
+viewing ply (or the finished position when absent) is authoritative. A title-only
+edit retains the payload bytes. An opening edit stores the same new move in
+`view_ply` and portable `at`, so existing visitors open the expected board.
+Previously copied links contain their own portable snapshot and open at their
+original move. Metadata edits do not add or remove publications.
+
 Statistics sharing is a separate explicit owner action. `setPublicProfileStats`
 compares the expected root revision, advances it, and writes one root document
 with a server timestamp; it does not change catalog generation or pages. A
@@ -80,20 +89,38 @@ nonempty publication writes. Owners can still disable and clear their data.
 
 | Field | Contract |
 |---|---|
-| `schema_version` | `1` |
+| `schema_version` | `1` or `2`. Current writers use `2`. |
 | `uid` | Owning Firebase UID |
 | `revision` | Positive monotonic integer, at most 2,147,483,647 |
 | `updated_at` | Firestore server timestamp |
 | `entries_json` | ASCII JSON string, at most 600,000 characters |
 
-The JSON snapshot is an array capped at 64 records. Each record has exactly
+The JSON snapshot is an array capped at 64 records. A v1 record has exactly
 `fingerprint`, `payload`, `kind` (`saved` or `practice`), and `saved_at` (a
-canonical ISO timestamp). The Firestore rule bounds the opaque snapshot bytes;
-the client decoder validates its JSON and record schema. The document is not
-created by a read. A save compares the revision loaded by the caller, replaces
-the full snapshot, and increments the revision. Removal writes an empty array
-and retains the marker. Concurrent/offline changes produce a reload-and-review
-conflict instead of a merge or last-write-wins restore.
+canonical ISO timestamp). V2 adds a required `metadata` object with exactly
+`title`, `note` and `opening_ply`. It encodes title and note as canonical,
+unpadded base64url of UTF-8. A title holds at most 80 Unicode scalar values and
+320 UTF-8 bytes. A note holds at most 280 scalar values and 1,120 bytes. The
+opening is `null` for the default finished board or an integer from 0 through
+the actual move count. V1 readers in the current app supply empty title/note
+and the default opening. The private payload omits portable `at`.
+
+The Firestore rule bounds the opaque bytes. Client validation checks the
+record shape, legal replay content and fingerprint before accepting a
+reviewed snapshot. A read creates no document. A save replaces the full
+snapshot at the expected revision, increments the revision, and writes v2.
+The rules allow v1→v1, v1→v2 and v2→v2 at the next revision. Retained empty
+markers use `[]` and continue to prevent downgrade after clear. Deploy the
+compatible rules before enabling v2 writers and retain them through app
+rollback.
+
+The device cache uses `gomoku2d.replay-library.v2`, with a 600,000-byte limit
+across guest and cached account buckets. A first durable mutation can copy
+the v1 cache into the v2 key. V2 writes compare the expected cache revision
+under an origin lock. The contract includes source/target revision binding,
+explicit whole-details conflict choices, confirmed restores, and local
+presence after Delete Cloud. See the
+[replay collection contract](../../working/v0_6_4_replay_collection_contract.md).
 
 New saves use `kind: saved`. The `practice` kind remains readable for completions
 created by early v0.6 previews; these appear in the owner's My games and displayed
@@ -103,8 +130,8 @@ its existing sync instead of adding private-library entries.
 ## Client API and operational behavior
 
 `src/cloud/sharing_public.ts` exports `loadPublicProfile`, `loadCatalogPage`,
-`setPublicProfile`, `setPublicProfileStats`, and `saveCatalogPage`.
-`saveCatalogPage` returns `{ profile, page }` so callers can refresh both root
+`setPublicProfile`, `setPublicProfileStats`, `saveCatalogPage`, and
+`editPublishedReplay`. Catalog writes return `{ profile, page }` so callers can refresh both root
 and page revisions. `src/cloud/sharing_private.ts`
 exports `loadPrivateLibrary` and `savePrivateLibrary`. Both accept an optional
 injected Firestore instance for tests and use the configured Firebase client

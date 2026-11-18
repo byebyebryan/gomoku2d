@@ -10,6 +10,7 @@ import {
 } from "../cloud/sharing_public";
 import { playerWinRate } from "../profile/player_stats";
 import { Icon } from "../ui/Icon";
+import { ReplayThumbnail } from "./ReplayThumbnail";
 import {
   publicGameDetails,
   publicLogicalPageCount,
@@ -544,6 +545,7 @@ export function PublicPlayerRoute() {
                       const origin = { uid, page: visibleView.pageIndex + 1 };
                       return (
                         <li className={styles.publicGame} key={entry.fingerprint}>
+                          <div className={styles.gameThumbnail}><ReplayThumbnail position={details.position} /></div>
                           <span className={`${styles.publicGameResult} ${
                             details.result === "Win" ? styles.publicGameResultWin
                               : details.result === "Loss" ? styles.publicGameResultLoss
@@ -558,6 +560,9 @@ export function PublicPlayerRoute() {
                               <span className="uiSrOnly">Opponent: </span>
                               {details.opponent ? `vs ${details.opponent}` : "Unavailable"}
                             </span>
+                            {details.position && details.position.opening < details.position.moves.length && (
+                              <span className={styles.publicGameMeta}>Opens at move {details.position.opening}</span>
+                            )}
                           </div>
                           <div className={styles.gameMetadata}>
                             <span className={`${styles.publicGameMeta} ${styles.gameRule}`}>

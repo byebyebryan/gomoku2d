@@ -430,11 +430,15 @@ test("C12: two clients explicitly reload and remove a saved replay from the acco
     await second.getByRole("button", { name: "Reload cloud library", exact: true }).click();
     await expect(second.getByText("Account library synced.", { exact: true })).toBeVisible();
     await expect(second.getByRole("link", { name: "Inspect replay", exact: true })).toHaveCount(1);
+    second.once("dialog", (dialog) => dialog.accept());
     await second.getByRole("button", { name: "Remove replay", exact: true }).click();
     await expect(second.getByText("No saved replays yet.", { exact: true })).toBeVisible();
     await expect(second.getByText("Account library synced.", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Reload cloud library", exact: true }).click();
+    await expect(page.getByText(/Review library changes: 1 local copies; 0 cloud copies/)).toBeVisible();
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "Use cloud library", exact: true }).click();
     await expect(page.getByText("No saved replays yet.", { exact: true })).toBeVisible();
     await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
   } finally {
@@ -466,8 +470,9 @@ test("C13: stale offline library data requires review and cannot restore another
     await openSavedReplays(second);
     await second.getByRole("button", { name: "Reload cloud library", exact: true }).click();
     await expect(second.getByText("Account library synced.", { exact: true })).toBeVisible();
-    await expect(second.getByText("First client · Bob · 9 moves · Freestyle", { exact: true })).toBeVisible();
+    await expect(second.getByRole("heading", { name: "First client · Bob", exact: true })).toBeVisible();
 
+    page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("button", { name: "Remove replay", exact: true }).click();
     await expect(page.getByText("No saved replays yet.", { exact: true })).toBeVisible();
     await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
@@ -482,8 +487,8 @@ test("C13: stale offline library data requires review and cannot restore another
     await second.getByRole("link", { name: "Profile", exact: true }).click();
     await openSavedReplays(second);
     await expect(second.getByText(/Review library changes: 2 local copies; 0 cloud copies\./)).toBeVisible();
-    await expect(second.getByText("First client · Bob · 9 moves · Freestyle", { exact: true })).toBeVisible();
-    await expect(second.getByText("Offline client · Bob · 9 moves · Freestyle", { exact: true })).toBeVisible();
+    await expect(second.getByRole("heading", { name: "First client · Bob", exact: true })).toBeVisible();
+    await expect(second.getByRole("heading", { name: "Offline client · Bob", exact: true })).toBeVisible();
 
     second.on("dialog", async (dialog) => { await dialog.accept(); });
     await second.getByRole("button", { name: "Use cloud library", exact: true }).click();
@@ -493,6 +498,190 @@ test("C13: stale offline library data requires review and cannot restore another
     await page.getByRole("button", { name: "Reload cloud library", exact: true }).click();
     await expect(page.getByText("No saved replays yet.", { exact: true })).toBeVisible();
     await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
+  } finally {
+    await secondContext.close();
+  }
+});
+
+test("C21: two account clients review competing titles, notes and replay openings", async ({ page, browser }, testInfo) => {
+  const email = `${fixtureId("library-details")}@example.test`;
+  const uid = await signIn(page, email);
+  const libraryPath = `replay_libraries/${uid}`;
+  await page.goto(sharedReplayUrl("Collection example"));
+  await page.getByRole("button", { name: "Save replay", exact: true }).click();
+  await expect(page.getByText("Saved in your account library.", { exact: true })).toBeVisible();
+  await page.goto("/profile?tab=saved");
+  await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
+
+  const secondContext = await browser.newContext();
+  await protectContext(secondContext);
+  const writeDetails = async (client: Page, from: number, title: string, note: string) => {
+    await client.getByRole("link", { name: "Inspect replay", exact: true }).click();
+    await client.getByRole("button", { name: "Edit details", exact: true }).click();
+    const panel = client.getByRole("region", { name: "Replay details", exact: true });
+    await panel.getByLabel("Private title").fill(title);
+    await panel.getByLabel("Private note").fill(note);
+    await panel.getByRole("slider", { name: "Replay timeline" }).press("Home");
+    if (from === 2) await panel.getByRole("button", { name: "Next turn", exact: true }).click();
+    await panel.getByRole("button", { name: `Use move ${from}`, exact: true }).click();
+    await panel.getByRole("button", { name: "Save details", exact: true }).click();
+    await expect(panel).not.toBeVisible();
+    await client.getByRole("link", { name: "Saved replays", exact: true }).click();
+  };
+  try {
+    const second = await secondContext.newPage();
+    await signIn(second, email);
+    await second.goto("/profile?tab=saved");
+    await expect(second.getByText("Account library synced.", { exact: true })).toBeVisible();
+    await writeDetails(page, 2, "Cloud copy", "Review the defense.");
+    await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
+    await writeDetails(second, 0, "Device copy", "🟡 The opening position.");
+    await expect(second.getByText(/Review library changes: 1 local copies; 1 cloud copies/)).toBeVisible();
+    await expect(second.getByRole("heading", { name: "Device copy", exact: true })).toBeVisible();
+    await second.getByRole("button", { name: "Review merge", exact: true }).click();
+    const review = second.getByRole("region", { name: "Review library changes", exact: true });
+    const apply = review.getByRole("button", { name: "Merge reviewed replays", exact: true });
+    await expect(apply).toBeDisabled();
+    await expect(review.getByText("Review the defense.", { exact: true })).toBeVisible();
+    await expect(review.getByText("🟡 The opening position.", { exact: true })).toBeVisible();
+    await review.getByRole("button", { name: /^Keep device details for/ }).click();
+    await expect(apply).toBeEnabled();
+    if (testInfo.project.name.includes("chromium")) {
+      await second.screenshot({ path: testInfo.outputPath("library-conflict-review.png"), fullPage: true });
+    }
+    await apply.click();
+    await expect(second.getByText("Account library synced.", { exact: true })).toBeVisible();
+    const document = await readFirestoreDocument(libraryPath);
+    expect(document?.schema_version).toBe(2);
+    const [entry] = JSON.parse(String(document?.entries_json));
+    expect(entry.metadata.opening_ply).toBe(0);
+    expect(Buffer.from(entry.metadata.title, "base64url").toString("utf8")).toBe("Device copy");
+    expect(Buffer.from(entry.metadata.note, "base64url").toString("utf8")).toBe("🟡 The opening position.");
+    await page.getByRole("button", { name: "Reload cloud library", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Device copy", exact: true })).toBeVisible();
+    await page.getByRole("link", { name: "Inspect replay", exact: true }).click();
+    await expect(page.getByTestId("replay-move-count")).toHaveText("Move 0 / 9");
+  } finally {
+    await secondContext.close();
+  }
+});
+
+test("C22: a stale reviewed cloud choice preserves device details until a fresh merge review", async ({ page, browser }) => {
+  const email = `${fixtureId("library-stale-merge-review")}@example.test`;
+  const uid = await signIn(page, email);
+  const libraryPath = `replay_libraries/${uid}`;
+  const replayUrl = sharedReplayUrl("Stale merge review");
+  const writeDetails = async (client: Page, title: string, note: string, opening: 0 | 2) => {
+    await client.getByRole("link", { name: "Inspect replay", exact: true }).click();
+    await client.getByRole("button", { name: "Edit details", exact: true }).click();
+    const panel = client.getByRole("region", { name: "Replay details", exact: true });
+    await panel.getByLabel("Private title").fill(title);
+    await panel.getByLabel("Private note").fill(note);
+    await panel.getByRole("slider", { name: "Replay timeline" }).press("Home");
+    if (opening === 2) await panel.getByRole("button", { name: "Next turn", exact: true }).click();
+    await panel.getByRole("button", { name: `Use move ${opening}`, exact: true }).click();
+    await panel.getByRole("button", { name: "Save details", exact: true }).click();
+    await expect(panel).not.toBeVisible();
+    await client.getByRole("link", { name: "Saved replays", exact: true }).click();
+  };
+
+  await page.goto(replayUrl);
+  await page.getByRole("button", { name: "Save replay", exact: true }).click();
+  await expect(page.getByText("Saved in your account library.", { exact: true })).toBeVisible();
+  await page.goto("/profile?tab=saved");
+  await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
+
+  const secondContext = await browser.newContext();
+  await protectContext(secondContext);
+  try {
+    const second = await secondContext.newPage();
+    await signIn(second, email);
+    await second.goto("/profile?tab=saved");
+    await expect(second.getByText("Account library synced.", { exact: true })).toBeVisible();
+
+    await writeDetails(page, "Cloud title", "Obsolete cloud note", 2);
+    await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
+    const firstCloud = await readFirestoreDocument(libraryPath);
+    expect(firstCloud?.revision).toEqual(expect.any(Number));
+
+    await writeDetails(second, "Device original", "B original private note", 0);
+    await expect(second.getByText(/Review library changes: 1 local copies; 1 cloud copies/)).toBeVisible();
+    await second.getByRole("button", { name: "Review merge", exact: true }).click();
+    const firstReview = second.getByRole("region", { name: "Review library changes", exact: true });
+    const applyFirstReview = firstReview.getByRole("button", { name: "Merge reviewed replays", exact: true });
+    const keepCloud = firstReview.getByRole("button", { name: /^Keep cloud details for / });
+    await expect(firstReview.getByText("Obsolete cloud note", { exact: true })).toBeVisible();
+    await expect(firstReview.getByText("B original private note", { exact: true })).toBeVisible();
+    await keepCloud.click();
+    await expect(keepCloud).toHaveAttribute("aria-pressed", "true");
+    await expect(applyFirstReview).toBeEnabled();
+
+    await writeDetails(page, "Cloud title", "Newest cloud note", 2);
+    await expect(page.getByText("Account library synced.", { exact: true })).toBeVisible();
+    const newestCloud = await readFirestoreDocument(libraryPath);
+    expect(newestCloud?.revision).toBeGreaterThan(firstCloud?.revision as number);
+    const newestCloudEntry = JSON.parse(String(newestCloud?.entries_json))[0];
+    expect(Buffer.from(newestCloudEntry.metadata.note, "base64url").toString("utf8")).toBe("Newest cloud note");
+    expect(Buffer.from(newestCloudEntry.metadata.note, "base64url").toString("utf8")).not.toBe("Obsolete cloud note");
+
+    await applyFirstReview.click();
+    await expect(second.getByRole("alert")).toBeVisible();
+    const staleError = (await second.getByRole("alert").textContent()) ?? "";
+    const cloudAfterRejectedReview = await readFirestoreDocument(libraryPath);
+    const rejectedCloudState = {
+      revision: cloudAfterRejectedReview?.revision,
+      entries_json: cloudAfterRejectedReview?.entries_json,
+    };
+
+    // Inspect through the saved replay route so the assertion covers the same
+    // private details a returning user sees after the rejected merge.
+    await second.getByRole("link", { name: "Inspect replay", exact: true }).click();
+    await expect(second.getByRole("button", { name: "Edit details", exact: true })).toBeVisible();
+    const afterStaleMove = (await second.getByTestId("replay-move-count").textContent()) ?? "";
+    await second.getByRole("button", { name: "Edit details", exact: true }).click();
+    const details = second.getByRole("region", { name: "Replay details", exact: true });
+    const localAfterStaleReview = {
+      title: await details.getByLabel("Private title").inputValue(),
+      note: await details.getByLabel("Private note").inputValue(),
+      opening: afterStaleMove,
+    };
+    await second.getByRole("link", { name: "Saved replays", exact: true }).click();
+    await expect(second.getByRole("button", { name: "Reload cloud library", exact: true })).toBeEnabled();
+    await second.getByRole("button", { name: "Reload cloud library", exact: true }).click();
+    await expect(second.getByText(/Review library changes: 1 local copies; 1 cloud copies/)).toBeVisible();
+    await second.getByRole("button", { name: "Review merge", exact: true }).click();
+    const refreshedReview = second.getByRole("region", { name: "Review library changes", exact: true });
+    const refreshedReviewText = await refreshedReview.innerText();
+    const keepDeviceAfterReload = refreshedReview.getByRole("button", { name: /^Keep device details for / });
+    const keepCloudAfterReload = refreshedReview.getByRole("button", { name: /^Keep cloud details for / });
+    await expect(keepDeviceAfterReload).toBeVisible();
+    await expect(keepCloudAfterReload).toBeVisible();
+    await keepDeviceAfterReload.click();
+    await expect(keepDeviceAfterReload).toHaveAttribute("aria-pressed", "true");
+    await refreshedReview.getByRole("button", { name: "Merge reviewed replays", exact: true }).click();
+    await expect(second.getByText("Account library synced.", { exact: true })).toBeVisible();
+
+    const mergedCloud = await readFirestoreDocument(libraryPath);
+    const [mergedEntry] = JSON.parse(String(mergedCloud?.entries_json));
+    const mergedMetadata = {
+      title: Buffer.from(mergedEntry.metadata.title, "base64url").toString("utf8"),
+      note: Buffer.from(mergedEntry.metadata.note, "base64url").toString("utf8"),
+      opening: mergedEntry.metadata.opening_ply,
+    };
+    expect(staleError).toMatch(/Reload and review before saving/i);
+    expect(rejectedCloudState.revision).toBe(newestCloud?.revision);
+    expect(rejectedCloudState.entries_json).toBe(newestCloud?.entries_json);
+    expect(localAfterStaleReview).toEqual({
+      title: "Device original",
+      note: "B original private note",
+      opening: "Move 0 / 9",
+    });
+    expect(refreshedReviewText).toContain("Device original");
+    expect(refreshedReviewText).toContain("B original private note");
+    expect(refreshedReviewText).toContain("Newest cloud note");
+    expect(refreshedReviewText).not.toContain("Obsolete cloud note");
+    expect(mergedMetadata).toEqual({ title: "Device original", note: "B original private note", opening: 0 });
+    expect(mergedCloud?.revision).toBeGreaterThan(newestCloud?.revision as number);
   } finally {
     await secondContext.close();
   }
@@ -603,7 +792,7 @@ test("C14: private reset keeps public sharing, while Delete Cloud clears markers
   await expect.poll(async () => (await readProfile(uid))?.match_history?.replay_matches).toEqual([]);
   await openSavedReplays(page);
   await expect(page.getByText("Review library changes: 1 local copies; 0 cloud copies.", { exact: true })).toBeVisible();
-  await expect(page.getByText("Local after delete · Bob · 9 moves · Freestyle", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Local after delete · Bob", exact: true })).toBeVisible();
   const privateAfterSignin = await readFirestoreDocument(`replay_libraries/${uid}`);
   expect(privateAfterSignin?.entries_json).toBe("[]");
   expect(privateAfterSignin?.revision).toBe(privateAfterDelete?.revision);
@@ -772,15 +961,15 @@ test("C16: sparse catalog pages, zero stats, last-page removal and legacy roots 
   await expectNoHorizontalOverflow(page);
 });
 
-test("C17: public replay returns preserve logical page, scroll and originating control", async ({ page }, testInfo) => {
+test("C17: full public catalog and replay returns preserve logical page, scroll and focus", async ({ page }, testInfo) => {
   const uid = fixtureId("public-return");
   const updatedAt = firestoreTimestamp("2026-10-23T00:00:00.000Z");
   await seedFirestoreDocument(`public_profiles/${uid}`, {
     schema_version: 1, uid, display_name: "Return navigation player", enabled: true,
     generation: 1, revision: 1, updated_at: updatedAt,
-    shared_stats: null, catalog_page_counts: [8, 8, 0, 0],
+    shared_stats: null, catalog_page_counts: [8, 8, 8, 8],
   });
-  for (const pageId of [0, 1]) {
+  for (const pageId of [0, 1, 2, 3]) {
     const entries = Array.from({ length: 8 }, (_, index) => {
       const number = pageId * 8 + index + 1;
       const wire = {
@@ -800,9 +989,18 @@ test("C17: public replay returns preserve logical page, scroll and originating c
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/player/?id=${uid}`);
-  await expect(page.getByText("Page 1 of 2", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Next page", exact: true }).click();
-  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  const nextPage = page.getByRole("button", { name: "Next page", exact: true });
+  const previousPage = page.getByRole("button", { name: "Previous page", exact: true });
+  for (let number = 1; number <= 4; number++) {
+    await expect(page.getByText(`Page ${number} of 4`, { exact: true })).toBeVisible();
+    await expect(page.getByTestId("replay-thumbnail").locator('canvas[data-ready="true"]')).toHaveCount(8);
+    await expect(page.getByText(`Return game ${number * 8}`, { exact: true })).toBeVisible();
+    if (number < 4) await nextPage.click();
+  }
+  await expect(nextPage).toBeDisabled();
+  await previousPage.click();
+  await previousPage.click();
+  await expect(page.getByText("Page 2 of 4", { exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Shared player statistics" })).toHaveCount(0);
   await captureSharingEvidence(page, testInfo, "public-statistics-off", "main");
   const trigger = page.getByRole("link", { name: "Replay Return game 15", exact: true });
@@ -823,24 +1021,24 @@ test("C17: public replay returns preserve logical page, scroll and originating c
   await captureSharingEvidence(page, testInfo, "public-origin-replay", "main");
 
   await page.getByRole("button", { name: "Return to public profile", exact: true }).click();
-  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByText("Page 2 of 4", { exact: true })).toBeVisible();
   await expect(trigger).toBeFocused();
   expect(await publicScrollTop()).toBeCloseTo(originalScroll, 0);
   await page.getByRole("button", { name: "Previous page", exact: true }).click();
-  await expect(page.getByText("Page 1 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByText("Page 1 of 4", { exact: true })).toBeVisible();
   await page.goBack();
-  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByText("Page 2 of 4", { exact: true })).toBeVisible();
   await expect(trigger).toBeFocused();
   expect(await publicScrollTop()).toBeCloseTo(originalScroll, 0);
   await page.goForward();
-  await expect(page.getByText("Page 1 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByText("Page 1 of 4", { exact: true })).toBeVisible();
   await page.goBack();
-  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByText("Page 2 of 4", { exact: true })).toBeVisible();
   await expect(trigger).toBeFocused();
   await trigger.click();
   await expect(page.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
   await page.goBack();
-  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByText("Page 2 of 4", { exact: true })).toBeVisible();
   await expect(trigger).toBeFocused();
   expect(await publicScrollTop()).toBeCloseTo(originalScroll, 0);
   await expectNoHorizontalOverflow(page);
@@ -858,10 +1056,10 @@ test("C17: public replay returns preserve logical page, scroll and originating c
   await seedFirestoreDocument(`public_profiles/${uid}`, {
     schema_version: 1, uid, display_name: "Return navigation player", enabled: true,
     generation: 1, revision: 2, updated_at: updatedAt,
-    shared_stats: null, catalog_page_counts: [8, 7, 0, 0],
+    shared_stats: null, catalog_page_counts: [8, 7, 8, 8],
   });
   await page.getByRole("button", { name: "Return to public profile", exact: true }).click();
-  await expect(page.getByText("Page 2 of 2", { exact: true })).toBeVisible();
+  await expect(page.getByText("Page 2 of 4", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Return navigation player", exact: true })).toBeFocused();
 
   // Return after changing the board viewport must retain a visible control,

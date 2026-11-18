@@ -1,0 +1,28 @@
+.thumbnail {
+  display: grid;
+  place-items: stretch;
+  width: var(--replay-thumbnail-size, 90px);
+  aspect-ratio: 1;
+  background: var(--surface-muted);
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  visibility: hidden;
+}
+
+.canvas[data-ready="true"] { visibility: visible; }
+.canvas[hidden] { display: none; }
+
+.fallback {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--type-quiet);
+  text-align: center;
+}

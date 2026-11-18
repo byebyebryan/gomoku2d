@@ -6,17 +6,35 @@
 .saveStatus { color: var(--accent-strong); font-family: var(--font-display); font-size: var(--type-label); line-height: 1.3; }
 .saveNotice { color: var(--text-muted); font-size: var(--type-body); line-height: 1.35; }
 .entries { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0; }
-.entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.entry { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.entryCopy { display: grid; gap: 4px; min-width: 0; }
+.entry h3 { margin: 0; font-family: var(--font-display); font-size: var(--type-body); overflow-wrap: anywhere; }
+.entry .actions :global(.uiAction) { min-width: 0; min-height: 44px; padding: 6px 12px; font-size: var(--type-meta); }
+.entry .actions :global(.uiActionIconOnly) { width: 44px; padding: 6px; }
 .entry small { color: var(--text-muted); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.compactActionLabel { display: none; }
 .conflict { border: 1px solid var(--border); display: grid; gap: 12px; padding: 12px; }
-@media (max-width: 720px) { .entry { grid-template-columns: minmax(0, 1fr); } .panel { padding: 12px 0; } }
+.conflict h3, .conflict h4, .reviewAdditions { margin: 0; }
+.reviewAdditions { padding-inline-start: 20px; }
+.reviewEntry { display: grid; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+.reviewSides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.reviewVersion { display: grid; align-content: start; gap: 8px; padding: 10px; border: 1px solid var(--border); background: var(--surface-muted); }
+.reviewVersion > :global(.uiAction) { min-width: 0; padding-inline: 8px; font-size: var(--type-meta); overflow-wrap: anywhere; }
+.reviewSelected { border-color: var(--accent); }
+.reviewNote { white-space: pre-wrap; }
 @media (max-width: 720px) {
+  .panel { padding: 12px 0; }
   .panel > .actions { display: grid; grid-template-columns: minmax(0, 1fr); }
   .panel > .actions :global(.uiAction) { width: 100%; min-width: 0; overflow-wrap: anywhere; }
-  .entry > .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .entry > .actions :global(.uiAction) { width: 100%; min-width: 0; padding-inline: 10px; font-size: var(--type-meta); }
-  .fullActionLabel { display: none; }
-  .compactActionLabel { display: inline; min-width: 0; overflow-wrap: anywhere; }
+  .entry {
+    --replay-thumbnail-size: 75px;
+    grid-template-columns: 75px minmax(0, 1fr);
+    grid-template-areas: "board copy" "board actions";
+    align-items: start;
+    gap: 8px 10px;
+  }
+  .thumbnail { grid-area: board; }
+  .entryCopy { grid-area: copy; }
+  .entry > .actions { grid-area: actions; }
+  .reviewSides { grid-template-columns: minmax(0, 1fr); }
 }

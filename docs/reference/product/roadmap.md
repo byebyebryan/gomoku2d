@@ -24,7 +24,7 @@ Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
 site and practical UI review tools in 0.6.3, then replay collections in 0.6.4.
 Curated learning follows later, unnumbered for now.
 `0.6.2` and `0.6.3` are published; remaining human checks stay explicit.
-`0.6.4` remains planned. No future release dates are committed.
+`0.6.4` is in local candidate validation. No future release dates are committed.
 
 | Release | Focus | Player outcome |
 |---|---|---|
@@ -108,6 +108,11 @@ older-client behavior, conflicts and reset/delete semantics. Preserve portable
 v1 links and fingerprints; no silent metadata loss during an old-client write
 or merge. Folders, multiple per-move annotations, public comments, arbitrary
 catalog reordering and featured games are outside the planned minimum.
+
+The [implementation checkpoint](../../working/v0_6_4_implementation.md) records
+the local candidate, compatibility and release handoff. The
+[design and contract pass](../../working/v0_6_4_design_contract_plan.md) retains
+the design decisions and prototype evidence.
 
 ### Later: Curated Learning Through Replays
 

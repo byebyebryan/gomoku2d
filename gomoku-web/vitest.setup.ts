@@ -17,3 +17,21 @@ Object.defineProperty(globalThis, "localStorage", {
     },
   },
 });
+
+// jsdom has no Web Locks. Keep unit writes serialized as they are in the
+// browser. Tests of missing locks can inject a null lock manager.
+if (!("locks" in navigator)) {
+  const lockTails = new Map<string, Promise<void>>();
+  Object.defineProperty(navigator, "locks", {
+    configurable: true,
+    value: {
+      request<T>(name: string, _options: { mode: "exclusive" }, work: () => Promise<T>): Promise<T> {
+        const result = (lockTails.get(name) ?? Promise.resolve()).then(work);
+        const tail = result.then(() => undefined, () => undefined);
+        lockTails.set(name, tail);
+        void tail.then(() => { if (lockTails.get(name) === tail) lockTails.delete(name); });
+        return result;
+      },
+    },
+  });
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
@@ -27,6 +27,9 @@ import { ShareReplayPanel } from "./ShareReplayPanel";
 import { SaveReplayButton } from "./ReplayLibraryPanel";
 import { StoredReplayRoute } from "./StoredReplayRoute";
 import { PublishReplayPanel } from "./PublishReplayPanel";
+import { PublishedReplayEditRoute } from "./PublishedReplayEditRoute";
+import { ReplayDetailsPanel, type ReplayDetailsBinding, type ReplayDraftState } from "./ReplayDetailsPanel";
+import { protectReplayDraftNavigation } from "./replay_draft_navigation";
 import { portableReplayFromSavedMatch, validatePortableReplay } from "../replay/portable_replay";
 import { portableReplayFingerprint } from "../replay/portable_replay_codec";
 import { localMatchSessionStore } from "../game/local_match_session";
@@ -42,9 +45,10 @@ import {
 } from "./ReplayRoutePanels";
 
 const AUTOPLAY_DELAY_MS = 700;
+const PUBLISHED_EDIT_PREFIX = "published-edit-";
 
 export function ReplayViewer({ match, localDisplayName, preserveNames = false, initialMoveIndex, source,
-  fingerprint, publishEligible, contextLabel, publicReplayReturn }: {
+  fingerprint, publishEligible, contextLabel, publicReplayReturn, details, privateReplayReturn }: {
   match: SavedMatchV2;
   localDisplayName: string;
   preserveNames?: boolean;
@@ -54,6 +58,8 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   publishEligible?: boolean;
   contextLabel?: string;
   publicReplayReturn?: PublicReplayReturn;
+  details?: ReplayDetailsBinding;
+  privateReplayReturn?: { to: string; state?: unknown };
 }) {
   useDocumentTitle("Replay Analysis");
   const navigate = useNavigate();
@@ -64,11 +70,14 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const [autoplaying, setAutoplaying] = useState(false);
   const [branching, setBranching] = useState(false);
   const [branchError, setBranchError] = useState("");
-  const [sidebar, setSidebar] = useState<"replay" | "share" | "publish">("replay");
+  const [sidebar, setSidebar] = useState<"replay" | "share" | "publish" | "details">(details?.kind === "public" ? "details" : "replay");
+  const [detailsNotice, setDetailsNotice] = useState("");
   const signedInUid = useStore(cloudAuthStore, (state) => state.status === "signed_in" ? state.user?.uid : null);
   const canPublish = Boolean((publishEligible ?? !preserveNames) && signedInUid);
   const sidebarOpen = sidebar !== "replay";
   const deckRef = useRef<HTMLElement>(null);
+  const detailsTriggerRef = useRef<HTMLButtonElement>(null);
+  const draftState = useRef<ReplayDraftState | null>(null);
   const shareTriggerRef = useRef<HTMLButtonElement>(null);
   const publishTriggerRef = useRef<HTMLButtonElement>(null);
   const deckScrollRef = useRef(0);
@@ -104,7 +113,8 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     if (sidebarOpen) {
       if (deckRef.current) deckRef.current.scrollTop = 0;
     } else if (previousSidebarRef.current !== "replay") {
-      const trigger = previousSidebarRef.current === "share" ? shareTriggerRef : publishTriggerRef;
+      const trigger = previousSidebarRef.current === "share" ? shareTriggerRef
+        : previousSidebarRef.current === "details" ? detailsTriggerRef : publishTriggerRef;
       trigger.current?.focus({ preventScroll: true });
       if (deckRef.current) deckRef.current.scrollTop = deckScrollRef.current;
     }
@@ -115,9 +125,30 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     if (!canPublish && sidebar === "publish") setSidebar("replay");
   }, [canPublish, sidebar]);
 
-  const openSidebar = (panel: "share" | "publish") => {
+  function canLeaveDetails(): boolean {
+    if (draftState.current?.saving) return false;
+    return !draftState.current?.dirty || window.confirm("Discard unsaved replay details?");
+  }
+
+  useEffect(() => {
+    if (sidebar !== "details") return;
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (!draftState.current?.dirty && !draftState.current?.saving) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const unprotect = protectReplayDraftNavigation(canLeaveDetails);
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => {
+      unprotect();
+      window.removeEventListener("beforeunload", beforeUnload);
+    };
+  }, [sidebar]);
+
+  const openSidebar = (panel: "share" | "publish" | "details") => {
     deckScrollRef.current = deckRef.current?.scrollTop ?? 0;
     setAutoplaying(false);
+    setDetailsNotice("");
     setSidebar(panel);
   };
 
@@ -160,9 +191,42 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     },
     winningCells: frame.winningCells,
   });
+  const playbackProps: ComponentProps<typeof ReplayPlaybackPanel> = {
+    autoplaying,
+    resumeBotLabel: botLabel(settings.botConfig),
+    frame,
+    match,
+    onResume: async (resumeSeed) => {
+      setBranching(true); setBranchError("");
+      try {
+        const portable = source ?? portableReplayFromSavedMatch(match).replay;
+        const sourceFingerprint = fingerprint ?? await portableReplayFingerprint(validatePortableReplay(portable));
+        const active = localMatchSessionStore.getState().matchStore?.getState();
+        if (active?.status === "playing" && active.moves.length > 0
+          && !window.confirm("Replace your active game with a new game from this position?")) return;
+        navigate(localMatchResumePath, { state: { resumeSeed: {
+          ...resumeSeed, practiceOrigin: { sourceFingerprint, inheritedPly: resumeSeed.moves.length },
+        } } });
+      } catch (error) { setBranchError(error instanceof Error ? error.message : "The game could not start."); }
+      finally { setBranching(false); }
+    },
+    replayFloor,
+    resumePending: branching,
+    setAutoplaying,
+    setMoveIndex,
+    timelineAnalysis,
+    timelineStyle,
+  };
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} onClickCapture={(event) => {
+      if (sidebar !== "details" || event.button !== 0 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+      const link = (event.target as Element).closest("a");
+      if (link && link.target !== "_blank" && !canLeaveDetails()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }}>
       <header className={`${styles.header} ${publicReplayReturn ? styles.headerWithReturn : ""}`}>
         <div className={styles.headerCopy}>
           <p className="uiPageEyebrow">{contextLabel ?? (preserveNames ? "Shared replay" : "Saved match")}</p>
@@ -184,9 +248,17 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               <span className={`uiActionLabel ${styles.returnActionCompact}`} aria-hidden="true">Return</span>
             </button>
           ) : null}
-          <Link aria-label={publicReplayReturn ? "My profile" : "Profile"} className="uiAction uiActionSecondary" to="/profile">
+          <Link aria-label={privateReplayReturn ? "Saved replays" : publicReplayReturn ? "My profile" : "Profile"}
+            className="uiAction uiActionSecondary" to={privateReplayReturn?.to ?? "/profile"}
+            state={privateReplayReturn?.state}
+            onClick={(event) => {
+              if (!(details?.kind === "public" && details.onCancel) || event.button !== 0
+                || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+              event.preventDefault();
+              details.onCancel();
+            }}>
             <Icon className="uiIconDesktop" name="profile" />
-            <span className="uiActionLabel">{publicReplayReturn ? "My profile" : "Profile"}</span>
+            <span className="uiActionLabel">{privateReplayReturn ? "Saved replays" : publicReplayReturn ? "My profile" : "Profile"}</span>
           </Link>
           <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
             <Icon className="uiIconDesktop" name="home" />
@@ -208,42 +280,37 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
 
             <div className="uiDivider" />
 
-            <ReplayPlaybackPanel
-              autoplaying={autoplaying}
-              resumeBotLabel={botLabel(settings.botConfig)}
-              frame={frame}
-              match={match}
-              onResume={async (resumeSeed) => {
-                setBranching(true); setBranchError("");
-                try {
-                  const portable = source ?? portableReplayFromSavedMatch(match).replay;
-                  const sourceFingerprint = fingerprint ?? await portableReplayFingerprint(validatePortableReplay(portable));
-                  const active = localMatchSessionStore.getState().matchStore?.getState();
-                  if (active?.status === "playing" && active.moves.length > 0
-                    && !window.confirm("Replace your active game with a new game from this position?")) return;
-                  navigate(localMatchResumePath, { state: { resumeSeed: { ...resumeSeed,
-                    practiceOrigin: { sourceFingerprint, inheritedPly: resumeSeed.moves.length } } } });
-                } catch (error) { setBranchError(error instanceof Error ? error.message : "The game could not start."); }
-                finally { setBranching(false); }
-              }}
-              replayFloor={replayFloor}
-              resumePending={branching}
-              setAutoplaying={setAutoplaying}
-              setMoveIndex={setMoveIndex}
-              timelineAnalysis={timelineAnalysis}
-              timelineStyle={timelineStyle}
-            />
+            {sidebar !== "details" && <ReplayPlaybackPanel {...playbackProps} />}
             {branchError && <section className={styles.deckSection}>
               <p className={styles.contextError} role="alert">{branchError}</p>
             </section>}
             <section className={`${styles.deckSection} ${styles.sharingSection}`}>
+              {details?.kind === "private" && <button className="uiAction uiActionSecondary" type="button" ref={detailsTriggerRef}
+                onClick={() => openSidebar("details")}><Icon name="settings" /><span className="uiActionLabel">Edit details</span></button>}
               <button className="uiAction uiActionSecondary" type="button" ref={shareTriggerRef}
                 onClick={() => openSidebar("share")}><Icon name="share" /><span className="uiActionLabel">Share replay</span></button>
               {canPublish && <button className="uiAction uiActionSecondary" type="button" ref={publishTriggerRef}
                 onClick={() => openSidebar("publish")}><Icon name="publish" /><span className="uiActionLabel">Publish replay</span></button>}
+              {detailsNotice && <p className={styles.detailsNotice} role="status">{detailsNotice}</p>}
             </section>
             {source && fingerprint && <SaveReplayButton replay={source} fingerprint={fingerprint} />}
           </div>
+          {sidebar === "details" && details && <ReplayDetailsPanel binding={details}
+            move={frame.moveIndex} total={match.move_count} draftState={draftState}
+            playback={<ReplayPlaybackPanel {...playbackProps} selectionOnly />}
+            onBack={() => {
+              if (!canLeaveDetails()) return;
+              setAutoplaying(false);
+              if (details.onCancel) details.onCancel();
+              else setSidebar("replay");
+            }}
+            onSaved={(message) => {
+              setAutoplaying(false);
+              if (details.kind === "private") {
+                setDetailsNotice(message ?? "Replay details saved.");
+                setSidebar("replay");
+              }
+            }} />}
           <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} open={sidebar === "share"} onClose={() => setSidebar("replay")} />
           <PublishReplayPanel match={match} source={source} moveIndex={frame.moveIndex} eligible={canPublish}
             open={sidebar === "publish"} onClose={() => setSidebar("replay")} />
@@ -255,6 +322,9 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
 
 export function ReplayRoute() {
   const { matchId } = useParams<{ matchId: string }>();
+  if (matchId?.startsWith(PUBLISHED_EDIT_PREFIX)) {
+    return <PublishedReplayEditRoute fingerprint={matchId.slice(PUBLISHED_EDIT_PREFIX.length)} />;
+  }
   return matchId?.startsWith("portable-") ? <StoredReplayRoute fingerprint={matchId.slice(9)} /> : <PrivateReplayRoute matchId={matchId} />;
 }
 

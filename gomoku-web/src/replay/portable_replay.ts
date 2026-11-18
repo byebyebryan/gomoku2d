@@ -1,9 +1,9 @@
-import type { GameVariant } from "../core/bot_protocol";
+import type { GameVariant } from "../core/bot_protocol.js";
 import {
   isBotConfig,
   isBotWidthAllowed,
   type BotConfig,
-} from "../core/bot_config";
+} from "../core/bot_config.js";
 import {
   BOT_CONFIG_VERSION,
   BOT_ENGINE,
@@ -11,8 +11,8 @@ import {
   isSavedMatchV2,
   type SavedMatchStatus,
   type SavedMatchV2,
-} from "../match/saved_match";
-import { applyWasmMove, createWasmBoard } from "../core/wasm_bridge";
+} from "../match/saved_match.js";
+import { applyWasmMove, createWasmBoard } from "../core/wasm_bridge.js";
 
 export const PORTABLE_REPLAY_VERSION = 1 as const;
 export const PORTABLE_REPLAY_MIN_MOVES = 9;

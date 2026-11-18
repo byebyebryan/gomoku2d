@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { cloudAuthStore } from "../cloud/auth_store";
@@ -14,6 +15,7 @@ import {
 } from "../cloud/sharing_public";
 import { playerWinRate, type PlayerStats } from "../profile/player_stats";
 import { localProfileStore } from "../profile/local_profile_store";
+import { profileRecordScroller } from "./profile_scroll";
 import { publicProfileDateLabel } from "./public_catalog";
 import { Icon } from "../ui/Icon";
 
@@ -76,6 +78,27 @@ function catalogReady(profile: PublicProfileSnapshot | null, pages: (PublicCatal
   return Boolean(profile?.enabled && pages?.length === 4 && pages.every((page) => page !== null));
 }
 
+interface PublishedReplayEditReturn {
+  fingerprint: string;
+  pageId: number;
+  scrollTop: number;
+}
+
+function publishedReplayEditReturnFromState(value: unknown): PublishedReplayEditReturn | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const origin = (value as Record<string, unknown>).publishedReplayEditReturn;
+  if (typeof origin !== "object" || origin === null || Array.isArray(origin)) return null;
+  const record = origin as Record<string, unknown>;
+  if (typeof record.fingerprint !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(record.fingerprint)
+    || !Number.isInteger(record.pageId) || (record.pageId as number) < 0 || (record.pageId as number) > 3
+    || !Number.isInteger(record.scrollTop) || (record.scrollTop as number) < 0 || (record.scrollTop as number) > 1_000_000) return null;
+  return {
+    fingerprint: record.fingerprint,
+    pageId: record.pageId as number,
+    scrollTop: record.scrollTop as number,
+  };
+}
+
 export function PublicProfileManager({
   stats,
   statsReady,
@@ -85,6 +108,8 @@ export function PublicProfileManager({
   statsReady: boolean;
   statsBlocker: string;
 }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const auth = useStore(cloudAuthStore);
   const localProfile = useStore(localProfileStore, (state) => state.profile);
   const uid = auth.status === "signed_in" ? auth.user?.uid ?? null : null;
@@ -104,6 +129,7 @@ export function PublicProfileManager({
   const latestUidRef = useRef<string | null>(uid);
   latestUidRef.current = uid;
   const requestRef = useRef(0);
+  const restoredReturnKeyRef = useRef<string | null>(null);
 
   const isCurrent = (requestedUid: string, request: number) => (
     latestUidRef.current === requestedUid
@@ -178,6 +204,24 @@ export function PublicProfileManager({
   const readyCatalog = catalogReady(profile, pages);
   const publishedEntries = pages?.flatMap((page) => page?.entries.map((entry) => ({ page, entry })) ?? []) ?? [];
   const isProfileLoaded = visibleSnapshot !== null && !loading && markersValid;
+  const editReturn = publishedReplayEditReturnFromState(location.state);
+
+  useLayoutEffect(() => {
+    if (!editReturn || restoredReturnKeyRef.current === location.key || !isProfileLoaded) return;
+    restoredReturnKeyRef.current = location.key;
+    const row = Array.from(document.querySelectorAll<HTMLElement>("[data-publication-row]"))
+      .find((candidate) => candidate.dataset.publicationRow === editReturn.fingerprint
+        && candidate.dataset.publicationPage === String(editReturn.pageId)) ?? null;
+    const editButton = row?.querySelector<HTMLElement>("[data-publication-edit]") ?? null;
+    const scroller = profileRecordScroller(row);
+    if (scroller) scroller.scrollTop = row ? editReturn.scrollTop : 0;
+    if (editButton) {
+      editButton.focus({ preventScroll: true });
+      editButton.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    } else {
+      document.getElementById("public-games-title")?.focus({ preventScroll: true });
+    }
+  }, [editReturn, isProfileLoaded, location.key]);
 
   const saveName = async () => {
     if (!uid || !profile?.enabled || !markersValid) return;
@@ -312,6 +356,14 @@ export function PublicProfileManager({
     }
   };
 
+  const editPublishedReplay = (page: PublicCatalogPageSnapshot, fingerprint: string, trigger: HTMLElement) => {
+    const scrollTop = Math.max(0, Math.min(1_000_000, Math.floor(profileRecordScroller(trigger)?.scrollTop ?? 0)));
+    const returnState: PublishedReplayEditReturn = { fingerprint, pageId: page.pageId, scrollTop };
+    navigate(`/replay/published-edit-${fingerprint}?page=${page.pageId}`, {
+      state: { publishedReplayEditReturn: returnState },
+    });
+  };
+
   const sharedStats = profile?.sharedStats ?? null;
   const winRate = sharedStats ? playerWinRate(sharedStats) : null;
 
@@ -442,7 +494,7 @@ export function PublicProfileManager({
                 </section>
 
                 <section className={styles.settingsSection} aria-labelledby="public-games-title">
-                  <h3 className="uiSectionLabel" id="public-games-title">Published games</h3>
+                  <h3 className="uiSectionLabel" id="public-games-title" tabIndex={-1}>Published games</h3>
                   <div className={styles.settingRow}>
                     <div className={styles.settingCopy}>
                       <p className={styles.settingLabel}>{publishedEntries.length} / 32 games</p>
@@ -450,8 +502,14 @@ export function PublicProfileManager({
                     </div>
                     <div className={styles.settingControls}>
                       {readyCatalog ? publishedEntries.length ? <ul className={styles.publicationList}>
-                        {publishedEntries.map(({ page, entry }) => page ? <li className={styles.publicationRow} key={entry.fingerprint}>
+                        {publishedEntries.map(({ page, entry }) => page ? <li className={styles.publicationRow} key={entry.fingerprint}
+                          data-publication-page={page.pageId} data-publication-row={entry.fingerprint}>
                           <span>{entry.title}</span>
+                          <button className="uiAction uiActionSecondary" type="button" disabled={pendingAction !== null}
+                            aria-label={`Edit ${entry.title || "published game"}`} data-publication-edit
+                            onClick={(event) => editPublishedReplay(page, entry.fingerprint, event.currentTarget)}>
+                            <Icon name="settings" />Edit
+                          </button>
                           <button className="uiAction uiActionDanger" type="button" disabled={pendingAction !== null}
                             onClick={() => void unpublish(page, entry.fingerprint)}>
                             <Icon name="minus" />{pendingAction === entry.fingerprint ? "Removing" : "Unpublish"}

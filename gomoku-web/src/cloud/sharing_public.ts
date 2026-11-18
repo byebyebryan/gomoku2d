@@ -30,6 +30,7 @@ import {
   type SharingFirestoreOptions,
   type SharingPageId,
 } from "./sharing_common.js";
+import { decodePortableReplay, encodePortableReplay, portableReplayFingerprint } from "../replay/portable_replay_codec.js";
 
 export type {
   PublicCatalogEntry,
@@ -56,6 +57,16 @@ function publicName(value: string, enabled: boolean): string {
   if (!normalized || chars > 80 || new TextEncoder().encode(normalized).length > 320
     || /[\r\n\u2028\u2029]/u.test(normalized)) {
     throw new SharingDataError("Public name must contain 1 to 80 characters and at most 320 UTF-8 bytes.");
+  }
+  return normalized;
+}
+
+function publicCatalogTitle(value: string): string {
+  const normalized = value.trim();
+  const chars = Array.from(normalized).length;
+  if (!normalized || chars > 80 || new TextEncoder().encode(normalized).length > 320
+    || /[\r\n\u2028\u2029]/u.test(normalized)) {
+    throw new SharingDataError("Published replay title must contain 1 to 80 characters and at most 320 UTF-8 bytes.");
   }
   return normalized;
 }
@@ -331,6 +342,137 @@ export async function saveCatalogPage(
   });
 
   if (!result) throw new SharingDataError("Catalog page update completed without a result.");
+  return result;
+}
+
+/**
+ * Changes the title and/or public opening of an existing catalog entry.
+ * The fixed page and root manifest are revision-bound so a stale edit cannot
+ * recreate a removed publication or cross a visibility generation change.
+ */
+export async function editPublishedReplay(
+  uid: string,
+  pageId: number,
+  fingerprint: string,
+  details: { title: string; opening_ply: number | null },
+  expectedRootRevision: number,
+  expectedGeneration: number,
+  expectedPageRevision: number,
+  options: SharingFirestoreOptions = {},
+  isCurrentSession?: () => boolean,
+): Promise<SaveCatalogPageResult> {
+  assertPageId(pageId);
+  assertExpectedRevision(expectedRootRevision, "Expected public profile revision");
+  assertExpectedRevision(expectedGeneration, "Expected public profile generation");
+  assertExpectedRevision(expectedPageRevision, "Expected catalog page revision");
+
+  if (!details || typeof details.title !== "string") throw new SharingDataError("Published replay title must be text.");
+  const normalizedTitle = publicCatalogTitle(details.title);
+
+  const firestore = resolveSharingFirestore(options);
+  const rootRef = publicProfileRef(firestore, uid);
+  const pageRef = catalogPageRef(firestore, uid, pageId);
+  let result: SaveCatalogPageResult | null = null;
+
+  await runTransaction(firestore, async (transaction) => {
+    const rootSnapshot = await transaction.get(rootRef);
+    if (!rootSnapshot.exists()) throw new SharingConflictError("Public profile is missing. Reload before editing this publication.");
+    const profile = readProfile(rootSnapshot.data(), uid);
+    if (profile.revision !== expectedRootRevision) {
+      throw new SharingConflictError(`Public profile revision changed from ${expectedRootRevision} to ${profile.revision}. Reload before editing this publication.`);
+    }
+    if (!profile.enabled) throw new SharingConflictError("Public profile is disabled. Reload before editing this publication.");
+    if (profile.generation !== expectedGeneration) {
+      throw new SharingConflictError("Public profile generation changed. Reload before editing this publication.");
+    }
+
+    const pageSnapshot = await transaction.get(pageRef);
+    if (!pageSnapshot.exists()) throw new SharingConflictError("Public catalog page is missing. Reload before editing this publication.");
+    const page = readPage(pageSnapshot.data(), uid, pageId);
+    if (page.generation !== expectedGeneration || page.revision !== expectedPageRevision) {
+      throw new SharingConflictError("Public catalog changed on another device. Reload and review this publication before saving.");
+    }
+    if (profile.catalogPageCounts !== null && page.entries.length !== profile.catalogPageCounts[pageId]) {
+      throw new SharingDataError("Public catalog counts do not match this page. Reload before editing this publication.");
+    }
+
+    const entryIndex = page.entries.findIndex((entry) => entry.fingerprint === fingerprint);
+    if (entryIndex < 0) {
+      throw new SharingConflictError("This publication was removed. Reload before editing; edits cannot restore removed games.");
+    }
+    const current = page.entries[entryIndex]!;
+    const validated = decodePortableReplay(current.payload);
+    const currentFingerprint = await portableReplayFingerprint(validated);
+    if (currentFingerprint !== fingerprint) {
+      throw new SharingDataError("This publication payload does not match its fingerprint. Reload before editing.");
+    }
+    const moveCount = validated.replay.moves.length;
+    const openingPly = details.opening_ply === null ? moveCount : details.opening_ply;
+    if (!Number.isInteger(openingPly) || openingPly < 0 || openingPly > moveCount) {
+      throw new SharingDataError(`Published replay opening must be the default position or a move from 0 to ${moveCount}.`);
+    }
+
+    const currentOpening = validated.replay.viewPly ?? moveCount;
+    if (normalizedTitle === current.title && openingPly === currentOpening) {
+      if (isCurrentSession && !isCurrentSession()) {
+        throw new SharingConflictError("The signed-in account changed before the publication edit finished.");
+      }
+      // A legacy root may not yet carry catalog_page_counts. This edit only
+      // touches one fixed page, so preserve that legacy shape and avoid the
+      // extra reads needed to initialize its manifest.
+      result = { profile, page };
+      return;
+    }
+
+    let payload = current.payload;
+    let viewPly = current.view_ply;
+    if (openingPly !== currentOpening) {
+      const encoded = encodePortableReplay({ ...validated.replay, viewPly: openingPly });
+      const updatedReplay = decodePortableReplay(encoded);
+      const updatedFingerprint = await portableReplayFingerprint(updatedReplay);
+      if (updatedFingerprint !== fingerprint) {
+        throw new SharingDataError("Changing the public opening changed the replay fingerprint. This publication cannot be edited safely.");
+      }
+      payload = encoded;
+      viewPly = openingPly;
+    }
+
+    if (isCurrentSession && !isCurrentSession()) {
+      throw new SharingConflictError("The signed-in account changed before the publication edit finished.");
+    }
+
+    const entries = page.entries.map((entry, index) => index === entryIndex
+      ? { ...entry, payload, title: normalizedTitle, view_ply: viewPly }
+      : entry);
+    const normalizedEntries = validateCatalogEntries(entries);
+    const pageRevision = nextRevision(page.revision, "Catalog page revision");
+    const rootRevision = nextRevision(profile.revision, "Public profile revision");
+    const updatedAt = timestampNow();
+
+    transaction.set(pageRef, pageDocument(profile.generation, pageRevision, normalizedEntries));
+    transaction.set(rootRef, updatedProfileDocument(
+      rootSnapshot.data()!,
+      uid,
+      profile.displayName,
+      profile.enabled,
+      profile.generation,
+      rootRevision,
+      profile.catalogPageCounts === null ? {} : { catalogPageCounts: profile.catalogPageCounts },
+    ));
+    result = {
+      profile: { ...profile, revision: rootRevision, updatedAt },
+      page: {
+        uid,
+        pageId,
+        generation: profile.generation,
+        revision: pageRevision,
+        entries: normalizedEntries,
+        updatedAt,
+      },
+    };
+  });
+
+  if (!result) throw new SharingDataError("Published replay update completed without a result.");
   return result;
 }
 

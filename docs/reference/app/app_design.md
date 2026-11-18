@@ -296,7 +296,7 @@ Primary elements:
 - cloud promotion/import status when signed in
 - My games, Saved replays and Public profile tabs in the main record area
 - summary stats strip and replay entry points in My games
-- private saved study copies in Saved replays
+- private saved study copies with static board previews in Saved replays
 - explicit public name/visibility, optional dated stats snapshot and publication
   management in Public profile (`/profile?tab=public`)
 
@@ -305,6 +305,13 @@ the visitor surface below. Statistics are off by default and published/refreshed
 explicitly from the complete My games summary. The
 [0.6.1 contract](../../working/v0_6_1_public_profile.md) retains the functional
 and storage boundaries.
+
+Saved and published games open in the existing Replay Analysis view.
+**Edit details** swaps the replay sidebar to a private title, note and opening
+editor. **Use move N** stages the opening, and **Save details** commits it.
+Public settings opens the same viewer in a separate publication-edit mode for
+the public title and opening. The visitor list preview shows the position its
+Replay link will open.
 
 Enabling a public profile uses an inline confirmation with the selected name.
 Opening or canceling confirmation performs no write; editing the name or

@@ -607,6 +607,43 @@ describe("Firestore public replay sharing rules and APIs", () => {
 });
 
 describe("Firestore private replay library rules and APIs", () => {
+  it("allows v1 reads and additive upgrades but denies writes that downgrade v2", async () => {
+    const { privateLibraryJson } = await import("../src/cloud/sharing_common.js");
+    const library = ownerDb().doc("replay_libraries/uid-1");
+    const v1 = {
+      schema_version: 1,
+      uid: "uid-1",
+      revision: 1,
+      updated_at: serverTimestamp(),
+      entries_json: privateLibraryJson([privateEntry()]),
+    };
+    await assertSucceeds(library.set(v1));
+    await assertSucceeds(library.set({ ...v1, revision: 2, updated_at: serverTimestamp() }));
+    await assertSucceeds(library.set({ ...v1, schema_version: 2, revision: 3, updated_at: serverTimestamp(), entries_json: "[]" }));
+    await assertFails(library.set({ ...v1, schema_version: 1, revision: 4, updated_at: serverTimestamp() }));
+    await assertFails(library.set({ ...v1, revision: 4, updated_at: serverTimestamp() }));
+  });
+
+  it("loads a v1 private snapshot as default details and upgrades its next save to v2", async () => {
+    const { privateLibraryJson } = await import("../src/cloud/sharing_common.js");
+    const { loadPrivateLibrary, savePrivateLibrary } = await import(sharingPrivateModule);
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc("replay_libraries/uid-1").set({
+        schema_version: 1,
+        uid: "uid-1",
+        revision: 8,
+        updated_at: new Date("2020-01-01T00:00:00.000Z"),
+        entries_json: privateLibraryJson([privateEntry()]),
+      });
+    });
+    const loaded = await loadPrivateLibrary("uid-1", { firestore: apiDb() });
+    expect(loaded).toMatchObject({ revision: 8, entries: [{ metadata: { title: "", note: "", opening_ply: null } }] });
+    const saved = await savePrivateLibrary("uid-1", loaded!.entries, loaded!.revision, { firestore: apiDb() });
+    expect(saved).toMatchObject({ revision: 9, entries: loaded!.entries });
+    const upgraded = await ownerDb().doc("replay_libraries/uid-1").get();
+    expect(upgraded.data()).toMatchObject({ schema_version: 2, revision: 9 });
+  });
+
   it("does not create a library on load and restricts reads to its owner", async () => {
     const { loadPrivateLibrary } = await import(sharingPrivateModule);
     await expect(loadPrivateLibrary("uid-1", { firestore: apiDb() })).resolves.toBeNull();

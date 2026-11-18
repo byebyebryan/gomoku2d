@@ -256,9 +256,9 @@ function cloudTitleText({
 
 export function ProfileRoute() {
   useDocumentTitle("Profile");
-  const [recordTab, setRecordTab] = useState<"games" | "saved">("games");
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") === "public" ? "public" : recordTab;
+  const requestedTab = searchParams.get("tab");
+  const activeTab = requestedTab === "public" || requestedTab === "saved" ? requestedTab : "games";
 
   const navigate = useNavigate();
   const [confirmingProfileAction, setConfirmingProfileAction] = useState<ProfileDangerAction | null>(null);
@@ -399,22 +399,13 @@ export function ProfileRoute() {
                 : "Your complete game history is not ready to share.";
 
   function selectTab(tab: "games" | "saved" | "public"): void {
-    if (tab === "public") {
-      setSearchParams((current) => {
-        const next = new URLSearchParams(current);
-        next.set("tab", "public");
-        return next;
-      });
-      return;
-    }
-    setRecordTab(tab);
-    if (searchParams.has("tab")) {
-      setSearchParams((current) => {
-        const next = new URLSearchParams(current);
-        next.delete("tab");
-        return next;
-      });
-    }
+    if (tab === activeTab) return;
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (tab === "games") next.delete("tab");
+      else next.set("tab", tab);
+      return next;
+    });
   }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>): void {
@@ -462,9 +453,13 @@ export function ProfileRoute() {
     if (!isCurrent()) throw new ProfileActionAccountChanged();
     const cleared = await savePrivateLibrary(user.uid, [], library?.revision ?? null);
     if (!isCurrent()) throw new ProfileActionAccountChanged();
-    await replayLibraryStore.getState().replaceEntries(`user:${user.uid}`, [], isCurrent);
+    await replayLibraryStore.getState().replaceEntries(`user:${user.uid}`, [], isCurrent, {
+      baseRevision: cleared.revision,
+      dirty: false,
+      restoreReview: false,
+    });
     if (!isCurrent()) throw new ProfileActionAccountChanged();
-    replayLibrarySync.acceptCleared(user.uid, cleared);
+    replayLibrarySync.acceptCleared(user.uid, cleared, { preserveLocal: false });
     await cloudProfileStore.getState().resetForUser(user, createDefaultProfileSettings());
     if (!isCurrent()) throw new ProfileActionAccountChanged();
     await cloudHistoryStore.getState().clearForUser(user);
@@ -474,19 +469,32 @@ export function ProfileRoute() {
     resetLocalProfileData();
   }
 
-  async function deleteSignedInProfile(): Promise<void> {
+  async function deleteSignedInProfile(): Promise<string | null> {
     if (cloudAuth.status !== "signed_in" || !cloudAuth.user) {
-      return;
+      return null;
     }
 
     const user = cloudAuth.user;
     const isCurrent = () => cloudAuthStore.getState().user === user;
+    let deviceWarning: string | null = null;
+    const owner = `user:${user.uid}` as const;
+    if (replayLibraryStore.getState().owners[owner]?.entries.length) {
+      try {
+        await replayLibraryStore.getState().markRestoreReview(owner, true);
+      } catch (error) {
+        deviceWarning = error instanceof Error ? error.message : "Device replay copies could not be marked for restore review.";
+      }
+      const localState = replayLibraryStore.getState();
+      const localOwner = localState.owners[owner];
+      if (!localOwner?.restoreReview || !localOwner.durable || localState.sessionOnly) {
+        deviceWarning ??= localState.storageError
+          ?? "Device replay copies remain on this device, but their restore review marker could not be saved durably.";
+      }
+    }
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
     const cleared = await clearSharingData(user.uid);
     if (!isCurrent()) throw new ProfileActionAccountChanged();
     // Preserve local copies, but require review before any future re-upload.
-    if (replayLibraryStore.getState().owners[`user:${user.uid}`]?.entries.length) {
-      replayLibraryStore.getState().markDirty(`user:${user.uid}`);
-    }
     replayLibrarySync.acceptCleared(user.uid, cleared.privateLibrary);
     await cloudHistoryStore.getState().clearForUser(user);
     if (!isCurrent()) throw new ProfileActionAccountChanged();
@@ -495,6 +503,7 @@ export function ProfileRoute() {
     cloudHistoryStore.getState().resetUserCache(user.uid);
     cloudPromotionStore.getState().reset();
     await cloudAuthStore.getState().signOut();
+    return deviceWarning;
   }
 
   async function confirmProfileAction(): Promise<void> {
@@ -508,8 +517,9 @@ export function ProfileRoute() {
     setProfileActionBusy(true);
     setProfileActionError(null);
     try {
+      let completionMessage: string | null = null;
       if (action === "delete") {
-        await deleteSignedInProfile();
+        completionMessage = await deleteSignedInProfile();
       } else if (signedIn) {
         await resetSignedInProfile();
       } else {
@@ -517,6 +527,7 @@ export function ProfileRoute() {
         resetLocalProfileData();
       }
       setConfirmingProfileAction(null);
+      setProfileActionError(completionMessage);
     } catch (error) {
       if (error instanceof ProfileActionAccountChanged ||
         (cloudAuthStore.getState().user === actionUser && localProfileStore.getState().profile?.id === actionLocalId)) {

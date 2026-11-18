@@ -3,7 +3,7 @@ import type {
   ReplayAnalysisStepResult,
   ReplayAnalysisSummary,
   ReplayFrameAnnotations,
-} from "./replay_analysis_protocol";
+} from "./replay_analysis_protocol.js";
 
 type RecordValue = Record<string, unknown>;
 

@@ -120,6 +120,7 @@ export function ReplayMatchPanel({ frame, localDisplayName, match, preserveNames
 
 interface ReplayPlaybackPanelProps {
   autoplaying: boolean;
+  selectionOnly?: boolean;
   resumeBotLabel: string;
   frame: ReplayFrame;
   match: SavedMatchV2;
@@ -134,6 +135,7 @@ interface ReplayPlaybackPanelProps {
 
 export function ReplayPlaybackPanel({
   autoplaying,
+  selectionOnly = false,
   resumeBotLabel,
   frame,
   match,
@@ -148,7 +150,9 @@ export function ReplayPlaybackPanel({
   return (
     <section className={`${styles.deckSection} ${styles.playbackSection}`}>
       <div className={styles.playbackHeader}>
-        <p className={`uiSectionLabel ${styles.playbackLabel}`}>Playback</p>
+        {selectionOnly
+          ? <p className="uiSectionLabel">Viewing move {frame.moveIndex} / {match.move_count}</p>
+          : <p className={`uiSectionLabel ${styles.playbackLabel}`}>Playback</p>}
       </div>
 
       <div className={styles.timeline} data-testid="replay-timeline" style={timelineStyle}>
@@ -240,7 +244,7 @@ export function ReplayPlaybackPanel({
         </button>
       </div>
 
-      <div className={styles.replayActions}>
+      {!selectionOnly && <div className={styles.replayActions}>
         <div className={styles.resumeRow}>
           <button
             className={`uiAction uiActionSecondary ${styles.resumeAction}`}
@@ -264,7 +268,7 @@ export function ReplayPlaybackPanel({
             <div><dt>Bot</dt><dd>{resumeBotLabel}</dd></div>
           </dl>
         </div>}
-      </div>
+      </div>}
     </section>
   );
 }

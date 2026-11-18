@@ -515,7 +515,7 @@ service cloud.firestore {
       return data is map
         && data.keys().hasAll(['schema_version', 'uid', 'revision', 'updated_at', 'entries_json'])
         && data.keys().hasOnly(['schema_version', 'uid', 'revision', 'updated_at', 'entries_json'])
-        && data.schema_version == 1
+        && data.schema_version in [1, 2]
         && data.uid == uid
         && validSharingUid(data.uid)
         && validSharingRevision(data.revision)
@@ -647,7 +647,10 @@ service cloud.firestore {
       allow update: if isOwner(uid)
         && validPrivateLibraryDocument(uid, request.resource.data)
         && request.resource.data.uid == resource.data.uid
-        && request.resource.data.schema_version == resource.data.schema_version
+        && (
+          (resource.data.schema_version == 1 && request.resource.data.schema_version in [1, 2])
+          || (resource.data.schema_version == 2 && request.resource.data.schema_version == 2)
+        )
         && request.resource.data.revision == resource.data.revision + 1;
       allow delete: if false;
     }

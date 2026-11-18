@@ -1,8 +1,8 @@
 import { WasmBoard, WasmBot, WasmReplayAnalyzer } from "gomoku-wasm";
 
-import type { BotMove, BotSpec, GameVariant } from "./bot_protocol";
-import type { ReplayAnalysisStepResult } from "../replay/replay_analysis_protocol";
-import { validateReplayAnalysisStep } from "../replay/replay_analysis_validation";
+import type { BotMove, BotSpec, GameVariant } from "./bot_protocol.js";
+import type { ReplayAnalysisStepResult } from "../replay/replay_analysis_protocol.js";
+import { validateReplayAnalysisStep } from "../replay/replay_analysis_validation.js";
 
 export type WasmGameResult = "black" | "draw" | "ongoing" | "white";
 

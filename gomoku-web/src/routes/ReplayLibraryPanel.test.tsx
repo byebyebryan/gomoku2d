@@ -78,17 +78,14 @@ describe("replay save persistence messages", () => {
   });
 
   it.each([
-    ["malformed", "{bad-json"],
-    ["newer", JSON.stringify({ schema_version: 99, owners: {} })],
-  ])("discloses temporary storage before saving over an unusable %s cache", async (_label, raw) => {
-    localStorage.setItem(STORAGE_KEY, raw);
+    [STORAGE_KEY, "{bad-json"],
+    ["gomoku2d.replay-library.v2", JSON.stringify({ schema_version: 99, owners: {} })],
+  ])("blocks saves and preserves unreadable bytes in %s", async (key, raw) => {
+    localStorage.setItem(key, raw);
     await setup();
-    expect(screen.getByText(/saving keeps a copy for this session only/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Save replay" }));
-
-    expect(await screen.findByRole("button", { name: "Saved for this session" })).toBeDisabled();
-    expect(screen.getByText(/lost when you reload or close this tab/i)).toBeInTheDocument();
-    expect(localStorage.getItem(STORAGE_KEY)).toBe(raw);
+    expect(screen.getByRole("button", { name: "Save replay" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toBeVisible();
+    expect(localStorage.getItem(key)).toBe(raw);
   });
 
   it("warns about session-only guest copies in the library after a storage failure", async () => {
@@ -151,7 +148,7 @@ describe("replay save persistence messages", () => {
     expect(screen.getByRole("button", { name: "Sync saved replays" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Copy guest replays into account (1)" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Use cloud library" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Merge copies into cloud" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Review merge" })).toBeEnabled();
     expect(sharing.savePrivateLibrary).not.toHaveBeenCalled();
   });
 });

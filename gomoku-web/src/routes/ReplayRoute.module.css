@@ -714,6 +714,11 @@
   border-top: 1px solid var(--border);
   overflow-wrap: anywhere;
 }
+.detailsNotice {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: var(--type-label);
+}
 .playerName a { color: inherit; }
 @media (max-width: 720px) and (orientation: portrait) {
   .sharingSection { grid-row: 8; padding: 12px 0; }

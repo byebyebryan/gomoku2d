@@ -12,17 +12,20 @@ import {
   SharingDataError,
   nextRevision,
   parseCatalogPageSnapshot,
-  parsePrivateLibrarySnapshot,
   parsePublicProfileSnapshot,
-  privateLibraryJson,
   resolveSharingFirestore,
   type PublicCatalogPageSnapshot,
   type PublicProfileSnapshot,
-  type PrivateLibrarySnapshot,
   type SharingFirestoreOptions,
   type SharingPageId,
 } from "./sharing_common.js";
-import { privateLibraryDocument, privateLibraryRef } from "./sharing_private.js";
+import {
+  parsePrivateLibrarySnapshot,
+  privateLibraryDocument,
+  privateLibraryRef,
+  privateLibraryV2Json,
+  type PrivateLibrarySnapshot,
+} from "./sharing_private.js";
 
 export interface ClearSharingDataResult {
   publicProfile: PublicProfileSnapshot;
@@ -48,7 +51,7 @@ export async function clearSharingData(
   const pageRefs = SHARING_PAGE_IDS.map((pageId) => doc(firestore, "public_profiles", uid, "pages", pageId));
   const libraryRef = privateLibraryRef(firestore, uid);
   const refs = [rootRef, ...pageRefs, libraryRef];
-  const emptyPrivateJson = privateLibraryJson([]);
+  const emptyPrivateJson = privateLibraryV2Json([]);
   let initialReadSet: string[] | null = null;
   let result: ClearSharingDataResult | null = null;
 

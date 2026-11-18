@@ -6,6 +6,7 @@ import type { PortableReplayV1 } from "./portable_replay";
 import { decodePortableReplay } from "./portable_replay_codec";
 import {
   REPLAY_LIBRARY_LIMIT,
+  REPLAY_LIBRARY_LEGACY_STORAGE_KEY,
   REPLAY_LIBRARY_STORAGE_KEY,
   createReplayLibraryStore,
   currentReplayLibraryOwner,
@@ -77,9 +78,10 @@ describe("replay library store", () => {
 
     const restored = createReplayLibraryStore({ storage });
     expect(restored.getState().owners.guest).toMatchObject({ dirty: true, entries: first.getState().owners.guest.entries });
-    restored.getState().markSynced("guest");
+    await restored.getState().replaceEntries("guest", restored.getState().owners.guest!.entries,
+      undefined, { dirty: false });
     expect(createReplayLibraryStore({ storage }).getState().owners.guest?.dirty).toBe(false);
-    restored.getState().markDirty("guest");
+    await restored.getState().markDirty("guest");
     expect(createReplayLibraryStore({ storage }).getState().owners.guest?.dirty).toBe(true);
   });
 
@@ -94,6 +96,97 @@ describe("replay library store", () => {
     await store.getState().removeReplay("guest", guestFingerprint);
     expect(store.getState().owners.guest?.entries).toEqual([]);
     expect(store.getState().owners["user:account-1"]?.entries[0]?.fingerprint).toBe(accountFingerprint);
+  });
+
+  it("edits one saved entry's normalized details without changing its game identity", async () => {
+    const store = createReplayLibraryStore({ storage: createMemoryStorage() });
+    const fingerprint = await store.getState().saveReplay("guest", winningReplay(), "saved");
+    const before = store.getState().owners.guest!.entries[0]!;
+    await store.getState().updateReplayMetadata("guest", fingerprint,
+      { title: "  Review line  ", note: "first\r\nsecond", opening_ply: WIN_MOVES.length }, before.metadata);
+    const edited = store.getState().owners.guest!.entries[0]!;
+
+    expect(edited).toMatchObject({
+      fingerprint: before.fingerprint,
+      payload: before.payload,
+      kind: before.kind,
+      saved_at: before.saved_at,
+      metadata: { title: "Review line", note: "first\nsecond", opening_ply: WIN_MOVES.length },
+    });
+    await expect(store.getState().updateReplayMetadata("guest", fingerprint,
+      { title: "stale", note: "", opening_ply: null }, before.metadata)).rejects.toThrow(/changed since this editor opened/i);
+    await expect(store.getState().updateReplayMetadata("guest", fingerprint,
+      { title: "bad ply", note: "", opening_ply: WIN_MOVES.length + 1 })).rejects.toThrow(/opening position/i);
+    await store.getState().saveReplay("guest", winningReplay(), "saved");
+    expect(store.getState().owners.guest!.entries[0]!.metadata).toEqual(edited.metadata);
+  });
+
+  it("rechecks a detail edit's account guard after waiting for the origin lock", async () => {
+    const storage = createMemoryStorage();
+    const owner = "user:account-1";
+    const source = createReplayLibraryStore({ storage });
+    const fingerprint = await source.getState().saveReplay(owner, winningReplay(), "saved");
+    const previous = storage.getItem(REPLAY_LIBRARY_STORAGE_KEY);
+    let signedIn = true;
+    let signalLockRequested!: () => void;
+    let releaseLock!: () => void;
+    const lockRequested = new Promise<void>((resolve) => { signalLockRequested = resolve; });
+    const canAcquireLock = new Promise<void>((resolve) => { releaseLock = resolve; });
+    const stale = createReplayLibraryStore({ storage, lockManager: {
+      request: async (_name, _options, write) => {
+        signalLockRequested();
+        await canAcquireLock;
+        return write();
+      },
+    } });
+    const edit = stale.getState().updateReplayMetadata(owner, fingerprint, { title: "Title", note: "Draft", opening_ply: 0 },
+      undefined, () => { if (!signedIn) throw new Error("Account changed"); });
+    await lockRequested;
+    signedIn = false;
+    releaseLock();
+    await expect(edit).rejects.toThrow("Account changed");
+    expect(storage.getItem(REPLAY_LIBRARY_STORAGE_KEY)).toBe(previous);
+  });
+
+  it("cuts all validated v1 owner buckets over to the authoritative v2 key on first mutation", async () => {
+    const source = createReplayLibraryStore({ storage: createMemoryStorage() });
+    const guestFingerprint = await source.getState().saveReplay("guest", winningReplay("Guest v1"), "saved");
+    const accountFingerprint = await source.getState().saveReplay("user:account-v1", winningReplay("Account v1"), "saved");
+    const legacyEntry = (entry: PrivateLibraryEntry) => {
+      const { metadata: _metadata, ...legacy } = entry;
+      return legacy;
+    };
+    const legacy = JSON.stringify({ schema_version: 1, owners: {
+      guest: { dirty: true, entries: source.getState().owners.guest!.entries.map(legacyEntry) },
+      "user:account-v1": { dirty: true, entries: source.getState().owners["user:account-v1"]!.entries.map(legacyEntry) },
+    } });
+    const storage = createMemoryStorage();
+    storage.setItem(REPLAY_LIBRARY_LEGACY_STORAGE_KEY, legacy);
+    const migrated = createReplayLibraryStore({ storage });
+    expect(migrated.getState().owners.guest?.entries[0]?.metadata).toEqual({ title: "", note: "", opening_ply: null });
+    expect(migrated.getState().owners["user:account-v1"]?.entries[0]?.fingerprint).toBe(accountFingerprint);
+    expect(migrated.getState().owners.guest?.entries[0]?.fingerprint).toBe(guestFingerprint);
+
+    await migrated.getState().saveReplay("guest", winningReplay("After cutover"), "saved");
+    const envelope = JSON.parse(storage.getItem(REPLAY_LIBRARY_STORAGE_KEY)!) as {
+      schema_version: number;
+      revision: number;
+      owners: Record<string, { dirty: boolean; entries: PrivateLibraryEntry[] }>;
+    };
+    expect(envelope).toMatchObject({ schema_version: 2, revision: 1 });
+    expect(envelope.owners.guest?.entries).toHaveLength(2);
+    expect(envelope.owners["user:account-v1"]?.entries).toHaveLength(1);
+    expect(storage.getItem(REPLAY_LIBRARY_LEGACY_STORAGE_KEY)).toBeNull();
+  });
+
+  it("keeps writes session-only when no origin lock is available", async () => {
+    const storage = createMemoryStorage();
+    const store = createReplayLibraryStore({ storage, lockManager: null });
+    const fingerprint = await store.getState().saveReplay("guest", winningReplay(), "saved");
+    expect(store.getState().owners.guest?.entries[0]?.fingerprint).toBe(fingerprint);
+    expect(store.getState().owners.guest?.durable).toBe(false);
+    expect(store.getState().sessionOnly).toBe(true);
+    expect(storage.getItem(REPLAY_LIBRARY_STORAGE_KEY)).toBeNull();
   });
 
   it("merges independent saves that finish hashing concurrently", async () => {
@@ -124,7 +217,7 @@ describe("replay library store", () => {
       const concurrentFingerprint = await store.getState().saveReplay("guest", winningReplay("Keep me"), "saved");
       digestGate.release();
 
-      await expect(replacing).rejects.toThrow(/changed while validating replacement/i);
+      await expect(replacing).rejects.toThrow(/changed after review|changed while validating replacement/i);
       expect(store.getState().owners.guest?.entries.map((entry) => entry.fingerprint))
         .toEqual([concurrentFingerprint]);
       expect(store.getState().owners.guest?.entries).not.toEqual(replacement);
@@ -219,7 +312,7 @@ describe("replay library store", () => {
       },
     })],
     ["oversized cache", "x".repeat(600_001)],
-  ])("keeps an unusable %s cache out of the live store without overwriting it", async (_label, raw) => {
+  ])("keeps an unusable %s cache read-only without overwriting it", async (_label, raw) => {
     const storage = createMemoryStorage();
     storage.setItem(REPLAY_LIBRARY_STORAGE_KEY, raw);
     storage.setItem("gomoku2d.local-profile.v5", "preserve-old-profile");
@@ -227,11 +320,11 @@ describe("replay library store", () => {
     const store = createReplayLibraryStore({ storage, onPersistenceUnavailable });
 
     expect(store.getState().owners.guest).toBeUndefined();
-    await store.getState().saveReplay("guest", winningReplay(), "saved");
+    await expect(store.getState().saveReplay("guest", winningReplay(), "saved")).rejects.toThrow();
     expect(storage.getItem(REPLAY_LIBRARY_STORAGE_KEY)).toBe(raw);
     expect(storage.getItem("gomoku2d.local-profile.v5")).toBe("preserve-old-profile");
     expect(store.getState().storageError).toBeTruthy();
-    expect(onPersistenceUnavailable).toHaveBeenCalledOnce();
+    expect(onPersistenceUnavailable).not.toHaveBeenCalled();
   });
 
   it("keeps saves usable in memory and reports denied persistence", async () => {

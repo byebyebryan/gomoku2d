@@ -89,4 +89,17 @@ describe("public logical catalog paging", () => {
     const unattributed = publicGameDetails(attributedGame("white", "Win", ""), "publisher-1");
     expect(unattributed).toMatchObject({ canReplay: true, opponent: null, result: null, rule: null, moves: null });
   });
+
+  it("projects the same opening as the replay link when legacy catalog fields differ", () => {
+    const game = attributedGame("black", "Win");
+    const final = publicGameDetails(game, "publisher-1");
+    expect(final.position?.opening).toBe(9);
+
+    const wire = JSON.parse(Buffer.from(game.payload, "base64url").toString("utf8"));
+    const fromStart = publicGameDetails({
+      ...game, view_ply: 8,
+      payload: Buffer.from(JSON.stringify({ ...wire, at: 0 })).toString("base64url"),
+    }, "publisher-1");
+    expect(fromStart.position).toEqual({ moves: final.position?.moves, opening: 0 });
+  });
 });

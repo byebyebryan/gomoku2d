@@ -1,5 +1,6 @@
 import type { PublicCatalogEntry, PublicCatalogPageSnapshot } from "../cloud/sharing_common";
 import { decodePortableReplay } from "../replay/portable_replay_codec";
+import type { ReplayThumbnailPosition } from "../replay/replay_thumbnail";
 
 export const PUBLIC_LOGICAL_PAGE_SIZE = 8;
 
@@ -9,6 +10,7 @@ export interface PublicGameDetails {
   opponent: string | null;
   result: "Win" | "Loss" | "Draw" | null;
   rule: "Freestyle" | "Renju" | null;
+  position: ReplayThumbnailPosition | null;
 }
 
 export function publicGameDetails(entry: PublicCatalogEntry, publisherUid: string): PublicGameDetails {
@@ -16,10 +18,11 @@ export function publicGameDetails(entry: PublicCatalogEntry, publisherUid: strin
   try {
     validated = decodePortableReplay(entry.payload);
   } catch {
-    return { canReplay: false, moves: null, opponent: null, result: null, rule: null };
+    return { canReplay: false, moves: null, opponent: null, result: null, rule: null, position: null };
   }
 
   const { replay, status } = validated;
+  const position = { moves: replay.moves, opening: replay.viewPly ?? replay.moves.length };
   const publisherSides = (["black", "white"] as const).filter((side) => (
     replay[side].kind === "human" && replay[side].profileUid === publisherUid
   ));
@@ -30,6 +33,7 @@ export function publicGameDetails(entry: PublicCatalogEntry, publisherUid: strin
       opponent: null,
       result: null,
       rule: null,
+      position,
     };
   }
 
@@ -49,6 +53,7 @@ export function publicGameDetails(entry: PublicCatalogEntry, publisherUid: strin
     opponent: opponent.name,
     result,
     rule: replay.ruleset === "renju" ? "Renju" : "Freestyle",
+    position,
   };
 }
 

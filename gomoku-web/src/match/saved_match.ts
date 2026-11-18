@@ -1,5 +1,5 @@
-import { BOARD_SIZE } from "../board/constants";
-import type { GameVariant } from "../core/bot_protocol";
+import { BOARD_SIZE } from "../board/constants.js";
+import type { GameVariant } from "../core/bot_protocol.js";
 import {
   DEFAULT_BOT_CONFIG,
   botLabel,
@@ -8,8 +8,8 @@ import {
   labSpecForBot,
   sanitizeBotConfig,
   type BotConfig,
-} from "../core/bot_config";
-import type { CellPosition, MatchMove, MatchPlayer } from "../game/types";
+} from "../core/bot_config.js";
+import type { CellPosition, MatchMove, MatchPlayer } from "../game/types.js";
 
 export const SAVED_MATCH_SCHEMA_VERSION = 2;
 export const SAVED_MATCH_BOARD_SIZE = BOARD_SIZE;

@@ -1,19 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { cloudAuthStore, type CloudAuthUser } from "../cloud/auth_store";
+import { SharingConflictError } from "../cloud/sharing_common";
 import type { PrivateLibrarySnapshot } from "../cloud/sharing_private";
-import { replayLibraryStore } from "./replay_library_store";
+import { replayLibraryStore, REPLAY_LIBRARY_STORAGE_KEY } from "./replay_library_store";
 import { replayLibrarySync } from "./replay_library_sync";
 import { EMPTY_LIBRARY_SYNC } from "./replay_library_sync";
 import type { PortableReplayV1 } from "./portable_replay";
-import { importGuestReplayCopies, saveReplayCopy } from "./replay_library_actions";
+import { commitGuestReplayImport, importGuestReplayCopies, planGuestReplayImport, saveReplayCopy } from "./replay_library_actions";
 
 const sharingMocks = vi.hoisted(() => ({
   loadPrivateLibrary: vi.fn(),
   savePrivateLibrary: vi.fn(),
 }));
 
-vi.mock("../cloud/sharing_private", () => ({
+vi.mock("../cloud/sharing_private", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../cloud/sharing_private")>(),
   loadPrivateLibrary: sharingMocks.loadPrivateLibrary,
   savePrivateLibrary: sharingMocks.savePrivateLibrary,
 }));
@@ -66,9 +68,10 @@ function signIn(uid: string) {
 }
 
 describe("replay library actions during cloud clearing", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
-    replayLibraryStore.setState({ owners: {}, storageError: null });
+    replayLibraryStore.setState({ owners: {}, revision: 0, sessionOnly: false, readOnly: false, storageError: null });
+    await replayLibraryStore.getState().refreshFromStorage();
     replayLibrarySync.store.setState({ users: {} }, true);
     cloudAuthStore.setState({ status: "signed_out", user: null });
     sharingMocks.loadPrivateLibrary.mockReset();
@@ -141,5 +144,27 @@ describe("replay library actions during cloud clearing", () => {
     expect(replayLibraryStore.getState().owners[`user:${uid}`]).toBeUndefined();
     expect(replayLibraryStore.getState().owners.guest?.entries).toHaveLength(1);
     expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
+  });
+
+  it("preserves both account and guest details when cloud rejects a reviewed import", async () => {
+    const uid = "stale-import";
+    const owner = `user:${uid}` as const;
+    signIn(uid);
+    sharingMocks.loadPrivateLibrary.mockResolvedValueOnce(null);
+    await replayLibrarySync.reload(uid);
+    const fingerprint = await replayLibraryStore.getState().saveReplay("guest", winningReplay(), "saved");
+    await replayLibraryStore.getState().saveReplay(owner, winningReplay(), "saved");
+    await replayLibraryStore.getState().updateReplayMetadata("guest", fingerprint, { title: "Guest", note: "Guest note", opening_ply: 0 });
+    await replayLibraryStore.getState().updateReplayMetadata(owner, fingerprint, { title: "Account", note: "Account note", opening_ply: 2 });
+    const plan = await planGuestReplayImport(uid);
+    expect(plan.rows[0]?.status).toBe("metadata-conflict");
+    const originalBytes = localStorage.getItem(REPLAY_LIBRARY_STORAGE_KEY);
+    const originalDevice = replayLibraryStore.getState().owners;
+    sharingMocks.savePrivateLibrary.mockRejectedValueOnce(new SharingConflictError());
+
+    await expect(commitGuestReplayImport(plan, { [fingerprint]: "guest" })).rejects.toThrow(SharingConflictError);
+    expect(sharingMocks.savePrivateLibrary).toHaveBeenCalledOnce();
+    expect(replayLibraryStore.getState().owners).toBe(originalDevice);
+    expect(localStorage.getItem(REPLAY_LIBRARY_STORAGE_KEY)).toBe(originalBytes);
   });
 });

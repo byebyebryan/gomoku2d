@@ -3,7 +3,7 @@ import {
   type PortableReplayParticipantV1,
   type PortableReplayV1,
   type ValidatedPortableReplayV1,
-} from "./portable_replay";
+} from "./portable_replay.js";
 
 export const PORTABLE_REPLAY_MAX_ENCODED_CHARS = 8192;
 export const PORTABLE_REPLAY_MAX_DECODED_BYTES = 6144;

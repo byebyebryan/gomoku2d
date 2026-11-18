@@ -244,9 +244,10 @@ describe("ProfileRoute cloud state", () => {
     replayLibrarySync.store.setState({ users: {} }, true);
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
-    replayLibraryStore.setState({ owners: {}, storageError: null });
+    replayLibraryStore.setState({ owners: {}, revision: 0, sessionOnly: false, readOnly: false, storageError: null });
+    await replayLibraryStore.getState().refreshFromStorage();
     replayLibrarySync.store.setState({ users: {} }, true);
     sharingMocks.clearSharingData.mockReset();
     sharingMocks.clearSharingData.mockImplementation(async (uid: string) => ({
@@ -1061,9 +1062,11 @@ describe("ProfileRoute cloud state", () => {
       payload: "AQ",
       kind: "saved" as const,
       saved_at: "2026-04-28T01:00:00.000Z",
+      metadata: { title: "", note: "", opening_ply: null },
     };
     replayLibraryStore.setState({
-      owners: { "user:uid-1": { dirty: true, entries: [localCopy], error: null } },
+      owners: { "user:uid-1": { baseRevision: "unknown", dirty: true, durable: true,
+        entries: [localCopy], error: null, restoreReview: false } },
     });
     sharingMocks.loadPrivateLibrary.mockResolvedValue({
       uid: "uid-1",
@@ -1126,11 +1129,13 @@ describe("ProfileRoute cloud state", () => {
       payload: "AQ",
       kind: "saved" as const,
       saved_at: "2026-04-28T01:00:00.000Z",
+      metadata: { title: "", note: "", opening_ply: null },
     };
 
     localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
     replayLibraryStore.setState({
-      owners: { "user:uid-1": { dirty: false, entries: [accountCopy], error: null } },
+      owners: { "user:uid-1": { baseRevision: 6, dirty: false, durable: true,
+        entries: [accountCopy], error: null, restoreReview: false } },
     });
     cloudAuthStore.setState({
       errorMessage: null,
@@ -1182,7 +1187,8 @@ describe("ProfileRoute cloud state", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
     expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([localMatch]);
     expect(replayLibraryStore.getState().owners["user:uid-1"]).toMatchObject({
-      dirty: true,
+      dirty: false,
+      restoreReview: true,
       entries: [accountCopy],
     });
     expect(replayLibrarySync.store.getState().users["uid-1"]).toMatchObject({

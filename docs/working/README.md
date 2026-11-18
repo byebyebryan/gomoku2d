@@ -8,6 +8,7 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
+| [0.6.4 replay collections](v0_6_4_implementation.md) | Local implementation and release handoff. The [approved UI review](v0_6_4_replay_collection_review.md) and [data contract](v0_6_4_replay_collection_contract.md) record the design |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Bryan; 0.6.2/0.6.3 published; replay metadata compatibility belongs to 0.6.4, curated learning later |
 
 Completed 0.6.2 design, implementation, review, mobile and completion-plan
