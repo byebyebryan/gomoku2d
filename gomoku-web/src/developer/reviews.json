@@ -1776,5 +1776,186 @@
         "url": "https://github.com/byebyebryan/gomoku2d/blob/565cb8f6fdc9f8fe815c8ba7648fd72ab79fa114/docs/working/v0_6_3_design_reviews.md#reconstructed-share-review-context"
       }
     ]
+  },
+  {
+    "schema": 1,
+    "id": "replay-collections-064",
+    "title": "Replay collections",
+    "scope": "Saved replays, publication edits and sync review",
+    "date": "2026-11-18",
+    "revision": "0.6.4 candidate · ffec605",
+    "versions": [
+      "0.6.4"
+    ],
+    "question": "Can players recognize a replay and reopen a useful position while keeping their study notes private?",
+    "summary": "Saved and published games preview their opening position. Both editors use Replay Analysis, and a sync review lets the player choose which private details to keep.",
+    "disposition": "historical checkpoint",
+    "comparisons": [
+      {
+        "id": "saved-library",
+        "title": "Saved replays",
+        "conditions": "The same guest fixture with one saved game at 1440 × 1100 and 390 × 844. The thumbnail shows the last move because the copy has no saved opening.",
+        "media": [
+          {
+            "file": "saved-library-desktop.png",
+            "sourcePath": "docs/working/v0_6_4_ui_evidence/saved-library-desktop.png",
+            "sha256": "7dfa5c2b275eeba014da31f38d0aba6694ab576a93f8fb7b19d031f7a406818d",
+            "width": 1440,
+            "height": 1100,
+            "label": "Saved replays · desktop",
+            "alt": "Desktop Saved replays tab with a board thumbnail, saved date, and Replay and Remove actions.",
+            "kind": "application capture",
+            "revision": "0.6.4 candidate · ffec605"
+          },
+          {
+            "file": "saved-library-portrait.png",
+            "sourcePath": "docs/working/v0_6_4_ui_evidence/saved-library-portrait.png",
+            "sha256": "e6d7544344536215997516ed50b294d917b91fd3593981a7e3a01ef6c1d898c4",
+            "width": 390,
+            "height": 844,
+            "label": "Saved replays · portrait",
+            "alt": "Portrait Saved replays tab with the same game and compact row actions.",
+            "kind": "application capture",
+            "revision": "0.6.4 candidate · ffec605"
+          }
+        ]
+      },
+      {
+        "id": "replay-editors",
+        "title": "Replay editors",
+        "conditions": "Two Replay Analysis states with different fixtures. The private sidebar is a full-page capture at a generic 390 × 844 viewport. The publication sidebar is a 1280 × 900 desktop capture.",
+        "media": [
+          {
+            "file": "private-editor-portrait.png",
+            "sourcePath": "docs/working/v0_6_4_ui_evidence/private-editor-portrait.png",
+            "sha256": "e952bf0b0f85181f82f5747322f584321be683568882f87d2fd2e1e85a485265",
+            "width": 390,
+            "height": 1135,
+            "label": "Private details · portrait",
+            "alt": "Replay board above the private title, multiline note, timeline and opening controls.",
+            "kind": "application capture",
+            "revision": "0.6.4 candidate · ffec605"
+          },
+          {
+            "file": "public-editor-desktop.png",
+            "sourcePath": "docs/working/v0_6_4_ui_evidence/public-editor-desktop.png",
+            "sha256": "091bc197258268c663a7948817f05b9889c72075791286ab97bbea796f932a8c",
+            "width": 1280,
+            "height": 900,
+            "label": "Edit publication · desktop",
+            "alt": "Replay Analysis board at move four beside the public title and opening editor.",
+            "kind": "application capture",
+            "revision": "0.6.4 candidate · ffec605"
+          }
+        ]
+      },
+      {
+        "id": "public-opening",
+        "title": "Publication opening",
+        "conditions": "The same public profile in a signed-out 390 × 844 browser. The owner changes the title and opening from move 4 to move 0.",
+        "media": [
+          {
+            "file": "public-opening-before.png",
+            "sourcePath": "docs/working/v0_6_4_ui_evidence/public-opening-before.png",
+            "sha256": "fe877ad49f9e24b961c828bce636dbceb80e51b491278490dc066978954eef60",
+            "width": 390,
+            "height": 844,
+            "label": "Before edit · move 4",
+            "alt": "Public game row titled White’s first defense with four stones in the thumbnail.",
+            "kind": "application capture",
+            "revision": "0.6.4 candidate · ffec605"
+          },
+          {
+            "file": "public-opening-after.png",
+            "sourcePath": "docs/working/v0_6_4_ui_evidence/public-opening-after.png",
+            "sha256": "0c64687c75e4516e21805f7162943a4a0d6b2e507d8f67077c3927e0648821df",
+            "width": 390,
+            "height": 844,
+            "label": "After edit · move 0",
+            "alt": "The same public game row titled Replay from the start with an empty board thumbnail.",
+            "kind": "application capture",
+            "revision": "0.6.4 candidate · ffec605"
+          }
+        ]
+      },
+      {
+        "id": "merge-review",
+        "title": "Private sync conflict",
+        "conditions": "A 1280 × 900 desktop capture from two browsers signed in to the same disposable emulator account. One copy opens at move 0 and the other opens at move 2.",
+        "media": [
+          {
+            "file": "private-merge-review.png",
+            "sourcePath": "docs/working/v0_6_4_ui_evidence/private-merge-review.png",
+            "sha256": "692718780aa003ce8fb4cc132c714e875844163401f69377441137dbb78dbdf5",
+            "width": 1280,
+            "height": 900,
+            "label": "Device and cloud choices",
+            "alt": "A private replay conflict shows the two notes and opening positions side by side, with the device copy selected.",
+            "kind": "application capture",
+            "revision": "0.6.4 candidate · ffec605"
+          }
+        ]
+      }
+    ],
+    "process": [
+      {
+        "id": "recognize",
+        "title": "Find the position",
+        "detail": "The thumbnail and opening label tell the player where Replay will start. Both layouts keep game information and the Replay action together.",
+        "comparisons": [
+          "saved-library"
+        ]
+      },
+      {
+        "id": "edit",
+        "title": "Keep the board in view",
+        "detail": "Both editors use the existing board and timeline. Selecting a move stages the new opening, then Save applies it. A publication edit updates its listing in place.",
+        "comparisons": [
+          "replay-editors",
+          "public-opening"
+        ]
+      },
+      {
+        "id": "review",
+        "title": "Compare before merging",
+        "detail": "For conflicting copies, the player chooses one complete set of details. If the cloud changes during review, the device keeps its original copy for a fresh comparison.",
+        "comparisons": [
+          "merge-review"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "fixed",
+        "title": "The editor stays in Replay Analysis",
+        "detail": "The first prototype looked like a separate replay screen. The accepted design and implementation put the fields beside the existing board on desktop and below it in portrait."
+      },
+      {
+        "state": "fixed",
+        "title": "An outdated review preserves the device note",
+        "detail": "The first implementation could replace the device details before Firestore rejected a stale choice. The device now applies reviewed details after the revision check succeeds."
+      }
+    ],
+    "technical": [
+      "Screens show the app from the cited commit in headless Chromium 156.0.8078.4 with DPR 1 and default text size. The jobs used guest state or disposable emulator data.",
+      "All 18 replay-library checks and all nine targeted emulator checks passed across Chromium, Firefox and WebKit on the cited commit.",
+      "The tests checked Black and White thumbnail pixels, move 0, a previously copied link, and a second review after a stale merge was rejected."
+    ],
+    "human": "Bryan approved the revised sidebar design on November 18. The captures use resized desktop browsers. Physical phone review, real Google sign-in and a human screen-reader pass remain open.",
+    "followUp": "Check the portrait editor with the phone keyboard open and verify focus when returning to the saved replay row. Walk through a conflict on two signed-in devices.",
+    "sources": [
+      {
+        "label": "Reviewed application source",
+        "url": "https://github.com/byebyebryan/gomoku2d/commit/ffec605ba22bc4adbd361e399c8a0f9edb880cea"
+      },
+      {
+        "label": "Design review and decisions",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/ffec605ba22bc4adbd361e399c8a0f9edb880cea/docs/working/v0_6_4_replay_collection_review.md"
+      },
+      {
+        "label": "Replay collection contract",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/ffec605ba22bc4adbd361e399c8a0f9edb880cea/docs/working/v0_6_4_replay_collection_contract.md"
+      }
+    ]
   }
 ]

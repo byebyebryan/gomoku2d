@@ -1,8 +1,12 @@
 # Gomoku2D 0.6.4 implementation checkpoint
 
-Local candidate based on `f94dde6`. The published app is still 0.6.3.
+Local implementation at `ffec605`. The published app is still 0.6.3.
 [Approved UI review](v0_6_4_replay_collection_review.md) ·
 [Design and data contract](v0_6_4_replay_collection_contract.md)
+
+The candidate adds a Dev site design review at
+`/dev/reviews/replay-collections-064/` with frozen captures of the implemented
+screens. The [capture record](v0_6_4_ui_evidence/README.md) pins their source.
 
 ## What players can do
 
@@ -50,6 +54,7 @@ transaction. The implementation adds no hosted service or dependency.
 | Replay and profile browser rerun | 51 passed across all three engines before the merge fix. All 18 replay-library checks passed on the fixed candidate |
 | Emulator journeys after the merge fix | 69 passed across Chromium, Firefox and WebKit against isolated Auth and Firestore emulators, including the C22 stale-review regression in each engine |
 | Repeated emulator races | 60 passed across all three engines, five repetitions each for stale writes, account switch, reset and competing private details |
+| Dev site design review | 15 browser checks passed across all three engines. The build validated all seven captures and generated the direct-entry route |
 
 The browser scenarios cover a 64-replay v1 migration, a full 32-publication
 catalog, a stale same-origin tab, denied persistence, private metadata excluded
