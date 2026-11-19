@@ -1,0 +1,23 @@
+{
+  "base_commit": "93f0a04e9ad3b11e3be49304f3aeaf76105b2a8f",
+  "application_diff_files_sha256": {
+    "gomoku-web/src/replay/publish_replay_eligibility.ts": "95e1c01ece878d8d835d959b11b61354b40d9d9a87263a3a9f9f199a37a3f981",
+    "gomoku-web/src/replay/use_replay_match.ts": "df2305aee7e0589f1e66b80d547bd4d171d2863591379b39beb88a6c026814ce",
+    "gomoku-web/src/routes/GuideRoute.tsx": "a2ca875340f68ee7a1f84ac0e1e92a6b46dee58a7913690e22071f972ad473ce",
+    "gomoku-web/src/routes/ProfileRoute.module.css": "0ba3dcd446e86a7933f16d02c927a825daf0bf16cfd68979ad29578bed45f915",
+    "gomoku-web/src/routes/ProfileRoute.test.tsx": "6f0ff6c952d85df57f659532e20561ebaa25e63ebc1902c26dd6087b1117b941",
+    "gomoku-web/src/routes/ProfileRoute.tsx": "987ab618b50075740e6f904eafdcd4f335a7ab00bd377d5c08b48489ccb8e962",
+    "gomoku-web/src/routes/PublicProfileManager.tsx": "9858ebe48193a35add241c125b5323607741c0cd21be941a2d32502b1e0833cc",
+    "gomoku-web/src/routes/PublicSharing.test.tsx": "b67c788cf83e62f42ab3494131200590f423bd62b918857058f119a3e1b56c14",
+    "gomoku-web/src/routes/PublishReplayPanel.tsx": "180c640c6556ef73a6affbbd4a255596a2f35e8c2b41ee72617edc8109946978",
+    "gomoku-web/src/routes/ReplayRoute.module.css": "8c240556a00cc715bb63b92409623b95a7721618598521678d629b08b20151f2",
+    "gomoku-web/src/routes/ReplayRoute.tsx": "d106c916c68782fd3a8c99d22857615a9ce7c9eab14b528b06b4aaaf5a117767",
+    "gomoku-web/src/routes/SharingPanels.module.css": "11ca94cda422ccb25cc6828243783f08156238c7d9fa5032fd5e7e203edaea5b",
+    "gomoku-web/src/routes/StoredReplayRoute.tsx": "47080acc9769b1b2da56dfcddd034f697ddaaea5626f81cb4b4d684ef4c6fbb2",
+    "gomoku-web/src/routes/my_games_navigation.ts": "3901df38d5b198ba5520957698ac83d799496fcf8c20072251d3da33d9b8ec86",
+    "gomoku-web/src/routes/replay_draft_navigation.ts": "5cc658185e2b8df969812fb894d7b76d743d3369b9ccdac8907d9a702294a0da"
+  },
+  "candidate_fingerprint": "273e3dc7e6b694ed5241df18fadcbc526d14783d302785db7890fa6f32e9c5d9",
+  "baseline_release_sha": "48822e22f3ee7e5f32753e511ab83e10528e0d59",
+  "baseline_pages_artifact_sha256": "ad514f6717f43f9e80db12f41216b0788370b1b1f46afa61bf6f391420490bcc"
+}

@@ -285,6 +285,12 @@
   gap: 4px;
 }
 
+.publishContinuation {
+  padding: 12px;
+  border-inline-start: 2px solid var(--accent-border);
+  background: var(--surface-muted);
+}
+
 .settingLabel {
   margin: 0;
   color: var(--text);

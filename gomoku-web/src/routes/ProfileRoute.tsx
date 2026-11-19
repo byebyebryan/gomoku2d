@@ -1,5 +1,5 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { useDocumentTitle } from "../app/useDocumentTitle";
@@ -11,6 +11,8 @@ import { loadPrivateLibrary, savePrivateLibrary } from "../cloud/sharing_private
 import { replayLibraryStore } from "../replay/replay_library_store";
 import { replayLibrarySync } from "../replay/replay_library_sync";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
+import { publishReplaySide } from "../replay/publish_replay_eligibility";
+import { replayHistoryMayStillLoad } from "../replay/use_replay_match";
 import {
   savedMatchIsAfterReset,
   savedMatchPlayerForSide,
@@ -28,6 +30,16 @@ import {
 import { replayPlayerName, variantLabel } from "../replay/local_replay";
 import { clearReplayAnalysisCache } from "../replay/replay_analysis_cache";
 import { Icon } from "../ui/Icon";
+import { ReplayThumbnail } from "./ReplayThumbnail";
+import { profileRecordScroller } from "./profile_scroll";
+import {
+  myGamesChooserFromState,
+  myGamesControlId,
+  myGamesReturnFromState,
+  rememberMyGamesReplayReturn,
+  type MyGamesReplayReturn,
+} from "./my_games_navigation";
+import type { ReplayThumbnailPosition } from "../replay/replay_thumbnail";
 
 import styles from "./ProfileRoute.module.css";
 import { PublicProfileManager } from "./PublicProfileManager";
@@ -52,6 +64,15 @@ interface HistorySyncStatus {
 
 const HISTORY_VISIBLE_BATCH_SIZE = 16;
 const COMPACT_PROFILE_QUERY = "(max-width: 720px), (max-width: 980px) and (max-height: 500px)";
+
+function ownerPracticeHistoryMatch(match: SavedMatchV2): boolean {
+  return match.id.startsWith("portable-") && Boolean(match.replay_origin);
+}
+
+function routeStateFlag(state: unknown, flag: string): boolean {
+  return Boolean(state && typeof state === "object" && !Array.isArray(state)
+    && (state as Record<string, unknown>)[flag] === true);
+}
 
 function compactProfile(): boolean {
   return typeof window.matchMedia === "function" && window.matchMedia(COMPACT_PROFILE_QUERY).matches;
@@ -254,8 +275,102 @@ function cloudTitleText({
   return "Cloud profile";
 }
 
+interface HistoryRowProps {
+  match: SavedMatchV2;
+  localProfileId: string | null;
+  uid: string | null;
+  localDisplayName: string;
+  publishSide: SavedMatchSide | null;
+  onNavigate: (action: MyGamesReplayReturn["action"], match: SavedMatchV2, control: HTMLButtonElement) => void;
+}
+
+const HistoryRow = memo(function HistoryRow({
+  match,
+  localProfileId,
+  uid,
+  localDisplayName,
+  publishSide,
+  onNavigate,
+}: HistoryRowProps) {
+  const position = useMemo<ReplayThumbnailPosition>(() => ({
+    moves: match.move_cells,
+    opening: match.move_count,
+  }), [match.move_cells, match.move_count]);
+  const identity: HistoryIdentity = { localProfileId, profileUid: uid };
+  const localSide = historyLocalSide(match, identity);
+  const result = historyResultLabel(match, identity);
+  const opponent = historyOpponentLabel(match, identity, localDisplayName);
+  const date = historyDateLabel(match.saved_at);
+  const time = historyTimeLabel(match.saved_at);
+  const played = `played ${date} at ${time}`;
+
+  return (
+    <li className={styles.historyItem} data-match-id={match.id}>
+      <div className={styles.historyThumbnail}><ReplayThumbnail position={position} /></div>
+      <div className={styles.historySummary}>
+        <p
+          className={`${styles.historyResult} ${
+            result === "Win"
+              ? styles.historyResultWin
+              : result === "Loss"
+                ? styles.historyResultLoss
+                : styles.historyResultDraw
+          }`}
+        >
+          {result}
+        </p>
+        <p className={styles.historyOpponent}>{opponent}</p>
+      </div>
+      <div className={styles.historyGame}>
+        <div className={styles.historyGameTop}>
+          <p className={`${styles.historyField} ${styles.historyStone} ${
+            localSide === "black"
+              ? styles.historyStoneBlack
+              : localSide === "white"
+                ? styles.historyStoneWhite
+                : ""
+          }`}>
+            {historySideLabel(localSide)}
+          </p>
+          <p className={`${styles.historyField} ${styles.historyRule}`}>{variantLabel(match.ruleset)}</p>
+        </div>
+        <p className={`${styles.historyField} ${styles.historyMoves}`}>{`Moves ${match.move_count}`}</p>
+      </div>
+      <p className={styles.historyPlayed}>
+        <span className={styles.historyDate}>{date}</span>
+        <span className={styles.historyTime}>{time}</span>
+      </p>
+      <div className={styles.historyActions}>
+        <button
+          aria-label={`Inspect game ${opponent}, ${played}`}
+          className={`uiAction uiActionSecondary ${styles.historyReplayAction}`}
+          id={myGamesControlId(match.id, "inspect")}
+          onClick={(event) => onNavigate("inspect", match, event.currentTarget)}
+          type="button"
+        >
+          <Icon name="replay" />
+          <span className="uiActionLabel">Inspect</span>
+        </button>
+        {publishSide ? (
+          <button
+            aria-label={`Publish game ${opponent}, ${played}`}
+            className={`uiAction uiActionNeutral ${styles.historyPublishAction}`}
+            id={myGamesControlId(match.id, "publish")}
+            onClick={(event) => onNavigate("publish", match, event.currentTarget)}
+            type="button"
+          >
+            <Icon name="publish" />
+            <span className="uiActionLabel">Publish</span>
+          </button>
+        ) : null}
+      </div>
+    </li>
+  );
+});
+
 export function ProfileRoute() {
   useDocumentTitle("Profile");
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const activeTab = requestedTab === "public" || requestedTab === "saved" ? requestedTab : "games";
@@ -267,6 +382,7 @@ export function ProfileRoute() {
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_VISIBLE_BATCH_SIZE);
   const [isCompact, setIsCompact] = useState(compactProfile);
   const [accountOpen, setAccountOpen] = useState(() => !compactProfile());
+  const activeHistory = useActiveHistory();
   const {
     cloudAuth,
     cloudHistory,
@@ -278,7 +394,10 @@ export function ProfileRoute() {
     localProfile: profile,
     pendingCloudMatchCount,
     sourceHistory,
-  } = useActiveHistory();
+  } = activeHistory;
+  const uid = cloudAuth.status === "signed_in" ? cloudAuth.user?.uid ?? null : null;
+  const returnOrigin = useMemo(() => myGamesReturnFromState(location.state, uid), [location.state, uid]);
+  const historyLoading = replayHistoryMayStillLoad(activeHistory);
   const cloudPromotion = useStore(cloudPromotionStore, (state) => state);
 
   useEffect(() => {
@@ -313,6 +432,22 @@ export function ProfileRoute() {
     localProfileId: profile?.id,
     profileUid: cloudAuth.status === "signed_in" ? cloudAuth.user?.uid : null,
   };
+  const focusGamesTabRequested = routeStateFlag(location.state, "myGamesFocusTab");
+  const chooserRequested = !focusGamesTabRequested && myGamesChooserFromState(location.state, uid);
+  const firstPublishableIndex = chooserRequested && uid !== null
+    ? history.findIndex((match) => publishReplaySide(
+      match,
+      uid,
+      profile?.id ?? null,
+      ownerPracticeHistoryMatch(match),
+    ) !== null)
+    : -1;
+  const returnFocusKey = returnOrigin
+    ? `${location.key}:${returnOrigin.matchId}:${returnOrigin.action}`
+    : null;
+  const restoredReturnRef = useRef<string | null>(null);
+  const chooserFocusRef = useRef<string | null>(null);
+  const tabFocusRef = useRef<string | null>(null);
   const stats = playerStatsFromHistory({
     identity: historyIdentity,
     replayHistory: history,
@@ -397,6 +532,137 @@ export function ProfileRoute() {
               : cloudHistory.syncStatus === "error" || hasPendingCloudMatchError
                 ? "Resolve the game history sync error before sharing statistics."
                 : "Your complete game history is not ready to share.";
+
+  const navigateFromHistory = useCallback((
+    action: MyGamesReplayReturn["action"],
+    match: SavedMatchV2,
+    control: HTMLButtonElement,
+  ): void => {
+    const currentAuth = cloudAuthStore.getState();
+    const currentUid = currentAuth.status === "signed_in" ? currentAuth.user?.uid ?? null : null;
+    if (action === "publish" && (
+      !uid
+      || currentUid !== uid
+      || publishReplaySide(match, uid, profile?.id ?? null, ownerPracticeHistoryMatch(match)) === null
+    )) return;
+
+    const origin: MyGamesReplayReturn = {
+      uid,
+      matchId: match.id,
+      action,
+      visible: visibleHistoryCount,
+      scrollTop: Math.max(0, profileRecordScroller(control)?.scrollTop ?? 0),
+    };
+    rememberMyGamesReplayReturn(origin);
+    navigate(`/replay/${match.id}`, {
+      state: {
+        myGamesReplayReturn: origin,
+        ...(action === "publish" && uid
+          ? { myGamesPublishIntent: { uid, matchId: match.id } }
+          : {}),
+      },
+    });
+  }, [navigate, profile?.id, uid, visibleHistoryCount]);
+
+  useEffect(() => {
+    if (focusGamesTabRequested || !returnOrigin || !returnFocusKey) return;
+    if (activeTab !== "games") return;
+    if (restoredReturnRef.current === returnFocusKey) return;
+
+    const index = history.findIndex((match) => match.id === returnOrigin.matchId);
+    if (index < 0) {
+      if (historyLoading) return;
+      restoredReturnRef.current = returnFocusKey;
+      const frame = window.requestAnimationFrame(() => {
+        document.getElementById("games-tab")?.focus({ preventScroll: true });
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    const neededCount = Math.max(returnOrigin.visible, index + 1);
+    if (visibleHistoryCount < neededCount) {
+      setVisibleHistoryCount(neededCount);
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const control = document.getElementById(myGamesControlId(returnOrigin.matchId, returnOrigin.action));
+      if (!(control instanceof HTMLElement)) {
+        restoredReturnRef.current = returnFocusKey;
+        document.getElementById("games-tab")?.focus({ preventScroll: true });
+        return;
+      }
+      const scroller = profileRecordScroller(control);
+      if (scroller) scroller.scrollTop = returnOrigin.scrollTop;
+      control.focus({ preventScroll: true });
+      restoredReturnRef.current = returnFocusKey;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    activeTab,
+    focusGamesTabRequested,
+    history,
+    historyLoading,
+    returnFocusKey,
+    returnOrigin,
+    visibleHistoryCount,
+  ]);
+
+  useEffect(() => {
+    if (!chooserRequested || !uid) return;
+    if (activeTab !== "games") {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.delete("tab");
+        return next;
+      });
+      return;
+    }
+    if (historyLoading || chooserFocusRef.current === location.key) return;
+
+    if (firstPublishableIndex >= visibleHistoryCount) {
+      setVisibleHistoryCount(firstPublishableIndex + 1);
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const firstPublishable = firstPublishableIndex >= 0 ? history[firstPublishableIndex] : null;
+      const control = firstPublishable
+        ? document.getElementById(myGamesControlId(firstPublishable.id, "publish"))
+        : document.getElementById("games-tab");
+      control?.focus({ preventScroll: true });
+      chooserFocusRef.current = location.key;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    activeTab,
+    chooserRequested,
+    firstPublishableIndex,
+    history,
+    historyLoading,
+    location.key,
+    setSearchParams,
+    uid,
+    visibleHistoryCount,
+  ]);
+
+  useEffect(() => {
+    if (!focusGamesTabRequested) return;
+    if (activeTab !== "games") {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.delete("tab");
+        return next;
+      });
+      return;
+    }
+    if (tabFocusRef.current === location.key) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("games-tab")?.focus({ preventScroll: true });
+      tabFocusRef.current = location.key;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab, focusGamesTabRequested, location.key, setSearchParams]);
 
   function selectTab(tab: "games" | "saved" | "public"): void {
     if (tab === activeTab) return;
@@ -705,7 +971,13 @@ export function ProfileRoute() {
           <div id={`${activeTab}-records`} role="tabpanel" aria-labelledby={`${activeTab}-tab`}
             className={activeTab === 'games' ? styles.recordContents : styles.libraryContents}>
           {activeTab === 'public' ? (
-            <PublicProfileManager stats={stats} statsReady={statsReady} statsBlocker={statsBlocker} />
+            <PublicProfileManager
+              history={history}
+              historyLoading={historyLoading}
+              stats={stats}
+              statsReady={statsReady}
+              statsBlocker={statsBlocker}
+            />
           ) : activeTab === 'saved' ? <ReplayLibraryPanel /> : <>
           <div className={styles.summaryGrid}>
             <article className={styles.summaryTile}>
@@ -733,12 +1005,10 @@ export function ProfileRoute() {
           >
             {history.length > 0 ? (
               <>
-              <span className={styles.historyHeadLabel}>Result</span>
-              <span className={styles.historyHeadLabel}>Opponent</span>
-              <span className={`${styles.historyHeadLabel} ${styles.historyHeadSide}`}>Side</span>
-              <span className={`${styles.historyHeadLabel} ${styles.historyHeadRule}`}>Rule</span>
-              <span className={`${styles.historyHeadLabel} ${styles.historyHeadMoves}`}>Moves</span>
-              <span className={`${styles.historyHeadLabel} ${styles.historyHeadPlayed}`}>Played</span>
+              <span className={styles.historyHeadLabel}>Board</span>
+              <span className={styles.historyHeadLabel}>Result / Opponent</span>
+              <span className={styles.historyHeadLabel}>Game</span>
+              <span className={styles.historyHeadLabel}>Played</span>
               <span className={styles.historyHeadSpacer} />
               </>
             ) : null}
@@ -746,65 +1016,22 @@ export function ProfileRoute() {
           <div className={styles.historyBody}>
             {history.length > 0 ? (
               <ol className={styles.historyList}>
-                {visibleHistory.map((match) => {
-                  const localSide = historyLocalSide(match, historyIdentity);
-                  const result = historyResultLabel(match, historyIdentity);
-
-                  return (
-                    <li className={styles.historyItem} key={match.id}>
-                      <div className={styles.historySummary}>
-                        <p
-                          className={`${styles.historyResult} ${
-                            result === "Win"
-                              ? styles.historyResultWin
-                              : result === "Loss"
-                                ? styles.historyResultLoss
-                                : styles.historyResultDraw
-                          }`}
-                        >
-                          {result}
-                        </p>
-                        <p className={styles.historyOpponent}>
-                          {historyOpponentLabel(match, historyIdentity, localDisplayName)}
-                        </p>
-                      </div>
-                      <div className={styles.historyDetails}>
-                        <p
-                          className={`${styles.historyField} ${styles.historyStone} ${styles.historySide} ${
-                            localSide === "black"
-                              ? styles.historyStoneBlack
-                              : localSide === "white"
-                                ? styles.historyStoneWhite
-                                : ""
-                          }`}
-                        >
-                          {historySideLabel(localSide)}
-                        </p>
-                        <p className={`${styles.historyField} ${styles.historyRule}`}>
-                          {variantLabel(match.ruleset)}
-                        </p>
-                        <p className={`${styles.historyField} ${styles.historyMoves}`}>
-                          {`Moves ${match.move_count}`}
-                        </p>
-                        <p className={`${styles.historyPlayed} ${styles.historyPlayedField}`}>
-                          <span className={styles.historyDate}>{historyDateLabel(match.saved_at)}</span>
-                          <span className={styles.historyTime}>{historyTimeLabel(match.saved_at)}</span>
-                        </p>
-                      </div>
-                      <button
-                        aria-label="Inspect"
-                        className={`uiAction uiActionSecondary ${styles.historyReplayAction}`}
-                        onClick={() => {
-                          navigate(`/replay/${match.id}`);
-                        }}
-                        type="button"
-                      >
-                        <Icon className="uiIconDesktop" name="replay" />
-                        <span className="uiActionLabel">Inspect</span>
-                      </button>
-                    </li>
-                  );
-                })}
+                {visibleHistory.map((match) => (
+                  <HistoryRow
+                    key={match.id}
+                    match={match}
+                    localProfileId={profile?.id ?? null}
+                    uid={uid}
+                    localDisplayName={localDisplayName}
+                    publishSide={uid ? publishReplaySide(
+                      match,
+                      uid,
+                      profile?.id ?? null,
+                      ownerPracticeHistoryMatch(match),
+                    ) : null}
+                    onNavigate={navigateFromHistory}
+                  />
+                ))}
               </ol>
             ) : (
               <div className={styles.historyEmpty}>

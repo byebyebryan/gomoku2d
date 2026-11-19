@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ComponentProps } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { useDocumentTitle } from "../app/useDocumentTitle";
@@ -19,6 +19,7 @@ import {
 } from "../replay/replay_analysis_overlays";
 import { useReplayAnalysis } from "../replay/use_replay_analysis";
 import { useReplayMatch } from "../replay/use_replay_match";
+import { publishReplaySide } from "../replay/publish_replay_eligibility";
 import { useReplayWinningCells } from "../replay/use_replay_winning_cells";
 import { Icon } from "../ui/Icon";
 import type { SavedMatchV2 } from "../match/saved_match";
@@ -35,6 +36,7 @@ import { portableReplayFingerprint } from "../replay/portable_replay_codec";
 import { localMatchSessionStore } from "../game/local_match_session";
 import { botLabel } from "../core/bot_config";
 import { publicProfilePath, type PublicReplayReturn } from "./public_player_navigation";
+import { myGamesPublishIntentFromState, myGamesReturnFromState } from "./my_games_navigation";
 
 import styles from "./ReplayRoute.module.css";
 import {
@@ -63,17 +65,35 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
 }) {
   useDocumentTitle("Replay Analysis");
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const replayFloor = match.undo_floor;
   const settings = useStore(localProfileStore, (state) => state.settings);
-  const [moveIndex, setMoveIndex] = useState(defaultReplayMoveIndex(0));
+  const localProfileId = useStore(localProfileStore, (state) => state.profile?.id ?? null);
+  const signedInUid = useStore(cloudAuthStore, (state) => state.status === "signed_in" ? state.user?.uid ?? null : null);
+  const ownerPractice = Boolean(preserveNames && publishEligible && source?.practice);
+  const canPublish = (publishEligible ?? !preserveNames)
+    && Boolean(publishReplaySide(match, signedInUid, localProfileId, ownerPractice));
+  const launch = myGamesPublishIntentFromState(location.state);
+  const launchAllowed = launch && launch.matchId === match.id && launch.uid === signedInUid && canPublish;
+  const origin = myGamesReturnFromState(location.state, signedInUid);
+  const historyReturn = origin?.matchId === match.id ? origin : undefined;
+  const inspection = myGamesPublishIntentFromState(location.state, "myGamesInspectTarget");
+  const inspectionMove = inspection?.matchId === match.id && inspection.uid === signedInUid ? inspection.inspectMove : undefined;
+  const startMove = Math.min(match.move_count, launchAllowed ? launch.inspectMove ?? match.move_count
+    : inspectionMove ?? (historyReturn ? match.move_count : initialMoveIndex ?? defaultReplayMoveIndex(match.move_count)));
+  const [moveIndex, setMoveIndex] = useState(startMove);
   const [autoplaying, setAutoplaying] = useState(false);
   const [branching, setBranching] = useState(false);
   const [branchError, setBranchError] = useState("");
-  const [sidebar, setSidebar] = useState<"replay" | "share" | "publish" | "details">(details?.kind === "public" ? "details" : "replay");
+  const [sidebar, setSidebar] = useState<"replay" | "share" | "publish" | "details">(
+    launchAllowed ? "publish" : details?.kind === "public" ? "details" : "replay",
+  );
+  const [publishEntry, setPublishEntry] = useState<{ uid: string; move: number; fromRow: boolean } | null>(
+    launchAllowed ? { uid: launch.uid, move: startMove, fromRow: launch.inspectMove === undefined } : null,
+  );
   const [detailsNotice, setDetailsNotice] = useState("");
-  const signedInUid = useStore(cloudAuthStore, (state) => state.status === "signed_in" ? state.user?.uid : null);
-  const canPublish = Boolean((publishEligible ?? !preserveNames) && signedInUid);
+  const publishOpen = sidebar === "publish" && canPublish && publishEntry?.uid === signedInUid;
   const sidebarOpen = sidebar !== "replay";
   const deckRef = useRef<HTMLElement>(null);
   const detailsTriggerRef = useRef<HTMLButtonElement>(null);
@@ -86,9 +106,9 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
 
   useEffect(() => {
-    setMoveIndex(initialMoveIndex ?? defaultReplayMoveIndex(match.move_count));
+    setMoveIndex(startMove);
     setAutoplaying(false);
-  }, [match.id, match.move_count, initialMoveIndex]);
+  }, [match.id, startMove]);
 
   useEffect(() => {
     if (!match || !autoplaying) {
@@ -122,8 +142,17 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   }, [sidebar, sidebarOpen]);
 
   useEffect(() => {
-    if (!canPublish && sidebar === "publish") setSidebar("replay");
-  }, [canPublish, sidebar]);
+    if (inspectionMove === undefined) return;
+    publishTriggerRef.current?.focus({ preventScroll: true });
+    publishTriggerRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [inspectionMove]);
+
+  useEffect(() => {
+    if (sidebar === "publish" && !publishOpen) {
+      setPublishEntry(null);
+      setSidebar("replay");
+    }
+  }, [publishOpen, sidebar]);
 
   function canLeaveDetails(): boolean {
     if (draftState.current?.saving) return false;
@@ -146,10 +175,38 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   }, [sidebar]);
 
   const openSidebar = (panel: "share" | "publish" | "details") => {
+    if (panel === "publish") {
+      if (!canPublish || !signedInUid) return;
+      setPublishEntry({ uid: signedInUid, move: frame.moveIndex, fromRow: false });
+    }
     deckScrollRef.current = deckRef.current?.scrollTop ?? 0;
     setAutoplaying(false);
     setDetailsNotice("");
     setSidebar(panel);
+  };
+
+  const closePublish = () => {
+    if (publishEntry?.fromRow) {
+      navigate("/profile", { replace: true, state: { myGamesReplayReturn: historyReturn, myGamesFocusTab: !historyReturn } });
+    } else if (publishEntry) {
+      setMoveIndex(publishEntry.move);
+      setPublishEntry(null);
+      setSidebar("replay");
+    }
+  };
+
+  const manageProfileForPublish = () => {
+    if (!publishOpen || !publishEntry) return;
+    const { status, user } = cloudAuthStore.getState();
+    if (status !== "signed_in" || user?.uid !== publishEntry.uid) return;
+    navigate("/profile?tab=public", { replace: true, state: {
+      myGamesPublishIntent: {
+        uid: publishEntry.uid,
+        matchId: match.id,
+        ...(publishEntry.fromRow ? {} : { inspectMove: publishEntry.move }),
+      },
+      myGamesReplayReturn: historyReturn,
+    } });
   };
 
   const frame = buildLocalReplayFrame(match, moveIndex, () => coreWinningCells);
@@ -218,8 +275,14 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     timelineStyle,
   };
 
+  if (launch && !launchAllowed) return <Navigate to="/profile" replace state={{ myGamesFocusTab: true }} />;
+
   return (
-    <main className={styles.page} onClickCapture={(event) => {
+    <main className={styles.page} onKeyDown={(event) => {
+      if (event.key !== "Escape" || sidebar !== "replay" || !historyReturn) return;
+      event.preventDefault();
+      navigate("/profile", { replace: true, state: { myGamesReplayReturn: historyReturn } });
+    }} onClickCapture={(event) => {
       if (sidebar !== "details" || event.button !== 0 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
       const link = (event.target as Element).closest("a");
       if (link && link.target !== "_blank" && !canLeaveDetails()) {
@@ -232,7 +295,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
           <p className="uiPageEyebrow">{contextLabel ?? (preserveNames ? "Shared replay" : "Saved match")}</p>
           <h1 className={styles.title}>Replay Analysis</h1>
         </div>
-        <div className={`${styles.headerActions} ${publicReplayReturn ? styles.headerActionsWithReturn : ""}`}>
+        {!publishOpen && <div className={`${styles.headerActions} ${publicReplayReturn ? styles.headerActionsWithReturn : ""}`}>
           {publicReplayReturn ? (
             <button
               aria-label="Return to public profile"
@@ -248,9 +311,9 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               <span className={`uiActionLabel ${styles.returnActionCompact}`} aria-hidden="true">Return</span>
             </button>
           ) : null}
-          <Link aria-label={privateReplayReturn ? "Saved replays" : publicReplayReturn ? "My profile" : "Profile"}
+          <Link aria-label={privateReplayReturn ? "Saved replays" : publicReplayReturn ? "My profile" : historyReturn ? "My games" : "Profile"}
             className="uiAction uiActionSecondary" to={privateReplayReturn?.to ?? "/profile"}
-            state={privateReplayReturn?.state}
+            state={privateReplayReturn?.state ?? (historyReturn && { myGamesReplayReturn: historyReturn })}
             onClick={(event) => {
               if (!(details?.kind === "public" && details.onCancel) || event.button !== 0
                 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
@@ -258,13 +321,13 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               details.onCancel();
             }}>
             <Icon className="uiIconDesktop" name="profile" />
-            <span className="uiActionLabel">{privateReplayReturn ? "Saved replays" : publicReplayReturn ? "My profile" : "Profile"}</span>
+            <span className="uiActionLabel">{privateReplayReturn ? "Saved replays" : publicReplayReturn ? "My profile" : historyReturn ? "My games" : "Profile"}</span>
           </Link>
           <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
             <Icon className="uiIconDesktop" name="home" />
             <span className="uiActionLabel">Home</span>
           </Link>
-        </div>
+        </div>}
       </header>
 
       <section className={`${styles.layout} ${sidebarOpen ? styles.layoutSharing : ""}`}>
@@ -312,8 +375,14 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               }
             }} />}
           <ShareReplayPanel match={match} moveIndex={frame.moveIndex} source={source} open={sidebar === "share"} onClose={() => setSidebar("replay")} />
-          <PublishReplayPanel match={match} source={source} moveIndex={frame.moveIndex} eligible={canPublish}
-            open={sidebar === "publish"} onClose={() => setSidebar("replay")} />
+          {publishOpen && publishEntry && <PublishReplayPanel
+            key={`${publishEntry.uid}:${match.id}`} match={match} source={source} moveIndex={frame.moveIndex}
+            eligible open onClose={closePublish} entryUid={publishEntry.uid} entryMove={publishEntry.move}
+            ownerPractice={ownerPractice} backToMyGames={publishEntry.fromRow}
+            playback={<ReplayPlaybackPanel {...playbackProps} selectionOnly />}
+            onMoveChange={(move) => { setAutoplaying(false); setMoveIndex(move); }}
+            onManageProfile={manageProfileForPublish}
+          />}
         </aside>
       </section>
     </main>
@@ -322,22 +391,38 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
 
 export function ReplayRoute() {
   const { matchId } = useParams<{ matchId: string }>();
+  const location = useLocation();
+  const auth = useStore(cloudAuthStore);
+  const launch = myGamesPublishIntentFromState(location.state);
+  if (launch && auth.status === "loading") return <ReplayUnavailable loading />;
+  if (launch && (launch.matchId !== matchId || auth.status !== "signed_in" || auth.user?.uid !== launch.uid)) {
+    return <Navigate to="/profile" replace state={{ myGamesFocusTab: true }} />;
+  }
   if (matchId?.startsWith(PUBLISHED_EDIT_PREFIX)) {
     return <PublishedReplayEditRoute fingerprint={matchId.slice(PUBLISHED_EDIT_PREFIX.length)} />;
   }
-  return matchId?.startsWith("portable-") ? <StoredReplayRoute fingerprint={matchId.slice(9)} /> : <PrivateReplayRoute matchId={matchId} />;
+  const key = launch ? location.key : matchId;
+  return matchId?.startsWith("portable-") ? <StoredReplayRoute key={key} fingerprint={matchId.slice(9)} /> : <PrivateReplayRoute key={key} matchId={matchId} />;
 }
 
 function PrivateReplayRoute({ matchId }: { matchId?: string }) {
+  const location = useLocation();
   const { localDisplayName, match, replayMayStillLoad } = useReplayMatch(matchId);
-  if (!match) return (
+  if (match) return <ReplayViewer key={matchId} match={match} localDisplayName={localDisplayName} />;
+  if (!replayMayStillLoad && myGamesPublishIntentFromState(location.state)) {
+    return <Navigate to="/profile" replace state={{ myGamesFocusTab: true }} />;
+  }
+  return <ReplayUnavailable loading={replayMayStillLoad} />;
+}
+
+function ReplayUnavailable({ loading }: { loading: boolean }) {
+  return (
     <main className={styles.page}>
       <section className={`${styles.notFound} uiPanel`}>
-        <h1 className={styles.title}>{replayMayStillLoad ? "Loading replay" : "Replay unavailable"}</h1>
-        <p className={styles.notFoundText}>{replayMayStillLoad ? "Checking saved match history." : "This replay is no longer available."}</p>
+        <h1 className={styles.title}>{loading ? "Loading replay" : "Replay unavailable"}</h1>
+        <p className={styles.notFoundText}>{loading ? "Checking saved match history." : "This replay is no longer available."}</p>
         <Link className="uiAction uiActionSecondary" to="/profile">Back to Profile</Link>
       </section>
     </main>
   );
-  return <ReplayViewer key={matchId} match={match} localDisplayName={localDisplayName} />;
 }

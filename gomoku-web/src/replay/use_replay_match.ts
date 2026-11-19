@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import type { SavedMatchV2 } from "../match/saved_match";
 import { localProfileStore } from "../profile/local_profile_store";
-import { useActiveHistory } from "../profile/use_active_history";
+import { useActiveHistory, type ActiveHistoryView } from "../profile/use_active_history";
 
 import { replayUndoFloor } from "./local_replay";
 
@@ -13,22 +13,8 @@ export interface ReplayMatchState {
   replayMayStillLoad: boolean;
 }
 
-export function useReplayMatch(matchId: string | undefined): ReplayMatchState {
-  const {
-    cloudAuth,
-    cloudHistory,
-    cloudProfile,
-    cloudUserCache,
-    history,
-    localDisplayName,
-  } = useActiveHistory();
-
-  useEffect(() => {
-    localProfileStore.getState().ensureLocalProfile();
-  }, []);
-
-  const match = history.find((entry) => entry.id === matchId) ?? null;
-  const replayMayStillLoad = !match && (
+export function replayHistoryMayStillLoad({ cloudAuth, cloudHistory, cloudProfile, cloudUserCache }: ActiveHistoryView): boolean {
+  return (
     (cloudAuth.isConfigured && cloudAuth.status === "loading")
     || (
       cloudAuth.status === "signed_in"
@@ -42,11 +28,21 @@ export function useReplayMatch(matchId: string | undefined): ReplayMatchState {
       )
     )
   );
+}
+
+export function useReplayMatch(matchId: string | undefined): ReplayMatchState {
+  const activeHistory = useActiveHistory();
+  const { history, localDisplayName } = activeHistory;
+  useEffect(() => {
+    localProfileStore.getState().ensureLocalProfile();
+  }, []);
+
+  const match = history.find((entry) => entry.id === matchId) ?? null;
 
   return {
     localDisplayName,
     match,
     replayFloor: match ? replayUndoFloor(match) : 0,
-    replayMayStillLoad,
+    replayMayStillLoad: !match && replayHistoryMayStillLoad(activeHistory),
   };
 }

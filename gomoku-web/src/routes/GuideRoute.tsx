@@ -390,7 +390,7 @@ export function GuideRoute() {
             <dl className={styles.actionGuide}>
               <div><dt><Icon name="share" />Share replay</dt><dd>Create a game link. Review the names and optional profile links before copying. Anyone with the link can replay it.</dd></div>
               <div><dt><Icon name="save" />Save replay</dt><dd>Keep a private study copy in Saved replays. Open it and choose Edit details to add a title, note or opening move.</dd></div>
-              <div><dt><Icon name="publish" />Publish replay</dt><dd>Add an eligible game you played to your public profile. Manage its public title and opening from Published games.</dd></div>
+              <div><dt><Icon name="publish" />Publish replay</dt><dd>Sign in, open My games, and choose Publish on an eligible game. Set its title and opening before publishing. You can change both from Published games.</dd></div>
               <div><dt><Icon name="plus" />Play From Here</dt><dd>Start a new game from an earlier position against your selected bot. When finished, it appears in My games like any other game.</dd></div>
             </dl>
             <details className={styles.sharingDetails}>

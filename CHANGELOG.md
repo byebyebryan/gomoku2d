@@ -12,6 +12,16 @@ their own section.
 
 ## [Unreleased]
 
+### Web
+
+- Show the final board in My games and keep Inspect and Publish visible in
+  compact history rows. Opening a game still starts at that final position.
+- Start a publish draft from its game row, and resume the same game after
+  enabling a public profile. Choose the opening while keeping the draft title,
+  then confirm publication separately. Keyboard focus follows the setup and
+  draft, and Escape can close the opening picker from the board.
+- Jump to the matching listing after publishing or finding an existing copy.
+
 ## [0.6.4] - 2026-11-18
 
 **Theme: keep the positions worth studying.**

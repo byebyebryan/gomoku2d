@@ -404,12 +404,12 @@ test("playing from a shared frame records a regular game and keeps its source at
   await page.goto("/profile");
   await expect(page.getByRole("tab", { name: "My games", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("heading", { name: "Practice games", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /^Inspect game / })).toHaveCount(1);
   await expectProfileStat(page, "Matches", 1);
   await expectProfileStat(page, "Wins", 1);
   await expectNoHorizontalOverflow(page);
   await page.reload();
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /^Inspect game / })).toHaveCount(1);
   await expectProfileStat(page, "Matches", 1);
   await captureChromiumScreenshot(page, "../docs/working/v0_6_evidence/portable_replay_practice_mobile.png", testInfo);
 
@@ -425,7 +425,7 @@ test("playing from a shared frame records a regular game and keeps its source at
 
   await page.getByRole("tab", { name: "My games", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Practice games", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /^Inspect game / })).toHaveCount(1);
   await expectProfileStat(page, "Matches", 1);
   await expectProfileStat(page, "Wins", 1);
 });

@@ -295,7 +295,8 @@ Primary elements:
 - optional linked cloud identity
 - cloud promotion/import status when signed in
 - My games, Saved replays and Public profile tabs in the main record area
-- summary stats strip and replay entry points in My games
+- summary stats strip and final-board thumbnails in My games, with Inspect
+  and Publish actions where the game is eligible
 - private saved study copies with static board previews in Saved replays
 - explicit public name/visibility, optional dated stats snapshot and publication
   management in Public profile (`/profile?tab=public`)
@@ -318,11 +319,18 @@ Opening or canceling confirmation performs no write; editing the name or
 switching account clears it. It follows the existing disable/reset interaction
 language and does not opt into statistics automatically.
 
+Publish from My games opens Replay Analysis at the final move with the publish
+sidebar ready. **Choose opening** stages a position and keeps a custom title.
+If the profile is off, setup offers **Continue publishing this game** once it
+is enabled. Publication still requires a separate confirmation. Back restores
+the originating row or inspected move. **View published games** focuses the
+matching listing after publication or when the game is already listed.
+
 On mobile, keep name/status and sign-in/out visible, with secondary account and
 reset controls under Profile controls. Desktop keeps those controls expanded.
-The three record tabs share one row in compact layouts; desktop tabs can wrap
-with enlarged text. My games uses compact rows in portrait and short landscape,
-keeping account and Inspect actions within the viewport. Statistics reflow with
+The three record tabs share one row where space permits and can wrap with
+enlarged text. My games shows the action labels and played time in compact rows.
+Short landscape places actions at the trailing edge. Statistics reflow with
 enlarged text. My games sync status belongs to My games. Saved entries use compact
 paired Inspect and Remove actions while retaining complete accessible names.
 

@@ -318,8 +318,7 @@ test("C11: public opt-in, visitor replay, unpublish, disable, re-enable, and cop
   await expect(publishTrigger.locator("svg")).toHaveCount(1);
   await page.getByRole("button", { name: "Auto play", exact: true }).click();
   await publishTrigger.click();
-  const backToReplay = page.getByRole("button", { name: "Back to replay", exact: true });
-  await expect(backToReplay).toBeFocused();
+  await expect(page.getByRole("heading", { name: "Publish replay", exact: true })).toBeFocused();
   await expect(page.getByRole("button", { name: "Next move", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Share replay", exact: true })).toHaveCount(0);
   expect(await canvas!.evaluate((element) => element.isConnected)).toBe(true);

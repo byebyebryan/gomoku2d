@@ -69,7 +69,7 @@ test("D01: developer entry ignores a persisted signed-in session and returning r
     .click();
   await developer.getByRole("link", { name: "Profile", exact: true }).click();
   await expect(developer.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
-  await expect(developer.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(1);
+  await expect(developer.getByRole("button", { name: /^Inspect / })).toHaveCount(1);
 });
 
 test("D02: a pending private snapshot survives game-to-developer navigation", async ({

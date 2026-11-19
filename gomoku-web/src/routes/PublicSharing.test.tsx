@@ -9,6 +9,7 @@ import { localProfileStore } from "../profile/local_profile_store";
 import type { PublicCatalogEntry, PublicCatalogPageSnapshot, PublicProfileSnapshot } from "../cloud/sharing_public";
 import { portableReplayFromSavedMatch } from "../replay/portable_replay";
 import { encodePortableReplay } from "../replay/portable_replay_codec";
+import { publishReplaySide } from "../replay/publish_replay_eligibility";
 
 import { PublicPlayerRoute } from "./PublicPlayerRoute";
 import { PublicProfileManager } from "./PublicProfileManager";
@@ -713,6 +714,89 @@ describe("public profile routes and controls", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("catalog is full");
     expect(sharing.loadCatalogPage).toHaveBeenCalledTimes(4);
     expect(sharing.saveCatalogPage).not.toHaveBeenCalled();
+  });
+
+  it("stages an opening locally and keeps the entered title through cancel and discard confirmation", async () => {
+    sharing.loadPublicProfile.mockResolvedValue(publicProfile());
+    const close = vi.fn();
+    const match = winningMatch();
+    function Draft() {
+      const [move, setMove] = useState(9);
+      return <PublishReplayPanel match={match} eligible open onClose={close} entryMove={9} moveIndex={move}
+        onMoveChange={setMove} playback={<input type="range" aria-label="Replay timeline" value={move}
+          max={9} onChange={(event) => setMove(Number(event.target.value))} />} />;
+    }
+    render(<MemoryRouter><Draft /></MemoryRouter>);
+    const input = await screen.findByRole("textbox", { name: "Public replay title" });
+    expect(input).toHaveValue("Replay after move 9");
+    fireEvent.click(screen.getByRole("button", { name: "Choose opening" }));
+    fireEvent.change(screen.getByRole("slider", { name: "Replay timeline" }), { target: { value: "0" } });
+    fireEvent.click(screen.getByRole("button", { name: "Use move 0" }));
+    expect(screen.getByRole("textbox", { name: "Public replay title" })).toHaveValue("Replay after move 0");
+    fireEvent.change(screen.getByRole("textbox", { name: "Public replay title" }), { target: { value: "Keep this title" } });
+    fireEvent.click(screen.getByRole("button", { name: "Choose opening" }));
+    fireEvent.change(screen.getByRole("slider", { name: "Replay timeline" }), { target: { value: "4" } });
+    fireEvent.keyDown(screen.getByRole("slider"), { key: "Escape" });
+    expect(screen.getByRole("textbox", { name: "Public replay title" })).toHaveValue("Keep this title");
+    expect(screen.getByRole("group", { name: "Publication preview" })).toHaveTextContent("Move 0 / 9");
+    fireEvent.click(screen.getByRole("button", { name: "Back to replay" }));
+    expect(screen.getByRole("button", { name: "Keep editing" })).toHaveFocus();
+    expect(close).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Discard draft" }));
+    expect(close).toHaveBeenCalledOnce();
+    expect(sharing.loadPublicProfile).toHaveBeenCalledOnce();
+    expect(sharing.loadCatalogPage).not.toHaveBeenCalled();
+    expect(sharing.saveCatalogPage).not.toHaveBeenCalled();
+  });
+
+  it("discards a late publish preview when the bound owner changes without reading the new profile", async () => {
+    let resolvePreview!: (value: PublicProfileSnapshot) => void;
+    sharing.loadPublicProfile.mockImplementation(() => new Promise<PublicProfileSnapshot>((resolve) => { resolvePreview = resolve; }));
+    render(<MemoryRouter><PublishReplayPanel match={winningMatch()} eligible open moveIndex={9}
+      entryUid={signedInUser.uid} onClose={() => {}} /></MemoryRouter>);
+    await waitFor(() => expect(sharing.loadPublicProfile).toHaveBeenCalledWith(signedInUser.uid));
+    act(() => setSignedIn("second-owner"));
+    await act(async () => resolvePreview(publicProfile()));
+    expect(screen.queryByRole("button", { name: "Publish this replay" })).not.toBeInTheDocument();
+    expect(sharing.loadPublicProfile).toHaveBeenCalledOnce();
+    expect(sharing.loadCatalogPage).not.toHaveBeenCalled();
+    expect(sharing.saveCatalogPage).not.toHaveBeenCalled();
+  });
+
+  it("drops a setup continuation on account switch before loading the new owner's catalog", async () => {
+    const match = winningMatch();
+    function Setup() {
+      return useLocation().search === "?tab=public"
+        ? <PublicProfileManager history={[match]} stats={ownerStats} statsReady statsBlocker="" />
+        : <h1>My games</h1>;
+    }
+    render(<MemoryRouter initialEntries={[{
+      pathname: "/profile",
+      search: "?tab=public",
+      state: { myGamesPublishIntent: { uid: signedInUser.uid, matchId: match.id } },
+    }]}><Setup /></MemoryRouter>);
+    await screen.findByRole("textbox", { name: "Choose your public name" });
+    act(() => setSignedIn("second-owner"));
+    expect(await screen.findByRole("heading", { name: "My games" })).toBeInTheDocument();
+    expect(sharing.loadPublicProfile).toHaveBeenCalledExactlyOnceWith(signedInUser.uid);
+    expect(sharing.loadCatalogPage.mock.calls.every(([uid]) => uid === signedInUser.uid)).toBe(true);
+    expect(sharing.setPublicProfile).not.toHaveBeenCalled();
+    expect(sharing.saveCatalogPage).not.toHaveBeenCalled();
+  });
+
+  it("only uses unattributed human fallback for an owner-scoped legacy continuation", () => {
+    const match = winningMatch();
+    expect(publishReplaySide(match, signedInUser.uid, "local-owner")).toBe("black");
+    const legacy = {
+      ...match,
+      id: `portable-${"a".repeat(43)}`,
+      player_black: { ...match.player_black, local_profile_id: null, profile_uid: null },
+      replay_origin: { source_fingerprint: "b".repeat(43), inherited_ply: 4 },
+    };
+    expect(publishReplaySide(legacy, signedInUser.uid, "local-owner", true)).toBe("black");
+    expect(publishReplaySide(legacy, signedInUser.uid, "local-owner")).toBeNull();
+    expect(publishReplaySide(legacy, null, "local-owner", true)).toBeNull();
+    expect(publishReplaySide({ ...legacy, id: match.id }, signedInUser.uid, "local-owner", true)).toBeNull();
   });
 
   it("requires an explicit preview reload when the public profile revision changes", async () => {

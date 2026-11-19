@@ -174,7 +174,10 @@ describe("ProfileRoute cloud state", () => {
     await replayLibraryStore.getState().saveReplay("user:other-account", { ...replay, black: { kind: "human", name: "Other account" } }, "practice");
     renderProfileRoute();
 
-    expect(screen.getAllByRole("button", { name: "Inspect" })).toHaveLength(1);
+    const inspect = screen.getAllByRole("button", { name: /^Inspect game vs Normal Bot, played .+ at .+$/ });
+    expect(inspect).toHaveLength(1);
+    expect(inspect[0]).toHaveAccessibleName(/Inspect game vs Normal Bot, played .+ at .+/);
+    expect(screen.queryByRole("button", { name: /^Publish game/ })).not.toBeInTheDocument();
     expect(within(screen.getByText("Matches").parentElement!).getByText("1", { exact: true })).toBeVisible();
     expect(within(screen.getByText("Wins").parentElement!).getByText("1", { exact: true })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Practice games" })).not.toBeInTheDocument();
@@ -189,7 +192,7 @@ describe("ProfileRoute cloud state", () => {
       cloudAuthStore.setState({ status: "signed_in", user: cloudUser });
       cloudProfileStore.setState({ status: "ready", profile: cloudProfile });
     });
-    expect(screen.queryByRole("button", { name: "Inspect" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Inspect game/ })).not.toBeInTheDocument();
     expect(within(screen.getByText("Matches").parentElement!).getByText("0", { exact: true })).toBeVisible();
     expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
   });
@@ -976,7 +979,9 @@ describe("ProfileRoute cloud state", () => {
 
     expect(screen.getByText("Win")).toBeInTheDocument();
     expect(screen.getByText("Moves 5")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Inspect" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^Inspect game/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^Publish game vs Normal Bot, played .+ at .+$/ }))
+      .toHaveLength(1);
   });
 
   it("reveals replay history in batches", () => {
@@ -989,9 +994,9 @@ describe("ProfileRoute cloud state", () => {
 
     renderProfileRoute();
 
-    expect(screen.getAllByRole("button", { name: "Inspect" })).toHaveLength(16);
+    expect(screen.getAllByRole("button", { name: /^Inspect game/ })).toHaveLength(16);
     fireEvent.click(screen.getByRole("button", { name: "Show more" }));
-    expect(screen.getAllByRole("button", { name: "Inspect" })).toHaveLength(20);
+    expect(screen.getAllByRole("button", { name: /^Inspect game/ })).toHaveLength(20);
     expect(screen.queryByRole("button", { name: "Show more" })).not.toBeInTheDocument();
   });
 

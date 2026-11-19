@@ -42,6 +42,14 @@ test("M01: mobile record, account, saved and sharing surfaces remain reachable",
   await expect(page.getByRole("button", { name: "Reset Profile", exact: true })).toBeVisible();
   await controls.click();
   await capture(page, info, "guest-games-390");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const guestInspect = page.getByRole("button", { name: /^Inspect / }).first();
+  const guestAction = await guestInspect.boundingBox();
+  expect(guestAction).not.toBeNull();
+  expect(guestAction!.width).toBeLessThan(200);
+  expect(guestAction!.height).toBeGreaterThanOrEqual(44);
+  await capture(page, info, "guest-games-1440");
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("tab", { name: "Saved replays", exact: true }).click();
   await capture(page, info, "guest-saved-390");
   await page.getByRole("tab", { name: "Public profile", exact: true }).click();
@@ -57,12 +65,25 @@ test("M01: mobile record, account, saved and sharing surfaces remain reachable",
   await page.reload();
   const signOut = page.getByRole("button", { name: "Sign out", exact: true });
   const displayName = page.getByRole("textbox", { name: "Name", exact: true });
-  const inspect = page.getByRole("button", { name: "Inspect", exact: true }).first();
+  const inspect = page.getByRole("button", { name: /^Inspect / }).first();
   await expect(signOut).toBeVisible();
   await expect(displayName).toBeVisible();
   await expect(inspect).toBeVisible();
-  for (const fontSize of ["100%", "200%"] as const) {
-    await page.setViewportSize({ width: 844, height: 390 });
+  const profileLayouts = [
+    { width: 1440, height: 900, fontSize: "100%", compact: false, grouped: true },
+    { width: 1360, height: 900, fontSize: "100%", compact: false, grouped: true },
+    { width: 1321, height: 900, fontSize: "100%", compact: false, grouped: true },
+    { width: 1241, height: 900, fontSize: "100%", compact: true, grouped: true },
+    { width: 1280, height: 900, fontSize: "100%", compact: true, grouped: true },
+    { width: 1024, height: 768, fontSize: "100%", compact: true, grouped: true },
+    { width: 844, height: 390, fontSize: "100%", compact: true, grouped: true },
+    { width: 844, height: 390, fontSize: "200%", compact: true, grouped: false },
+    { width: 390, height: 844, fontSize: "100%", compact: true, grouped: true },
+    { width: 390, height: 844, fontSize: "200%", compact: true, grouped: false },
+    { width: 320, height: 900, fontSize: "200%", compact: true, grouped: false },
+  ] as const;
+  for (const { width, height, fontSize, compact, grouped } of profileLayouts) {
+    await page.setViewportSize({ width, height });
     await page.evaluate((size) => { document.documentElement.style.fontSize = size; }, fontSize);
     await page.evaluate(() => document.fonts.ready);
     await expect(signOut).toBeVisible();
@@ -76,19 +97,51 @@ test("M01: mobile record, account, saved and sharing surfaces remain reachable",
       const layout = main?.querySelector('[class*="layout"]') as HTMLElement | null;
       const historyBody = main?.querySelector('[class*="historyBody"]') as HTMLElement | null;
       const historyItem = historyBody?.querySelector("ol > li") as HTMLElement | null;
+      const historyHead = main?.querySelector('[class*="historyHead"]') as HTMLElement | null;
+      const historyActions = historyItem?.querySelector('[class*="historyActions"]') as HTMLElement | null;
       const tablist = main?.querySelector('[role="tablist"]') as HTMLElement | null;
       const name = main?.querySelector('input[aria-label="Name"]') as HTMLElement | null;
       const auth = main?.querySelector('button[aria-label="Sign out"]') as HTMLElement | null;
-      const inspect = main?.querySelector('button[aria-label="Inspect"]') as HTMLElement | null;
-      if (!main || !layout || !historyBody || !historyItem || !tablist || !name || !auth || !inspect) return null;
+      const inspect = main?.querySelector('button[aria-label^="Inspect "]') as HTMLElement | null;
+      if (!main || !layout || !historyBody || !historyItem || !historyHead || !historyActions || !tablist || !name || !auth || !inspect) return null;
       const mainRect = main.getBoundingClientRect();
       const bounds = [name, auth, inspect, ...Array.from(tablist.querySelectorAll('[role="tab"]'))]
         .map((element) => {
           const rect = element.getBoundingClientRect();
           return { left: rect.left, right: rect.right };
         });
+      const actionButtons = Array.from(historyActions.querySelectorAll("button"));
+      const actionLabels = Array.from(historyActions.querySelectorAll<HTMLElement>(".uiActionLabel"));
+      const actionRects = actionButtons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { bottom: rect.bottom, height: rect.height, left: rect.left, right: rect.right, top: rect.top, width: rect.width };
+      });
+      const actionLabelLineCounts = actionLabels.map((label) => {
+        const range = document.createRange();
+        range.selectNodeContents(label);
+        return range.getClientRects().length;
+      });
+      const actionLabelRects = actionLabels.map((label) => {
+        const rect = label.getBoundingClientRect();
+        return { left: rect.left, right: rect.right };
+      });
+      const historyHeadLabels = Array.from(historyHead.querySelectorAll<HTMLElement>("[class*='historyHeadLabel']"));
+      const historyRowColumns = ["historyThumbnail", "historySummary", "historyGame", "historyPlayed"]
+        .map((name) => historyItem.querySelector<HTMLElement>(`[class*='${name}']`))
+        .filter((element): element is HTMLElement => element !== null);
+      const columnOffsets = historyHeadLabels.map((label, index) => {
+        const labelLeft = label.getBoundingClientRect().left;
+        const columnLeft = historyRowColumns[index]?.getBoundingClientRect().left ?? labelLeft;
+        return Math.abs(labelLeft - columnLeft);
+      });
       return {
+        actionLabelRects,
+        actionLabelLineCounts,
+        actionRects,
+        actionsGrouped: actionRects.length === 2 && Math.abs(actionRects[0]!.top - actionRects[1]!.top) <= 1,
         bounds,
+        columnOffsets,
+        historyHeadDisplay: getComputedStyle(historyHead).display,
         historyBodyClientWidth: historyBody.clientWidth,
         historyBodyScrollWidth: historyBody.scrollWidth,
         historyItemClientWidth: historyItem.clientWidth,
@@ -104,6 +157,21 @@ test("M01: mobile record, account, saved and sharing surfaces remain reachable",
       };
     });
     expect(metrics).not.toBeNull();
+    expect(metrics!.actionRects).toHaveLength(2);
+    expect(metrics!.actionLabelLineCounts).toEqual([1, 1]);
+    expect(metrics!.actionsGrouped).toBe(grouped);
+    expect(metrics!.historyHeadDisplay === "none").toBe(compact);
+    expect(metrics!.actionLabelRects).toHaveLength(2);
+    if (!compact) {
+      for (const offset of metrics!.columnOffsets) expect(offset).toBeLessThanOrEqual(1);
+    }
+    for (const [index, button] of metrics!.actionRects.entries()) {
+      expect(button.height).toBeGreaterThanOrEqual(44);
+      expect(button.left).toBeGreaterThanOrEqual(metrics!.mainLeft - 1);
+      expect(button.right).toBeLessThanOrEqual(metrics!.mainRight + 1);
+      expect(metrics!.actionLabelRects[index]!.left).toBeGreaterThanOrEqual(button.left);
+      expect(metrics!.actionLabelRects[index]!.right).toBeLessThanOrEqual(button.right + 1);
+    }
     expect(metrics!.mainScrollWidth - metrics!.mainClientWidth).toBeLessThanOrEqual(1);
     expect(metrics!.layoutScrollWidth - metrics!.layoutClientWidth).toBeLessThanOrEqual(1);
     expect(metrics!.historyBodyScrollWidth - metrics!.historyBodyClientWidth).toBeLessThanOrEqual(1);
@@ -113,9 +181,20 @@ test("M01: mobile record, account, saved and sharing surfaces remain reachable",
       expect(bounds.left).toBeGreaterThanOrEqual(metrics!.mainLeft - 1);
       expect(bounds.right).toBeLessThanOrEqual(metrics!.mainRight + 1);
     }
+    if ((fontSize === "100%" && [1440, 1024, 844].includes(width)) || (fontSize === "200%" && width === 320)) {
+      await inspect.scrollIntoViewIfNeeded();
+      const suffix = fontSize === "200%" ? "-200" : "";
+      const label = `owner-games-${width}${width === 844 ? "-landscape" : ""}${suffix}`;
+      await capture(page, info, label);
+      await writeFile(info.outputPath(`profile-layout-${width}-${fontSize.replace("%", "")}.json`), JSON.stringify(metrics, null, 2));
+    }
   }
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.evaluate(() => { document.documentElement.style.fontSize = "100%"; });
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "100%";
+    window.scrollTo(0, 0);
+    document.querySelector('[class*="layout"]')?.scrollTo(0, 0);
+  });
   await page.getByRole("tab", { name: "Public profile", exact: true }).click();
   await page.getByLabel("Choose your public name", { exact: true }).fill("Mobile Player");
   await page.getByRole("button", { name: "Enable public profile", exact: true }).click();

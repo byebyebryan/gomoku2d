@@ -644,7 +644,6 @@
 
   .timeline {
     --timeline-track-top: 19px;
-    grid-row: 3;
     gap: 0;
     padding-top: 6px;
     min-width: 0;
@@ -653,11 +652,18 @@
   }
 
   .controlsRow {
-    grid-row: 4;
     gap: 10px;
     min-width: 0;
     max-width: 100%;
     width: 100%;
+  }
+
+  .replayDeck .timeline {
+    grid-row: 3;
+  }
+
+  .replayDeck .controlsRow {
+    grid-row: 4;
   }
 
   .controlsRow :global(.uiAction) {

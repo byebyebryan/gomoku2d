@@ -13,6 +13,7 @@ const DESIGN_CASE_IDS = [
   "action-icons-061",
   "mobile-records-062",
   "replay-collections-064",
+  "my-games-publishing-065",
 ] as const;
 const NEW_AND_EXPANDED_CASE_IDS = [
   "board-first-shell-022",
@@ -22,6 +23,7 @@ const NEW_AND_EXPANDED_CASE_IDS = [
   "replay-sidebar-061",
   "public-player-062",
   "replay-collections-064",
+  "my-games-publishing-065",
 ] as const;
 const REFERENCE_GALLERY_IDS = ["core-screens-062", "ui-evolution-024-062"] as const;
 const EXPECTED_PHASES = ["0.6", "0.5", "0.4", "0.2"];
@@ -64,7 +66,7 @@ test("design review index keeps source versions, order, and legacy destinations"
   page,
 }) => {
   const records = await curatedReviews();
-  expect(records).toHaveLength(11);
+  expect(records).toHaveLength(DESIGN_CASE_IDS.length + REFERENCE_GALLERY_IDS.length);
   expect(new Set(records.map((record) => record.id)).size).toBe(records.length);
 
   const designReviews = records.filter(
@@ -72,7 +74,6 @@ test("design review index keeps source versions, order, and legacy destinations"
       record.disposition !== "screen reference" &&
       record.disposition !== "retrospective comparison",
   );
-  expect(designReviews).toHaveLength(9);
   expect(designReviews.map((record) => record.id).sort()).toEqual([...DESIGN_CASE_IDS].sort());
 
   const expectedOrder = [...designReviews].sort(

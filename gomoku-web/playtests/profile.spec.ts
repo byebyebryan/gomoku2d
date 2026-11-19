@@ -247,7 +247,7 @@ test("desktop profile prioritizes the record summary over the identity rail", as
   expect(metrics!.summaryTileGap).toBe("4px");
   expect(metrics!.summaryValueFontSize).toBeGreaterThanOrEqual(30);
   expect(metrics!.historyHeadLabelOpacity).toBeLessThanOrEqual(0.82);
-  expect(metrics!.historyItemColumnGap).toBe("18px");
+  expect(metrics!.historyItemColumnGap).toBe("14px");
   expect(metrics!.historyItemRowGap).toBe("10px");
 });
 
@@ -370,7 +370,7 @@ test("compact profile keeps account actions accessible across rotation and enlar
   const authAction = page.locator(
     'button[aria-label="Sign in"], button[aria-label="Sign out"], button[aria-label="Checking"]',
   );
-  const inspect = page.getByRole("button", { name: "Inspect", exact: true });
+  const inspect = page.getByRole("button", { name: /^Inspect game / });
   await expect(authAction).toBeVisible();
   await expect(inspect).toBeVisible();
   await expect(page.locator("ol > li").first()).toContainText("Normal Bot");
@@ -426,7 +426,7 @@ test("compact profile keeps account actions accessible across rotation and enlar
       const auth = main?.querySelector(
         'button[aria-label="Sign in"], button[aria-label="Sign out"], button[aria-label="Checking"]',
       ) as HTMLElement | null;
-      const inspect = main?.querySelector('button[aria-label="Inspect"]') as HTMLElement | null;
+      const inspect = main?.querySelector('button[id^="my-games-inspect-"]') as HTMLElement | null;
       const name = main?.querySelector('input[aria-label="Name"]') as HTMLElement | null;
       if (!main || !layout || !historyBody || !historyItem || !tabs || !auth || !inspect || !name) return null;
       const mainRect = main.getBoundingClientRect();

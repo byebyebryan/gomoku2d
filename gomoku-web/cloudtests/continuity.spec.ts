@@ -51,7 +51,7 @@ test("C3: a completed continuation syncs as a regular game and opens from a seco
   await page.reload(); await readyCloud(page);
   await finishBranch(page, "branch-source");
   await page.getByRole("link", { name: "Profile", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /^Inspect / })).toHaveCount(2);
   await expect(page.getByRole("region", { name: "Practice games" })).toHaveCount(0);
   await expect.poll(async () => (await readProfile(uid))?.match_history.replay_matches.length).toBe(2);
   const continuation = (await readProfile(uid))?.match_history.replay_matches.find((match: { id: string }) => match.id !== "branch-source");
@@ -62,7 +62,7 @@ test("C3: a completed continuation syncs as a regular game and opens from a seco
   const context = await browser.newContext(); await protectContext(context);
   try {
     const second = await context.newPage(); await signIn(second, email); await readyCloud(second);
-    await expect(second.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+    await expect(second.getByRole("button", { name: /^Inspect / })).toHaveCount(2);
     await second.goto(`/replay/${continuation.id}`);
     await expect(second.getByTestId("replay-move-count")).toHaveText("Move 9 / 9");
     await expect(second.getByRole("grid", { name: "Gomoku board" })).toBeVisible();
@@ -114,17 +114,17 @@ test("C5/C8: failed transport preserves a completed continuation in My games and
   await expect(page.getByTestId("match-status")).toHaveText(/wins$/);
   await expect(page.getByRole("link", { name: "Analyze", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Profile", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /^Inspect / })).toHaveCount(2);
   expect((await readProfile(uid))?.match_history.replay_matches.map((match: { id: string }) => match.id)).toEqual(["offline-source"]);
   expect(await readPrivateLibrary(uid)).toBeNull();
 
   await page.reload();
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /^Inspect / })).toHaveCount(2);
   await context.unroute(`${cloudTestOrigins.firestore}/**`);
   await page.reload(); await readyCloud(page);
   await expect.poll(async () => (await readProfile(uid))?.match_history.replay_matches.length).toBe(2);
   await page.reload(); await readyCloud(page);
-  await expect(page.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /^Inspect / })).toHaveCount(2);
   expect((await readProfile(uid))?.match_history.replay_matches.filter((match: { id: string }) => match.id !== "offline-source")).toHaveLength(1);
   expect(await readPrivateLibrary(uid)).toBeNull();
 });
@@ -210,7 +210,7 @@ test("C1/C2/C8: promote guest history, restore account setup, merge another clie
     expect(profile?.match_history.replay_matches.map((match: { id: string }) => match.id).sort()).toEqual(["first-game", "second-game"]);
     await second.reload();
     await expect(second.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
-    await expect(second.getByRole("button", { name: "Inspect", exact: true })).toHaveCount(2);
+    await expect(second.getByRole("button", { name: /^Inspect / })).toHaveCount(2);
     await second.getByRole("link", { name: "Settings", exact: true }).click();
     await expect(second.getByRole("button", { name: "Renju", exact: true })).toHaveAttribute("aria-pressed", "true");
   } finally { await context.close(); }

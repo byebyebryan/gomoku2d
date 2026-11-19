@@ -15,8 +15,12 @@ import {
 } from "../cloud/sharing_public";
 import { playerWinRate, type PlayerStats } from "../profile/player_stats";
 import { localProfileStore } from "../profile/local_profile_store";
+import { type SavedMatchV2 } from "../match/saved_match";
+import { replayPlayerName } from "../replay/local_replay";
+import { publishReplaySide } from "../replay/publish_replay_eligibility";
 import { profileRecordScroller } from "./profile_scroll";
 import { publicProfileDateLabel } from "./public_catalog";
+import { myGamesPublishIntentFromState, myGamesReturnFromState, publicationTargetFromState } from "./my_games_navigation";
 import { Icon } from "../ui/Icon";
 
 import styles from "./SharingPanels.module.css";
@@ -103,16 +107,27 @@ export function PublicProfileManager({
   stats,
   statsReady,
   statsBlocker,
+  history = [],
+  historyLoading = false,
 }: {
   stats: PlayerStats;
   statsReady: boolean;
   statsBlocker: string;
+  history?: readonly SavedMatchV2[];
+  historyLoading?: boolean;
 }) {
   const location = useLocation();
   const navigate = useNavigate();
   const auth = useStore(cloudAuthStore);
   const localProfile = useStore(localProfileStore, (state) => state.profile);
   const uid = auth.status === "signed_in" ? auth.user?.uid ?? null : null;
+  const setupIntent = myGamesPublishIntentFromState(location.state);
+  const setupMatch = setupIntent && setupIntent.uid === uid ? history.find((match) => match.id === setupIntent.matchId) : undefined;
+  const setupSide = setupMatch ? publishReplaySide(setupMatch, uid, localProfile?.id ?? null, setupMatch.id.startsWith("portable-")) : null;
+  const invalidSetup = Boolean(setupIntent && auth.status !== "loading"
+    && (setupIntent.uid !== uid || (setupMatch ? !setupSide : !historyLoading)));
+  const mayManage = !setupIntent || Boolean(setupSide);
+  const historyReturn = myGamesReturnFromState(location.state, uid);
   const [snapshot, setSnapshot] = useState<OwnerSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -123,8 +138,12 @@ export function PublicProfileManager({
   const [confirmDisable, setConfirmDisable] = useState(false);
   const [linkMessage, setLinkMessage] = useState("");
   const linkRef = useRef<HTMLInputElement>(null);
+  const managerHeadingRef = useRef<HTMLHeadingElement>(null);
+  const setupFocusKey = useRef<string | null>(null);
   const enableTriggerRef = useRef<HTMLButtonElement>(null);
   const enableConfirmRef = useRef<HTMLButtonElement>(null);
+  const continueRef = useRef<HTMLButtonElement>(null);
+  const continuedFocusKey = useRef<string | null>(null);
   const returnEnableFocusRef = useRef(false);
   const latestUidRef = useRef<string | null>(uid);
   latestUidRef.current = uid;
@@ -184,8 +203,12 @@ export function PublicProfileManager({
     setConfirmEnable(false);
     setConfirmDisable(false);
     setLinkMessage("");
-    if (uid) void reload(uid);
-  }, [uid]);
+    if (uid && mayManage) void reload(uid);
+  }, [uid, mayManage]);
+
+  useLayoutEffect(() => {
+    if (invalidSetup) navigate("/profile", { replace: true, state: { myGamesFocusTab: true } });
+  }, [invalidSetup, navigate]);
 
   useEffect(() => () => { requestRef.current += 1; }, []);
 
@@ -205,23 +228,44 @@ export function PublicProfileManager({
   const publishedEntries = pages?.flatMap((page) => page?.entries.map((entry) => ({ page, entry })) ?? []) ?? [];
   const isProfileLoaded = visibleSnapshot !== null && !loading && markersValid;
   const editReturn = publishedReplayEditReturnFromState(location.state);
+  const publicationTarget = publicationTargetFromState(location.state, uid);
+  const hasValidSetup = Boolean(setupIntent && setupSide);
+  const canContinue = Boolean(setupMatch && setupSide && isProfileLoaded && profile?.enabled && pendingAction === null);
 
   useLayoutEffect(() => {
-    if (!editReturn || restoredReturnKeyRef.current === location.key || !isProfileLoaded) return;
+    if (!hasValidSetup || setupFocusKey.current === location.key) return;
+    setupFocusKey.current = location.key;
+    managerHeadingRef.current?.focus({ preventScroll: true });
+    managerHeadingRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [hasValidSetup, location.key]);
+
+  useLayoutEffect(() => {
+    if (!canContinue || continuedFocusKey.current === location.key) return;
+    continuedFocusKey.current = location.key;
+    continueRef.current?.focus({ preventScroll: true });
+    continueRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [canContinue, location.key]);
+
+  useLayoutEffect(() => {
+    if ((!editReturn && !publicationTarget) || restoredReturnKeyRef.current === location.key || !isProfileLoaded) return;
     restoredReturnKeyRef.current = location.key;
-    const row = Array.from(document.querySelectorAll<HTMLElement>("[data-publication-row]"))
-      .find((candidate) => candidate.dataset.publicationRow === editReturn.fingerprint
-        && candidate.dataset.publicationPage === String(editReturn.pageId)) ?? null;
+    const target = publicationTarget ?? editReturn!;
+    const rows = Array.from(document.querySelectorAll<HTMLElement>("[data-publication-row]"));
+    const matching = rows.filter((candidate) => candidate.dataset.publicationRow === target.fingerprint);
+    const row = matching.find((candidate) => candidate.dataset.publicationPage === String(target.pageId))
+      ?? (publicationTarget ? matching[0] : undefined) ?? null;
     const editButton = row?.querySelector<HTMLElement>("[data-publication-edit]") ?? null;
     const scroller = profileRecordScroller(row);
-    if (scroller) scroller.scrollTop = row ? editReturn.scrollTop : 0;
+    if (scroller && editReturn && !publicationTarget) scroller.scrollTop = row ? editReturn.scrollTop : 0;
     if (editButton) {
       editButton.focus({ preventScroll: true });
       editButton.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     } else {
-      document.getElementById("public-games-title")?.focus({ preventScroll: true });
+      const heading = document.getElementById("public-games-title") ?? document.getElementById("public-profile-manager-title");
+      heading?.focus({ preventScroll: true });
+      if (publicationTarget) heading?.scrollIntoView?.({ block: "nearest" });
     }
-  }, [editReturn, isProfileLoaded, location.key]);
+  }, [editReturn, isProfileLoaded, location.key, publicationTarget]);
 
   const saveName = async () => {
     if (!uid || !profile?.enabled || !markersValid) return;
@@ -366,16 +410,29 @@ export function PublicProfileManager({
 
   const sharedStats = profile?.sharedStats ?? null;
   const winRate = sharedStats ? playerWinRate(sharedStats) : null;
+  const setupDate = setupMatch ? new Date(setupMatch.saved_at).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" }) : "";
+  const setupOpponent = setupMatch && setupSide ? replayPlayerName(
+    setupSide === "black" ? setupMatch.player_white : setupMatch.player_black,
+    localProfile?.displayName ?? "Player",
+  ) : "";
+  const backFromSetup = () => {
+    if (setupMatch && setupSide && setupIntent?.inspectMove !== undefined) {
+      navigate(`/replay/${encodeURIComponent(setupMatch.id)}`, { replace: true, state: {
+        myGamesInspectTarget: setupIntent,
+        myGamesReplayReturn: historyReturn,
+      } });
+    } else navigate("/profile", { replace: true, state: { myGamesReplayReturn: historyReturn, myGamesFocusTab: !historyReturn } });
+  };
 
   return (
     <section className={`${styles.manager} uiPanel`} aria-labelledby="public-profile-manager-title">
       <div className={styles.managerHeader}>
         <div>
           <p className="uiPageEyebrow">Optional sharing · {profile?.enabled ? "Enabled" : "Off"}</p>
-          <h2 className={styles.sectionTitle} id="public-profile-manager-title">Public profile</h2>
+          <h2 className={styles.sectionTitle} id="public-profile-manager-title" ref={managerHeadingRef} tabIndex={-1}>Public profile</h2>
         </div>
         {uid && <button className="uiAction uiActionNeutral" type="button" aria-label={loading ? "Loading profile" : "Reload public profile"}
-          disabled={loading || pendingAction !== null} onClick={() => void reload(uid)}>
+          disabled={!mayManage || loading || pendingAction !== null} onClick={() => void reload(uid)}>
           <Icon name="reset" /><span className="uiActionLabel">{loading ? "Loading" : "Reload"}</span>
         </button>}
       </div>
@@ -387,9 +444,29 @@ export function PublicProfileManager({
       ) : (
         <div className={styles.managerBody}>
           {loading && <p className={styles.mutedText} role="status">Loading your public profile.</p>}
+          {!mayManage && !invalidSetup && <p className={styles.mutedText} role="status">Checking saved match history.</p>}
           {error && <p className={styles.errorText} role="alert">{error}</p>}
           {notice && <p className={styles.successText} role="status">{notice}</p>}
           {linkMessage && <p className={styles.mutedText} role="status">{linkMessage}</p>}
+
+          {setupMatch && setupSide && <section className={`${styles.settingRow} ${styles.publishContinuation}`} aria-label="Continue publishing">
+            <div className={styles.settingCopy}>
+              <p className={styles.settingLabel}>Publishing this game</p>
+              <p className={styles.settingHint}>vs {setupOpponent} · {setupDate}</p>
+            </div>
+            <div className={styles.settingControls}>
+              {canContinue && <button ref={continueRef} className="uiAction uiActionSecondary" type="button" onClick={() => {
+                if (cloudAuthStore.getState().status !== "signed_in" || cloudAuthStore.getState().user?.uid !== setupIntent?.uid) return;
+                navigate(`/replay/${encodeURIComponent(setupMatch.id)}`, { replace: true, state: {
+                  myGamesPublishIntent: setupIntent,
+                  myGamesReplayReturn: historyReturn,
+                } });
+              }}><Icon name="publish" />Continue publishing this game</button>}
+              <button className="uiAction uiActionNeutral" type="button" disabled={pendingAction !== null} onClick={backFromSetup}>
+                <Icon name="back" />{setupIntent?.inspectMove === undefined ? "Back to My games" : "Back to replay"}
+              </button>
+            </div>
+          </section>}
 
           {isProfileLoaded ? (
             <>
@@ -498,9 +575,12 @@ export function PublicProfileManager({
                   <div className={styles.settingRow}>
                     <div className={styles.settingCopy}>
                       <p className={styles.settingLabel}>{publishedEntries.length} / 32 games</p>
-                      <p className={styles.settingHint}>Publish from a replay. Unpublishing removes the listing; shared copies remain.</p>
+                      <p className={styles.settingHint}>Unpublishing removes the listing. Shared copies remain.</p>
                     </div>
                     <div className={styles.settingControls}>
+                      <button className="uiAction uiActionSecondary" type="button" onClick={() => navigate("/profile", { state: { myGamesChooserUid: uid } })}>
+                        <Icon name="publish" />Publish a game
+                      </button>
                       {readyCatalog ? publishedEntries.length ? <ul className={styles.publicationList}>
                         {publishedEntries.map(({ page, entry }) => page ? <li className={styles.publicationRow} key={entry.fingerprint}
                           data-publication-page={page.pageId} data-publication-row={entry.fingerprint}>

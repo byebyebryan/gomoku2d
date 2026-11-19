@@ -1957,5 +1957,244 @@
         "url": "https://github.com/byebyebryan/gomoku2d/blob/ffec605ba22bc4adbd361e399c8a0f9edb880cea/docs/working/v0_6_4_replay_collection_contract.md"
       }
     ]
+  },
+  {
+    "schema": 1,
+    "id": "my-games-publishing-065",
+    "title": "Publishing from My games",
+    "scope": "History rows, replay publishing and profile setup",
+    "date": "2026-11-19",
+    "revision": "0.6.5 candidate · 273e3dc7e6b6",
+    "versions": [
+      "0.6.4",
+      "0.6.5"
+    ],
+    "question": "Can players find the game they want and see how to publish it from My games?",
+    "summary": "Final-board previews distinguish similar games. A row action opens Publish in Replay Analysis and keeps the selected game through public profile setup.",
+    "disposition": "historical checkpoint",
+    "comparisons": [
+      {
+        "id": "my-games-before-after",
+        "title": "Recognize the game in the list",
+        "conditions": "Both views use the same two guest games against Normal Bot on the same day at 1440 × 900. The baseline comes from the published 0.6.4 Pages artifact.",
+        "media": [
+          {
+            "file": "my-games-before.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/my-games-before.png",
+            "sha256": "5b2b0d656b33e20573ad079c66aadb73329ace4a5c53028f2b4f6d123951fd23",
+            "width": 1440,
+            "height": 900,
+            "label": "0.6.4 · history rows",
+            "alt": "Two guest games in a text ledger with Inspect actions.",
+            "kind": "application capture",
+            "revision": "0.6.4 release · 48822e2"
+          },
+          {
+            "file": "my-games-after.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/my-games-after.png",
+            "sha256": "2ea7c9a2b3cc9cce8307b6319e8b6464481b5fb9acb6955f73d1f1f9062d537a",
+            "width": 1440,
+            "height": 900,
+            "label": "0.6.5 candidate · final-board previews",
+            "alt": "The same two guest games with different final board thumbnails and their played times.",
+            "kind": "application capture",
+            "revision": "0.6.5 candidate · 273e3dc7e6b6"
+          }
+        ]
+      },
+      {
+        "id": "publish-on-portrait",
+        "title": "Find Publish on a game row",
+        "conditions": "The same history after sign-in with a disposable emulator account. Chrome emulates a 390 × 844 touch viewport.",
+        "media": [
+          {
+            "file": "my-games-publish-portrait.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/my-games-publish-portrait.png",
+            "sha256": "f4d73cde38a7767d284923c707cb19203d217d713617ed060dc043ae8a9aed69",
+            "width": 390,
+            "height": 844,
+            "label": "My games · portrait",
+            "alt": "Two finished games with board previews and labeled Inspect and Publish buttons under each row.",
+            "kind": "application capture",
+            "revision": "0.6.5 candidate · 273e3dc7e6b6"
+          }
+        ]
+      },
+      {
+        "id": "keep-selected-game",
+        "title": "Continue with the same game after setup",
+        "conditions": "The owner has just enabled a public profile at 1440 × 900. The fixture’s catalog is empty, and the continuation still identifies the earlier game by its played time.",
+        "media": [
+          {
+            "file": "continue-after-setup.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/continue-after-setup.png",
+            "sha256": "e0ee3b2222311dc08cc1679507076c0537c7d9d3d72b6db37d38bb8f087b619b",
+            "width": 1440,
+            "height": 900,
+            "label": "Continue publishing · profile enabled",
+            "alt": "Public profile settings show the selected 8:18 PM game and the Continue publishing this game action.",
+            "kind": "application capture",
+            "revision": "0.6.5 candidate · 273e3dc7e6b6"
+          }
+        ]
+      },
+      {
+        "id": "review-opening",
+        "title": "Choose an opening before confirming",
+        "conditions": "In the desktop draft, the owner accepts move 4, then browses to move 0 on the picker. Browser Back restores the accepted move and custom title.",
+        "media": [
+          {
+            "file": "publish-draft-after-back.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/publish-draft-after-back.png",
+            "sha256": "e0987c4342165351ed10c7acee8588097b610acc342805cd907bd659ffc68a1a",
+            "width": 1440,
+            "height": 900,
+            "label": "Publish draft · move 4 restored",
+            "alt": "Replay Analysis at move four with the title Before the winning line and the Publish this replay confirmation.",
+            "kind": "application capture",
+            "revision": "0.6.5 candidate · 273e3dc7e6b6"
+          }
+        ]
+      },
+      {
+        "id": "locate-publication",
+        "title": "Return to the published listing",
+        "conditions": "After the owner confirms and opens View published games, the browser focuses the matching Edit control. The settings pane is scrolled to show the entire listing.",
+        "media": [
+          {
+            "file": "published-listing-focus.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/published-listing-focus.png",
+            "sha256": "b58af44944352153b17f37c38a7919a57b2be27988ec04654fb95ed7f6a20cda",
+            "width": 1440,
+            "height": 900,
+            "label": "Published games · Edit focused",
+            "alt": "The owner’s one published game, with focus on its Edit button and Unpublish below it.",
+            "kind": "application capture",
+            "revision": "0.6.5 candidate · 273e3dc7e6b6"
+          }
+        ]
+      },
+      {
+        "id": "desktop-and-tablet",
+        "title": "Desktop and tablet history",
+        "purpose": "layout-check",
+        "conditions": "Signed-in My games at 1440 × 900 and 1024 × 960. The wide view keeps the ledger headings. The compact view groups the game details beside the board preview.",
+        "media": [
+          {
+            "file": "my-games-publish-desktop.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/my-games-publish-desktop.png",
+            "sha256": "7d527e8a8a01a8bd93ea8edd29723303eeb68c0b7b34f26a4e78383f75e8272e",
+            "width": 1440,
+            "height": 900,
+            "label": "My games · signed-in desktop",
+            "alt": "A wide history ledger with two board previews, game fields under their headings, and Inspect and Publish on one line.",
+            "kind": "application capture",
+            "revision": "0.6.5 candidate · 273e3dc7e6b6"
+          },
+          {
+            "file": "my-games-publish-tablet.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/my-games-publish-tablet.png",
+            "sha256": "4d219f4e63c3859478e3532f6263f76201ef20c0145d4ff73f12367717f0656b",
+            "width": 1024,
+            "height": 960,
+            "label": "My games · tablet width",
+            "alt": "The desktop-width ledger has become two compact game rows with the details grouped beside the board previews and the actions to the right.",
+            "kind": "application capture",
+            "revision": "0.6.5 candidate · 273e3dc7e6b6"
+          }
+        ]
+      },
+      {
+        "id": "short-landscape",
+        "title": "Short landscape at default text size",
+        "purpose": "layout-check",
+        "conditions": "Chrome touch emulation at 844 × 390, scrolled to the game rows. At default text size, both actions fit beside the details.",
+        "media": [
+          {
+            "file": "my-games-publish-landscape.png",
+            "sourcePath": "docs/working/v0_6_5_ui_evidence/my-games-publish-landscape.png",
+            "sha256": "056e01c6760dae8678c05388f53bb2898b5b9c1efb0cbafb66b7ec10cf5d74a2",
+            "width": 844,
+            "height": 390,
+            "label": "My games · short landscape",
+            "alt": "Signed-in history with thumbnails at left and single-line Inspect and Publish buttons at right.",
+            "kind": "application capture",
+            "revision": "0.6.5 candidate · 273e3dc7e6b6"
+          }
+        ]
+      }
+    ],
+    "process": [
+      {
+        "id": "identify",
+        "title": "Find a game",
+        "detail": "Board previews help distinguish games against the same opponent. Signed-in players can open Publish directly from an eligible history row.",
+        "comparisons": [
+          "my-games-before-after",
+          "publish-on-portrait"
+        ]
+      },
+      {
+        "id": "continue",
+        "title": "Keep the selected game",
+        "detail": "Public profile setup and replay publication each have their own confirmation. The setup return carries the original game even when a newer one appears first.",
+        "comparisons": [
+          "keep-selected-game"
+        ]
+      },
+      {
+        "id": "confirm",
+        "title": "Review and publish",
+        "detail": "The board stays in Replay Analysis while the owner chooses the opening. Browser Back closes the picker and keeps the draft. After publishing, the owner can jump straight to that listing.",
+        "comparisons": [
+          "review-opening",
+          "locate-publication"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "fixed",
+        "title": "Setup carries the selected game",
+        "detail": "The first setup handoff sent the player back to the list. The continuation now opens the game that started setup."
+      },
+      {
+        "state": "fixed",
+        "title": "Browser Back keeps the publish draft",
+        "detail": "Closing the opening picker used to trigger a second discard prompt. The history guard now returns to the accepted move and title."
+      },
+      {
+        "state": "fixed",
+        "title": "Game actions stay readable at compact widths",
+        "detail": "Signed-in desktop and short-landscape rows now give Inspect and Publish enough room for one line. Narrow layouts can wrap a whole button."
+      },
+      {
+        "state": "fixed",
+        "title": "Headings follow the history layout",
+        "detail": "The compact rows group game and played details with the opponent and retire the wide ledger headings at the same breakpoint."
+      },
+      {
+        "state": "fixed",
+        "title": "Keyboard focus follows the publishing task",
+        "detail": "Entering setup or the draft focuses its heading. In the picker, Escape from the board restores the accepted opening and returns to Choose opening."
+      }
+    ],
+    "technical": [
+      "The baseline is the verified Pages artifact from 48822e2. The local production-style build is based on 93f0a04, with application changes identified by 273e3dc7e6b6.",
+      "Chrome for Testing 156.0.8078.4 used default text, UTC and en-US. Desktop and tablet-width captures use DPR 1. Portrait and landscape captures use touch emulation and DPR 3, recorded at CSS-pixel size.",
+      "The capture run checked the two fixture rows, separate profile setup, draft restoration and focus after publication. User and catalog data came from disposable Auth and Firestore emulators."
+    ],
+    "human": "Bryan approved the revised interaction prototype before implementation. A second review of the running app found label wrapping on signed-in desktop and short landscape, stale headings on tablet, and keyboard focus gaps. The captures show the layout after those corrections.",
+    "followUp": "The three Profile tabs still split words at 320 px with 200% text, which also occurs in the 0.6.4 release.",
+    "sources": [
+      {
+        "label": "0.6.4 release used for the baseline",
+        "url": "https://github.com/byebyebryan/gomoku2d/releases/tag/v0.6.4"
+      },
+      {
+        "label": "0.6.4 production validation and artifact record",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/93f0a04e9ad3b11e3be49304f3aeaf76105b2a8f/docs/archive/v0_6_4_release.md"
+      }
+    ]
   }
 ]
