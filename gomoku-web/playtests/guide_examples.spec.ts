@@ -18,7 +18,10 @@ test("guest discovers portable examples, shares and saves without importing play
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 28 / 28");
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Easy Bot");
   await expect(page.getByTestId("replay-player-row-white")).toContainText("Normal Bot");
-  expect(await page.evaluate(() => localStorage.getItem("gomoku2d.replay-library.v1"))).toBeNull();
+  expect(await page.evaluate(() => ({
+    legacy: localStorage.getItem("gomoku2d.replay-library.v1"),
+    current: localStorage.getItem("gomoku2d.replay-library.v2"),
+  }))).toEqual({ legacy: null, current: null });
   await page.getByRole("button", { name: "Previous move", exact: true }).click();
   await page.getByRole("button", { name: "Share replay", exact: true }).click();
   const shared = await page.getByRole("textbox", { name: "Replay link", exact: true }).inputValue();

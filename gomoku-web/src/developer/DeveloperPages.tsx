@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { Icon } from "../ui/Icon";
-import { DEVELOPER_SECTIONS, DEV_SITE_LABEL } from "../app/links";
+import { DEVELOPER_SECTIONS, DEV_SITE_LABEL, UI_DESIGN_ENTRY_PATH } from "../app/links";
 
 export function DeveloperOverview() {
   useDocumentTitle(DEV_SITE_LABEL);
@@ -26,12 +26,24 @@ export function DeveloperOverview() {
       </div>
       <div className="dev-columns dev-section">
         <section>
-          <h2>The released screens</h2>
+          <h2>Screens and UI reviews</h2>
           <p>
             Home, match, replay, settings, profile and public player, captured from the 0.6.2
             release. Compare desktop and portrait layouts, then inspect landscape and enlarged text.
           </p>
-          <Link to="/dev/reviews/core-screens-062/">Open the screen reference</Link>
+          <ul className="dev-record-list">
+            <li>
+              <Link to={UI_DESIGN_ENTRY_PATH}>Open the screen reference</Link>
+            </li>
+            <li>
+              <Link to="/dev/reviews/my-games-publishing-065/">Publishing from My games</Link>
+              <small>0.6.5 · Final-board previews and publishing</small>
+            </li>
+            <li>
+              <Link to="/dev/reviews/replay-collections-064/">Replay collections</Link>
+              <small>0.6.4 · Private study copies and public replay edits</small>
+            </li>
+          </ul>
         </section>
         <section>
           <h2>Start with a concrete example</h2>

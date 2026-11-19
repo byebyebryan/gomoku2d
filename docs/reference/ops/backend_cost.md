@@ -56,8 +56,9 @@ Features to avoid while we are intentionally staying free-tier-first:
 
 ## Expected Firestore Usage
 
-The current cloud path is private profile/history continuity, not live gameplay.
-Local play has no backend cost.
+Casual play remains browser-local and uses no backend. Cloud use covers optional
+private profile/history continuity and explicit public sharing/private-library
+operations.
 
 Counting assumptions:
 
@@ -228,9 +229,14 @@ a selected fallback. There is no measured free-tier player/game capacity yet.
 
 ### Selected v0.6 Sharing Design
 
-The local v0.6 candidate implements [bounded sharing data](../backend/sharing_data.md).
-It is not deployed. Portable copy/view/scrub/analysis and guest-library operations
-perform zero Firestore operations. Ordinary signed-in played-game history retains its existing coalesced profile
+The released v0.6 implementation follows [bounded sharing data](../backend/sharing_data.md).
+The real signed-in profile, statistics and publication round trip remains
+pending. The [v0.6.1 release record](../../archive/v0_6_1_release.md)
+and [v0.6.4 release record](../../archive/v0_6_4_release.md) contain deployment
+and readback evidence.
+
+Portable copy/view/scrub/analysis and guest-library operations perform zero
+Firestore operations. Ordinary signed-in played-game history retains its existing coalesced profile
 sync, including completed Play From Here continuations. New
 account-library operations are deliberate,
 with no background polling or persistent application listener. SDK server reads
@@ -270,14 +276,17 @@ were checked October 21, 2026; emulator results cannot prove a billing allowance
 The public catalog is 32 entries (four pages of eight); private library is 64
 entries. Payloads are at most 8,192 ASCII characters. The measured largest legal
 portable fixture uses 1,804 characters, including 225 moves and maximum Unicode
-names/UIDs. Current operation instrumentation and bounded document sizes live in
-the [0.6.1 sharing receipt](../../working/v0_6_1_evidence/sharing_shape.json);
-the [original v0.6 evidence](../../working/v0_6_evidence/README.md) retains portable
+names/UIDs. The [v0.6.1 sharing receipt](../../working/v0_6_1_evidence/sharing_shape.json)
+records emulator operation counts and bounded document-size measurements for that
+release. The [original v0.6 evidence](../../working/v0_6_evidence/README.md) retains portable
 fixture and earlier candidate measurements. JSON fixture sizes exclude
 Firestore document-name/field/index overhead and serialized network framing.
-Payload fields are exempted from automatic indexes. Six empty markers remain
-after cloud deletion, without names, statistics or replay payloads. The legacy profile-delete
-guard can add two dependent sharing-document reads to the prior deletion flow.
+The v0.6.1 release record reports readbacks for the five sharing-field
+exemptions and preservation of the four existing profile-history exemptions.
+The v0.6.4 release record reports no index changes. Six empty markers remain
+after cloud deletion, without names, statistics or replay payloads. The legacy
+profile-delete guard can add two dependent sharing-document reads to the prior
+deletion flow.
 
 Caps bound each account’s retained data. Public visits are still billable work,
 and repeated traffic is not globally rate-limited by this design. A shared URL

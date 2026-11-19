@@ -6,8 +6,12 @@ This document is the schema contract for persisted app data. Backend design and
 trust boundaries live in [`backend.md`](backend.md); live project setup and
 deployed rulesets live in [`backend_infra.md`](../ops/backend_infra.md).
 
-The v0.6 public-profile, publication and private-library schema-1 contracts are
-specified in [Sharing data](sharing_data.md). Portable replay links use the
+The [sharing-data contract](sharing_data.md) owns the public-profile,
+publication and private-library shapes and compatibility rules. For
+`replay_libraries/{uid}`, schema v1 remains readable and the current writer uses
+schema v2. The [v0.6.1](../../archive/v0_6_1_release.md)
+and [v0.6.4](../../archive/v0_6_4_release.md) records contain production
+rules/index deployment and readback evidence. Portable replay links use the
 independent [portable format v1](../app/portable_replay.md). Existing private
 profile schema 5 and saved-match schema 2 remain unchanged.
 
@@ -405,13 +409,12 @@ and cannot be safely deduped against an existing cloud archive.
 
 ## Replay library and continuations (v0.6)
 
-The separate schema-1 library is specified in [Sharing data](sharing_data.md).
-Browser cache `gomoku2d.replay-library.v1` contains `{schema_version: 1, owners}`;
-owner keys are `guest` or `user:{uid}` and each value is `{entries, dirty}`.
-Entries have the same shape as the cloud library. Each owner is capped at 64;
-the whole device cache is capped at 600,000 UTF-8 bytes. Malformed/newer data is
-preserved and reported instead of silently overwritten. Persistence denial
-leaves a visible in-memory copy; it does not claim reload durability.
+The cloud library contract and its legacy-v1/current-v2 compatibility are
+specified in [Sharing data](sharing_data.md). The current browser cache key is
+`gomoku2d.replay-library.v2`; its first durable mutation can copy a v1 cache into
+the v2 key. The device cache is capped at 600,000 UTF-8 bytes. Malformed/newer
+data is preserved and reported instead of silently overwritten. Persistence
+denial leaves a visible in-memory copy; it does not claim reload durability.
 
 Saving a study copy never adds a played game. Completing Play From Here records
 a normal `SavedMatchV2` through existing history, promotion and statistics. Its

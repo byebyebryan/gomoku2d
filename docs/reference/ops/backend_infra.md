@@ -32,8 +32,8 @@ location is a foundational project decision.
 |---|---|
 | `.firebaserc` | Firebase project mapping |
 | `firebase.json` | Firebase rules/index config |
-| `firestore.rules` | Owner-scoped profile and private-history rules |
-| `firestore.indexes.json` | Index config; disables bulky replay payload fields |
+| `firestore.rules` | Owner-scoped profile/history plus public-sharing and private-library rules |
+| `firestore.indexes.json` | Index config; exempts profile and bounded sharing payload fields |
 | `gomoku-web/.env.example` | Public Vite Firebase config template |
 | `gomoku-web/src/cloud/firebase.ts` | Optional browser Firebase bootstrap |
 
@@ -123,17 +123,26 @@ ssh -L 8001:127.0.0.1:8001 bryan@starship.lan
 - Update [`future_cloud_run.md`](../backend/future_cloud_run.md) rather than
   this runbook for undeployed server-authority designs.
 
-## Local v0.6 sharing candidate
+## v0.6 sharing deployment
 
-No sharing rules, indexes, records or web changes were deployed by the goal loop.
-The candidate adds `public_profiles/{uid}` plus four fixed pages and
-`replay_libraries/{uid}`; see [data contract](../backend/sharing_data.md) and
-[rules-first rollout/rollback](release.md#v06-sharing-rollout-and-compatibility).
-The current workflow updates rules only; deploy index exemptions separately
-through the reviewed operational path when release authorization is given.
+The v0.6 sharing families are deployed: `public_profiles/{uid}` and its four
+catalog pages, plus the owner-scoped `replay_libraries/{uid}`. The v0.6.1
+release applied and read back five single-field exemptions for
+`public_profiles.display_name`, `public_profiles.shared_stats`,
+`public_profiles.catalog_page_counts`, `pages.entries`, and
+`replay_libraries.entries_json`. Its release record confirms the four existing
+`profiles.match_history` exemptions were preserved. The v0.6.4 release deployed
+schema-2-compatible rules before the web tag and made no index changes. The
+[v0.6.1 release record](../../archive/v0_6_1_release.md) and
+[v0.6.4 release record](../../archive/v0_6_4_release.md) contain release-time
+deployment/readback evidence.
+
+The real signed-in profile, statistics and publication round trip remains
+pending. See the [data contract](../backend/sharing_data.md), the
+[v0.6.1 rules-first procedure](release.md#v061-sharing-release-and-compatibility),
+and [schema-2 rollout guidance](release.md#rules-first-rollout-for-replay-library-schema-2).
 
 To disable public access operationally, change `publicSharingEnabled()` in
 `firestore.rules` from `true` to `false`, validate rules, deploy the reviewed
 ruleset and read back its release pointer. Owner cleanup stays available;
-portable links and local analysis need no public Firestore access. No production
-switch was changed during implementation.
+portable links and local analysis need no public Firestore access.

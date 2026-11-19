@@ -150,6 +150,15 @@ for (const width of [1440, 412]) {
     ).toHaveText(["Overview", "Visual design", "UI design", "Bot lab"]);
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Replay collections", exact: true }))
+      .toHaveAttribute("href", "/dev/reviews/replay-collections-064/");
+    await page.getByRole("link", { name: "Publishing from My games", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Publishing from My games", exact: true, level: 1 })).toBeVisible();
+    await page.getByText("Technical evidence, sources and media identity", { exact: true }).click();
+    await expect(page.getByRole("link", { name: "0.6.5 capture receipt", exact: true })).toHaveAttribute(
+      "href",
+      /^https:\/\/github\.com\/byebyebryan\/gomoku2d\/blob\/[0-9a-f]{40}\/docs\/working\/v0_6_5_ui_evidence\/README\.md$/,
+    );
     await page.goto("/dev/not-a-page/");
     await expect(page.getByRole("heading", { name: "Reference not found" })).toBeVisible();
     await page.getByRole("link", { name: "Dev site overview", exact: true }).click();

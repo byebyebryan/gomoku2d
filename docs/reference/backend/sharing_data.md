@@ -161,7 +161,8 @@ partial failures remain retryable. Up to two dependent reads can be billed for
 this deletion guard. Older schema-5 writes otherwise remain unchanged.
 
 The checked-in index configuration exempts public `shared_stats` and
-`catalog_page_counts` from automatic indexing: both are read by known document
-UID and are never queried. Applying these exemptions to production remains a
-separate scoped deployment; local source/emulator validation does not prove
-their deployed state.
+`catalog_page_counts` from automatic indexing. The app reads both fields through
+the public profile document at the known UID. The
+[v0.6.1 release record](../../archive/v0_6_1_release.md#firestore-rules-and-indexes)
+records the production readback of those exemptions and the other three sharing
+fields.

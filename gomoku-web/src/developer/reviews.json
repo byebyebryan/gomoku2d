@@ -2180,13 +2180,17 @@
       }
     ],
     "technical": [
-      "The baseline is the verified Pages artifact from 48822e2. The local production-style build is based on 93f0a04, with application changes identified by 273e3dc7e6b6.",
+      "The baseline is the verified Pages artifact from 48822e2. The candidate application files match 814fc5a. The capture receipt identifies those files with fingerprint 273e3dc7e6b6.",
       "Chrome for Testing 156.0.8078.4 used default text, UTC and en-US. Desktop and tablet-width captures use DPR 1. Portrait and landscape captures use touch emulation and DPR 3, recorded at CSS-pixel size.",
       "The capture run checked the two fixture rows, separate profile setup, draft restoration and focus after publication. User and catalog data came from disposable Auth and Firestore emulators."
     ],
     "human": "Bryan approved the revised interaction prototype before implementation. A second review of the running app found label wrapping on signed-in desktop and short landscape, stale headings on tablet, and keyboard focus gaps. The captures show the layout after those corrections.",
     "followUp": "The three Profile tabs still split words at 320 px with 200% text, which also occurs in the 0.6.4 release.",
     "sources": [
+      {
+        "label": "0.6.5 capture receipt",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/814fc5a4e8a3e8b37433536d1bf56db01bcb4fdf/docs/working/v0_6_5_ui_evidence/README.md"
+      },
       {
         "label": "0.6.4 release used for the baseline",
         "url": "https://github.com/byebyebryan/gomoku2d/releases/tag/v0.6.4"

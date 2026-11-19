@@ -7,11 +7,13 @@ records a preferred signaling-only backend and browser-owned gameplay, deferred
 from v0.6. It is not implemented or deployed. Longer-term authoritative service
 ideas remain parked in [`future_cloud_run.md`](future_cloud_run.md).
 
-The local v0.6 candidate adds public profiles, portable replay links and an
-explicitly synced private library. [Sharing data](sharing_data.md) owns its
-additive schema-1 families; [cost operations](../ops/backend_cost.md#selected-v06-sharing-design)
-records their bounded request shape. Production remains the private v0.5
-baseline until an authorized release verifies deployment.
+The released v0.6 line includes public profiles, portable replay links and an
+explicitly synced private library. [Sharing data](sharing_data.md) owns the
+current schemas and compatibility rules. The [cost guide](../ops/backend_cost.md#selected-v06-sharing-design)
+records bounded request shapes. The [v0.6.1](../../archive/v0_6_1_release.md)
+and [v0.6.4](../../archive/v0_6_4_release.md) records contain production
+deployment and readback evidence. The real signed-in profile, statistics and
+publication round trip remains pending.
 
 ## Current Deployed Backend
 
@@ -19,8 +21,12 @@ baseline until an authorized release verifies deployment.
 - Firestore `(default)` in `us-central1`.
 - `profiles/{uid}` stores owner-scoped cloud profile, settings, and capped
   private match history.
+- `public_profiles/{uid}` stores public identity and optional shared statistics.
+  `public_profiles/{uid}/pages/{pageId}` holds the four bounded catalog pages.
+- `replay_libraries/{uid}` stores the owner's private replay library. The
+  current writer uses schema 2 while legacy schema-1 data remains readable.
 - Firestore rules in this repo enforce ownership, schema shape, cooldowns,
-  reset barriers, and closed future namespaces.
+  reset barriers, sharing-family constraints, and closed future namespaces.
 - No Cloud Run service is deployed.
 - Local/casual gameplay, bot moves, tactical hints, and replay analysis run in
   the browser through Rust/WebAssembly.
@@ -67,9 +73,9 @@ contract:
 - lightweight summaries and archived stats for older history.
 
 Private match history is embedded in the profile document for the current
-casual path. The v0.6 candidate separates public catalog records from private data;
-public publication does not make a game server-verified. A future trusted match
-service would need its own server-owned records.
+casual path. Public catalog records are separate from private data and carry
+unverified results. A future trusted match service would need its own
+server-owned records.
 
 ## Promotion Flow
 
@@ -100,7 +106,7 @@ Rules also enforce:
 Any change to cloud profile schema should update `data_model.md`, Firestore
 rules, and rules tests together.
 
-## v0.6 candidate additions
+## v0.6 sharing behavior
 
 `public_profiles/{uid}` carries a separately confirmed name and four fixed catalog
 pages, a bounded page-count manifest, and an optional explicitly published
