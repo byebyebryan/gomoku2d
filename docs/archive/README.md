@@ -18,9 +18,12 @@ records the later integration matrix, sync repair and fixed desktop workloads.
 
 ## Release Records
 
-The 0.6.4 release record closes the planned 0.6 line and records replay
-collections, exact-source CI, Chrome mobile layout checks and production
-readbacks. [0.6.4 release record](v0_6_4_release.md)
+The [0.6.5 release record](v0_6_5_release.md) closes the 0.6 line with
+My games and publishing polish. It records CI, the Chrome layout check,
+the exact public artifact and Firestore readbacks.
+
+The [0.6.4 release record](v0_6_4_release.md) covers replay collections,
+including the rules-first deployment for private library schema 2.
 
 The [0.6.3 release record](v0_6_3_release.md) owns the developer-site publication,
 exact-source CI, complete served-file manifest, backend readbacks and automated

@@ -135,5 +135,10 @@ production automation from the still-open account/device/human checks.
 private study details and in-place edits to public replay listings. It added the
 Dev site's Replay collections case and deployed additive Firestore rules before
 publishing the web build. Chrome mobile emulation covered the release layout
-check. Curated learning remains unnumbered and multiplayer remains deferred.
-[Release record](v0_6_4_release.md)
+check. [Release record](v0_6_4_release.md)
+
+`v0.6.5` closed the line with final-board previews in My games and a direct
+path from an eligible row to the publishing draft. Returning to My games
+restores focus to the selected game. The Dev site retains the comparison
+captures. Curated learning remains unnumbered and multiplayer remains deferred.
+[Release record](v0_6_5_release.md)

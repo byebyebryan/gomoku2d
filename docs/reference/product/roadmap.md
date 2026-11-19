@@ -6,27 +6,22 @@ behavior live in the reference contracts; completed work lives in
 
 ## Current Status
 
-`v0.6.4` was published on November 18, 2026 and is the latest release.
-It adds position previews, private study details, and edits to existing public
-listings. The static Dev site now includes the replay-collection design review.
+`v0.6.5` was published on November 19, 2026 and closes the 0.6 line. It adds
+final-board previews to My games and opens the publishing draft from eligible
+game rows. The Dev site records the changes in the My games and publishing review.
 
-The real signed-in profile/statistics/game-publication round trip remains
-pending. Chrome emulation covers the 0.6.4 mobile layout gate. Physical-device,
+The real signed-in profile, statistics and game-publication round trip remains
+pending. Chrome emulation covers the 0.6.5 mobile layout gate. Physical-device,
 human accessibility, two-device private-account and novice-feedback checks
 retain their recorded open or deferred status.
-[Release record](../../archive/v0_6_4_release.md)
-
-The reviewed `v0.6.5` candidate is the final polish pass for the line. It adds
-My games board previews and opens the publishing draft from an eligible game
-row. Release preparation, exact-source CI and publication are pending.
-[Candidate handoff](../../working/README.md#065-candidate)
+[Release record](../../archive/v0_6_5_release.md)
 
 ## `0.6` Sequence
 
 Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
 site and practical UI review tools in 0.6.3, then replay collections in 0.6.4.
-The planned sequence shipped through 0.6.4. Curated learning follows the
-0.6.5 polish pass, with version and timing open.
+The planned sequence shipped through 0.6.4. The 0.6.5 polish pass closes
+the line. Curated learning is next in the roadmap, with version and timing open.
 
 | Release | Focus | Player outcome |
 |---|---|---|
@@ -34,7 +29,7 @@ The planned sequence shipped through 0.6.4. Curated learning follows the
 | `0.6.2` | Public-profile design, sharing usability, documentation and presentation | Understand a player's page, open a game, and understand saving, sharing and publishing; demonstrate the app without signing in |
 | `0.6.3` | Developer site, design/assets and UI review tools | Inspect the current design system, compare assets/screens at matched scale and follow real review findings |
 | `0.6.4` | Replay collection and study tools | Recognize saved games visually, give them private context, and reopen a deliberately chosen moment |
-| `0.6.5` candidate | My games and publishing polish | Recognize the finished board, start publishing from the game row, and return to the matching listing |
+| `0.6.5` | My games and publishing polish | Recognize the finished board, start publishing from the game row, and return to the matching listing |
 | Later | Curated learning through replays | Read a short tactical prompt, inspect the example, and try another line against the existing bot |
 
 The [follow-up plan](../../working/v0_6_followup_plan.md) records the review,

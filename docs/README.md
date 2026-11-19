@@ -7,13 +7,11 @@ historical context belongs in [`archive/`](archive/).
 
 ## Current Status
 
-`v0.6.4` is the latest published release. It adds replay thumbnails, private
-study details and editable public listings. The [release record](archive/v0_6_4_release.md)
-tracks exact-source CI, deployment, Chrome mobile layout and remaining acceptance.
-
-The reviewed `v0.6.5` candidate adds My games board previews and direct replay
-publishing. The [candidate handoff](working/README.md#065-candidate) points to
-the captures and release procedure.
+`v0.6.5` closes the 0.6 line with My games board previews and a direct path
+from an eligible game row to the publishing draft. The
+[release record](archive/v0_6_5_release.md) tracks deployment, Chrome mobile layout
+and remaining acceptance. The [capture record](working/v0_6_5_ui_evidence/README.md)
+retains the comparison images and capture conditions.
 
 The [0.6 implementation index](archive/v0_6_implementation.md) connects the
 design, review and publication records. The [roadmap](reference/product/roadmap.md)
@@ -49,8 +47,9 @@ documentation tree:
 - [Privacy](https://gomoku2d.byebyebryan.com/privacy/) and
   [Terms](https://gomoku2d.byebyebryan.com/terms/) — public policy pages
 
-The 0.6.4 design review records the replay editors and private conflict flow.
-[Replay collections](https://gomoku2d.byebyebryan.com/dev/reviews/replay-collections-064/)
+The latest design review shows the My games rows, publishing draft and return
+to the published listing.
+[My games and publishing](https://gomoku2d.byebyebryan.com/dev/reviews/my-games-publishing-065/)
 
 ## Buckets
 

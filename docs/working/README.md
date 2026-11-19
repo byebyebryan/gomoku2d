@@ -4,15 +4,6 @@ Active design drafts and maintained procedures. Completed reviews belong in
 the [archive](../archive/README.md); current product and implementation contracts
 belong in the [reference docs](../README.md#choose-a-path).
 
-## 0.6.5 Candidate
-
-The reviewed candidate adds final-board previews to My games and starts a
-replay publish draft directly from an eligible row. The [capture receipt](v0_6_5_ui_evidence/README.md)
-records the application source, comparison images, and emulator scope. The
-[roadmap](../reference/product/roadmap.md#current-status) records release status.
-Use the [release runbook](../reference/ops/release.md#release-prep) for packaging,
-exact-source CI, and deployment checks.
-
 ## Follow-up Research
 
 | Note | Owner and next review |
@@ -23,8 +14,9 @@ exact-source CI, and deployment checks.
 
 The [0.6 implementation index](../archive/v0_6_implementation.md) links the
 accepted designs, review evidence, and published release records. Use the
-[0.6.4 release record](../archive/v0_6_4_release.md) for the latest production
-results and open acceptance.
+[0.6.5 release record](../archive/v0_6_5_release.md) for production results and
+open acceptance. The [0.6.5 capture record](v0_6_5_ui_evidence/README.md) retains
+the comparison images and emulator scope.
 
 ## Completed Follow-up
 

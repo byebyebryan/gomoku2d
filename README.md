@@ -137,17 +137,17 @@ lists checks by area.
 
 ## Project Status
 
-`v0.6.4` is the latest published release. Replay collections show board previews
-at the chosen opening move, and publishers can edit a listed game's title and
-opening in place. The Dev site documents those changes in the
-[Replay collections review](https://gomoku2d.byebyebryan.com/dev/reviews/replay-collections-064/).
+`v0.6.5` closes the 0.6 line. My games shows the final board for replayable
+games and lets eligible players start a publishing draft from the game row.
+The Dev site shows the changes in the
+[My games and publishing review](https://gomoku2d.byebyebryan.com/dev/reviews/my-games-publishing-065/).
 
 Release validation includes Chrome mobile layout emulation. Real signed-in
 sharing, physical-device and human-accessibility checks retain their recorded
-pending or deferred status. [Release record](docs/archive/v0_6_4_release.md)
+pending or deferred status. [Release record](docs/archive/v0_6_5_release.md)
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
-[v0.6.4 changelog](CHANGELOG.md#064---2026-11-18) ·
+[v0.6.5 changelog](CHANGELOG.md#065---2026-11-19) ·
 [Roadmap](docs/reference/product/roadmap.md)
 
 ## Project References

@@ -6,10 +6,8 @@ source identities, screenshots and release receipts at their existing paths.
 Current contracts live in [App design](../reference/app/app_design.md),
 [Portable replay](../reference/app/portable_replay.md) and
 [Sharing data](../reference/backend/sharing_data.md). The
-[most recent release record](v0_6_4_release.md) owns production results and open
-acceptance. The [working-note index](../working/README.md#065-candidate) links
-the 0.6.5 candidate handoff, and the [roadmap](../reference/product/roadmap.md)
-owns future scope.
+[0.6.5 release record](v0_6_5_release.md) owns production results and open
+acceptance. The [roadmap](../reference/product/roadmap.md) owns future scope.
 
 | Checkpoint | Retained record |
 |---|---|
@@ -28,6 +26,7 @@ owns future scope.
 | 0.6.3 publication | [Release plan](../working/v0_6_3_release_plan.md), [release record](v0_6_3_release.md) |
 | 0.6.4 replay collections | [Design and contract pass](../working/v0_6_4_design_contract_plan.md), [data contract](../working/v0_6_4_replay_collection_contract.md), [implementation](../working/v0_6_4_implementation.md) |
 | 0.6.4 review and publication | [UI review](../working/v0_6_4_replay_collection_review.md), [release record](v0_6_4_release.md) |
+| 0.6.5 My games and publishing polish | [Capture record](../working/v0_6_5_ui_evidence/README.md), [release record](v0_6_5_release.md) |
 
 Statements about remaining implementation or preview addresses in an older
 snapshot describe its capture date. The release record supersedes those

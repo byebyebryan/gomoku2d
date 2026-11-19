@@ -1,0 +1,180 @@
+{
+  "version": "0.6.5",
+  "source_sha": "25d67c1360566d7ada265962d20cf52d93d9ab32",
+  "tag": {
+    "name": "v0.6.5",
+    "annotation_sha": "9c82e3f27844008957b2a32433274ac3e5328cf4",
+    "peeled_sha": "25d67c1360566d7ada265962d20cf52d93d9ab32"
+  },
+  "ci": {
+    "run_id": 44613408212,
+    "passing_attempt": 1,
+    "rust_workspace_tests": 348,
+    "web_unit_tests": 586,
+    "tool_checks": 44,
+    "firestore_rules_checks": 51,
+    "browser_passes": 306,
+    "browser_expected_skips": 6,
+    "auth_firestore_emulator_passes": 72,
+    "repeated_emulator_race_passes": 45
+  },
+  "dependency_audits": {
+    "production_npm_advisories": 0,
+    "cargo_advisories": 0,
+    "rustsec_database_commit": "074ea9a7ed619f511b5b7374c7a97e98d1e98be4"
+  },
+  "mobile_layout": {
+    "browser": "Chrome for Testing 156.0.8078.4",
+    "playwright": "1.64.1",
+    "device_scale_factor": 3,
+    "viewports_css_px_and_text_size": [
+      {
+        "width": 390,
+        "height": 844,
+        "textSize": "100%"
+      },
+      {
+        "width": 844,
+        "height": 390,
+        "textSize": "100%"
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "textSize": "200%"
+      },
+      {
+        "width": 844,
+        "height": 390,
+        "textSize": "200%"
+      },
+      {
+        "width": 320,
+        "height": 900,
+        "textSize": "200%"
+      }
+    ],
+    "mobile_and_touch_emulation": true,
+    "passed": 2,
+    "checks": [
+      "M01 mobile variant: signed-in My games labels, compact profile layout, responsive controls, and tab/action reachability",
+      "C23 mobile variant: signed-in My games labels, compact profile layout, publication setup, keyboard focus, and return path",
+      "Direct viewport receipts: My games and publish-panel controls are visible, reachable in the viewport, within CSS bounds, and non-overlapping"
+    ],
+    "first_attempt": [
+      "The C23 fixture waited for a popup while mobile Chrome used redirect sign-in.",
+      "The M01 fixture expected stacked actions at 844 by 390 CSS pixels with 200% text."
+    ],
+    "follow_up": [
+      "Mobile redirect completed through a disposable emulator account.",
+      "Measured control visibility, bounds, reachability after scroll, and overlap directly.",
+      "M01 actions fit side by side at 844 by 390 and 390 by 844 with 200% text; they stack at 320 by 900.",
+      "Profile tab labels can wrap at enlarged text."
+    ],
+    "production_account_writes": false
+  },
+  "release": {
+    "run_id": 44617861197,
+    "published_at_utc": "2026-11-19T21:21:15Z",
+    "url": "https://github.com/byebyebryan/gomoku2d/releases/tag/v0.6.5"
+  },
+  "pages": {
+    "origin": "https://gomoku2d.byebyebryan.com",
+    "run_id": 44617861117,
+    "deployment_id": 7926111838,
+    "artifact_id": 14575651374,
+    "artifact_tar_sha256": "47e86e860727987aafcc0d16b89b6b2adb0397390a2c3181c06e72992b5d946a",
+    "matched_artifact_files": 607,
+    "artifact_payload_bytes": 23344361,
+    "matched_direct_entry_routes": 13,
+    "manifest": "v0_6_5_release_manifest.json",
+    "manifest_sha256": "69ad286e0edf7eb0ffb668436d551f854bf2735922bddb3b076cc66d30b9f678"
+  },
+  "firestore": {
+    "tag_workflow_run_id": 44617861100,
+    "release": "projects/gomoku2d/releases/cloud.firestore",
+    "previous_ruleset": "projects/gomoku2d/rulesets/f3668f76-a550-4e53-9fe2-5ac1bffcd2f0",
+    "live_ruleset": "projects/gomoku2d/rulesets/15061f70-939c-41bd-8ef7-54c58aa64bd1",
+    "updated_at": "2026-11-19T21:21:08.336514Z",
+    "readback_rules_sha256": "430c9c56dd1bc63e26d206b840b513933cf9331864cafd1ebe16928d6abde95c",
+    "independent_readback_matches": true,
+    "verified_index_overrides": [
+      "profiles/match_history",
+      "profiles/match_history.replay_matches",
+      "profiles/match_history.summary_matches",
+      "profiles/match_history.archived_stats",
+      "public_profiles/display_name",
+      "public_profiles/shared_stats",
+      "public_profiles/catalog_page_counts",
+      "pages/entries",
+      "replay_libraries/entries_json"
+    ],
+    "index_config_sha256": "fba74ee1b1bebd39a499ea97d64ffa97a6a8cb3e9ad25ad3a2716127ab4cbac0",
+    "index_deployment": false,
+    "production_account_writes": false
+  },
+  "production_browser": {
+    "engine_checks": [
+      {
+        "engine": "chromium",
+        "version": "156.0.8078.4",
+        "home_version": "v0.6.5",
+        "review_captures_decoded": 9,
+        "external_requests": 0,
+        "page_errors": 0
+      },
+      {
+        "engine": "firefox",
+        "version": "157.0",
+        "home_version": "v0.6.5",
+        "review_captures_decoded": 9,
+        "external_requests": 0,
+        "page_errors": 0
+      },
+      {
+        "engine": "webkit",
+        "version": "27.2",
+        "home_version": "v0.6.5",
+        "review_captures_decoded": 9,
+        "external_requests": 0,
+        "page_errors": 0
+      }
+    ],
+    "playwright_stats": {
+      "startTime": "2026-11-19T21:22:49.418Z",
+      "duration": 33283.836,
+      "expected": 21,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "production_account_writes": false
+  },
+  "web_recovery_ref": "v0.6.4",
+  "acceptance_limits": [
+    "Real Google sign-in and the live profile, statistics, publish, guest viewing, and cleanup round trip remain pending.",
+    "Physical touch, OS keyboard and lower-powered device behavior remain deferred.",
+    "Human screen-reader and native zoom, two-device private continuity, and novice feedback retain their existing limits."
+  ],
+  "routing": {
+    "delegated_role": "luna-max",
+    "delegated_work": "Targeted Chrome mobile emulation with disposable emulators and a reviewed measurement receipt.",
+    "primary_work": "Integration, release prep, CI, publication, production verification and documentation."
+  },
+  "raw_receipt_sha256": {
+    "gomoku-web/test-results/v065-release/ci.log": "32181be81f6e2b874f714da9a68d59ca9c481c6044b799eee824cfcef009671e",
+    "gomoku-web/test-results/v065-release/npm-audit-prod.json": "b00b699665b549d10b0dada1171abd8d23625b5f18afff0eaf09b0b9107a4b35",
+    "gomoku-web/test-results/v065-release/cargo-audit.json": "496120f6419a87f5b7c3d488210d0203fb3da0c439fb35f730c333505aed259f",
+    "gomoku-web/test-results/v065-release/mobile/README.md": "3f4f0da5be71ca169a79f357dc5bc78cffe0f59ec57f1429255b273327c5ad25",
+    "gomoku-web/test-results/v065-release/mobile/run.json": "90d478573f0daf0e49f2735c593c8c9fad11d044eab64b1d67988238b237ce7d",
+    "gomoku-web/test-results/v065-release/mobile/report.json": "50c1eae814d13a11c0a433d3275c15896b1961748a9b9b38c4126373f7429eb8",
+    "gomoku-web/test-results/v065-release/mobile/first-run/report.json": "ee044398dcd560334d4e310c3aba076a79065363a2d7508bdcf64d2c4cab4a5e",
+    "gomoku-web/test-results/v065-release/production/workflows.json": "d1883cd4c1420256b409a427e71912f2c13c549ae2ca83bad1c489cd0e01c39e",
+    "gomoku-web/test-results/v065-release/production/rules-tag.log": "23265dafb60670b691ec84f45766cbbb83c00a3c3711a64ddd12e6c783e7c146",
+    "gomoku-web/test-results/v065-release/production/firestore-before.json": "281c00a527ebce94bb307936ece7307675661f95f440d5145f13032b214c96dd",
+    "gomoku-web/test-results/v065-release/production/firestore-after.json": "44c9ebc7d2e7185e65c310df1f701a5e6f61f8a20e792e1d9f84bf31bf21ff23",
+    "gomoku-web/test-results/v065-release/production/direct-browser.json": "4aadbe46b858afae8991de0b1d8da03278c09afbdffd12c2292981eec8c4c743",
+    "gomoku-web/test-results/v065-release/production/live-playwright.json": "3c6d058a2bfac6b16c2bd08b9d120b36bafaba6ac6bd813decb40a8c7e0824c2",
+    "gomoku-web/test-results/v065-release/production/direct-routes.json": "41a317c8502b550943ee50c6e2e1d0c9ce7f99964def3939070f38268fd4c709"
+  }
+}
