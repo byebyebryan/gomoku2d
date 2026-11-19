@@ -12,6 +12,10 @@ their own section.
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-11-19
+
+**Theme: find and publish the game you meant to share.**
+
 ### Web
 
 - Show the final board in My games and keep Inspect and Publish visible in
@@ -21,6 +25,14 @@ their own section.
   then confirm publication separately. Keyboard focus follows the setup and
   draft, and Escape can close the opening picker from the board.
 - Jump to the matching listing after publishing or finding an existing copy.
+- Return focus to the chosen game when navigating back from a publish draft.
+
+### Repository
+
+- Add the My games publishing review, including signed-in layout captures and
+  the steps from profile setup through publication.
+- Reconcile the 0.6 documentation and link the final review evidence from the
+  Dev site overview.
 
 ## [0.6.4] - 2026-11-18
 
@@ -1392,7 +1404,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.4...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.5...HEAD
+[0.6.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.1...v0.6.2
