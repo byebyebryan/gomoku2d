@@ -362,5 +362,15 @@ test("C23: My games publication resumes after separate profile setup and duplica
   await expect(duplicateViewListing).toBeFocused();
   await duplicateViewListing.click();
   await expect(page.getByRole("button", { name: `Edit ${title}`, exact: true })).toBeFocused();
+
+  // Returning to the chooser entry restores the row chosen there, even when a newer game is eligible.
+  await page.getByRole("button", { name: "Publish a game", exact: true }).click();
+  const firstEligible = page.locator(`#my-games-publish-${newerMatchId}`);
+  await expect(firstEligible).toBeFocused();
+  await expect(firstEligible).toBeInViewport();
+  await publishFromGames.click();
+  await expect(titleInput).toHaveValue("Replay after move 9");
+  await page.goBack();
+  await expect(publishFromGames).toBeFocused();
   expect(await readPublishedEntries(uid)).toHaveLength(1);
 });

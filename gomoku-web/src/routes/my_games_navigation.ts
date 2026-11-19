@@ -50,8 +50,20 @@ export function myGamesPublishIntentFromState(
   return { uid: value.uid, matchId: value.matchId, inspectMove };
 }
 
-export function myGamesChooserFromState(state: unknown, uid: string | null): boolean {
-  return uid !== null && object(state).myGamesChooserUid === uid;
+type MyGamesFocusRequest =
+  | { kind: "tab" }
+  | { kind: "return"; origin: MyGamesReplayReturn }
+  | { kind: "choose-publish" };
+
+export function myGamesFocusFromState(state: unknown, uid: string | null): MyGamesFocusRequest | undefined {
+  const routeState = object(state);
+  if (routeState.myGamesFocusTab === true) return { kind: "tab" };
+
+  // Browser Back can restore a chooser entry that now also remembers the chosen row.
+  const origin = myGamesReturnFromState(routeState, uid);
+  if (origin) return { kind: "return", origin };
+
+  if (uid !== null && routeState.myGamesChooserUid === uid) return { kind: "choose-publish" };
 }
 
 export function publicationTargetFromState(state: unknown, uid: string | null): PublicationTarget | undefined {

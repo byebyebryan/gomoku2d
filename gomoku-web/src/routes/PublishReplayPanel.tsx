@@ -38,6 +38,11 @@ function errorText(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
+function isSignedInAs(uid: string): boolean {
+  const currentAuth = cloudAuthStore.getState();
+  return currentAuth.status === "signed_in" && currentAuth.user?.uid === uid;
+}
+
 function publisherIdentity(
   replay: PortableReplayV1,
   side: SavedMatchSide,
@@ -85,8 +90,10 @@ export function PublishReplayPanel({
   const auth = useStore(cloudAuthStore);
   const localProfileId = useStore(localProfileStore, (state) => state.profile?.id ?? null);
   const activeUid = auth.status === "signed_in" ? auth.user?.uid ?? null : null;
-  const uid = eligible && (!entryUid || entryUid === activeUid)
-    && publishReplaySide(match, activeUid, localProfileId, ownerPractice) ? activeUid : null;
+  const side = eligible && (!entryUid || entryUid === activeUid)
+    ? publishReplaySide(match, activeUid, localProfileId, ownerPractice)
+    : null;
+  const uid = side ? activeUid : null;
   const startMove = entryMove ?? moveIndex;
   const backRef = useRef<HTMLButtonElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -110,6 +117,10 @@ export function PublishReplayPanel({
   const latestUidRef = useRef<string | null>(uid);
   latestUidRef.current = uid;
   const requestRef = useRef(0);
+  const isLiveOwner = (requestedUid: string) => latestUidRef.current === requestedUid
+    && isSignedInAs(requestedUid);
+  const isCurrentRequest = (requestedUid: string, request: number) => isLiveOwner(requestedUid)
+    && requestRef.current === request;
   const title = customTitle ?? `Replay after move ${opening}`;
   const dirty = !listing && (opening !== startMove || title !== `Replay after move ${startMove}`);
 
@@ -119,7 +130,6 @@ export function PublishReplayPanel({
     try {
       original ??= portableReplayFromSavedMatch(match).replay;
       if (!original) throw new Error("This game could not be converted to a portable replay.");
-      const side = publishReplaySide(match, uid, localProfileId, ownerPractice);
       if (!side) throw new Error("This game does not identify your human player for public attribution.");
       const replay = publisherIdentity({ ...original, viewPly: opening }, side, uid);
       const validated = validatePortableReplay(replay);
@@ -137,27 +147,24 @@ export function PublishReplayPanel({
         error: errorText(previewError, "This game cannot be published."),
       };
     }
-  }, [localProfileId, match, open, opening, ownerPractice, source, uid]);
+  }, [match, open, opening, side, source, uid]);
 
   const publisherForCurrentUid = publisher?.uid === uid ? publisher : null;
 
   const loadPublisher = async (requestedUid = uid) => {
-    if (preview.error || !requestedUid || cloudAuthStore.getState().status !== "signed_in"
-      || cloudAuthStore.getState().user?.uid !== requestedUid) return;
+    if (preview.error || !requestedUid || !isLiveOwner(requestedUid)) return;
     const request = ++requestRef.current;
+    const isCurrent = () => isCurrentRequest(requestedUid, request);
     setPublisher({ uid: requestedUid, status: "loading", profile: null, message: null });
     setError(null);
     setNotice(null);
     try {
       const profile = await loadPublicProfile(requestedUid);
-      if (latestUidRef.current !== requestedUid || cloudAuthStore.getState().status !== "signed_in"
-        || cloudAuthStore.getState().user?.uid !== requestedUid
-        || requestRef.current !== request) return;
+      if (!isCurrent()) return;
       setPreviewReloadRequired(false);
       setPublisher({ uid: requestedUid, status: "ready", profile, message: null });
     } catch (loadError) {
-      if (latestUidRef.current === requestedUid && cloudAuthStore.getState().status === "signed_in"
-        && requestRef.current === request) {
+      if (isCurrent()) {
         setPublisher({ uid: requestedUid, status: "error", profile: null, message: errorText(loadError, "The public profile could not be loaded.") });
       }
     }
@@ -165,8 +172,9 @@ export function PublishReplayPanel({
 
   const publish = async () => {
     const replayForPublish = preview.replay;
+    const payloadForPublish = preview.payload;
     const previewProfile = publisherForCurrentUid?.profile;
-    if (!uid || !replayForPublish || !preview.payload || preview.error || !previewProfile?.enabled || pending) return;
+    if (!uid || !replayForPublish || !payloadForPublish || preview.error || !previewProfile?.enabled || pending) return;
     const cleanTitle = title.trim();
     if (!cleanTitle) {
       setError("Enter a title for this published replay.");
@@ -174,10 +182,7 @@ export function PublishReplayPanel({
     }
     const request = ++requestRef.current;
     const currentUid = uid;
-    const isCurrent = () => latestUidRef.current === currentUid
-      && cloudAuthStore.getState().status === "signed_in"
-      && cloudAuthStore.getState().user?.uid === currentUid
-      && requestRef.current === request;
+    const isCurrent = () => isCurrentRequest(currentUid, request);
     setPending(true);
     setError(null);
     setNotice(null);
@@ -206,7 +211,6 @@ export function PublishReplayPanel({
       }
 
       const validated = validatePortableReplay(replayForPublish);
-      const payload = encodePortableReplay(validated.replay);
       const fingerprint = await portableReplayFingerprint(validated);
       if (!isCurrent()) return;
       const existing = pages.find((page) => page!.entries.some((entry) => entry.fingerprint === fingerprint));
@@ -225,7 +229,7 @@ export function PublishReplayPanel({
         ...availablePage.entries,
         {
           fingerprint,
-          payload,
+          payload: payloadForPublish,
           title: cleanTitle,
           view_ply: validated.replay.viewPly ?? 0,
         },

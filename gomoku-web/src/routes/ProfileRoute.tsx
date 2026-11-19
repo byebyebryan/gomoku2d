@@ -33,9 +33,8 @@ import { Icon } from "../ui/Icon";
 import { ReplayThumbnail } from "./ReplayThumbnail";
 import { profileRecordScroller } from "./profile_scroll";
 import {
-  myGamesChooserFromState,
   myGamesControlId,
-  myGamesReturnFromState,
+  myGamesFocusFromState,
   rememberMyGamesReplayReturn,
   type MyGamesReplayReturn,
 } from "./my_games_navigation";
@@ -65,13 +64,9 @@ interface HistorySyncStatus {
 const HISTORY_VISIBLE_BATCH_SIZE = 16;
 const COMPACT_PROFILE_QUERY = "(max-width: 720px), (max-width: 980px) and (max-height: 500px)";
 
-function ownerPracticeHistoryMatch(match: SavedMatchV2): boolean {
-  return match.id.startsWith("portable-") && Boolean(match.replay_origin);
-}
-
-function routeStateFlag(state: unknown, flag: string): boolean {
-  return Boolean(state && typeof state === "object" && !Array.isArray(state)
-    && (state as Record<string, unknown>)[flag] === true);
+function canPublishHistoryMatch(match: SavedMatchV2, uid: string | null, localProfileId: string | null): boolean {
+  const ownerPractice = match.id.startsWith("portable-") && Boolean(match.replay_origin);
+  return publishReplaySide(match, uid, localProfileId, ownerPractice) !== null;
 }
 
 function compactProfile(): boolean {
@@ -280,7 +275,7 @@ interface HistoryRowProps {
   localProfileId: string | null;
   uid: string | null;
   localDisplayName: string;
-  publishSide: SavedMatchSide | null;
+  canPublish: boolean;
   onNavigate: (action: MyGamesReplayReturn["action"], match: SavedMatchV2, control: HTMLButtonElement) => void;
 }
 
@@ -289,7 +284,7 @@ const HistoryRow = memo(function HistoryRow({
   localProfileId,
   uid,
   localDisplayName,
-  publishSide,
+  canPublish,
   onNavigate,
 }: HistoryRowProps) {
   const position = useMemo<ReplayThumbnailPosition>(() => ({
@@ -343,7 +338,7 @@ const HistoryRow = memo(function HistoryRow({
       <div className={styles.historyActions}>
         <button
           aria-label={`Inspect game ${opponent}, ${played}`}
-          className={`uiAction uiActionSecondary ${styles.historyReplayAction}`}
+          className="uiAction uiActionSecondary"
           id={myGamesControlId(match.id, "inspect")}
           onClick={(event) => onNavigate("inspect", match, event.currentTarget)}
           type="button"
@@ -351,10 +346,10 @@ const HistoryRow = memo(function HistoryRow({
           <Icon name="replay" />
           <span className="uiActionLabel">Inspect</span>
         </button>
-        {publishSide ? (
+        {canPublish ? (
           <button
             aria-label={`Publish game ${opponent}, ${played}`}
-            className={`uiAction uiActionNeutral ${styles.historyPublishAction}`}
+            className="uiAction uiActionNeutral"
             id={myGamesControlId(match.id, "publish")}
             onClick={(event) => onNavigate("publish", match, event.currentTarget)}
             type="button"
@@ -396,7 +391,9 @@ export function ProfileRoute() {
     sourceHistory,
   } = activeHistory;
   const uid = cloudAuth.status === "signed_in" ? cloudAuth.user?.uid ?? null : null;
-  const returnOrigin = useMemo(() => myGamesReturnFromState(location.state, uid), [location.state, uid]);
+  const localProfileId = profile?.id ?? null;
+  const focusRequest = useMemo(() => myGamesFocusFromState(location.state, uid), [location.state, uid]);
+  const focusedRouteKey = useRef<string | null>(null);
   const historyLoading = replayHistoryMayStillLoad(activeHistory);
   const cloudPromotion = useStore(cloudPromotionStore, (state) => state);
 
@@ -429,25 +426,9 @@ export function ProfileRoute() {
   const visibleHistory = history.slice(0, visibleHistoryCount);
   const hiddenHistoryCount = Math.max(0, history.length - visibleHistory.length);
   const historyIdentity: HistoryIdentity = {
-    localProfileId: profile?.id,
-    profileUid: cloudAuth.status === "signed_in" ? cloudAuth.user?.uid : null,
+    localProfileId,
+    profileUid: uid,
   };
-  const focusGamesTabRequested = routeStateFlag(location.state, "myGamesFocusTab");
-  const chooserRequested = !focusGamesTabRequested && myGamesChooserFromState(location.state, uid);
-  const firstPublishableIndex = chooserRequested && uid !== null
-    ? history.findIndex((match) => publishReplaySide(
-      match,
-      uid,
-      profile?.id ?? null,
-      ownerPracticeHistoryMatch(match),
-    ) !== null)
-    : -1;
-  const returnFocusKey = returnOrigin
-    ? `${location.key}:${returnOrigin.matchId}:${returnOrigin.action}`
-    : null;
-  const restoredReturnRef = useRef<string | null>(null);
-  const chooserFocusRef = useRef<string | null>(null);
-  const tabFocusRef = useRef<string | null>(null);
   const stats = playerStatsFromHistory({
     identity: historyIdentity,
     replayHistory: history,
@@ -543,7 +524,7 @@ export function ProfileRoute() {
     if (action === "publish" && (
       !uid
       || currentUid !== uid
-      || publishReplaySide(match, uid, profile?.id ?? null, ownerPracticeHistoryMatch(match)) === null
+      || !canPublishHistoryMatch(match, uid, localProfileId)
     )) return;
 
     const origin: MyGamesReplayReturn = {
@@ -562,109 +543,9 @@ export function ProfileRoute() {
           : {}),
       },
     });
-  }, [navigate, profile?.id, uid, visibleHistoryCount]);
+  }, [localProfileId, navigate, uid, visibleHistoryCount]);
 
-  useEffect(() => {
-    if (focusGamesTabRequested || !returnOrigin || !returnFocusKey) return;
-    if (activeTab !== "games") return;
-    if (restoredReturnRef.current === returnFocusKey) return;
-
-    const index = history.findIndex((match) => match.id === returnOrigin.matchId);
-    if (index < 0) {
-      if (historyLoading) return;
-      restoredReturnRef.current = returnFocusKey;
-      const frame = window.requestAnimationFrame(() => {
-        document.getElementById("games-tab")?.focus({ preventScroll: true });
-      });
-      return () => window.cancelAnimationFrame(frame);
-    }
-
-    const neededCount = Math.max(returnOrigin.visible, index + 1);
-    if (visibleHistoryCount < neededCount) {
-      setVisibleHistoryCount(neededCount);
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      const control = document.getElementById(myGamesControlId(returnOrigin.matchId, returnOrigin.action));
-      if (!(control instanceof HTMLElement)) {
-        restoredReturnRef.current = returnFocusKey;
-        document.getElementById("games-tab")?.focus({ preventScroll: true });
-        return;
-      }
-      const scroller = profileRecordScroller(control);
-      if (scroller) scroller.scrollTop = returnOrigin.scrollTop;
-      control.focus({ preventScroll: true });
-      restoredReturnRef.current = returnFocusKey;
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [
-    activeTab,
-    focusGamesTabRequested,
-    history,
-    historyLoading,
-    returnFocusKey,
-    returnOrigin,
-    visibleHistoryCount,
-  ]);
-
-  useEffect(() => {
-    if (!chooserRequested || !uid) return;
-    if (activeTab !== "games") {
-      setSearchParams((current) => {
-        const next = new URLSearchParams(current);
-        next.delete("tab");
-        return next;
-      });
-      return;
-    }
-    if (historyLoading || chooserFocusRef.current === location.key) return;
-
-    if (firstPublishableIndex >= visibleHistoryCount) {
-      setVisibleHistoryCount(firstPublishableIndex + 1);
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      const firstPublishable = firstPublishableIndex >= 0 ? history[firstPublishableIndex] : null;
-      const control = firstPublishable
-        ? document.getElementById(myGamesControlId(firstPublishable.id, "publish"))
-        : document.getElementById("games-tab");
-      control?.focus({ preventScroll: true });
-      chooserFocusRef.current = location.key;
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [
-    activeTab,
-    chooserRequested,
-    firstPublishableIndex,
-    history,
-    historyLoading,
-    location.key,
-    setSearchParams,
-    uid,
-    visibleHistoryCount,
-  ]);
-
-  useEffect(() => {
-    if (!focusGamesTabRequested) return;
-    if (activeTab !== "games") {
-      setSearchParams((current) => {
-        const next = new URLSearchParams(current);
-        next.delete("tab");
-        return next;
-      });
-      return;
-    }
-    if (tabFocusRef.current === location.key) return;
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById("games-tab")?.focus({ preventScroll: true });
-      tabFocusRef.current = location.key;
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [activeTab, focusGamesTabRequested, location.key, setSearchParams]);
-
-  function selectTab(tab: "games" | "saved" | "public"): void {
+  const selectTab = useCallback((tab: "games" | "saved" | "public"): void => {
     if (tab === activeTab) return;
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
@@ -672,7 +553,63 @@ export function ProfileRoute() {
       else next.set("tab", tab);
       return next;
     });
-  }
+  }, [activeTab, setSearchParams]);
+
+  useEffect(() => {
+    if (!focusRequest) return;
+    const { kind } = focusRequest;
+    if (activeTab !== "games") {
+      if (kind !== "return") selectTab("games");
+      return;
+    }
+
+    const origin = kind === "return" ? focusRequest.origin : undefined;
+    const key = origin
+      ? `${location.key}:${origin.matchId}:${origin.action}`
+      : `${location.key}:${kind}`;
+    if (focusedRouteKey.current === key) return;
+    if (kind === "choose-publish" && historyLoading) return;
+
+    const index = origin
+      ? history.findIndex((match) => match.id === origin.matchId)
+      : kind === "choose-publish"
+        ? history.findIndex((match) => canPublishHistoryMatch(match, uid, localProfileId))
+        : -1;
+    if (origin && index < 0 && historyLoading) return;
+
+    const match = history[index];
+    if (match) {
+      const neededCount = Math.max(origin?.visible ?? 0, index + 1);
+      if (visibleHistoryCount < neededCount) {
+        setVisibleHistoryCount(neededCount);
+        return;
+      }
+    }
+
+    const controlId = match ? myGamesControlId(match.id, origin?.action ?? "publish") : null;
+    const frame = window.requestAnimationFrame(() => {
+      const control = controlId ? document.getElementById(controlId) : null;
+      if (control && origin) {
+        const scroller = profileRecordScroller(control);
+        if (scroller) scroller.scrollTop = origin.scrollTop;
+      }
+      const target = control ?? document.getElementById("games-tab");
+      target?.focus({ preventScroll: true });
+      if (kind === "choose-publish") target?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+      focusedRouteKey.current = key;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    activeTab,
+    focusRequest,
+    history,
+    historyLoading,
+    localProfileId,
+    location.key,
+    selectTab,
+    uid,
+    visibleHistoryCount,
+  ]);
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>): void {
     const tabs = ["games", "saved", "public"] as const;
@@ -1020,15 +957,10 @@ export function ProfileRoute() {
                   <HistoryRow
                     key={match.id}
                     match={match}
-                    localProfileId={profile?.id ?? null}
+                    localProfileId={localProfileId}
                     uid={uid}
                     localDisplayName={localDisplayName}
-                    publishSide={uid ? publishReplaySide(
-                      match,
-                      uid,
-                      profile?.id ?? null,
-                      ownerPracticeHistoryMatch(match),
-                    ) : null}
+                    canPublish={canPublishHistoryMatch(match, uid, localProfileId)}
                     onNavigate={navigateFromHistory}
                   />
                 ))}
