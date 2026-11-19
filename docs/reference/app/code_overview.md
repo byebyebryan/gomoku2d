@@ -33,7 +33,7 @@ threat, bot, or replay-analysis semantics.
 | Board renderer | `src/board/*` | Phaser scene, sprites, overlays, input mapping, and animation timing |
 | Game session | `src/game/local_match_session.ts`, `src/game/local_match_store.ts` | Current local match state, bot turns, clocks, hints, undo, completion |
 | Profile/settings | `src/profile/*` | Local profile, persisted settings, local history, active-history selection |
-| Cloud sync | `src/cloud/*` | Optional Firebase auth/profile/history stores and local-to-cloud promotion |
+| Cloud sync and sharing | `src/cloud/*` | Optional Firebase auth, profile/history sync, public catalog and private-library snapshot access |
 | Saved matches | `src/match/saved_match.ts` | Compact persisted replay/history schema |
 | Shared history | `src/match/match_history.ts` | Local/cloud summary validation, retention, archive statistics and identity projection without Firebase |
 | Replay UI | `src/replay/*`, `src/routes/ReplayRoute.tsx` | Replay reconstruction, timeline, analysis overlays, cache, and worker runner |
@@ -167,6 +167,9 @@ Local profile state is the default. Cloud is optional and layered on top.
 - `profile_settings.ts` defines the persisted settings schema.
 - `cloud_profile.ts` / `cloud_profile_store.ts` define cloud profile shape.
 - `cloud_history.ts` / `cloud_history_store.ts` own private cloud history.
+- `sharing_public.ts` owns public profile and catalog access.
+  `sharing_private.ts` owns reads and revision-checked writes for private
+  replay-library snapshots.
 - `cloud_promotion.ts` moves local profile/history/settings into cloud after
   sign-in. `cloud_setup.ts` restores the account setup once before controller or
   background uploads; later local edits remain authoritative for that session.
@@ -183,8 +186,8 @@ invalidation. A background profile patch must supply the exact source snapshot;
 the store rejects it after another load, reset, or patch. Follow-up history
 actions also check the current authentication session.
 
-Keep guest-local history, private cloud history, and future public/shared replay
-surfaces separate.
+Keep guest-local history, private cloud history, portable shared replays, public
+profiles/catalogs, and private replay-library copies separate.
 
 ## Common Change Map
 

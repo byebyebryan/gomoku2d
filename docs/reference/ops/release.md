@@ -161,10 +161,12 @@ Compatibility and rollback:
   administratively to reclaim a tiny amount of storage: stale revision barriers
   depend on them. Re-enable starts empty; retained local copies require explicit
   merge after cloud removal.
-- Prefer a compatible forward fix or a previous v0.6 candidate that retains the
-  new cleanup controls. If rolling web back to v0.5, keep additive rules and
-  explain that old tabs cannot manage the new library/publication families.
-  Never bypass the deletion guard to make old Delete Cloud appear successful.
+- Prefer a compatible forward fix or a released web build with sharing cleanup
+  and support for the library schema already written by accounts. For schema 2,
+  use the [v0.6.4 rollback guidance](#rules-first-rollout-for-replay-library-schema-2).
+  Keep the additive rules and deletion guard during web recovery. If the web
+  shell rolls back to v0.5, use a sharing-capable build for library and
+  publication cleanup.
 - For a public incident, first set `publicSharingEnabled()` to `false` in the
   reviewed rules source and deploy/read back that ruleset through the same
   authorized path. This blocks visitor reads and new enabling/publication while

@@ -7,39 +7,18 @@ historical context belongs in [`archive/`](archive/).
 
 ## Current Status
 
-`v0.6.4` completes the planned 0.6 line with replay thumbnails, private study
-details and editable public listings. The release record tracks exact-source
-CI, deployment, Chrome mobile layout and the retained account/device/human
-acceptance limits. [Release record](archive/v0_6_4_release.md)
+`v0.6.4` is the latest published release. It adds replay thumbnails, private
+study details and editable public listings. The [release record](archive/v0_6_4_release.md)
+tracks exact-source CI, deployment, Chrome mobile layout and remaining acceptance.
 
-Curated learning remains unnumbered. Multiplayer remains deferred.
-[Roadmap](reference/product/roadmap.md) ·
-[Implementation archive](archive/v0_6_implementation.md)
-The [October closeout](archive/reconciliation_2026_10/README.md)
-retains the `0.5.x` reconciliation decisions and evidence.
+The reviewed `v0.6.5` candidate adds My games board previews and direct replay
+publishing. The [candidate handoff](working/README.md#065-candidate) points to
+the captures and release procedure.
 
-The v0.6 sharing work shipped in `v0.6.1`. Its
-[design draft](working/v0_6_profiles_and_replays.md) separates accepted scope
-from the original proposals; final formats and storage contracts live in
-[portable replay](reference/app/portable_replay.md) and
-[sharing data](reference/backend/sharing_data.md). The
-[implementation roadmap](working/v0_6_implementation_plan.md) sequences the guest
-sharing demo, private library, public publishing, and release checks.
-[Execution and evidence](working/v0_6_execution.md) retain the local acceptance
-history. Multiplayer research is retained as deferred work.
-
-The shared developer area first shipped in 0.6.3. Its
-[contract](reference/app/developer_area.md) owns route, source and review-record
-semantics; the [execution record](working/v0_6_3_execution.md) owns local
-validation. The [0.6.3 release record](archive/v0_6_3_release.md) holds its
-production results.
-The [UI history implementation](working/v0_6_3_history_implementation.md) extends
-that area with a milestone overview and individual screen trails, backed by
-qualified recaptures from tagged sources.
-
-Markdown is detailed agent/maintainer context. The developer area prepares
-selected design references, inspectors, review comparisons and the screenshot checklist
-for human reading; it does not automatically publish this tree.
+The [0.6 implementation index](archive/v0_6_implementation.md) connects the
+design, review and publication records. The [roadmap](reference/product/roadmap.md)
+tracks later work. The Dev site presents selected design references, inspectors
+and review comparisons alongside the detailed maintainer context kept here.
 
 ## Choose A Path
 
@@ -47,8 +26,8 @@ for human reading; it does not automatically publish this tree.
 |---|---|---|
 | Product direction | [`Product Strategy`](reference/product/product_strategy.md) | [`Roadmap`](reference/product/roadmap.md) |
 | Browser app | [`Web Code Overview`](reference/app/code_overview.md) | [`Architecture`](reference/app/architecture.md), [`App Design`](reference/app/app_design.md), [`UI Design`](reference/app/ui_design.md) |
-| Cloud continuity | [`Backend`](reference/backend/backend.md) | [`Data Model`](reference/backend/data_model.md), [`Infra`](reference/ops/backend_infra.md), [`Cost`](reference/ops/backend_cost.md) |
-| Developer presentation and review workflow | [`Developer area`](reference/app/developer_area.md) | [`Capture procedure`](working/ui_screenshot_review.md), [`Execution`](working/v0_6_3_execution.md) |
+| Cloud continuity and sharing | [`Backend`](reference/backend/backend.md) | [`Data Model`](reference/backend/data_model.md), [`Sharing data`](reference/backend/sharing_data.md), [`Infra`](reference/ops/backend_infra.md), [`Cost`](reference/ops/backend_cost.md) |
+| Developer presentation and review workflow | [`Developer area`](reference/app/developer_area.md) | [`Capture procedure`](working/ui_screenshot_review.md), [`0.6 implementation index`](archive/v0_6_implementation.md) |
 | Board visuals | [`Game Visual`](reference/app/game_visual.md) | [`Asset Sources`](../gomoku-web/assets/README.md) |
 | Rust rules, bots, and analyzer | [`Bot Lab Code Overview`](reference/lab/code_overview.md) | [`Search Bot`](reference/lab/search_bot.md), [`Game Analysis`](reference/lab/game_analysis.md) |
 | Tactical model | [`Tactical Shapes`](reference/lab/tactical_shapes.md) | [`Lethal Threats`](reference/lab/lethal_threats.md), [`Corridor Search`](reference/lab/corridor_search.md) |
@@ -65,7 +44,7 @@ documentation tree:
   and account-free example replays
 - [Dev site](https://gomoku2d.byebyebryan.com/dev/) — overview of the work behind the game
 - [Visual design](https://gomoku2d.byebyebryan.com/visuals/) — visual system and asset inspection
-- [UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) — current screens, UI history and design reviews
+- [UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) — screen reference, UI history and design reviews
 - [Bot lab](https://gomoku2d.byebyebryan.com/lab/) — bot tournament and replay-analysis reports
 - [Privacy](https://gomoku2d.byebyebryan.com/privacy/) and
   [Terms](https://gomoku2d.byebyebryan.com/terms/) — public policy pages

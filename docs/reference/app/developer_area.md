@@ -1,8 +1,10 @@
 # Developer area
 
-This contract describes the published 0.6.3 developer area. The
-[release record](../../archive/v0_6_3_release.md) owns publication and production
-evidence. Detailed implementation and local validation belong to the
+This contract describes the developer area introduced in v0.6.3. The
+[0.6.3 release record](../../archive/v0_6_3_release.md) covers its first
+publication, and the [0.6.4 release record](../../archive/v0_6_4_release.md)
+covers the replay-collections review on the published site. Detailed
+implementation and local validation belong to the
 [execution record](../../working/v0_6_3_execution.md).
 The [brief](../../working/v0_6_3_developer_site_plan.md) retains design decisions;
 the [visual study](../../working/v0_6_3_design/README.md) is an accepted proposal,

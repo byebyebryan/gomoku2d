@@ -4,9 +4,9 @@ This roadmap owns release sequencing and product scope. Current formats and
 behavior live in the reference contracts; completed work lives in
 [`release_history.md`](../../archive/release_history.md).
 
-## `v0.6.4` Published
+## Current Status
 
-`v0.6.4` was published on November 18, 2026 and completes the planned 0.6 line.
+`v0.6.4` was published on November 18, 2026 and is the latest release.
 It adds position previews, private study details, and edits to existing public
 listings. The static Dev site now includes the replay-collection design review.
 
@@ -16,18 +16,25 @@ human accessibility, two-device private-account and novice-feedback checks
 retain their recorded open or deferred status.
 [Release record](../../archive/v0_6_4_release.md)
 
+The reviewed `v0.6.5` candidate is the final polish pass for the line. It adds
+My games board previews and opens the publishing draft from an eligible game
+row. Release preparation, exact-source CI and publication are pending.
+[Candidate handoff](../../working/README.md#065-candidate)
+
 ## `0.6` Sequence
 
 Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
 site and practical UI review tools in 0.6.3, then replay collections in 0.6.4.
-The sequence is complete. Curated learning follows later, with version and
-timing open.
+The planned sequence shipped through 0.6.4. Curated learning follows the
+0.6.5 polish pass, with version and timing open.
 
 | Release | Focus | Player outcome |
 |---|---|---|
+| `0.6.1` | Replay sharing and opt-in public profiles | Share a portable game, save a private copy, or publish chosen games and statistics |
 | `0.6.2` | Public-profile design, sharing usability, documentation and presentation | Understand a player's page, open a game, and understand saving, sharing and publishing; demonstrate the app without signing in |
 | `0.6.3` | Developer site, design/assets and UI review tools | Inspect the current design system, compare assets/screens at matched scale and follow real review findings |
 | `0.6.4` | Replay collection and study tools | Recognize saved games visually, give them private context, and reopen a deliberately chosen moment |
+| `0.6.5` candidate | My games and publishing polish | Recognize the finished board, start publishing from the game row, and return to the matching listing |
 | Later | Curated learning through replays | Read a short tactical prompt, inspect the example, and try another line against the existing bot |
 
 The [follow-up plan](../../working/v0_6_followup_plan.md) records the review,
@@ -144,7 +151,7 @@ arbitrary starting-board sharing, a lesson editor or cloud progress tracking.
 
 ## Deferred Multiplayer
 
-Multiplayer remains outside the planned `0.6.2`–`0.6.4` work because of its UX
+Multiplayer stays deferred beyond the `0.6` line because of its UX
 and implementation effort, uncertain use and need for a second demo player.
 The [P2P research](../backend/p2p_multiplayer.md) preserves the preferred casual
 PoC: direct WebRTC moves, validation in both Rust/Wasm clients and a small

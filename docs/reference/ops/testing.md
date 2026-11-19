@@ -48,9 +48,11 @@ accounts, the actual repository rules, and a separate `dist-cloud` preview on
 port 8013. It refuses occupied ports, stops its own process groups, and blocks
 non-loopback identity/database requests. The SDK still loads Google's static
 GAPI library; cosmetic widget assets and generic telemetry/connectivity probes
-are fulfilled locally. There are no production account/data writes. The lane runs all
-C1-C14 journeys and supported embedded redirect in three engines, plus five
-fresh-state repetitions of conflict, account-switch and reset races. The
+are fulfilled locally. All account and data writes stay in the emulators. The
+default run uses Chromium, Firefox, and WebKit for the continuity and sharing
+scenarios C1–C23, developer boundary cases D01–D02, mobile layout case M01,
+and supported embedded redirect. CI also repeats the conflict, account-switch,
+and reset cases five times with fresh state. The
 [unattended evidence ledger](../../archive/reconciliation_2026_10/v0_5_unattended_evidence.md) records
 scenarios, fixture-only timestamp eligibility, and the difference from real OAuth.
 

@@ -90,7 +90,7 @@ layering rules used on the board.
 ![The Visuals guide shows the pixel-art style system, icons, sprites, and source sheets.](docs/assets/readme-visuals.gif)
 
 [UI design](https://gomoku2d.byebyebryan.com/dev/reviews/core-screens-062/) brings
-together current screens, UI history and design reviews.
+together the screen reference, UI history and design reviews.
 
 ## How It Was Built
 
@@ -137,7 +137,7 @@ lists checks by area.
 
 ## Project Status
 
-`v0.6.4` completes the planned 0.6 line. Replay collections show board previews
+`v0.6.4` is the latest published release. Replay collections show board previews
 at the chosen opening move, and publishers can edit a listed game's title and
 opening in place. The Dev site documents those changes in the
 [Replay collections review](https://gomoku2d.byebyebryan.com/dev/reviews/replay-collections-064/).

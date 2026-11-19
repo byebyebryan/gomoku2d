@@ -4,58 +4,27 @@ Active design drafts and maintained procedures. Completed reviews belong in
 the [archive](../archive/README.md); current product and implementation contracts
 belong in the [reference docs](../README.md#choose-a-path).
 
+## 0.6.5 Candidate
+
+The reviewed candidate adds final-board previews to My games and starts a
+replay publish draft directly from an eligible row. The [capture receipt](v0_6_5_ui_evidence/README.md)
+records the application source, comparison images, and emulator scope. The
+[roadmap](../reference/product/roadmap.md#current-status) records release status.
+Use the [release runbook](../reference/ops/release.md#release-prep) for packaging,
+exact-source CI, and deployment checks.
+
 ## Follow-up Research
 
 | Note | Owner and next review |
 |---|---|
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Planning snapshot with research for later curated learning. The roadmap tracks current scope. |
 
-Completed 0.6.2 design, implementation, review, mobile and completion-plan
-checkpoints are indexed in the [implementation archive](../archive/v0_6_implementation.md).
-Their paths and original evidence remain intact; they are snapshots, not
-competing active plans.
-
 ## Published v0.6 Handoff
 
-The 0.6.4 release record closes the planned line and records production results
-and remaining acceptance. The replay implementation checkpoint and approved
-design retain the decisions and local evidence.
-[0.6.4 release record](../archive/v0_6_4_release.md) ·
-[Implementation](v0_6_4_implementation.md) ·
-[UI review](v0_6_4_replay_collection_review.md) ·
-[Data contract](v0_6_4_replay_collection_contract.md)
-
-The [0.6.3 release record](../archive/v0_6_3_release.md) records publication of
-the developer site, automated checks and outstanding human acceptance. Its
-[release plan](v0_6_3_release_plan.md) retains the executed preparation sequence.
-The [0.6.2 release record](../archive/v0_6_2_release.md),
-[release plan](v0_6_2_release_plan.md) and historical
-[candidate checkpoint](v0_6_2_candidate.md) retain the preceding release.
-
-The earlier [0.6.1 release record](../archive/v0_6_1_release.md) retains its
-publication evidence and original real-account handoff. Its [release plan](v0_6_1_release_plan.md) and
-[acceptance ledger](v0_6_1_evidence/README.md) retain the executed sequence and
-manual handoff. The [original design](v0_6_profiles_and_replays.md),
-[implementation plan](v0_6_implementation_plan.md),
-[execution record](v0_6_execution.md) and
-[functional profile pass](v0_6_1_public_profile.md) retain completed design and
-implementation context. They are not the active plan for the remaining line;
-see the [implementation archive](../archive/v0_6_implementation.md) for the
-completed-note index. Their existing paths and release evidence are preserved.
-
-## Completed 0.6.3 Checkpoints
-
-These dated implementation/review records keep their source and media paths;
-the release record above owns final publication and remaining acceptance.
-
-| Record | Evidence |
-|---|---|
-| [Developer-area brief](v0_6_3_developer_site_plan.md) and [execution](v0_6_3_execution.md) | Accepted scope and local integration history |
-| [Retrospective capture](v0_6_3_retrospective_capture.md) and [UI history](v0_6_3_history_implementation.md) | Tagged-source reconstruction, 24 milestones / 15 families / 274 selected captures; portrait references remain provisional |
-| [Design reviews](v0_6_3_design_reviews.md) | Eight prepared cases, preserved sources/media and shared-export delivery |
-| [Overall review fixes](v0_6_3_review_fixes.md) | All five findings from the [original review](v0_6_3_overall_review.md) resolved at `c1c3af6` |
-| [Release-readiness fixes](v0_6_3_release_fixes.md) | Auth readiness, narrow dependency patches and Node CI coverage; source-qualified validation at `e34129f` |
-| [Final review](v0_6_3_final_review.md) | No new blockers; shallow-checkout portability, source/evidence and audits checked before packaging |
+The [0.6 implementation index](../archive/v0_6_implementation.md) links the
+accepted designs, review evidence, and published release records. Use the
+[0.6.4 release record](../archive/v0_6_4_release.md) for the latest production
+results and open acceptance.
 
 ## Completed Follow-up
 

@@ -7,8 +7,8 @@ Current components, one repo:
 ```
 ┌────────────────────────────┐      ┌────────────────────────────┐
 │   gomoku-web (browser)     │◄────►│   Firebase / Firestore     │
-│   ├─ React app shell (DOM) │      │   Auth + private profile   │
-│   └─ Phaser board (canvas) │      │   and history persistence  │
+│   ├─ React app shell (DOM) │      │   Auth + profile/history   │
+│   └─ Phaser board (canvas) │      │   sharing + replay library │
 │       ↑ shares core via    │      └────────────────────────────┘
 │       wasm bridge          │
 └────────────────────────────┘
@@ -26,8 +26,8 @@ Current components, one repo:
   tools, and the wasm bridge live together because they share logic. The web
   and (future) server both borrow from it.
 - **Firebase Auth + Firestore** are the deployed backend today: optional Google
-  sign-in, owner-scoped profile documents, private settings/history sync, and
-  hardened rules.
+  sign-in, owner-scoped profile documents, private settings/history sync,
+  public profiles/catalogs, a private replay library, and hardened rules.
 - A separate trusted backend is deferred. Public profiles and replay catalogs
   already use bounded Firestore contracts; multiplayer research prefers a small
   matchmaking/signaling boundary with peer-to-peer moves. That research is not
@@ -42,8 +42,8 @@ Current components, one repo:
 - **React Router** — URL-driven screens for the current app (`/`,
   `/match/local`, `/replay/:matchId`, `/settings`, `/profile`, `/rules/`,
   `/guide/`, `/lab/`, `/visuals/`, `/dev/`, `/dev/process/`, `/dev/reviews/`,
-  curated review case URLs, `/replay/shared/`, `/player/`, `/privacy/`, `/terms/`), with future
-  cloud/online routes added later.
+  curated review case URLs, `/replay/shared/`, `/player/`, `/privacy/`, `/terms/`),
+  with online-match routes still deferred.
 - **Zustand** — client state (current view, draft moves, UI toggles).
 - **Firebase SDK directly** — sign-in, explicit profile reads and checkpoint writes for
   cloud-backed features.
@@ -73,13 +73,13 @@ Context triggers too-broad re-renders for live game state. Zustand is a
 minimal store with selectors — the least machinery for the job.
 
 **Why Firebase SDK directly, not TanStack Query?**
-The current app explicitly reads one private profile and coalesces settings and
-history into checkpoint writes. Small stores own auth identity, cooldown,
-pending work, and reset barriers; there is no always-on profile listener. A
-transaction checks current snapshot content before replacement to reject stale
-cross-device writes. Retain this small boundary while cloud remains optional.
-Revisit a query/subscription abstraction when actual live-data requirements
-justify it; future online `onSnapshot` flows are not the current implementation.
+The private-history flow explicitly reads one owner profile and coalesces
+settings and history into checkpoint writes. Public profile/catalog and private
+library features use bounded reads and revision-checked writes. Small stores
+own auth identity, cooldown, pending work, and reset barriers. The app loads
+profiles on demand and checks the private profile snapshot in a transaction
+before replacing it to reject stale cross-device writes. Revisit a subscription
+abstraction when there is a live-data requirement.
 
 **Why no CSS framework (Tailwind / MUI / etc.)?**
 CSS Modules (`*.module.css`) plus a small hand-rolled token layer in
@@ -268,15 +268,18 @@ October `0.5.x` review completed deeper correctness, lifecycle, usability,
 and maintenance work. The [closeout](../../archive/reconciliation_2026_10/README.md)
 records the retained architecture, targeted repairs, and acceptance deferrals.
 
-The v0.6 local candidate adds self-contained shared replay links, an isolated
-private replay library, and opt-in public profiles/catalogs. Shared and
-public routes initialize authentication independently of private history.
-Completed continuations use normal game history, promotion and aggregate totals;
-an optional saved-match origin preserves the starting ply and source fingerprint
-through cloud sync and portable export. Earlier preview continuation-library
-entries appear in My games under their existing owner. Study copies stay separate.
-See [portable format](portable_replay.md) and [sharing data](../backend/sharing_data.md).
-Multiplayer remains deferred; its preferred gameplay path is direct P2P.
+The published v0.6 releases added self-contained replay links, a private replay
+library, and opt-in public profiles and catalogs. v0.6.4 added private titles,
+notes and openings for saved replays and revision-safe edits to public listings.
+Shared and public routes initialize authentication independently of private
+history. Completed continuations use normal game history, promotion and
+aggregate totals. An optional saved-match origin preserves the starting ply and
+source fingerprint through cloud sync and portable export. Earlier preview
+continuations appear in their owner's My games. Private study copies stay in
+Saved replays. See the [portable format](portable_replay.md),
+[sharing data](../backend/sharing_data.md), and the [v0.6.4 release record](../../archive/v0_6_4_release.md).
+The live signed-in public-sharing round trip remains pending. Multiplayer
+remains deferred with direct P2P as the preferred gameplay path.
 
 Details are in [`Roadmap`](../product/roadmap.md). The architectural contract
 — what React owns, what Phaser owns, how they talk, and where `gomoku-core` is

@@ -105,5 +105,7 @@ Recipients rebuild the board and recompute bounded analysis in their own
 browser; the link carries no trusted analysis or server-verification flag.
 
 The Vitest suite exercises the installed Rust/Wasm bridge through the same
-validator for both rulesets. Production-browser direct-route, static hosting,
-and guest/signed-in network-isolation checks remain part of M2 acceptance.
+validator for both rulesets. The [v0.6 execution record](../../working/v0_6_execution.md)
+records the three-engine shared viewer and signed-in isolation checks. The
+[v0.6.1 release record](../../archive/v0_6_1_release.md) records static hosting
+and direct-route results on the published build.

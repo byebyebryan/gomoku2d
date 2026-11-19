@@ -132,7 +132,7 @@ application journeys establish their behavior separately.
 Separate new storage families keep provenance out of old promotion/aggregation.
 Rules reject old profile deletion if newer sharing data remains, plus stale
 revision/generation writes and visibility changes without atomic page clearing.
-[Rollout/rollback](../../reference/ops/release.md#v06-sharing-rollout-and-compatibility)
+[Rollout/rollback](../../reference/ops/release.md#v061-sharing-release-and-compatibility)
 requires rules-first deployment, separately applied index exemptions, retained
 empty markers and a compatible cleanup UI.
 
