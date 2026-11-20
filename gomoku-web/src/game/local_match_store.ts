@@ -90,6 +90,16 @@ export interface LocalMatchResumeSeed {
   variant: GameVariant;
 }
 
+function minimumRetainedMoveCount(state: Pick<LocalMatchState, "players" | "undoFloor">): number {
+  return Math.max(state.undoFloor, state.players[0].kind === "bot" ? 1 : 0);
+}
+
+export function canUndoLocalMatch(
+  state: Pick<LocalMatchState, "moves" | "players" | "status" | "undoFloor">,
+): boolean {
+  return state.status === "playing" && state.moves.length > minimumRetainedMoveCount(state);
+}
+
 function withBotPlayerNames(
   players: [MatchPlayer, MatchPlayer],
   botConfig: BotConfig,
@@ -530,9 +540,6 @@ export function createLocalMatchStore(
       void queueBotMove(slot);
     };
 
-    const minimumRetainedMoveCount = (): number =>
-      Math.max(undoFloor, players[0].kind === "bot" ? 1 : 0);
-
     const resetMatch = (
       nextPlayers: [MatchPlayer, MatchPlayer],
       nextVariant = selectedVariant,
@@ -628,11 +635,11 @@ export function createLocalMatchStore(
       },
       undoLastTurn: () => {
         const state = get();
-        const minimumMoves = minimumRetainedMoveCount();
-        if (state.moves.length <= minimumMoves) {
+        if (!canUndoLocalMatch(state)) {
           return false;
         }
 
+        const minimumMoves = minimumRetainedMoveCount(state);
         interruptBotRequests();
 
         const nextMoves = [...state.moves];

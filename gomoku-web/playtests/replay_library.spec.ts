@@ -371,10 +371,12 @@ test("playing from a shared frame records a regular game and keeps its source at
   await expect(winningCell).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 9");
+  await expect(page.getByRole("button", { name: "Undo", exact: true })).toBeDisabled();
   await expect(page.getByRole("link", { name: "Analyze" })).toBeVisible();
 
   await page.getByRole("link", { name: "Analyze" }).click();
   await expect(page).toHaveURL(/\/replay\/(?!portable-)[A-Za-z0-9-]+$/);
+  const firstReplayPath = new URL(page.url()).pathname;
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 9 / 9");
   await expect(page.getByRole("region", { name: "Practice origin" })).toHaveCount(0);
   await expect(page.getByTestId("replay-player-row-black")).toContainText("Guest");
@@ -428,4 +430,30 @@ test("playing from a shared frame records a regular game and keeps its source at
   await expect(page.getByRole("button", { name: /^Inspect game / })).toHaveCount(1);
   await expectProfileStat(page, "Matches", 1);
   await expectProfileStat(page, "Wins", 1);
+
+  // The first completion is recorded. An explicit Play From Here from the same
+  // shared frame starts a separate round with the same winning line.
+  await page.goto(sharedLink(8));
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 9");
+  await page.getByRole("button", { name: "Play From Here", exact: true }).click();
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 8");
+  await expect(page.getByRole("button", { name: "Undo", exact: true })).toBeDisabled();
+  const secondWinningCell = page.getByRole("gridcell", { name: "J8: empty" });
+  await secondWinningCell.focus();
+  await secondWinningCell.press("Enter");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 9");
+  await expect(page.getByRole("button", { name: "Undo", exact: true })).toBeDisabled();
+  await page.getByRole("link", { name: "Analyze", exact: true }).click();
+  await expect(page).toHaveURL(/\/replay\/(?!portable-)[A-Za-z0-9-]+$/);
+  const secondReplayPath = new URL(page.url()).pathname;
+  expect(secondReplayPath).not.toBe(firstReplayPath);
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 9 / 9");
+  await page.goto("/profile");
+  await expect(page.getByRole("button", { name: /^Inspect game / })).toHaveCount(2);
+  await expectProfileStat(page, "Matches", 2);
+  await expectProfileStat(page, "Wins", 2);
+  await page.reload();
+  await expect(page.getByRole("button", { name: /^Inspect game / })).toHaveCount(2);
+  await expectProfileStat(page, "Matches", 2);
+  await expectProfileStat(page, "Wins", 2);
 });

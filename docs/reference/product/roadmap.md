@@ -19,8 +19,8 @@ retain their recorded open or deferred status.
 ## `0.7` Refinement
 
 `0.7.0` starts with correctness and validation for the shipped game. First,
-preserve active replay continuations across browser navigation. The
-finished-round Undo policy is a separate decision. Verify existing player
+preserve active replay continuations across browser navigation and make
+wins and draws final for the round. Verify existing player
 journeys and carry forward open real-account, device and accessibility checks.
 
 Later work will refine the code, design and presentation around Play → Replay →

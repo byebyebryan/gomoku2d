@@ -17,7 +17,7 @@ import {
   ensureLocalMatchSession,
   localMatchSessionStore,
 } from "../game/local_match_session";
-import type { LocalMatchState } from "../game/local_match_store";
+import { canUndoLocalMatch, type LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { localProfileStore } from "../profile/local_profile_store";
 import type { BoardHintSettings } from "../profile/profile_settings";
@@ -91,13 +91,6 @@ function statusLabel(
   }
 
   return `${state.players[state.currentPlayer - 1]?.name ?? "Unknown"} to move`;
-}
-
-function canUndo(
-  state: Pick<LocalMatchState, "moves" | "players" | "undoFloor">,
-): boolean {
-  const minimumMoves = Math.max(state.undoFloor, state.players[0]?.kind === "bot" ? 1 : 0);
-  return state.moves.length > minimumMoves;
 }
 
 function moveCountLabel(moveCount: number): string {
@@ -468,7 +461,7 @@ export function LocalMatchRoute() {
               <button
                 aria-label="Undo"
                 className="uiAction uiActionNeutral"
-                disabled={!canUndo(state)}
+                disabled={!canUndoLocalMatch(state)}
                 onClick={() => {
                   resetTouchCandidate();
                   state.undoLastTurn();

@@ -208,6 +208,11 @@ This same interaction updates the saved local/cloud profile settings.
 
 The end of a game should feel like a compact payoff, not a modal interruption.
 
+A win or draw finalizes the round and saves its result. Undo is available
+during active play. To try a different line after finishing, open Analyze and
+use Play From Here at an eligible position. The continuation counts as a new
+game when it finishes.
+
 Use a stronger result block than the normal in-play HUD:
 
 - winner/result line

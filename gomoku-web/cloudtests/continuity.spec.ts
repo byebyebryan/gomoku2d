@@ -35,6 +35,7 @@ async function finishBranch(page: import("@playwright/test").Page, sourceId: str
   await winningCell.focus();
   await winningCell.press("Enter");
   await expect(page.getByTestId("match-status")).toHaveText(/wins$/);
+  await expect(page.getByRole("button", { name: "Undo", exact: true })).toBeDisabled();
 }
 
 async function resetProfile(page: import("@playwright/test").Page) {
@@ -58,6 +59,13 @@ test("C3: a completed continuation syncs as a regular game and opens from a seco
   expect(continuation.replay_origin).toMatchObject({ inherited_ply: 8, source_fingerprint: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/) });
   expect(continuation.undo_floor).toBe(8);
   expect(await readPrivateLibrary(uid)).toBeNull();
+
+  await page.reload();
+  await readyCloud(page);
+  await expect.poll(async () => (await readProfile(uid))?.match_history.replay_matches.length).toBe(2);
+  await expect(page.getByRole("button", { name: /^Inspect / })).toHaveCount(2);
+  const reloadedIds = (await readProfile(uid))?.match_history.replay_matches.map((match: { id: string }) => match.id).sort();
+  expect(reloadedIds).toEqual(["branch-source", continuation.id].sort());
 
   const context = await browser.newContext(); await protectContext(context);
   try {

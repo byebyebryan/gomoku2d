@@ -15,7 +15,7 @@ Analysis surface, board-first layout, opt-in publication, and static hosting.
 
 | Milestone | Work and outcome | When to proceed |
 | --- | --- | --- |
-| **0.7.0** | Fix replay-branch navigation, settle the finished-round contract, and verify existing journeys. | Start with the navigation fix. Confirm the Undo decision before changing game completion. |
+| **0.7.0** | Preserve replay continuations across navigation, finalize completed rounds, and verify existing journeys. | Confirm guest and emulator behavior before release review. |
 | Design, code and presentation | Improve the transitions between Match, Replay and Guide on desktop and mobile. Refine the underlying code where it simplifies a demonstrated problem. Refresh the Dev site's current references from a published build. | Select a small set of findings from the current game before committing to a release. |
 | Bot and analyzer | Establish current browser and native baselines. Choose a focused improvement in tactical behavior, responsiveness, or explanation. | Baseline work can run independently. Compare the candidate with the current presets before adopting a change. |
 | One lesson in Guide | Use one existing replay to test whether a new player can understand a threat, try a line, and retry. | The practice navigation contract must hold. Use the trial to decide whether to expand to the planned three to five scenarios. |
@@ -68,20 +68,16 @@ win at F11 again. The review confirmed that My games shows two matches with
 distinct replay IDs. The profile store records every terminal transition as a
 new game. [Profile store](../../gomoku-web/src/profile/local_profile_store.ts#L300)
 
-For **0.7.0**, propose finalizing the round at completion and making Undo
-available during active play only. After the game ends, players can inspect
-the ending and use Play From Here to start an intentional continuation, which
-counts as an ordinary game when finished. Preserve existing history and
-public links as issued. The match store and controls should enforce the same
-rule. Confirm the change before implementation because it affects a currently
-available action.
+For **0.7.0**, a win or draw finalizes its round and Undo is available during
+active play only. After finishing, players can inspect the ending and use
+Play From Here to start a continuation, which counts as an ordinary game when
+finished. The match store and controls enforce the same rule.
+[Match end state](../reference/app/app_design.md#match-end-state)
 
-If post-finish Undo should remain an edit to the same round, settle when the
-record becomes final and what happens to a result already synced or published.
 Private history merges by saved record ID. A public listing has its own
-fingerprint and payload, and a copied URL carries its own replay. An editable
-round needs explicit rules for each of those copies. Keep intentional new
-attempts distinct even if the board and moves match.
+fingerprint and payload, and a copied URL carries its own replay. Keep issued
+copies and previous history intact and count each intentionally started round
+separately, even if its moves match a prior game.
 [Cloud history merge](../../gomoku-web/src/cloud/cloud_profile.ts#L390) ·
 [Publication lookup](../../gomoku-web/src/routes/PublishReplayPanel.tsx#L213) ·
 [Portable replay encoding](../../gomoku-web/src/replay/portable_replay_codec.ts#L230)
@@ -109,6 +105,11 @@ repeat the affected live steps after an authorized deployment. If a live or
 human check remains open, record the specific limit for the release decision.
 [Testing guide](../reference/ops/testing.md) ·
 [Release runbook](../reference/ops/release.md)
+
+The 390 × 844 Chrome touch check for the F11 ending reached the result and
+Analyze. On both v0.6.5 and the 0.7.0 Undo candidate, the page was 390 CSS px
+wide before the win and 458 CSS px wide afterward. Review the finished-match
+actions at this width during candidate review.
 
 ## Foundation work after the first milestone
 
