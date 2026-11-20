@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
@@ -33,7 +33,7 @@ import { ReplayDetailsPanel, type ReplayDetailsBinding, type ReplayDraftState } 
 import { protectReplayDraftNavigation } from "./replay_draft_navigation";
 import { portableReplayFromSavedMatch, validatePortableReplay } from "../replay/portable_replay";
 import { portableReplayFingerprint } from "../replay/portable_replay_codec";
-import { localMatchSessionStore } from "../game/local_match_session";
+import { ensureLocalMatchSession, localMatchSessionStore } from "../game/local_match_session";
 import { botLabel } from "../core/bot_config";
 import { publicProfilePath, type PublicReplayReturn } from "./public_player_navigation";
 import { myGamesPublishIntentFromState, myGamesReturnFromState } from "./my_games_navigation";
@@ -86,6 +86,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const [autoplaying, setAutoplaying] = useState(false);
   const [branching, setBranching] = useState(false);
   const [branchError, setBranchError] = useState("");
+  const branchRequestRef = useRef<object | null>(null);
   const [sidebar, setSidebar] = useState<"replay" | "share" | "publish" | "details">(
     launchAllowed ? "publish" : details?.kind === "public" ? "details" : "replay",
   );
@@ -104,6 +105,15 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const previousSidebarRef = useRef(sidebar);
   const { analysisAnnotations, analysisStep } = useReplayAnalysis(match);
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
+
+  useLayoutEffect(() => {
+    branchRequestRef.current = null;
+    setBranching(false);
+    setBranchError("");
+    return () => {
+      branchRequestRef.current = null;
+    };
+  }, [location.hash, location.key, location.pathname, location.search, location.state, match.id, moveIndex]);
 
   useEffect(() => {
     setMoveIndex(startMove);
@@ -254,18 +264,34 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     frame,
     match,
     onResume: async (resumeSeed) => {
+      if (branchRequestRef.current) return;
+      const request = {};
+      branchRequestRef.current = request;
+      let launched = false;
+      setAutoplaying(false);
       setBranching(true); setBranchError("");
+      const isCurrentRequest = () => branchRequestRef.current === request;
       try {
         const portable = source ?? portableReplayFromSavedMatch(match).replay;
         const sourceFingerprint = fingerprint ?? await portableReplayFingerprint(validatePortableReplay(portable));
+        if (!isCurrentRequest()) return;
         const active = localMatchSessionStore.getState().matchStore?.getState();
         if (active?.status === "playing" && active.moves.length > 0
           && !window.confirm("Replace your active game with a new game from this position?")) return;
-        navigate(localMatchResumePath, { state: { resumeSeed: {
+        if (!isCurrentRequest()) return;
+        ensureLocalMatchSession({ resumeState: {
           ...resumeSeed, practiceOrigin: { sourceFingerprint, inheritedPly: resumeSeed.moves.length },
-        } } });
-      } catch (error) { setBranchError(error instanceof Error ? error.message : "The game could not start."); }
-      finally { setBranching(false); }
+        } });
+        navigate(localMatchResumePath);
+        launched = true;
+      } catch (error) {
+        if (isCurrentRequest()) setBranchError(error instanceof Error ? error.message : "The game could not start.");
+      } finally {
+        if (!launched && isCurrentRequest()) {
+          branchRequestRef.current = null;
+          setBranching(false);
+        }
+      }
     },
     replayFloor,
     resumePending: branching,

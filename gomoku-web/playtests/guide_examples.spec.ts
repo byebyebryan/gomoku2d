@@ -87,6 +87,22 @@ test("an example opens an eligible continuation and cancel preserves an active g
   await page.getByRole("button", { name: "Play From Here", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Local Match", exact: true })).toBeVisible();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 26");
+
+  const firstMove = page.getByRole("gridcell", { name: /^A1: empty/ });
+  await expect(firstMove).toHaveAttribute("aria-disabled", "false");
+  await firstMove.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Local Match", exact: true })).toBeVisible();
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+  await page.goForward();
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+
   await page.getByRole("link", { name: "Home", exact: true }).click();
   await page.getByRole("link", { name: "Examples", exact: true }).click();
   await page.getByRole("link", { name: "Open Review a finished game", exact: true }).click();
@@ -98,5 +114,16 @@ test("an example opens an eligible continuation and cancel preserves an active g
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 27 / 28");
   await page.getByRole("link", { name: "Home", exact: true }).click();
   await page.getByRole("link", { name: "Play", exact: true }).click();
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+
+  await page.getByRole("link", { name: "Home", exact: true }).click();
+  await page.getByRole("link", { name: "Examples", exact: true }).click();
+  await page.getByRole("link", { name: "Open Try another line", exact: true }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 26 / 36");
+  const replaceDialog = page.waitForEvent("dialog");
+  const relaunch = page.getByRole("button", { name: "Play From Here", exact: true }).click();
+  await (await replaceDialog).accept();
+  await relaunch;
+  await expect(page.getByRole("heading", { name: "Local Match", exact: true })).toBeVisible();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 26");
 });

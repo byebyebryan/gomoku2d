@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
@@ -17,7 +17,7 @@ import {
   ensureLocalMatchSession,
   localMatchSessionStore,
 } from "../game/local_match_session";
-import type { LocalMatchResumeSeed, LocalMatchState } from "../game/local_match_store";
+import type { LocalMatchState } from "../game/local_match_store";
 import type { CellPosition } from "../game/types";
 import { localProfileStore } from "../profile/local_profile_store";
 import type { BoardHintSettings } from "../profile/profile_settings";
@@ -176,9 +176,7 @@ function visibleBoardHints(
 export function LocalMatchRoute() {
   useDocumentTitle("Local Match");
 
-  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const appliedResumeSeedKeyRef = useRef<string | null>(null);
   const [compactTouchMode, setCompactTouchMode] = useState(false);
   const [clockNowMs, setClockNowMs] = useState(() => Date.now());
   const [touchCandidate, setTouchCandidate] = useState<CellPosition | null>(null);
@@ -189,8 +187,6 @@ export function LocalMatchRoute() {
   const latestReplayId = useStore(localMatchSessionStore, (snapshot) => snapshot.latestReplayId);
   const settings = useStore(localProfileStore, (snapshot) => snapshot.settings);
   const state = useStore(matchStore ?? loadingMatchStore, (snapshot) => snapshot);
-  const resumeSeed = (location.state as { resumeSeed?: LocalMatchResumeSeed } | null)?.resumeSeed ?? null;
-  const resumeSeedKey = resumeSeed ? JSON.stringify(resumeSeed) : null;
   const visibleHints = visibleBoardHints(state, settings.boardHints);
   const mediaMode = searchParams.get("media");
   const suppressSequenceNumbers = mediaMode === "og" || mediaMode === "showcase";
@@ -234,16 +230,10 @@ export function LocalMatchRoute() {
       return;
     }
 
-    if (resumeSeed && appliedResumeSeedKeyRef.current !== resumeSeedKey) {
-      ensureLocalMatchSession({ resumeState: resumeSeed });
-      appliedResumeSeedKeyRef.current = resumeSeedKey;
-      return;
-    }
-
     if (!matchStore) {
       ensureLocalMatchSession();
     }
-  }, [matchStore, profile, resumeSeed, resumeSeedKey]);
+  }, [matchStore, profile]);
 
   useEffect(() => {
     if (state.status === "playing" && latestReplayId) {
