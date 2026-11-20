@@ -16,12 +16,25 @@ human accessibility, two-device private-account and novice-feedback checks
 retain their recorded open or deferred status.
 [Release record](../../archive/v0_6_5_release.md)
 
+## `0.7` Refinement
+
+`0.7.0` starts with correctness and validation for the shipped game. First,
+preserve active replay continuations across browser navigation. The
+finished-round Undo policy is a separate decision. Verify existing player
+journeys and carry forward open real-account, device and accessibility checks.
+
+Later work will refine the code, design and presentation around Play → Replay →
+Try another line and establish current bot and analyzer baselines. Point-release
+scope follows the findings. Use one guest lesson to test the learning loop
+before planning a larger set.
+[0.7 refinement plan](../../working/v0_7_refinement_plan.md)
+
 ## `0.6` Sequence
 
 Bryan revised the sequence on October 24: finish 0.6.2, establish the developer
 site and practical UI review tools in 0.6.3, then replay collections in 0.6.4.
-The planned sequence shipped through 0.6.4. The 0.6.5 polish pass closes
-the line. Curated learning is next in the roadmap, with version and timing open.
+The planned sequence shipped through 0.6.4. The 0.6.5 polish pass closed the
+line.
 
 | Release | Focus | Player outcome |
 |---|---|---|
@@ -30,7 +43,6 @@ the line. Curated learning is next in the roadmap, with version and timing open.
 | `0.6.3` | Developer site, design/assets and UI review tools | Inspect the current design system, compare assets/screens at matched scale and follow real review findings |
 | `0.6.4` | Replay collection and study tools | Recognize saved games visually, give them private context, and reopen a deliberately chosen moment |
 | `0.6.5` | My games and publishing polish | Recognize the finished board, start publishing from the game row, and return to the matching listing |
-| Later | Curated learning through replays | Read a short tactical prompt, inspect the example, and try another line against the existing bot |
 
 The [follow-up plan](../../working/v0_6_followup_plan.md) records the review,
 first-party research, implementation implications, decision gates and release
@@ -113,11 +125,12 @@ The design and contract pass retains decisions and prototype evidence.
 [Implementation checkpoint](../../working/v0_6_4_implementation.md) ·
 [Design and contract pass](../../working/v0_6_4_design_contract_plan.md)
 
-### Later: Curated Learning Through Replays
+## Later Curated Learning Through Replays
 
-- Build three to five short, authored scenarios around legal, complete games
-  and selected nonterminal positions. Reuse the `0.6.2` example corpus where it
-  fits; teach threats, forcing sequences and alternatives through Guide.
+- Validate one short guest lesson first. If the trial supports expansion,
+  consider three to five authored scenarios around legal, complete games and
+  selected nonterminal positions. Reuse the `0.6.2` example corpus where it
+  fits and teach threats, forcing sequences and alternatives through Guide.
 - Offer a clear prompt, inspection/analysis, Play From Here and a return/retry
   path to the original example. Use the existing bot and replay controls.
 - Keep scenarios and explanations as static, versioned content. Opening an
@@ -126,9 +139,9 @@ The design and contract pass retains decisions and prototype evidence.
 - Distinguish authored explanation, bounded analysis and the actual outcome
   against the selected bot. A different legal line is not automatically wrong.
 
-Review the corpus and lesson interaction before implementation. This release
-does not introduce automatic puzzle generation, a correctness-grading engine,
-arbitrary starting-board sharing, a lesson editor or cloud progress tracking.
+Review the corpus and lesson interaction before implementation. Keep automatic
+puzzle generation, grading, arbitrary starting-board sharing, lesson editing
+and cloud progress tracking in the parking lot.
 
 ## Constraints Across the Line
 

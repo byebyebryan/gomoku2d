@@ -8,6 +8,7 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
+| [0.7 refinement plan](v0_7_refinement_plan.md) | First milestone scope, acceptance checks and later refinement work. |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Planning snapshot with research for later curated learning. The roadmap tracks current scope. |
 
 ## Published v0.6 Handoff
@@ -42,4 +43,4 @@ completed review.
 Bryan owns these design and maintenance decisions. The maintenance notes do not
 reopen the completed [October reconciliation](../archive/reconciliation_2026_10/README.md),
 which records the retained UI and deferred manual acceptance. The
-[roadmap](../reference/product/roadmap.md) tracks later curated learning.
+[roadmap](../reference/product/roadmap.md) tracks the 0.7 sequence.
