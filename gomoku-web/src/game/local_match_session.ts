@@ -17,30 +17,29 @@ import {
 export interface LocalMatchSessionState {
   latestReplayId: string | null;
   matchStore: StoreApi<LocalMatchState> | null;
+  sourceReplay: { to: string; state: unknown } | null;
 }
 
-export interface LocalMatchSessionOptions
-  extends Omit<
-    LocalMatchStoreOptions,
-    "humanDisplayName" | "onMatchFinished" | "botConfig" | "resumeState" | "variant"
-  > {
-  resumeState?: LocalMatchResumeSeed;
-}
+type LocalMatchSessionOptions = Omit<
+  LocalMatchStoreOptions,
+  "humanDisplayName" | "onMatchFinished" | "onRoundStarted" | "botConfig" | "resumeState" | "variant"
+>;
 
 export const localMatchSessionStore = createStore<LocalMatchSessionState>(() => ({
   latestReplayId: null,
   matchStore: null,
+  sourceReplay: null,
 }));
 
-function createSessionMatchStore(options: LocalMatchSessionOptions = {}): StoreApi<LocalMatchState> {
+function createSessionMatchStore(options: LocalMatchSessionOptions, resumeState?: LocalMatchResumeSeed): StoreApi<LocalMatchState> {
   const localProfile = localProfileStore.getState().ensureLocalProfile();
   const settings = localProfileStore.getState().settings;
 
-  const matchStore = createLocalMatchStore({
+  return createLocalMatchStore({
     ...options,
     humanDisplayName: localProfile.displayName,
     onMatchFinished: (match) => {
-      const origin = match.undoFloor > 0 ? options.resumeState?.practiceOrigin : undefined;
+      const origin = match.undoFloor > 0 ? resumeState?.practiceOrigin : undefined;
       const replayId = localProfileStore.getState().recordFinishedMatch({
         ...match,
         ...(origin ? { replayOrigin: {
@@ -83,38 +82,38 @@ function createSessionMatchStore(options: LocalMatchSessionOptions = {}): StoreA
 
       localMatchSessionStore.setState({ latestReplayId: replayId });
     },
+    onRoundStarted: () => localMatchSessionStore.setState({ latestReplayId: null, sourceReplay: null }),
     botConfig: settings.botConfig,
-    resumeState: options.resumeState,
-    variant: options.resumeState?.variant ?? settings.gameConfig.ruleset,
+    resumeState,
+    variant: resumeState?.variant ?? settings.gameConfig.ruleset,
   });
-
-  return matchStore;
 }
 
 export function ensureLocalMatchSession(
   options: LocalMatchSessionOptions = {},
 ): StoreApi<LocalMatchState> {
-  const existingStore = localMatchSessionStore.getState().matchStore;
-  if (existingStore && !options.resumeState) {
-    return existingStore;
-  }
+  const { matchStore } = localMatchSessionStore.getState();
+  if (matchStore) return matchStore;
 
-  if (existingStore) {
-    existingStore.getState().dispose();
-  }
+  const created = createSessionMatchStore(options);
+  localMatchSessionStore.setState({ latestReplayId: null, matchStore: created, sourceReplay: null });
+  return created;
+}
 
-  const matchStore = createSessionMatchStore(options);
-  localMatchSessionStore.setState({ latestReplayId: null, matchStore });
+export function startReplayContinuation(
+  seed: LocalMatchResumeSeed,
+  sourceReplay: NonNullable<LocalMatchSessionState["sourceReplay"]>,
+  options: LocalMatchSessionOptions = {},
+): StoreApi<LocalMatchState> {
+  const matchStore = createSessionMatchStore(options, seed);
+  localMatchSessionStore.getState().matchStore?.getState().dispose();
+  localMatchSessionStore.setState({ latestReplayId: null, matchStore, sourceReplay });
   return matchStore;
 }
 
 export function disposeLocalMatchSession(): void {
   localMatchSessionStore.getState().matchStore?.getState().dispose();
-  localMatchSessionStore.setState({ latestReplayId: null, matchStore: null });
-}
-
-export function clearLocalMatchLatestReplay(): void {
-  localMatchSessionStore.setState({ latestReplayId: null });
+  localMatchSessionStore.setState({ latestReplayId: null, matchStore: null, sourceReplay: null });
 }
 
 export function applySavedLocalMatchSetup(): void {
@@ -136,7 +135,6 @@ export function startLocalMatchWithSavedSetup(): StoreApi<LocalMatchState> {
   const matchStore = ensureLocalMatchSession();
   applySavedLocalMatchSetup();
   matchStore.getState().startNewMatch();
-  localMatchSessionStore.setState({ latestReplayId: null });
   return matchStore;
 }
 

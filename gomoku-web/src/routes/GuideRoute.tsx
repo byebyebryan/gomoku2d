@@ -269,11 +269,18 @@ export function GuideRoute() {
                 Strong players do not wait for combos to appear. They force one
                 through a sequence of must-answer threats.
               </p>
+              <p>
+                These crops follow one illustrative continuation, showing selected
+                stones from the full position. Other stones and possible replies
+                are omitted.
+              </p>
             </div>
             <GuideFramePanel
               label="Forced corridor sequence"
               frames={[
                 {
+                  description:
+                    "Black's I3 completes a four on I3–I6. I2 is the open end of that four. White plays I2. This closes the line because White already holds I7.",
                   label: "1. Forced reply 1",
                   model: guideModelFromReplayFrame({
                     currentPlayer: "white",
@@ -294,6 +301,8 @@ export function GuideRoute() {
                   }),
                 },
                 {
+                  description:
+                    "Black's H3 forms a three on H3–I4–J5. The overlays mark G2 and K6 as extension points. White answers at G2. K6 stays open.",
                   label: "2. Forced reply 2",
                   model: guideModelFromReplayFrame({
                     currentPlayer: "white",
@@ -321,6 +330,8 @@ export function GuideRoute() {
                   }),
                 },
                 {
+                  description:
+                    "Black's J3 completes a four on G6–H5–I4–J3. White holds F7, leaving K2 as the marked winning point. Black also has the three H3–I3–J3. G3 and K3 are its marked extension points. White's block at K2 leaves that three intact.",
                   label: "3. 4+3 combo",
                   model: guideModelFromReplayFrame({
                     currentPlayer: "white",
@@ -431,9 +442,16 @@ export function GuideRoute() {
   );
 }
 
-function GuideDiagram({ label, model }: { label: string; model: BoardViewModel }) {
+function GuideDiagram({ label, model }: { label?: string; model: BoardViewModel }) {
+  const decorative = label === undefined;
+
   return (
-    <div className={styles.diagram} aria-label={label} role="img">
+    <div
+      aria-hidden={decorative || undefined}
+      aria-label={decorative ? undefined : label}
+      className={styles.diagram}
+      role={decorative ? undefined : "img"}
+    >
       <Board decorative model={model} />
     </div>
   );
@@ -443,7 +461,7 @@ function GuideFramePanel({
   frames,
   label,
 }: {
-  frames: Array<{ label: string; model: BoardViewModel }>;
+  frames: Array<{ description: string; label: string; model: BoardViewModel }>;
   label: string;
 }) {
   const frameLayout = frameGridClassName(frames.length);
@@ -452,13 +470,13 @@ function GuideFramePanel({
     <article className={`${styles.example} ${styles.frameOnlyExample}`}>
       <div className={`${styles.frameGrid} ${frameLayout}`} aria-label={label} role="group">
         {frames.map((frame) => (
-          <div key={frame.label} className={styles.frame}>
-            <GuideDiagram
-              label={`${label}: ${frame.label} board diagram.`}
-              model={frame.model}
-            />
-            <p className={styles.frameLabel}>{frame.label}</p>
-          </div>
+          <figure key={frame.label} className={styles.frame}>
+            <GuideDiagram model={frame.model} />
+            <figcaption className={styles.frameCopy}>
+              <h3 className={styles.frameLabel}>{frame.label}</h3>
+              <p className={styles.frameDescription}>{frame.description}</p>
+            </figcaption>
+          </figure>
         ))}
       </div>
     </article>

@@ -154,8 +154,16 @@
 
 .frame {
   display: grid;
+  align-content: start;
   gap: 6px;
   min-width: 0;
+  margin: 0;
+}
+
+.frameCopy {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
 }
 
 .frame .diagram {
@@ -171,6 +179,12 @@
   letter-spacing: 0.1em;
   line-height: 1;
   text-transform: uppercase;
+}
+
+.frameCopy .frameDescription {
+  max-width: 42ch;
+  overflow-wrap: anywhere;
+  line-height: 1.28;
 }
 
 .tileGrid {

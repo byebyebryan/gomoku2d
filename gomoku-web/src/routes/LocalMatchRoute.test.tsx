@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
@@ -165,5 +165,10 @@ describe("LocalMatchRoute", () => {
     expect(within(black).queryByText(/^\+/)).not.toBeInTheDocument();
     expect(within(white).getByText("38.0s")).toBeInTheDocument();
     expect(within(white).getByText("+2.4s")).toBeInTheDocument();
+
+    const boardRenders = mockedBoard.mock.calls.length;
+    act(() => { vi.advanceTimersByTime(500); });
+    expect(within(white).getByText("+2.9s")).toBeInTheDocument();
+    expect(mockedBoard).toHaveBeenCalledTimes(boardRenders);
   });
 });

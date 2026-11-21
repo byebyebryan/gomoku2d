@@ -69,7 +69,10 @@ for (const mode of ["canvas", "webgl"] as const) {
         await expectBoardRenderer(canvas, mode);
         await expectCellColour(canvas, row, col, colour, 7);
       }
-      const focus = page.getByRole("img", { name: "Forced corridor sequence: 1. Forced reply 1 board diagram.", exact: true }).locator("canvas");
+      const focus = page.getByRole("group", { name: "Forced corridor sequence", exact: true })
+        .getByRole("figure")
+        .filter({ has: page.getByRole("heading", { name: "1. Forced reply 1", exact: true }) })
+        .locator("canvas");
       await expectCellColour(focus, 1, 3, BLACK, 7);
       await expectCellColour(focus, 0, 3, WHITE, 7);
       await page.goto("/rules/");

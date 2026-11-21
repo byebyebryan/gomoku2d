@@ -17,12 +17,14 @@ import {
   ensureLocalMatchSession,
   localMatchSessionStore,
   startLocalMatchWithSavedSetup,
+  startReplayContinuation,
 } from "./local_match_session";
 
 const initialLocalProfileState = localProfileStore.getState();
 const initialCloudAuthState = cloudAuthStore.getState();
 const defaultSettings = createDefaultProfileSettings();
 const ORIGIN = { sourceFingerprint: "A".repeat(43), inheritedPly: 8 };
+const SOURCE_REPLAY = { to: "/replay/example", state: { sourceReplayFrame: { matchId: "example", move: 8 } } };
 
 function testUser(uid: string): CloudAuthUser {
   return {
@@ -146,17 +148,14 @@ describe("local match session", () => {
     const hard: BotConfig = { mode: "preset", preset: "hard", version: 1 };
     localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle", hard)));
 
-    const store = ensureLocalMatchSession({
-      botRunner: noOpBotRunner,
-      resumeState: {
-        currentPlayer: 1,
-        moves: [
-          { col: 7, moveNumber: 1, player: 1, row: 7 },
-          { col: 8, moveNumber: 2, player: 2, row: 7 },
-        ],
-        variant: "renju",
-      },
-    });
+    const store = startReplayContinuation({
+      currentPlayer: 1,
+      moves: [
+        { col: 7, moveNumber: 1, player: 1, row: 7 },
+        { col: 8, moveNumber: 2, player: 2, row: 7 },
+      ],
+      variant: "renju",
+    }, SOURCE_REPLAY, { botRunner: noOpBotRunner });
 
     expect(store.getState()).toMatchObject({
       currentBotConfig: hard,
@@ -171,11 +170,25 @@ describe("local match session", () => {
     });
   });
 
+  it("keeps the current game when constructing its replacement fails", () => {
+    localProfileStore.setState(createLocalProfileTestState());
+    const active = ensureLocalMatchSession({ botRunner: noOpBotRunner });
+    expect(active.getState().placeHumanMove(7, 7)).toBe(true);
+
+    expect(() => startReplayContinuation(practiceBranch(), SOURCE_REPLAY, {
+      boardFactory: () => { throw new Error("board unavailable"); },
+      botRunner: noOpBotRunner,
+    })).toThrow("board unavailable");
+
+    expect(localMatchSessionStore.getState().matchStore).toBe(active);
+    expect(active.getState().moves).toHaveLength(1);
+  });
+
   it("records a completed continuation as a regular game with its replay origin", () => {
     setSignedOut();
     localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
     const recordFinishedMatch = vi.spyOn(localProfileStore.getState(), "recordFinishedMatch");
-    const store = ensureLocalMatchSession({ botRunner: noOpBotRunner, resumeState: practiceBranch() });
+    const store = startReplayContinuation(practiceBranch(), SOURCE_REPLAY, { botRunner: noOpBotRunner });
 
     expect(store.getState().placeHumanMove(7, 9)).toBe(true);
     const [saved] = localProfileStore.getState().matchHistory.replayMatches;
@@ -191,6 +204,7 @@ describe("local match session", () => {
     });
     expect(portableReplayFromSavedMatch(saved).replay.practice).toEqual(ORIGIN);
     expect(localMatchSessionStore.getState().latestReplayId).toBe(saved?.id);
+    expect(localMatchSessionStore.getState().sourceReplay).toEqual(SOURCE_REPLAY);
     expect(saved?.id).not.toMatch(/^portable-/);
   });
 
@@ -206,10 +220,11 @@ describe("local match session", () => {
       configure: () => undefined,
       dispose: () => undefined,
     };
-    const store = ensureLocalMatchSession({ botRunner, resumeState: practiceBranch() });
+    const store = startReplayContinuation(practiceBranch(), SOURCE_REPLAY, { botRunner });
     expect(store.getState().placeHumanMove(7, 9)).toBe(true);
     const continuationId = localMatchSessionStore.getState().latestReplayId;
     store.getState().startNextRound();
+    expect(localMatchSessionStore.getState()).toMatchObject({ latestReplayId: null, sourceReplay: null });
     await vi.waitFor(() => expect(store.getState()).toMatchObject({ pendingBotMove: false, moves: [{ row: 7, col: 5 }] }));
     for (let col = 0; col < 4; col += 1) {
       expect(store.getState().placeHumanMove(0, col)).toBe(true);
@@ -229,7 +244,7 @@ describe("local match session", () => {
     setSignedIn("account-A");
     const flush = vi.spyOn(cloudSync, "flushCloudProfileSync").mockResolvedValue(null);
     localProfileStore.setState(createLocalProfileTestState(settingsWith("freestyle")));
-    const store = ensureLocalMatchSession({ botRunner: noOpBotRunner, resumeState: practiceBranch() });
+    const store = startReplayContinuation(practiceBranch(), SOURCE_REPLAY, { botRunner: noOpBotRunner });
     expect(store.getState().placeHumanMove(7, 9)).toBe(true);
     setSignedIn("account-B");
     expect(flush).toHaveBeenCalledOnce();

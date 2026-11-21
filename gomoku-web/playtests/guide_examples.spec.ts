@@ -64,6 +64,51 @@ test("Guide section links reflow, focus their destination and expose concise sta
       expect(metrics.examplesScroll).toBeLessThanOrEqual(metrics.examples + 1);
     }
   }
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/guide/#tactics");
+  await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+  await page.evaluate(() => document.fonts.ready);
+  const sequence = page.getByRole("group", { name: "Forced corridor sequence" });
+  const frames = sequence.locator("figure");
+  await expect(frames).toHaveCount(3);
+  await expect(sequence.getByRole("heading", { level: 3 })).toHaveText([
+    "1. Forced reply 1",
+    "2. Forced reply 2",
+    "3. 4+3 combo",
+  ]);
+  const readingOrder = await frames.evaluateAll((elements) => elements.map((frame) => {
+    const caption = frame.querySelector("figcaption")!;
+    return Array.from(caption.children).map((element) => element.textContent?.trim());
+  }));
+  expect(readingOrder).toEqual([
+    [
+      "1. Forced reply 1",
+      "Black's I3 completes a four on I3–I6. I2 is the open end of that four. White plays I2. This closes the line because White already holds I7.",
+    ],
+    [
+      "2. Forced reply 2",
+      "Black's H3 forms a three on H3–I4–J5. The overlays mark G2 and K6 as extension points. White answers at G2. K6 stays open.",
+    ],
+    [
+      "3. 4+3 combo",
+      "Black's J3 completes a four on G6–H5–I4–J3. White holds F7, leaving K2 as the marked winning point. Black also has the three H3–I3–J3. G3 and K3 are its marked extension points. White's block at K2 leaves that three intact.",
+    ],
+  ]);
+  await expect(sequence.getByRole("img")).toHaveCount(0);
+  for (const frame of await frames.all()) {
+    await frame.scrollIntoViewIfNeeded();
+    await expect(frame.locator("figcaption h3")).toBeVisible();
+    await expect(frame.locator("figcaption p")).toBeVisible();
+  }
+  const sequenceMetrics = await sequence.evaluate((element) => ({
+    document: document.documentElement.scrollWidth,
+    viewport: innerWidth,
+    width: element.clientWidth,
+    scroll: element.scrollWidth,
+  }));
+  expect(sequenceMetrics.document).toBeLessThanOrEqual(sequenceMetrics.viewport + 1);
+  expect(sequenceMetrics.scroll).toBeLessThanOrEqual(sequenceMetrics.width + 1);
+
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/guide/#replays");
   const heading = page.getByRole("heading", { name: "Replays & sharing", exact: true });

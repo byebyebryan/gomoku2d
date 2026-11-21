@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 
@@ -31,12 +31,11 @@ import { PublishReplayPanel } from "./PublishReplayPanel";
 import { PublishedReplayEditRoute } from "./PublishedReplayEditRoute";
 import { ReplayDetailsPanel, type ReplayDetailsBinding, type ReplayDraftState } from "./ReplayDetailsPanel";
 import { protectReplayDraftNavigation } from "./replay_draft_navigation";
-import { portableReplayFromSavedMatch, validatePortableReplay } from "../replay/portable_replay";
-import { portableReplayFingerprint } from "../replay/portable_replay_codec";
-import { ensureLocalMatchSession, localMatchSessionStore } from "../game/local_match_session";
 import { botLabel } from "../core/bot_config";
 import { publicProfilePath, type PublicReplayReturn } from "./public_player_navigation";
 import { myGamesPublishIntentFromState, myGamesReturnFromState } from "./my_games_navigation";
+import type { SavedReplayReturn } from "./saved_replay_navigation";
+import { sourceReplayMove, useReplayContinuation } from "./use_replay_continuation";
 
 import styles from "./ReplayRoute.module.css";
 import {
@@ -61,7 +60,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   contextLabel?: string;
   publicReplayReturn?: PublicReplayReturn;
   details?: ReplayDetailsBinding;
-  privateReplayReturn?: { to: string; state?: unknown };
+  privateReplayReturn?: { to: string; state?: { savedReplayReturn: SavedReplayReturn } };
 }) {
   useDocumentTitle("Replay Analysis");
   const navigate = useNavigate();
@@ -80,13 +79,13 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const historyReturn = origin?.matchId === match.id ? origin : undefined;
   const inspection = myGamesPublishIntentFromState(location.state, "myGamesInspectTarget");
   const inspectionMove = inspection?.matchId === match.id && inspection.uid === signedInUid ? inspection.inspectMove : undefined;
+  const returnedMove = sourceReplayMove(location.state, match);
+  const focusReplayHeading = returnedMove !== undefined
+    || (historyReturn?.action === "inspect" && inspectionMove === undefined && !launch);
   const startMove = Math.min(match.move_count, launchAllowed ? launch.inspectMove ?? match.move_count
-    : inspectionMove ?? (historyReturn ? match.move_count : initialMoveIndex ?? defaultReplayMoveIndex(match.move_count)));
+    : returnedMove ?? inspectionMove ?? (historyReturn ? match.move_count : initialMoveIndex ?? defaultReplayMoveIndex(match.move_count)));
   const [moveIndex, setMoveIndex] = useState(startMove);
   const [autoplaying, setAutoplaying] = useState(false);
-  const [branching, setBranching] = useState(false);
-  const [branchError, setBranchError] = useState("");
-  const branchRequestRef = useRef<object | null>(null);
   const [sidebar, setSidebar] = useState<"replay" | "share" | "publish" | "details">(
     launchAllowed ? "publish" : details?.kind === "public" ? "details" : "replay",
   );
@@ -96,6 +95,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const [detailsNotice, setDetailsNotice] = useState("");
   const publishOpen = sidebar === "publish" && canPublish && publishEntry?.uid === signedInUid;
   const sidebarOpen = sidebar !== "replay";
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const deckRef = useRef<HTMLElement>(null);
   const detailsTriggerRef = useRef<HTMLButtonElement>(null);
   const draftState = useRef<ReplayDraftState | null>(null);
@@ -106,14 +106,9 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const { analysisAnnotations, analysisStep } = useReplayAnalysis(match);
   const coreWinningCells = useReplayWinningCells(match, moveIndex);
 
-  useLayoutEffect(() => {
-    branchRequestRef.current = null;
-    setBranching(false);
-    setBranchError("");
-    return () => {
-      branchRequestRef.current = null;
-    };
-  }, [location.hash, location.key, location.pathname, location.search, location.state, match.id, moveIndex]);
+  useEffect(() => {
+    if (focusReplayHeading) headingRef.current?.focus();
+  }, [location.key, focusReplayHeading]);
 
   useEffect(() => {
     setMoveIndex(startMove);
@@ -245,6 +240,14 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   const localMatchResumePath = mediaMode
     ? `/match/local?media=${encodeURIComponent(mediaMode)}`
     : "/match/local";
+  const continuation = useReplayContinuation({
+    match,
+    moveIndex,
+    source,
+    fingerprint,
+    resumePath: localMatchResumePath,
+    returnState: { myGamesReplayReturn: historyReturn, publicReplayReturn, ...privateReplayReturn?.state },
+  });
   const boardModel = buildReplayBoardModel({
     analysisOverlays,
     nextReplayMove: replayMovePreview,
@@ -263,38 +266,12 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     resumeBotLabel: botLabel(settings.botConfig),
     frame,
     match,
-    onResume: async (resumeSeed) => {
-      if (branchRequestRef.current) return;
-      const request = {};
-      branchRequestRef.current = request;
-      let launched = false;
+    onResume: (resumeSeed) => {
       setAutoplaying(false);
-      setBranching(true); setBranchError("");
-      const isCurrentRequest = () => branchRequestRef.current === request;
-      try {
-        const portable = source ?? portableReplayFromSavedMatch(match).replay;
-        const sourceFingerprint = fingerprint ?? await portableReplayFingerprint(validatePortableReplay(portable));
-        if (!isCurrentRequest()) return;
-        const active = localMatchSessionStore.getState().matchStore?.getState();
-        if (active?.status === "playing" && active.moves.length > 0
-          && !window.confirm("Replace your active game with a new game from this position?")) return;
-        if (!isCurrentRequest()) return;
-        ensureLocalMatchSession({ resumeState: {
-          ...resumeSeed, practiceOrigin: { sourceFingerprint, inheritedPly: resumeSeed.moves.length },
-        } });
-        navigate(localMatchResumePath);
-        launched = true;
-      } catch (error) {
-        if (isCurrentRequest()) setBranchError(error instanceof Error ? error.message : "The game could not start.");
-      } finally {
-        if (!launched && isCurrentRequest()) {
-          branchRequestRef.current = null;
-          setBranching(false);
-        }
-      }
+      void continuation.start(resumeSeed);
     },
     replayFloor,
-    resumePending: branching,
+    resumePending: continuation.pending,
     setAutoplaying,
     setMoveIndex,
     timelineAnalysis,
@@ -319,7 +296,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
       <header className={`${styles.header} ${publicReplayReturn ? styles.headerWithReturn : ""}`}>
         <div className={styles.headerCopy}>
           <p className="uiPageEyebrow">{contextLabel ?? (preserveNames ? "Shared replay" : "Saved match")}</p>
-          <h1 className={styles.title}>Replay Analysis</h1>
+          <h1 className={styles.title} ref={headingRef} tabIndex={-1}>Replay Analysis</h1>
         </div>
         {!publishOpen && <div className={`${styles.headerActions} ${publicReplayReturn ? styles.headerActionsWithReturn : ""}`}>
           {publicReplayReturn ? (
@@ -346,7 +323,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
               event.preventDefault();
               details.onCancel();
             }}>
-            <Icon className="uiIconDesktop" name="profile" />
+            <Icon className="uiIconDesktop" name={historyReturn ? "back" : "profile"} />
             <span className="uiActionLabel">{privateReplayReturn ? "Saved replays" : publicReplayReturn ? "My profile" : historyReturn ? "My games" : "Profile"}</span>
           </Link>
           <Link aria-label="Home" className="uiAction uiActionNeutral" to="/">
@@ -370,8 +347,8 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
             <div className="uiDivider" />
 
             {sidebar !== "details" && <ReplayPlaybackPanel {...playbackProps} />}
-            {branchError && <section className={styles.deckSection}>
-              <p className={styles.contextError} role="alert">{branchError}</p>
+            {continuation.error && <section className={styles.deckSection}>
+              <p className={styles.contextError} role="alert">{continuation.error}</p>
             </section>}
             <section className={`${styles.deckSection} ${styles.sharingSection}`}>
               {details?.kind === "private" && <button className="uiAction uiActionSecondary" type="button" ref={detailsTriggerRef}

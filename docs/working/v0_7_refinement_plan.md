@@ -15,14 +15,13 @@ Analysis surface, board-first layout, opt-in publication, and static hosting.
 
 | Milestone | Work and outcome | When to proceed |
 | --- | --- | --- |
-| **0.7.0** | Preserve replay continuations across navigation, finalize completed rounds, and verify existing journeys. | Confirm guest and emulator behavior before release review. |
-| Design, code and presentation | Improve the transitions between Match, Replay and Guide on desktop and mobile. Refine the underlying code where it simplifies a demonstrated problem. Refresh the Dev site's current references from a published build. | Select a small set of findings from the current game before committing to a release. |
-| Bot and analyzer | Establish current browser and native baselines. Choose a focused improvement in tactical behavior, responsiveness, or explanation. | Baseline work can run independently. Compare the candidate with the current presets before adopting a change. |
+| Correctness checkpoint | Preserve replay continuations across navigation, finalize completed rounds, and keep the result and Analyze reachable on compact screens. | Confirm guest and emulator behavior. |
+| **0.7.0 refinement** | Improve Play → Analyze → Try another line and My games → Inspect → Return. Clarify match and replay ownership, explain the Guide's existing tactics in text, and record a browser performance comparison and before-and-after evidence. | Select changes against observed friction and verify the integrated candidate. Refresh the Dev site's current references from a published build. |
+| Bot and analyzer follow-up | Use measured baselines to choose a focused improvement in tactical behavior, responsiveness, or explanation. | Compare the candidate with the current presets before adopting a change. |
 | One lesson in Guide | Use one existing replay to test whether a new player can understand a threat, try a line, and retry. | The practice navigation contract must hold. Use the trial to decide whether to expand to the planned three to five scenarios. |
 
-Only the first milestone has a version. Assign later point releases
-when the findings and a coherent deliverable are clear. If an early correctness
-fix is ready, it can ship independently of the design and bot baseline work.
+The correctness checkpoint is part of the 0.7.0 candidate. Assign later point
+releases when the findings and a coherent deliverable are clear.
 
 ## 0.7.0 candidate
 
@@ -106,12 +105,63 @@ human check remains open, record the specific limit for the release decision.
 [Testing guide](../reference/ops/testing.md) ·
 [Release runbook](../reference/ops/release.md)
 
-The 390 × 844 Chrome touch check for the F11 ending reached the result and
-Analyze. On both v0.6.5 and the 0.7.0 Undo candidate, the page was 390 CSS px
-wide before the win and 458 CSS px wide afterward. Review the finished-match
-actions at this width during candidate review.
+For the F11 ending, the v0.6.5 and initial 0.7.0 builds widened from 390 to
+458 CSS px after the win. The disabled Place button pushed Analyze into the
+narrow Undo column. The updated candidate removes Place when the round ends,
+shows the result above Analyze, and lets the compact match layout wrap at
+enlarged text sizes. The regression test wins the round by touch, checks the
+visible result and horizontal bounds before opening the saved replay, and
+covers Chromium, Firefox, and WebKit at 390 × 844 with normal text and 320 × 900
+with 200% CSS text.
+[Finish-screen regression](../../gomoku-web/playtests/win-screen.spec.ts)
 
-## Foundation work after the first milestone
+Local candidate checks passed on November 20. The full browser lane passed
+312 cases, with six Chromium-only WebGL checks skipped in Firefox and WebKit.
+All 72 Auth/Firestore emulator cases and 45 repeated race checks passed before
+the compact result text was made visible. The updated build passed all nine
+follow-up checks covering continuation sync after reload, offline recovery, and
+mobile layout. The live Google account, physical-device, human accessibility,
+and two-device checks remain open.
+
+## 0.7.0 refinement work
+
+### Observed changes
+
+The baseline used the 607 archived v0.6.5 Pages files, verified against the
+release manifest. The local captures used the same Chromium build, fixtures,
+and viewport settings for the baseline and candidate.
+
+On v0.6.5, branching from move 27 of a finished 28-move replay left no action
+in Match to revisit that position. Browser Back reopened the replay at move 28
+on both 1440 × 1000 and 390 × 844 Chromium viewports. The candidate's **Source
+replay** action opens move 27 and focuses the Replay Analysis heading. Browser
+Back from there returns to the active continuation. The match session keeps the
+source and result links with the current round and clears both on the next round.
+[Round and return regression](../../gomoku-web/playtests/win-screen.spec.ts)
+
+The active turn clock previously updated state on the whole Match route at each
+100 ms tick. The clock now owns its own updates. The route regression advances
+the clock by 500 ms and checks that the displayed time changes without a board
+render. [Match route test](../../gomoku-web/src/routes/LocalMatchRoute.test.tsx)
+
+Inspecting a game from My games previously left keyboard focus on the document
+body, where Escape could not reach Replay's return handler. The candidate
+focuses the Replay Analysis heading and uses a return arrow for the My games
+action. At 1440 × 900 and 320 × 900 with 200% CSS text, Escape returned focus to
+the same row in a 16-match history and preserved desktop list scroll and
+compact page scroll. On the enlarged replay, the player cards stack and the
+rule and move count wrap without overlapping.
+[Keyboard journey](../../gomoku-web/playtests/reconciliation.spec.ts)
+
+The Guide's forced sequence now has three visible captions describing the
+threat, the reply, and what remains open. The existing boards keep their visual
+role alongside the captions. Human screen-reader verification is still open.
+[Guide](../../gomoku-web/src/routes/GuideRoute.tsx)
+
+The integrated build passed typechecking, 588 web unit tests, 44 tooling tests,
+and 312 browser tests, with six Chromium-only WebGL cases skipped in Firefox
+and WebKit. All 72 Auth/Firestore emulator journeys and 45 repeated race checks
+passed. The release commit and its GitHub CI remain ahead of publication.
 
 ### Code, design and Dev site
 
@@ -137,6 +187,23 @@ result. Choose the findings that repeatedly affect the journey.
   [Developer area contract](../reference/app/developer_area.md)
 
 ### Bot and analysis baseline
+
+On November 20, the v0.6.5 tag and the integrated candidate from `d233bc4`
+plus the working patch `037dfa38` each passed the 168-row browser profile.
+Both builds used the same frozen workloads and Wasm bytes rebuilt with the
+current toolchain. The runs used Chromium 156.0.8078.4 on a Ryzen 9 7900X.
+
+| Median on this host | v0.6.5 tag rebuild | 0.7.0 candidate |
+| --- | ---: | ---: |
+| Board ready, fresh context | 818 ms | 818 ms |
+| First replay annotation | 837 ms | 837 ms |
+| Uncached 50-ply replay completion | 6.15 s | 6.14 s |
+| Uncached 51-ply replay completion | 6.65 s | 6.65 s |
+
+Each run completed 108 fresh-worker bot requests, 36 reused-worker requests,
+18 uncached and 18 cached analyses, and 30 navigation cycles. Both passed
+replacement and route cancellation checks. These runs support retaining the
+current presets and analyzer settings. Physical-device timings remain open.
 
 Record the source, build, device/browser, rules, position corpus and preset.
 Use the existing native tactical and lethal fixtures for correctness and

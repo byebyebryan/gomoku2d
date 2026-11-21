@@ -99,8 +99,9 @@ than bypassing the runner.
 - failed bot-turn state and explicit retry after the runner's bounded recovery
 
 `src/game/local_match_session.ts` owns the singleton session around that store:
-saved setup application, replay-branch resume seeds, and current match reuse
-across routes.
+saved setup application, explicit replay continuations, and current match reuse
+across routes. It keeps the round's result and source replay links in memory
+and clears them when a new round starts.
 
 ## Replay Analysis
 

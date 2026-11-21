@@ -77,6 +77,7 @@ export interface LocalMatchStoreOptions {
   humanDisplayName?: string;
   nowMs?: () => number;
   onMatchFinished?: (match: FinishedLocalMatch) => void;
+  onRoundStarted?: () => void;
   botConfig?: BotConfig;
   resumeState?: LocalMatchResumeSeed;
   variant?: GameVariant;
@@ -556,6 +557,7 @@ export function createLocalMatchStore(
       configureBots();
       set({ botError: null });
       updateState([], false);
+      options.onRoundStarted?.();
       maybeQueueBotMove();
     };
 

@@ -18,15 +18,17 @@ retain their recorded open or deferred status.
 
 ## `0.7` Refinement
 
-`0.7.0` starts with correctness and validation for the shipped game. First,
-preserve active replay continuations across browser navigation and make
-wins and draws final for the round. Verify existing player
-journeys and carry forward open real-account, device and accessibility checks.
+`0.7.0` refines the existing game. The correctness checkpoint preserves active
+replay continuations across browser navigation and makes wins and draws final
+for the round. The release also improves Play → Analyze → Try another line and
+the return from Replay Analysis to My games. Clarify match and replay ownership,
+improve compact layouts and Guide accessibility, and compare the existing bot
+and analyzer behavior with the published baseline. Carry forward open
+real-account, physical-device and human accessibility checks.
 
-Later work will refine the code, design and presentation around Play → Replay →
-Try another line and establish current bot and analyzer baselines. Point-release
-scope follows the findings. Use one guest lesson to test the learning loop
-before planning a larger set.
+Use the refinement findings to choose later point releases. Trial one guest
+lesson after the play and replay foundation is in place, then decide whether to
+develop a larger set.
 [0.7 refinement plan](../../working/v0_7_refinement_plan.md)
 
 ## `0.6` Sequence

@@ -66,7 +66,7 @@ export function ReplayMatchPanel({ frame, localDisplayName, match, preserveNames
     <section className={`${styles.deckSection} ${styles.matchSection}`}>
       <p className={`uiSectionLabel ${styles.matchLabel}`}>Match</p>
       <div className={styles.metaRows}>
-        <div className={`${styles.metaRow} ${styles.ruleRow}`}>
+        <div className={styles.metaRow}>
           <span className={styles.metaLabel}>Rule</span>
           <span className={styles.metaValue} data-testid="replay-rule">
             {variantLabel(match.ruleset)}

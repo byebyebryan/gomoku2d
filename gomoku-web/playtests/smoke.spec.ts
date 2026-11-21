@@ -156,9 +156,9 @@ test("guide route explains threat vocabulary inside the app shell", async ({ pag
   await expect(page.getByRole("heading", { name: "Counter threat" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Make a combo." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "4+4 combo" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "4+3 combo" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "4+3 combo", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Force a combo." })).toBeVisible();
-  await expect(page.getByText("3. 4+3 combo")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "3. 4+3 combo", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Figure out what went wrong." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Combo onset" })).toBeVisible();
 });

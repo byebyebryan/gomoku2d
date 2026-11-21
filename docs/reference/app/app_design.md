@@ -213,6 +213,10 @@ during active play. To try a different line after finishing, open Analyze and
 use Play From Here at an eligible position. The continuation counts as a new
 game when it finishes.
 
+A continuation offers **Source replay** to reopen the position it branched
+from. This keeps the continuation in memory. **Analyze** opens the result of
+the current round after it finishes.
+
 Use a stronger result block than the normal in-play HUD:
 
 - winner/result line

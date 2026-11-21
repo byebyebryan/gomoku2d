@@ -13,7 +13,6 @@ import {
   botLabel,
 } from "../core/bot_config";
 import {
-  clearLocalMatchLatestReplay,
   ensureLocalMatchSession,
   localMatchSessionStore,
 } from "../game/local_match_session";
@@ -109,6 +108,18 @@ function clockLabel(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function ActiveTurnClock({ startedAtMs }: { startedAtMs: number }) {
+  const [nowMs, setNowMs] = useState(Date.now);
+
+  useEffect(() => {
+    setNowMs(Date.now());
+    const timer = window.setInterval(() => setNowMs(Date.now()), 100);
+    return () => window.clearInterval(timer);
+  }, [startedAtMs]);
+
+  return <span className={styles.playerTurnClock}>+{clockLabel(nowMs - startedAtMs)}</span>;
+}
+
 function setupChanged(state: Pick<
   LocalMatchState,
   "currentBotConfig" | "currentVariant" | "selectedBotConfig" | "selectedVariant"
@@ -171,13 +182,13 @@ export function LocalMatchRoute() {
 
   const [searchParams] = useSearchParams();
   const [compactTouchMode, setCompactTouchMode] = useState(false);
-  const [clockNowMs, setClockNowMs] = useState(() => Date.now());
   const [touchCandidate, setTouchCandidate] = useState<CellPosition | null>(null);
   const [touchCandidatePlaceable, setTouchCandidatePlaceable] = useState(false);
   const [touchCandidateResetVersion, setTouchCandidateResetVersion] = useState(0);
   const profile = useStore(localProfileStore, (snapshot) => snapshot.profile);
   const matchStore = useStore(localMatchSessionStore, (snapshot) => snapshot.matchStore);
   const latestReplayId = useStore(localMatchSessionStore, (snapshot) => snapshot.latestReplayId);
+  const sourceReplay = useStore(localMatchSessionStore, (snapshot) => snapshot.sourceReplay);
   const settings = useStore(localProfileStore, (snapshot) => snapshot.settings);
   const state = useStore(matchStore ?? loadingMatchStore, (snapshot) => snapshot);
   const visibleHints = visibleBoardHints(state, settings.boardHints);
@@ -204,21 +215,6 @@ export function LocalMatchRoute() {
   }, []);
 
   useEffect(() => {
-    if (state.status !== "playing") {
-      return undefined;
-    }
-
-    setClockNowMs(Date.now());
-    const timer = window.setInterval(() => {
-      setClockNowMs(Date.now());
-    }, 100);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [state.currentPlayer, state.status, state.turnStartedAtMs]);
-
-  useEffect(() => {
     if (!profile) {
       return;
     }
@@ -227,12 +223,6 @@ export function LocalMatchRoute() {
       ensureLocalMatchSession();
     }
   }, [matchStore, profile]);
-
-  useEffect(() => {
-    if (state.status === "playing" && latestReplayId) {
-      clearLocalMatchLatestReplay();
-    }
-  }, [latestReplayId, state.status]);
 
   useEffect(() => {
     if (compactTouchMode) {
@@ -337,7 +327,9 @@ export function LocalMatchRoute() {
         </div>
 
         <aside className={styles.hud}>
-          <section className={`${styles.hudSection} ${styles.statusSection}`}>
+          <section
+            className={`${styles.hudSection} ${styles.statusSection} ${state.status !== "playing" ? styles.finishedStatus : ""}`}
+          >
             <p className="uiSectionLabel">Status</p>
             <p className={styles.statusText} data-testid="match-status">
               {statusLabel(state)}
@@ -409,9 +401,7 @@ export function LocalMatchRoute() {
                       <p className={styles.playerClock} data-testid={`player-clock-${player.stone}`}>
                         <span>{clockLabel(state.playerClockMs[index] ?? 0)}</span>
                         {state.status === "playing" && state.currentPlayer === index + 1 ? (
-                          <span className={styles.playerTurnClock}>
-                            +{clockLabel(clockNowMs - state.turnStartedAtMs)}
-                          </span>
+                          <ActiveTurnClock startedAtMs={state.turnStartedAtMs} />
                         ) : null}
                       </p>
                     </div>
@@ -432,7 +422,7 @@ export function LocalMatchRoute() {
                   <span className="uiActionLabel">Retry bot</span>
                 </button>
               ) : null}
-              {compactTouchMode ? (
+              {compactTouchMode && state.status === "playing" ? (
                 <button
                   className="uiAction uiActionPrimary"
                   disabled={!humanToMove || !touchCandidate || !touchCandidatePlaceable}
@@ -471,6 +461,16 @@ export function LocalMatchRoute() {
                 <Icon className="uiIconDesktop" name="undo" />
                 <span className="uiActionLabel">Undo</span>
               </button>
+              {sourceReplay && (
+                <Link
+                  className={`uiAction uiActionSecondary ${styles.sourceReplay}`}
+                  to={sourceReplay.to}
+                  state={sourceReplay.state}
+                >
+                  <Icon name="back" />
+                  <span className="uiActionLabel">Source replay</span>
+                </Link>
+              )}
             </div>
           </section>
         </aside>

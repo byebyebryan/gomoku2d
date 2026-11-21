@@ -98,6 +98,36 @@ test("a keyboard player can branch, finish, analyze, and find the saved game", a
   await expect(page.getByRole("button", { name: /^Inspect game / })).toHaveCount(2);
   const playedMatchCount = page.getByText("Matches", { exact: true }).locator("..").locator("span").first();
   await expect(playedMatchCount).toHaveText("2");
+
+  const inspect = page.locator("#my-games-inspect-keyboard-source");
+  await inspect.press("Enter");
+  await expect(page.getByRole("heading", { name: "Replay Analysis" })).toBeFocused();
+  const desktop = page.viewportSize()!;
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.evaluate(async () => {
+    document.documentElement.style.fontSize = "200%";
+    await document.fonts.ready;
+  });
+  const replayMetadata = await page.evaluate(() => {
+    function textBounds(testId: string) {
+      const range = document.createRange();
+      range.selectNodeContents(document.querySelector(`[data-testid="${testId}"]`)!);
+      return range.getBoundingClientRect();
+    }
+    const rule = textBounds("replay-rule");
+    const move = textBounds("replay-move-count");
+    return {
+      overlap: rule.left < move.right && rule.right > move.left && rule.top < move.bottom && rule.bottom > move.top,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  expect(replayMetadata.overlap).toBe(false);
+  expect(replayMetadata.overflow).toBeLessThanOrEqual(1);
+  await page.keyboard.press("Escape");
+  await expect(inspect).toBeFocused();
+  await page.setViewportSize(desktop);
+  await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+
   await page.getByRole("link", { name: "Play", exact: true }).press("Enter");
   await page.getByRole("button", { name: "Next round", exact: true }).press("Enter");
   await expect(page.getByTestId("player-row-black")).toContainText("Normal Bot");
