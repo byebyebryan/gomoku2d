@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigationType, useSearchParams } from "react-router-dom";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
@@ -22,6 +22,8 @@ import { localProfileStore } from "../profile/local_profile_store";
 import type { BoardHintSettings } from "../profile/profile_settings";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
+import { confirmLocalMatchReplacement } from "./confirm_local_match_replacement";
+import { sourceReplayToken } from "./source_replay_navigation";
 
 import styles from "./LocalMatchRoute.module.css";
 
@@ -180,6 +182,10 @@ function visibleBoardHints(
 export function LocalMatchRoute() {
   useDocumentTitle("Local Match");
 
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const matchHeading = useRef<HTMLHeadingElement>(null);
+  const sourceReplayLink = useRef<HTMLAnchorElement>(null);
   const [searchParams] = useSearchParams();
   const [compactTouchMode, setCompactTouchMode] = useState(false);
   const [touchCandidate, setTouchCandidate] = useState<CellPosition | null>(null);
@@ -233,6 +239,13 @@ export function LocalMatchRoute() {
     setTouchCandidatePlaceable(false);
   }, [compactTouchMode]);
 
+  useEffect(() => {
+    const token = sourceReplayToken(sourceReplay?.state);
+    if (navigationType === "PUSH" && token && location.state?.resumeSourceToken === token) {
+      sourceReplayLink.current?.focus();
+    }
+  }, [location, navigationType, sourceReplay]);
+
   if (!matchStore) {
     return <main className={styles.page}>Loading match…</main>;
   }
@@ -247,13 +260,19 @@ export function LocalMatchRoute() {
     setTouchCandidatePlaceable(false);
     setTouchCandidateResetVersion((version) => version + 1);
   };
+  const advanceRound = () => {
+    const current = matchStore.getState();
+    if (current.status === "playing") return;
+    resetTouchCandidate();
+    current.startNextRound();
+  };
   const boardModel = buildLocalMatchBoardModel({
     forbiddenMoves: state.forbiddenMoves,
     hints: visibleHints,
     interaction: {
       interactive: humanToMove,
       kind: "play",
-      onAdvanceRound: state.startNextRound,
+      onAdvanceRound: advanceRound,
       onPlace: state.placeHumanMove,
       onTouchCandidateChange: (candidate, canPlace) => {
         setTouchCandidate((previous) => {
@@ -289,23 +308,23 @@ export function LocalMatchRoute() {
       <header className={styles.header}>
         <div className={styles.headerCopy}>
           <p className="uiPageEyebrow">Solo play</p>
-          <h1 className={styles.title}>Local Match</h1>
+          <h1 className={styles.title} ref={matchHeading} tabIndex={-1}>Local Match</h1>
         </div>
         <div className={styles.headerActions}>
-          <button
-            aria-label={state.status === "playing" ? "New Game" : "Next round"}
+          {state.status === "playing" && <button
+            aria-label="New Game"
             className="uiAction uiActionPrimary"
             onClick={() => {
+              if (!confirmLocalMatchReplacement()) return;
               resetTouchCandidate();
-              if (state.status === "playing") state.startNewMatch();
-              else state.startNextRound();
+              state.startNewMatch();
             }}
-            title={state.status === "playing" ? "Start a new game" : "Swap colors and play again"}
+            title="Start a new game"
             type="button"
           >
             <Icon className="uiIconDesktop" name="plus" />
-            <span className="uiActionLabel">{state.status === "playing" ? "New Game" : "Next round"}</span>
-          </button>
+            <span className="uiActionLabel">New Game</span>
+          </button>}
           <Link aria-label="Profile" className="uiAction uiActionSecondary" to="/profile">
             <Icon className="uiIconDesktop" name="profile" />
             <span className="uiActionLabel">Profile</span>
@@ -438,6 +457,20 @@ export function LocalMatchRoute() {
                   <span className="uiActionLabel">Place</span>
                 </button>
               ) : null}
+              {state.status !== "playing" && (
+                <button
+                  className={`uiAction uiActionPrimary ${styles.nextRound}`}
+                  onClick={() => {
+                    advanceRound();
+                    matchHeading.current?.focus();
+                  }}
+                  title="Swap colors and play again"
+                  type="button"
+                >
+                  <Icon className="uiIconDesktop" name="plus" />
+                  <span className="uiActionLabel">Next round</span>
+                </button>
+              )}
               {state.status !== "playing" && latestReplayId ? (
                 <Link
                   aria-label="Analyze"
@@ -464,6 +497,7 @@ export function LocalMatchRoute() {
               {sourceReplay && (
                 <Link
                   className={`uiAction uiActionSecondary ${styles.sourceReplay}`}
+                  ref={sourceReplayLink}
                   to={sourceReplay.to}
                   state={sourceReplay.state}
                 >

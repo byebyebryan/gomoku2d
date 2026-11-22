@@ -113,6 +113,7 @@
   width: 100%;
 }
 
+.nextRound,
 .sourceReplay {
   grid-column: 1 / -1;
 }

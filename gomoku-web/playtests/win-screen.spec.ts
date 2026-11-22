@@ -72,7 +72,10 @@ test("finished board click advances to the next round with swapped colors", asyn
     .toBeGreaterThan(beforeCount);
   await expect(page.getByTestId("match-status")).toHaveText("Guest wins");
 
-  await canvas.click({ position: boardClickPosition(box, 7, 7) });
+  const position = boardClickPosition(box, 7, 7);
+  await canvas.click({ button: "right", position });
+  await expect(page.getByTestId("match-status")).toHaveText("Guest wins");
+  await canvas.click({ position });
 
   await expect(page.getByTestId("player-row-black")).toContainText("Normal Bot");
   await expect(page.getByTestId("player-row-white")).toContainText("Guest");
@@ -85,11 +88,11 @@ test("finished board click advances to the next round with swapped colors", asyn
 test.describe("compact touch finish", () => {
   test.use({ hasTouch: true });
 
-  for (const { width, height, textSize } of [
-    { width: 390, height: 844, textSize: "100%" },
-    { width: 320, height: 900, textSize: "200%" },
+  for (const { width, height, textSize, advance } of [
+    { width: 390, height: 844, textSize: "100%", advance: "button" },
+    { width: 320, height: 900, textSize: "200%", advance: "mouse" },
   ]) {
-    test(`keeps Analyze reachable at ${width}px and ${textSize} text`, async ({ page }) => {
+    test(`keeps the finished board and its actions at ${width}px and ${textSize} text`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await page.goto("/guide/#examples");
       await page.evaluate(async (size) => {
@@ -117,11 +120,14 @@ test.describe("compact touch finish", () => {
       await place.tap();
 
       const analyze = page.getByRole("link", { name: "Analyze", exact: true });
+      const nextRound = page.getByRole("button", { name: "Next round", exact: true });
       await expect(analyze).toBeVisible();
+      await expect(nextRound.getByText("Next round", { exact: true })).toBeVisible();
       const result = page.getByTestId("match-status");
       await expect(result).toBeVisible();
       await expect(result).toHaveText("Guest wins");
       await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+      await expect(page.getByTestId("player-row-white")).toContainText("Guest");
       const layout = await analyze.evaluate((link) => ({
         viewport: document.documentElement.clientWidth,
         scrollWidth: document.documentElement.scrollWidth,
@@ -135,8 +141,33 @@ test.describe("compact touch finish", () => {
       await expect(place).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Undo", exact: true })).toBeDisabled();
 
+      await canvas.tap({ position: boardClickPosition(box, 7, 7) });
+      await expect(result).toHaveText("Guest wins");
+      await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+      const point = await canvas.boundingBox();
+      if (!point) throw new Error("finished canvas did not report a bounding box");
+      const pen = { pointerType: "pen", isPrimary: true, button: 0, pointerId: 5,
+        clientX: point.x + point.width / 2, clientY: point.y + point.height / 2 };
+      await canvas.dispatchEvent("pointerdown", pen);
+      await canvas.dispatchEvent("pointerup", pen);
+      await expect(result).toHaveText("Guest wins");
+
+      await page.getByRole("link", { name: "Source replay", exact: true }).tap();
+      await expect(page.getByTestId("replay-move-count")).toHaveText("Move 27 / 28");
+      await expect(page.getByRole("button", { name: "Resume current game", exact: true })).toHaveCount(0);
+      await page.goBack();
       await analyze.tap();
       await expect(page.getByTestId("replay-move-count")).toHaveText("Move 28 / 28");
+      await page.goBack();
+      if (advance === "button") {
+        await nextRound.tap();
+      } else {
+        // A mouse on a touch-capable device can advance without placing an opening stone.
+        await canvas.click({ position: boardClickPosition(box, 7, 7) });
+      }
+      await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
+      await expect(page.getByTestId("player-row-black")).toContainText("Guest");
+      await expect(page.getByTestId("player-row-white")).toContainText("Normal Bot");
     });
   }
 });

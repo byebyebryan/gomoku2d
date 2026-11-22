@@ -214,8 +214,11 @@ use Play From Here at an eligible position. The continuation counts as a new
 game when it finishes.
 
 A continuation offers **Source replay** to reopen the position it branched
-from. This keeps the continuation in memory. **Analyze** opens the result of
-the current round after it finishes.
+from. **Resume current game** returns to the same live round from that replay
+visit. **Analyze** opens the result of the current round after it finishes.
+
+New Game, Settings' Start New Game, and Play From Here ask for confirmation
+before replacing a round in progress that contains stones.
 
 Use a stronger result block than the normal in-play HUD:
 
@@ -225,13 +228,15 @@ Use a stronger result block than the normal in-play HUD:
 
 Preferred actions:
 
-- `Rematch` or `New Game`
+- `Next round`
 - `Analyze`
 - `Home`
 
 Arcade shortcut:
 
-- clicking the finished board can still advance to the next round quickly
+- a primary mouse click begun on the finished board advances to the next round
+- touch, pen, and keyboard board exploration keep the finished position available
+- the visible `Next round` action works with every input method
 - shell buttons remain visible for discoverability and navigation
 
 ### Replay Analysis (`/replay/:matchId`)
@@ -255,8 +260,8 @@ After analysis resolves, status should become frame-aware: winner frame, winner
 inside corridor, loser locked in, last escape, or ordinary side-to-move outside
 the corridor.
 
-On portrait mobile, verbose analysis status copy may be suppressed in the first
-viewport so the player cards, board, timeline, transport, and branch action stay
+In compact layouts, show the frame verdict and let it wrap. Keep the worker
+detail out of the compact view so the board, timeline, and transport stay
 in the primary flow.
 
 On short landscape screens, keep the board beside a scrollable control pane so

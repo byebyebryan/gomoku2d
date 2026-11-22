@@ -272,7 +272,6 @@ export interface BoardSceneState {
   lastMove: CellPosition | null;
   moves: MatchMove[];
   nextReplayMove: CellPosition | null;
-  onAdvanceRound: () => void;
   onPlace: (row: number, col: number) => void;
   onTouchCandidateChange: (candidate: CellPosition | null, canPlace: boolean) => void;
   touchControlMode: BoardTouchControlMode;
@@ -302,7 +301,6 @@ const DEFAULT_STATE: BoardSceneState = {
   lastMove: null,
   moves: [],
   nextReplayMove: null,
-  onAdvanceRound: () => undefined,
   onPlace: () => undefined,
   onTouchCandidateChange: () => undefined,
   touchControlMode: "none",
@@ -351,6 +349,15 @@ export class BoardScene extends Phaser.Scene {
 
   constructor() {
     super({ key: "BoardScene" });
+  }
+
+  containsBoardPoint(clientX: number, clientY: number): boolean {
+    if (!this.board) return false;
+    const bounds = this.game.canvas.getBoundingClientRect();
+    return this.board.pixelToCell(
+      (clientX - bounds.left) * this.scale.width / bounds.width,
+      (clientY - bounds.top) * this.scale.height / bounds.height,
+    ) !== null;
   }
 
   setReducedMotion(reduced: boolean): void {
@@ -880,15 +887,7 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
-    const cell = this.board.pixelToCell(pointer.x, pointer.y);
-    if (this.boardState.status !== "playing") {
-      if (cell) {
-        this.boardState.onAdvanceRound();
-      }
-      return;
-    }
-
-    if (!this.boardState.interactive) {
+    if (this.boardState.status !== "playing" || !this.boardState.interactive) {
       return;
     }
 
@@ -913,6 +912,7 @@ export class BoardScene extends Phaser.Scene {
       return;
     }
 
+    const cell = this.board.pixelToCell(pointer.x, pointer.y);
     if (
       !cell ||
       !canPlaceTouchCandidate(this.boardState.cells, this.boardState.forbiddenMoves, cell)

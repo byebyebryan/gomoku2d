@@ -615,7 +615,8 @@
   }
 
   .statusSection {
-    display: none;
+    grid-row: 5;
+    padding: 0;
   }
 
   .matchSection,
@@ -671,13 +672,13 @@
   }
 
   .replayActions {
-    grid-row: 5;
+    grid-row: 6;
     width: 100%;
   }
 
   .metaRows {
     display: flex;
-    grid-row: 6;
+    grid-row: 7;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
@@ -812,7 +813,6 @@
     overflow: auto;
   }
 
-  .statusSection,
   .matchLabel,
   .playbackLabel,
   .metaLabel {
@@ -822,6 +822,34 @@
   .deckSection {
     gap: 8px;
     padding: 8px 10px;
+  }
+
+  .replayDeck > .playbackSection {
+    display: contents;
+  }
+
+  .replayDeck .playbackHeader,
+  .replayDeck > :global(.uiDivider) {
+    display: none;
+  }
+
+  .replayDeck > .matchSection,
+  .replayDeck .timeline,
+  .replayDeck .controlsRow {
+    order: -1;
+  }
+
+  .replayDeck .timeline,
+  .replayDeck .controlsRow {
+    margin-inline: 10px;
+  }
+
+  .replayDeck .timeline {
+    margin-bottom: 8px;
+  }
+
+  .replayDeck .replayActions {
+    padding: 0 10px 8px;
   }
 
   .matchSection {
@@ -853,5 +881,21 @@
   .playerName {
     font-size: var(--type-body);
     line-height: 1.1;
+  }
+}
+
+@media (max-width: 720px) and (orientation: portrait),
+  (min-width: 560px) and (max-width: 980px) and (max-height: 500px) and (orientation: landscape) {
+  .statusSection :global(.uiSectionLabel),
+  .statusDetail {
+    display: none;
+  }
+
+  .statusText {
+    min-width: 0;
+    font-size: var(--type-body);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 }

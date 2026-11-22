@@ -138,11 +138,23 @@ test("an example opens an eligible continuation and cancel preserves an active g
   await firstMove.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+  const sourceReplay = page.getByRole("link", { name: "Source replay", exact: true });
+  const resumeCurrent = page.getByRole("button", { name: "Resume current game", exact: true });
+  await sourceReplay.press("Enter");
+  await expect(page.getByRole("heading", { name: "Replay Analysis", exact: true })).toBeFocused();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 26 / 36");
+  await page.getByRole("button", { name: "Next move", exact: true }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 27 / 36");
+  await resumeCurrent.press("Enter");
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+  await expect(sourceReplay).toBeFocused();
+
   await page.getByRole("link", { name: "Settings", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
   await page.goBack();
   await expect(page.getByRole("heading", { name: "Local Match", exact: true })).toBeVisible();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
+  await expect(sourceReplay).not.toBeFocused();
   await page.goForward();
   await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
   await page.goBack();
@@ -152,6 +164,7 @@ test("an example opens an eligible continuation and cancel preserves an active g
   await page.getByRole("link", { name: "Examples", exact: true }).click();
   await page.getByRole("link", { name: "Open Review a finished game", exact: true }).click();
   await page.getByRole("button", { name: "Previous move", exact: true }).click();
+  await expect(resumeCurrent).toHaveCount(0);
   const dialog = page.waitForEvent("dialog");
   const attempt = page.getByRole("button", { name: "Play From Here", exact: true }).click();
   await (await dialog).dismiss();
@@ -161,14 +174,64 @@ test("an example opens an eligible continuation and cancel preserves an active g
   await page.getByRole("link", { name: "Play", exact: true }).click();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 28");
 
-  await page.getByRole("link", { name: "Home", exact: true }).click();
-  await page.getByRole("link", { name: "Examples", exact: true }).click();
-  await page.getByRole("link", { name: "Open Try another line", exact: true }).click();
+  await sourceReplay.click();
   await expect(page.getByTestId("replay-move-count")).toHaveText("Move 26 / 36");
+  await expect(resumeCurrent).toBeVisible();
   const replaceDialog = page.waitForEvent("dialog");
   const relaunch = page.getByRole("button", { name: "Play From Here", exact: true }).click();
   await (await replaceDialog).accept();
   await relaunch;
   await expect(page.getByRole("heading", { name: "Local Match", exact: true })).toBeVisible();
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 26");
+  await page.goBack();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 26 / 36");
+  await expect(resumeCurrent).toHaveCount(0);
+  await page.goForward();
+  await sourceReplay.click();
+  await expect(resumeCurrent).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 26 / 36");
+  await expect(resumeCurrent).toHaveCount(0);
+});
+
+test("compact Replay keeps the frame verdict readable with quiet worker detail", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/guide/#examples");
+  await page.getByRole("link", { name: "Open Try another line", exact: true }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 26 / 36");
+  await page.getByRole("button", { name: "Play From Here", exact: true }).click();
+  await page.getByRole("link", { name: "Source replay", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Resume current game", exact: true })).toBeVisible();
+  const verdict = page.getByTestId("replay-analysis-status");
+  const detail = page.getByTestId("replay-analysis-detail");
+  await expect(verdict).toHaveText("Black: possible escape", { timeout: 20_000 });
+  await expect(verdict).toHaveAttribute("aria-live", "polite");
+  await expect(verdict).toHaveAttribute("aria-atomic", "true");
+
+  for (const { width, height, textSize } of [
+    { width: 390, height: 844, textSize: "100%" },
+    { width: 844, height: 390, textSize: "100%" },
+    { width: 320, height: 900, textSize: "200%" },
+    { width: 560, height: 320, textSize: "200%" },
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate(async (size) => {
+      document.documentElement.style.fontSize = size;
+      await document.fonts.ready;
+    }, textSize);
+    await verdict.evaluate((element) => {
+      window.scrollTo(0, 0);
+      element.closest("aside")!.scrollTop = 0;
+    });
+    if (textSize === "100%") {
+      await expect(page.getByTestId("replay-step-controls")).toBeInViewport({ ratio: 1 });
+      await expect(verdict).toBeInViewport({ ratio: 1 });
+    } else {
+      await verdict.scrollIntoViewIfNeeded();
+      await expect(verdict).toBeInViewport();
+    }
+    await expect(detail).toBeHidden();
+    expect(await verdict.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  }
 });

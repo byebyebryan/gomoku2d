@@ -7,6 +7,7 @@ import type { BoardOverlay, BoardViewModel } from "../../board/board_model";
 import styles from "./Board.module.css";
 
 export interface BoardProps {
+  announcePosition?: boolean;
   // Teaching diagrams provide their own text alternative on the parent image.
   decorative?: boolean;
   model: BoardViewModel;
@@ -38,6 +39,7 @@ export function Board(props: BoardProps) {
   const gameRef = useRef<Phaser.Game | null>(null);
   const lastHostSizeRef = useRef<{ width: number; height: number } | null>(null);
   const sceneRef = useRef<BoardScene | null>(null);
+  const finishedPointer = useRef<{ id: number; moves: BoardViewModel["position"]["moves"] } | null>(null);
   const instructionsId = useId();
   const [focusedCell, setFocusedCell] = useState(() => Math.floor(props.model.boardSize / 2) * (props.model.boardSize + 1));
   const cellRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -159,7 +161,33 @@ export function Board(props: BoardProps) {
 
   return (
     <div className={styles.frame} ref={frameRef}>
-      <div aria-hidden={props.decorative || undefined} className={styles.viewport} inert={props.decorative || undefined} ref={hostRef}>
+      <div
+        aria-hidden={props.decorative || undefined}
+        className={styles.viewport}
+        inert={props.decorative || undefined}
+        onPointerCancel={() => { finishedPointer.current = null; }}
+        onPointerDown={(event) => {
+          if (!event.isPrimary || event.pointerType !== "mouse" || event.button !== 0) return;
+          finishedPointer.current = model.interaction.kind === "play" && model.position.status !== "playing"
+            && event.target === gameRef.current?.canvas && sceneRef.current?.containsBoardPoint(event.clientX, event.clientY)
+            ? { id: event.pointerId, moves: model.position.moves }
+            : null;
+          // Suppress the compatibility mouseup so it cannot place a stone in the new round.
+          if (finishedPointer.current) event.preventDefault();
+        }}
+        onPointerLeave={() => { finishedPointer.current = null; }}
+        onPointerUp={(event) => {
+          if (!event.isPrimary || event.pointerType !== "mouse" || event.button !== 0) return;
+          const press = finishedPointer.current;
+          finishedPointer.current = null;
+          if (press?.id === event.pointerId && press.moves === model.position.moves
+            && model.interaction.kind === "play" && model.position.status !== "playing"
+            && event.target === gameRef.current?.canvas && sceneRef.current?.containsBoardPoint(event.clientX, event.clientY)) {
+            model.interaction.onAdvanceRound();
+          }
+        }}
+        ref={hostRef}
+      >
         {!props.decorative && (
           <>
             <span className={styles.screenReaderText} id={instructionsId}>
@@ -170,7 +198,8 @@ export function Board(props: BoardProps) {
                   : " Game finished. Choose Analyze to inspect it or Next round to play again."
                 : " This board is read only."}
             </span>
-            <span className={styles.screenReaderText} role="status" aria-live="polite" aria-atomic="true">
+            <span className={styles.screenReaderText} role="status"
+              aria-live={props.announcePosition === false ? "off" : "polite"} aria-atomic="true">
               {positionStatus} {model.position.lastMove
                 ? `Last move ${cellNotation(model.position.lastMove.row, model.position.lastMove.col)}.`
                 : "Board empty."}
@@ -280,7 +309,6 @@ function boardSceneStateFromModel(model: BoardViewModel): BoardSceneState {
     lastMove: model.position.lastMove,
     moves: model.position.moves,
     nextReplayMove: null,
-    onAdvanceRound: () => undefined,
     onPlace: () => undefined,
     onTouchCandidateChange: () => undefined,
     touchControlMode: "none",
@@ -294,7 +322,6 @@ function boardSceneStateFromModel(model: BoardViewModel): BoardSceneState {
   };
 
   if (model.interaction.kind === "play") {
-    state.onAdvanceRound = model.interaction.onAdvanceRound;
     state.onPlace = model.interaction.onPlace;
     state.onTouchCandidateChange = model.interaction.onTouchCandidateChange;
     state.touchControlMode = model.interaction.touchControlMode;

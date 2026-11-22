@@ -24,27 +24,30 @@ type ReplayFrame = ReturnType<typeof buildLocalReplayFrame>;
 type ReplayTimelineAnalysis = ReturnType<typeof replayTimelineAnalysis>;
 
 interface ReplayBoardPanelProps {
+  announcePosition: boolean;
   model: BoardViewModel;
 }
 
-export function ReplayBoardPanel({ model }: ReplayBoardPanelProps) {
+export function ReplayBoardPanel({ announcePosition, model }: ReplayBoardPanelProps) {
   return (
     <div className={styles.boardPanel}>
-      <Board model={model} />
+      <Board announcePosition={announcePosition} model={model} />
     </div>
   );
 }
 
 interface ReplayStatusPanelProps {
+  announce: boolean;
   detail: string;
   label: string;
 }
 
-export function ReplayStatusPanel({ detail, label }: ReplayStatusPanelProps) {
+export function ReplayStatusPanel({ announce, detail, label }: ReplayStatusPanelProps) {
   return (
     <section className={`${styles.deckSection} ${styles.statusSection}`}>
       <p className="uiSectionLabel">Status</p>
-      <p className={styles.statusText} data-testid="replay-analysis-status">
+      <p aria-atomic="true" aria-live={announce ? "polite" : "off"}
+        className={styles.statusText} data-testid="replay-analysis-status">
         {label}
       </p>
       <p className={styles.statusDetail} data-testid="replay-analysis-detail">
@@ -126,6 +129,7 @@ interface ReplayPlaybackPanelProps {
   match: SavedMatchV2;
   onResume: (seed: LocalMatchResumeSeed) => void;
   replayFloor: number;
+  resumeCurrent?: () => void;
   resumePending?: boolean;
   setAutoplaying: Dispatch<SetStateAction<boolean>>;
   setMoveIndex: Dispatch<SetStateAction<number>>;
@@ -141,6 +145,7 @@ export function ReplayPlaybackPanel({
   match,
   onResume,
   replayFloor,
+  resumeCurrent,
   resumePending = false,
   setAutoplaying,
   setMoveIndex,
@@ -245,6 +250,13 @@ export function ReplayPlaybackPanel({
       </div>
 
       {!selectionOnly && <div className={styles.replayActions}>
+        {resumeCurrent && <button
+          className={`uiAction uiActionPrimary ${styles.resumeAction}`}
+          onClick={resumeCurrent}
+          type="button"
+        >
+          <span className="uiActionLabel">Resume current game</span>
+        </button>}
         <div className={styles.resumeRow}>
           <button
             className={`uiAction uiActionSecondary ${styles.resumeAction}`}

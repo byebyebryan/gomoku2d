@@ -26,6 +26,7 @@ import {
 } from "../profile/profile_settings";
 import { variantLabel } from "../replay/local_replay";
 import { Icon } from "../ui/Icon";
+import { confirmLocalMatchReplacement } from "./confirm_local_match_replacement";
 
 import styles from "./SettingsRoute.module.css";
 
@@ -230,6 +231,7 @@ export function SettingsRoute() {
                   <button
                     className="uiAction uiActionAccent"
                     onClick={() => {
+                      if (!confirmLocalMatchReplacement()) return;
                       startLocalMatchWithSavedSetup();
                       navigate("/match/local");
                     }}

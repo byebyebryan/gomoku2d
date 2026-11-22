@@ -190,8 +190,18 @@ describe("SettingsRoute", () => {
     expect(screen.getByText(/changes apply next game/i)).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /back to game/i })[0]).toHaveAttribute("href", "/match/local");
 
-    fireEvent.click(screen.getByRole("button", { name: /start new game/i }));
+    const confirm = vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true);
+    vi.stubGlobal("confirm", confirm);
+    const restart = screen.getByRole("button", { name: /start new game/i });
+    fireEvent.click(restart);
+    expect(matchStore.getState()).toMatchObject({
+      currentVariant: "freestyle",
+      selectedVariant: "renju",
+    });
+    expect(matchStore.getState().moves).toHaveLength(1);
+    fireEvent.click(restart);
 
+    expect(confirm).toHaveBeenCalledTimes(2);
     expect(matchStore.getState()).toMatchObject({
       currentVariant: "renju",
       moves: [],

@@ -125,7 +125,6 @@ test("local replay opens from profile history and supports stepping plus autopla
       metaGap: metaRowsBox.top - resumeActionBox.bottom,
       layoutOverflowY: window.getComputedStyle(layout).overflowY,
       pageScrollRange: document.documentElement.scrollHeight - document.documentElement.clientHeight,
-      statusHidden: window.getComputedStyle(statusSection).display === "none",
       canvasToFrame: Math.min(
         canvasBox.width / frameBox.width,
         canvasBox.height / frameBox.height,
@@ -144,11 +143,14 @@ test("local replay opens from profile history and supports stepping plus autopla
   expect(portraitMetrics!.metaGap).toBeGreaterThanOrEqual(8);
   expect(portraitMetrics!.layoutOverflowY).toBe("visible");
   expect(portraitMetrics!.pageScrollRange).toBeGreaterThanOrEqual(0);
-  expect(portraitMetrics!.statusHidden).toBe(true);
+  await expect(page.getByTestId("replay-analysis-status")).toBeVisible();
+  await expect(page.getByTestId("replay-analysis-detail")).toBeHidden();
   expect(portraitMetrics!.canvasToFrame).toBeGreaterThan(0.98);
 
   await page.getByRole("button", { name: "Auto play" }).click();
   await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+  await expect(page.getByTestId("replay-analysis-status")).toHaveAttribute("aria-live", "off");
+  await expect(page.getByRole("status")).toHaveAttribute("aria-live", "off");
   await expect
     .poll(async () => page.getByTestId("replay-move-count").textContent(), { timeout: 15_000 })
     .toBe("Move 10 / 10");

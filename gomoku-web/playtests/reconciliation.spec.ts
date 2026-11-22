@@ -130,6 +130,7 @@ test("a keyboard player can branch, finish, analyze, and find the saved game", a
 
   await page.getByRole("link", { name: "Play", exact: true }).press("Enter");
   await page.getByRole("button", { name: "Next round", exact: true }).press("Enter");
+  await expect(page.getByRole("heading", { name: "Local Match", exact: true })).toBeFocused();
   await expect(page.getByTestId("player-row-black")).toContainText("Normal Bot");
   await expect(page.getByTestId("player-row-white")).toContainText("Guest");
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 1");

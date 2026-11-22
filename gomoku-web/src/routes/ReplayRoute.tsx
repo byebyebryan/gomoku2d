@@ -35,7 +35,8 @@ import { botLabel } from "../core/bot_config";
 import { publicProfilePath, type PublicReplayReturn } from "./public_player_navigation";
 import { myGamesPublishIntentFromState, myGamesReturnFromState } from "./my_games_navigation";
 import type { SavedReplayReturn } from "./saved_replay_navigation";
-import { sourceReplayMove, useReplayContinuation } from "./use_replay_continuation";
+import { sourceReplayMove } from "./source_replay_navigation";
+import { useReplayContinuation } from "./use_replay_continuation";
 
 import styles from "./ReplayRoute.module.css";
 import {
@@ -224,6 +225,8 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
     settings.boardHints.evidence === "on",
   );
   const analysisStatus = replayAnalysisStatusSummary(analysisStep, analysisAnnotations, match, frame);
+  const announceVerdict = !autoplaying && analysisStatus.detail !== "Normal play"
+    && (frame.status === "playing" || analysisStep?.status !== "resolved");
   const timelineAnalysis = replayTimelineAnalysis(analysisAnnotations, match.move_count, analysisSummary);
   const timelineStyle = {
     "--timeline-analyzed-end": timelineAnalysis.analyzedEndPercent ?? "0%",
@@ -271,6 +274,7 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
       void continuation.start(resumeSeed);
     },
     replayFloor,
+    resumeCurrent: continuation.resumeCurrent,
     resumePending: continuation.pending,
     setAutoplaying,
     setMoveIndex,
@@ -334,11 +338,11 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
       </header>
 
       <section className={`${styles.layout} ${sidebarOpen ? styles.layoutSharing : ""}`}>
-        <ReplayBoardPanel model={boardModel} />
+        <ReplayBoardPanel announcePosition={!autoplaying} model={boardModel} />
 
         <aside className={`${styles.deck} ${sidebarOpen ? styles.deckSharing : ""}`} ref={deckRef}>
           <div className={styles.replayDeck} hidden={sidebarOpen}>
-            <ReplayStatusPanel detail={analysisStatus.detail} label={analysisStatus.label} />
+            <ReplayStatusPanel announce={announceVerdict} detail={analysisStatus.detail} label={analysisStatus.label} />
 
             <div className="uiDivider" />
 

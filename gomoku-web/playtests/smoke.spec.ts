@@ -250,7 +250,21 @@ test("home boot and local bot match smoke flow", async ({ page }) => {
   await expect(page.getByText("Next: Renju · Normal")).toBeVisible();
 
   await page.getByRole("link", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "Start New Game" }).click();
+  const startNew = page.getByRole("button", { name: "Start New Game" });
+  const cancelRestart = page.waitForEvent("dialog");
+  const canceledStart = startNew.click();
+  await (await cancelRestart).dismiss();
+  await canceledStart;
+  await expect(page.getByText("Changes apply next game.")).toBeVisible();
+  await page.getByRole("link", { name: "Back to Game" }).first().click();
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 2");
+  await expect(page.getByTestId("match-rule")).toHaveText("Freestyle");
+
+  await page.getByRole("link", { name: "Settings" }).click();
+  const confirmRestart = page.waitForEvent("dialog");
+  const confirmedStart = startNew.click();
+  await (await confirmRestart).accept();
+  await confirmedStart;
   await expect(page.getByTestId("match-move-count")).toHaveText("Move 0");
   await expect(page.getByTestId("match-rule")).toHaveText("Renju");
 
@@ -539,6 +553,15 @@ test("portrait touch input uses Place instead of auto-placing on release", async
     await placeButton.click();
     await waitForBotReply(page);
     await expect(placeButton).toBeDisabled();
+
+    await page.touchscreen.tap(box.x + box.width * 0.1, box.y + box.height * 0.1);
+    await expect(placeButton).toBeEnabled();
+    const cancelRestart = page.waitForEvent("dialog");
+    const restart = page.getByRole("button", { name: "New Game" }).click();
+    await (await cancelRestart).dismiss();
+    await restart;
+    await expect(page.getByTestId("match-move-count")).toHaveText("Move 2");
+    await expect(placeButton).toBeEnabled();
   } finally {
     await context.close();
   }
