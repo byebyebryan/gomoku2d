@@ -11,6 +11,37 @@ belong in the [reference docs](../README.md#choose-a-path).
 | [0.7 refinement plan](v0_7_refinement_plan.md) | First milestone scope, acceptance checks and later refinement work. |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Planning snapshot with research for later curated learning. The roadmap tracks current scope. |
 
+### Repository review follow-ups
+
+- **Raw replay analysis.** A legal one-move replay declared as a Black win
+  can yield a decisive-attack claim. Require an on-board win for tactical
+  winner claims in the native analyzer and Wasm adapter. Keep valid terminal
+  wins and capped draws readable. Fold the CLI's `--max-moves 0` behavior into
+  the arena limit tests. [Analysis contract](../reference/lab/game_analysis.md)
+- **Replay-library cost.** The repo-wide host-side Wasm probe took a median
+  of 223 ms to hydrate 64 legal 225-ply games. Metadata edits revalidate the
+  unchanged payloads. Profile opening the library and editing one title in
+  browser with full and multi-owner collections. Reuse validation for
+  identical bytes while retaining legality, fingerprint, and revision checks.
+  [Replay collection review](v0_6_4_replay_collection_review.md)
+- **Visuals publication.** Use an explicit published inventory and fail the
+  build on missing manifest references. Keep the canonical asset sources, the
+  public social preview, the three linked font roles, and applicable license
+  notices. Review the duplicate social-preview source and the 12 tuning-font
+  variants as source-only candidates. Preserve existing history and review
+  image URLs and digests. [Visual design assets](../../gomoku-web/assets/README.md)
+- **Current screens.** Date the 0.6.2 pointer or refresh it from a separately
+  qualified published build. Keep the original gallery address and add one
+  matched comparison for the changed play and replay flow.
+  [Developer area contract](../reference/app/developer_area.md)
+- **Player journeys.** Cancel pending replay branches when another action
+  takes over, make compact verdict qualifications reachable, and recover on
+  Back after a failed route load. Before adding Guide lessons, compare lazy
+  initialization or static diagrams with the nine off-screen WebGL contexts
+  observed on a compact Examples visit. Preserve the sprite output and
+  accessible captions. Physical device and real screen-reader checks remain
+  open.
+
 ## Published v0.6 Handoff
 
 The [0.6 implementation index](../archive/v0_6_implementation.md) links the
