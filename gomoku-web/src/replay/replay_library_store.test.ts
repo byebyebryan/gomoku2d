@@ -320,6 +320,8 @@ describe("replay library store", () => {
     const store = createReplayLibraryStore({ storage, onPersistenceUnavailable });
 
     expect(store.getState().owners.guest).toBeUndefined();
+    await expect(store.getState().replaceEntries("user:reset-probe", [], undefined, { preflightOnly: true }))
+      .rejects.toThrow();
     await expect(store.getState().saveReplay("guest", winningReplay(), "saved")).rejects.toThrow();
     expect(storage.getItem(REPLAY_LIBRARY_STORAGE_KEY)).toBe(raw);
     expect(storage.getItem("gomoku2d.local-profile.v5")).toBe("preserve-old-profile");

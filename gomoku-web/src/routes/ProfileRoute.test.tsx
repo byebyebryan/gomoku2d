@@ -8,7 +8,7 @@ import { CloudSessionController } from "../cloud/CloudSessionController";
 import { cloudHistoryStore } from "../cloud/cloud_history_store";
 import { createCloudSavedMatch } from "../cloud/cloud_match";
 import { emptyCloudMatchHistory, type CloudProfile } from "../cloud/cloud_profile";
-import { cloudProfileStore } from "../cloud/cloud_profile_store";
+import { cloudProfileStore, createCloudProfileStore } from "../cloud/cloud_profile_store";
 import { cloudPromotionStore } from "../cloud/cloud_promotion_store";
 import { createLocalSavedMatch, movesFromMoveCells } from "../match/saved_match";
 import { portableReplayFromSavedMatch } from "../replay/portable_replay";
@@ -234,6 +234,64 @@ describe("ProfileRoute cloud state", () => {
     expect(localProfileStore.getState().profile?.displayName).toBe("Next player");
     expect(cloudAuthStore.getState().user).toBe(nextUser);
     expect(cloudPromotionStore.getState().reset).not.toHaveBeenCalled();
+  });
+
+  it.each(["reset", "delete"] as const)("does not treat a stale failed %s as success after a same-account refresh", async (action) => {
+    const mutationError = new Error(`${action} permission denied`);
+    let rejectMutation!: (error: Error) => void;
+    let mutationStarted!: () => void;
+    const started = new Promise<void>((resolve) => { mutationStarted = resolve; });
+    const pendingMutation = () => new Promise<CloudProfile>((_resolve, reject) => {
+      rejectMutation = reject;
+      mutationStarted();
+    });
+    const operationStore = createCloudProfileStore({
+      deleteProfile: action === "delete" ? vi.fn(() => pendingMutation().then(() => undefined)) : undefined,
+      loadProfile: vi.fn().mockResolvedValue(cloudProfile),
+      resetProfile: action === "reset" ? vi.fn(pendingMutation) : undefined,
+    });
+    const signOut = vi.fn().mockResolvedValue(undefined);
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.getState().renameDisplayName("Keep after failure");
+    const localMatch = localSavedMatch(`stale-${action}-match`, localProfile.id);
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
+    cloudAuthStore.setState({
+      isConfigured: true,
+      signOut,
+      status: "signed_in",
+      user: cloudUser,
+    });
+    cloudProfileStore.setState({
+      deleteForUser: operationStore.getState().deleteForUser,
+      loadForUser: vi.fn(),
+      profile: cloudProfile,
+      resetForUser: operationStore.getState().resetForUser,
+      status: "ready",
+    });
+    const clearForUser = vi.fn().mockResolvedValue(undefined);
+    const resetUserCache = vi.fn();
+    cloudHistoryStore.setState({ clearForUser, resetUserCache });
+
+    renderProfileRoute();
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    if (action === "delete") fireEvent.click(screen.getByRole("button", { name: "Delete Cloud" }));
+    fireEvent.click(screen.getByRole("button", { name: action === "reset" ? "Reset" : "Delete" }));
+    await started;
+
+    await expect(operationStore.getState().loadForUser(cloudUser, defaultSettings)).resolves.toBe(cloudProfile);
+    rejectMutation(mutationError);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(`${action} permission denied`);
+    expect(screen.getByRole("button", { name: action === "reset" ? "Reset" : "Delete" })).toBeInTheDocument();
+    expect(localProfileStore.getState().profile?.displayName).toBe("Keep after failure");
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([localMatch]);
+    expect(resetUserCache).not.toHaveBeenCalled();
+    if (action === "reset") {
+      expect(clearForUser).not.toHaveBeenCalled();
+    } else {
+      expect(clearForUser).toHaveBeenCalledWith(cloudUser);
+      expect(signOut).not.toHaveBeenCalled();
+    }
   });
 
   afterEach(() => {
@@ -1120,6 +1178,87 @@ describe("ProfileRoute cloud state", () => {
       status: "synced",
       hasIncoming: false,
     });
+  });
+
+  it("preflights an unreadable device replay cache before clearing the private cloud library", async () => {
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.getState().renameDisplayName("Keep this profile");
+    const localMatch = localSavedMatch("preflight-match", localProfile.id);
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
+    const cacheBytes = "unreadable local fixture";
+    localStorage.setItem("gomoku2d.replay-library.v2", cacheBytes);
+    replayLibraryStore.setState({
+      readOnly: true,
+      storageError: "Replay library cache is not valid JSON.",
+    });
+    const resetForUser = vi.fn();
+    const clearForUser = vi.fn();
+    cloudAuthStore.setState({ status: "signed_in", isConfigured: true, user: cloudUser });
+    cloudProfileStore.setState({ profile: cloudProfile, resetForUser, status: "ready" });
+    cloudHistoryStore.setState({ clearForUser });
+
+    renderProfileRoute();
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Replay library cache is not valid JSON.");
+    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
+    expect(sharingMocks.loadPrivateLibrary).toHaveBeenCalledWith("uid-1");
+    expect(sharingMocks.savePrivateLibrary).not.toHaveBeenCalled();
+    expect(resetForUser).not.toHaveBeenCalled();
+    expect(clearForUser).not.toHaveBeenCalled();
+    expect(localStorage.getItem("gomoku2d.replay-library.v2")).toBe(cacheBytes);
+    expect(localProfileStore.getState().profile?.displayName).toBe("Keep this profile");
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([localMatch]);
+  });
+
+  it("keeps reset retryable when the local library update fails after the cloud clear", async () => {
+    const localProfile = localProfileStore.getState().ensureLocalProfile();
+    localProfileStore.getState().renameDisplayName("Keep history until retry");
+    const localMatch = localSavedMatch("partial-reset-match", localProfile.id);
+    localProfileStore.setState({ matchHistory: localMatchHistoryWith([localMatch]) });
+    sharingMocks.loadPrivateLibrary
+      .mockResolvedValueOnce({ uid: "uid-1", revision: 6, entries: [], updatedAt: "2026-04-28T01:00:00.000Z" })
+      .mockResolvedValueOnce({ uid: "uid-1", revision: 7, entries: [], updatedAt: "2026-04-28T01:01:00.000Z" });
+    const resetForUser = vi.fn().mockResolvedValue(undefined);
+    const clearForUser = vi.fn().mockResolvedValue(undefined);
+    cloudAuthStore.setState({ status: "signed_in", isConfigured: true, user: cloudUser });
+    cloudProfileStore.setState({ profile: cloudProfile, resetForUser, status: "ready" });
+    cloudHistoryStore.setState({ clearForUser });
+
+    const replaceEntries = replayLibraryStore.getState().replaceEntries;
+    let failFirstLocalCommit = true;
+    const replaceEntriesWithOneFailure = vi.fn(async (...args: Parameters<typeof replaceEntries>) => {
+      if (!args[3]?.preflightOnly && failFirstLocalCommit) {
+        failFirstLocalCommit = false;
+        throw new Error("Device replay cache write failed.");
+      }
+      await replaceEntries(...args);
+    });
+    replayLibraryStore.setState({ replaceEntries: replaceEntriesWithOneFailure });
+
+    renderProfileRoute();
+    fireEvent.click(screen.getByRole("button", { name: "Reset Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Device replay cache write failed.");
+    expect(sharingMocks.savePrivateLibrary).toHaveBeenCalledTimes(1);
+    expect(resetForUser).not.toHaveBeenCalled();
+    expect(clearForUser).not.toHaveBeenCalled();
+    expect(localProfileStore.getState().profile?.displayName).toBe("Keep history until retry");
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([localMatch]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+    await waitFor(() => expect(resetForUser).toHaveBeenCalledWith(cloudUser, defaultSettings));
+    expect(sharingMocks.loadPrivateLibrary).toHaveBeenCalledTimes(2);
+    expect(sharingMocks.savePrivateLibrary).toHaveBeenCalledTimes(2);
+    expect(sharingMocks.savePrivateLibrary).toHaveBeenNthCalledWith(1, "uid-1", [], 6);
+    expect(sharingMocks.savePrivateLibrary).toHaveBeenNthCalledWith(2, "uid-1", [], 7);
+    expect(clearForUser).toHaveBeenCalledWith(cloudUser);
+    expect(localProfileStore.getState().matchHistory.replayMatches).toEqual([]);
+    expect(localProfileStore.getState().profile?.id).not.toBe(localProfile.id);
+    expect(replayLibrarySync.store.getState().users["uid-1"]).toMatchObject({ revision: 8, status: "synced" });
   });
 
   it("deletes the online profile and signs out without clearing local history", async () => {

@@ -35,6 +35,16 @@ export function createCloudProfileStore(
   const loadProfile = options.loadProfile ?? ensureCloudProfile;
   const resetProfile = options.resetProfile ?? resetCloudProfile;
   let requestId = 0;
+  let requestEpoch = 0;
+  let requestUser: CloudAuthUser | null = null;
+  let requestKind: "delete" | "load" | "reset" | null = null;
+  const startRequest = (user: CloudAuthUser, kind: "delete" | "load" | "reset") => {
+    if (requestUser !== user || kind === "delete" || kind === "reset") requestEpoch += 1;
+    requestUser = user;
+    requestKind = kind;
+    requestId += 1;
+    return { id: requestId, epoch: requestEpoch };
+  };
 
   return createStore<CloudProfileState>((set, get) => ({
     applyLocalPatch: (source, patch) => {
@@ -45,8 +55,7 @@ export function createCloudProfileStore(
       return true;
     },
     deleteForUser: async (user) => {
-      const currentRequestId = requestId + 1;
-      requestId = currentRequestId;
+      const { id: currentRequestId } = startRequest(user, "delete");
 
       set({
         errorMessage: null,
@@ -65,22 +74,18 @@ export function createCloudProfileStore(
           status: "idle",
         });
       } catch (error) {
-        if (requestId !== currentRequestId) {
-          return;
+        if (requestId === currentRequestId) {
+          set({
+            errorMessage: errorMessageFor(error),
+            status: "error",
+          });
         }
-
-        const message = errorMessageFor(error);
-        set({
-          errorMessage: message,
-          status: "error",
-        });
-        throw new Error(message);
+        throw error;
       }
     },
     errorMessage: null,
     loadForUser: async (user, settings) => {
-      const currentRequestId = requestId + 1;
-      requestId = currentRequestId;
+      const { id: currentRequestId } = startRequest(user, "load");
 
       set({
         errorMessage: null,
@@ -114,6 +119,9 @@ export function createCloudProfileStore(
     profile: null,
     reset: () => {
       requestId += 1;
+      requestEpoch += 1;
+      requestUser = null;
+      requestKind = null;
       set({
         errorMessage: null,
         profile: null,
@@ -121,8 +129,7 @@ export function createCloudProfileStore(
       });
     },
     resetForUser: async (user, settings) => {
-      const currentRequestId = requestId + 1;
-      requestId = currentRequestId;
+      const { id: currentRequestId, epoch: currentRequestEpoch } = startRequest(user, "reset");
 
       set({
         errorMessage: null,
@@ -131,7 +138,28 @@ export function createCloudProfileStore(
 
       try {
         const profile = await resetProfile(user, settings);
-        if (requestId !== currentRequestId) {
+        const supersedesSameUserLoad = requestId !== currentRequestId
+          && requestEpoch === currentRequestEpoch
+          && requestUser === user
+          && requestKind === "load";
+        if (requestId !== currentRequestId && !supersedesSameUserLoad) {
+          return;
+        }
+
+        const currentProfile = get().profile;
+        const currentResetAt = currentProfile?.uid === user.uid ? currentProfile.resetAt : null;
+        const resultResetAt = profile.uid === user.uid ? profile.resetAt : null;
+        const hasNewerResetBarrier = currentProfile?.uid === user.uid
+          && currentResetAt !== null
+          && (resultResetAt === null || Date.parse(currentResetAt) > Date.parse(resultResetAt));
+
+        if (supersedesSameUserLoad) {
+          requestId += 1;
+          requestKind = "reset";
+        }
+
+        if (hasNewerResetBarrier) {
+          set({ errorMessage: null, status: "ready" });
           return;
         }
 
@@ -141,16 +169,13 @@ export function createCloudProfileStore(
           status: "ready",
         });
       } catch (error) {
-        if (requestId !== currentRequestId) {
-          return;
+        if (requestId === currentRequestId) {
+          set({
+            errorMessage: errorMessageFor(error),
+            status: "error",
+          });
         }
-
-        const message = errorMessageFor(error);
-        set({
-          errorMessage: message,
-          status: "error",
-        });
-        throw new Error(message);
+        throw error;
       }
     },
     status: "idle",

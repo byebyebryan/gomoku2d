@@ -165,6 +165,118 @@ describe("createCloudProfileStore", () => {
     });
   });
 
+  it.each(["reset", "delete"] as const)("rejects a stale %s failure without replacing refreshed state", async (action) => {
+    const mutationError = new Error(`${action} permission denied`);
+    let rejectMutation!: (error: Error) => void;
+    const pendingMutation = () => new Promise<CloudProfile>((_resolve, reject) => {
+      rejectMutation = reject;
+    });
+    const store = createCloudProfileStore({
+      deleteProfile: action === "delete" ? vi.fn(() => pendingMutation().then(() => undefined)) : undefined,
+      loadProfile: vi.fn().mockResolvedValue(profile),
+      resetProfile: action === "reset" ? vi.fn(pendingMutation) : undefined,
+    });
+
+    const mutation = action === "reset"
+      ? store.getState().resetForUser(authUser, defaultSettings)
+      : store.getState().deleteForUser(authUser);
+    const rejection = expect(mutation).rejects.toBe(mutationError);
+
+    await expect(store.getState().loadForUser(authUser, defaultSettings)).resolves.toBe(profile);
+    rejectMutation(mutationError);
+
+    await rejection;
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      profile,
+      status: "ready",
+    });
+  });
+
+  it("keeps a successful reset barrier ahead of an in-flight same-user refresh", async () => {
+    const resetSnapshot: CloudProfile = { ...profile, resetAt: "2026-04-28T00:00:00.000Z" };
+    let finishReset!: (value: CloudProfile) => void;
+    let finishLoad!: (value: CloudProfile) => void;
+    const store = createCloudProfileStore({
+      loadProfile: vi.fn(() => new Promise<CloudProfile>((resolve) => { finishLoad = resolve; })),
+      resetProfile: vi.fn(() => new Promise<CloudProfile>((resolve) => { finishReset = resolve; })),
+    });
+
+    const reset = store.getState().resetForUser(authUser, defaultSettings);
+    const refresh = store.getState().loadForUser(authUser, defaultSettings);
+    finishReset(resetSnapshot);
+    await reset;
+    finishLoad(profile);
+
+    await expect(refresh).resolves.toBeNull();
+    expect(store.getState()).toMatchObject({
+      errorMessage: null,
+      profile: resetSnapshot,
+      status: "ready",
+    });
+  });
+
+  it("preserves a strictly newer same-user reset barrier over a stale reset response", async () => {
+    const newerSnapshot: CloudProfile = { ...profile, resetAt: "2026-04-29T00:00:00.000Z" };
+    const olderSnapshot: CloudProfile = { ...profile, resetAt: "2026-04-28T00:00:00.000Z" };
+    let finishReset!: (value: CloudProfile) => void;
+    const store = createCloudProfileStore({
+      loadProfile: vi.fn().mockResolvedValue(newerSnapshot),
+      resetProfile: vi.fn(() => new Promise<CloudProfile>((resolve) => { finishReset = resolve; })),
+    });
+
+    const reset = store.getState().resetForUser(authUser, defaultSettings);
+    await store.getState().loadForUser(authUser, defaultSettings);
+    finishReset(olderSnapshot);
+    await reset;
+
+    expect(store.getState()).toMatchObject({ profile: newerSnapshot, status: "ready" });
+  });
+
+  it("does not let an older reset supersede a load after a newer mutation starts", async () => {
+    const loadedSnapshot: CloudProfile = { ...profile, displayName: "After newer mutation" };
+    let finishReset!: (value: CloudProfile) => void;
+    let finishDelete!: () => void;
+    const store = createCloudProfileStore({
+      deleteProfile: vi.fn(() => new Promise<void>((resolve) => { finishDelete = resolve; })),
+      loadProfile: vi.fn().mockResolvedValue(loadedSnapshot),
+      resetProfile: vi.fn(() => new Promise<CloudProfile>((resolve) => { finishReset = resolve; })),
+    });
+
+    const olderReset = store.getState().resetForUser(authUser, defaultSettings);
+    const newerDelete = store.getState().deleteForUser(authUser);
+    const refresh = store.getState().loadForUser(authUser, defaultSettings);
+    await refresh;
+    finishReset({ ...profile, resetAt: "2026-04-28T00:00:00.000Z" });
+    await olderReset;
+
+    expect(store.getState()).toMatchObject({ profile: loadedSnapshot, status: "ready" });
+    finishDelete();
+    await newerDelete;
+  });
+
+  it("does not carry a stale reset across an A-to-B-to-A account sequence", async () => {
+    const nextUser: CloudAuthUser = { ...authUser, uid: "uid-2" };
+    const nextProfile: CloudProfile = { ...profile, uid: nextUser.uid };
+    const laterOriginalProfile: CloudProfile = { ...profile, displayName: "Later A snapshot" };
+    const resetSnapshot: CloudProfile = { ...profile, resetAt: "2026-04-28T00:00:00.000Z" };
+    let finishReset!: (value: CloudProfile) => void;
+    const store = createCloudProfileStore({
+      loadProfile: vi.fn()
+        .mockResolvedValueOnce(nextProfile)
+        .mockResolvedValueOnce(laterOriginalProfile),
+      resetProfile: vi.fn(() => new Promise<CloudProfile>((resolve) => { finishReset = resolve; })),
+    });
+
+    const reset = store.getState().resetForUser(authUser, defaultSettings);
+    await store.getState().loadForUser(nextUser, defaultSettings);
+    await store.getState().loadForUser(authUser, defaultSettings);
+    finishReset(resetSnapshot);
+    await reset;
+
+    expect(store.getState()).toMatchObject({ profile: laterOriginalProfile, status: "ready" });
+  });
+
   it("deletes a cloud profile for a signed-in user", async () => {
     const deleteProfile = vi.fn().mockResolvedValue(undefined);
     const store = createCloudProfileStore({

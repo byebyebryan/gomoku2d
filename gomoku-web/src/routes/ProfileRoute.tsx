@@ -654,11 +654,19 @@ export function ProfileRoute() {
       && localProfileStore.getState().profile?.id === localProfileId;
     const library = await loadPrivateLibrary(user.uid);
     if (!isCurrent()) throw new ProfileActionAccountChanged();
+    const owner = `user:${user.uid}` as const;
+    const localRevision = replayLibraryStore.getState().revision;
+    await replayLibraryStore.getState().replaceEntries(owner, [], isCurrent, {
+      expectedRevision: localRevision,
+      preflightOnly: true,
+    });
+    if (!isCurrent()) throw new ProfileActionAccountChanged();
     const cleared = await savePrivateLibrary(user.uid, [], library?.revision ?? null);
     if (!isCurrent()) throw new ProfileActionAccountChanged();
-    await replayLibraryStore.getState().replaceEntries(`user:${user.uid}`, [], isCurrent, {
+    await replayLibraryStore.getState().replaceEntries(owner, [], isCurrent, {
       baseRevision: cleared.revision,
       dirty: false,
+      expectedRevision: localRevision,
       restoreReview: false,
     });
     if (!isCurrent()) throw new ProfileActionAccountChanged();
