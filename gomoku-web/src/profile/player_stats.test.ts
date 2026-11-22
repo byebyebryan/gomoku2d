@@ -41,6 +41,23 @@ describe("player statistics", () => {
       .toEqual({ matches: 1, wins: 1, losses: 0, draws: 0 });
   });
 
+  it("does not count a stale replay again while retaining known games and legacy practice rows", () => {
+    const retained = game("known");
+    const stale = { ...game("stale"), source: "cloud_saved" as const };
+    const practice = {
+      ...game("portable-old-example", "draw"),
+      replay_origin: { source_fingerprint: "A".repeat(43), inherited_ply: 8 },
+    };
+    const sourceHistory = emptyMatchHistory();
+    sourceHistory.replayMatches = [retained];
+    sourceHistory.archivedStats.archived_before = retained.saved_at;
+    sourceHistory.archivedStats.archived_count = 1;
+    sourceHistory.archivedStats.totals = { matches: 1, wins: 0, losses: 1, draws: 0, moves: 9 };
+
+    expect(playerStatsFromHistory({ identity, replayHistory: [retained, stale, practice], sourceHistory }))
+      .toEqual({ matches: 3, wins: 1, losses: 1, draws: 1 });
+  });
+
   it("keeps zero records valid without inventing a win rate", () => {
     const totals = playerStatsFromHistory({ identity, replayHistory: [], sourceHistory: emptyMatchHistory() });
     expect(totals).toEqual({ matches: 0, wins: 0, losses: 0, draws: 0 });

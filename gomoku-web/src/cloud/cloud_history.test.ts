@@ -221,4 +221,27 @@ describe("cloud history", () => {
     });
     expect(result.matches).toEqual([]);
   });
+
+  it("rejects unknown rows at the archive cutoff while preserving known replay IDs", async () => {
+    const { backend } = createBackend();
+    const retained = { ...match, source: "cloud_saved" as const, trust: "client_uploaded" as const };
+    const archivedStats = {
+      ...emptyCloudArchivedMatchStats(),
+      archived_count: 1,
+      archived_before: match.saved_at,
+    };
+    const existing = cloudProfile({
+      matchHistory: { archivedStats, replayMatches: [retained], summaryMatches: [] },
+    });
+
+    const result = await saveCloudHistorySnapshot(user, {
+      cloudProfile: existing,
+      displayName: "Bryan",
+      matches: [match, { ...match, id: "unknown-at-cutoff" }],
+      settings: defaultSettings,
+    }, { backend });
+
+    expect(result.profile.matchHistory).toEqual(existing.matchHistory);
+    expect(result.matches).toEqual([retained]);
+  });
 });

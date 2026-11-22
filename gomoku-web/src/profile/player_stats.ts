@@ -1,4 +1,4 @@
-import type { MatchHistory, MatchSummaryIdentity } from "../match/match_history";
+import { matchHistoryCanImport, type MatchHistory, type MatchSummaryIdentity } from "../match/match_history";
 import {
   matchUserSide,
   savedMatchPlayers,
@@ -29,12 +29,15 @@ export function playerResultForMatch(match: SavedMatchV2, identity: MatchSummary
 export function playerStatsFromHistory(input: {
   identity: MatchSummaryIdentity;
   replayHistory: SavedMatchV2[];
-  sourceHistory: Pick<MatchHistory, "summaryMatches" | "archivedStats"> | null;
+  sourceHistory: MatchHistory | null;
 }): PlayerStats {
   const totals: PlayerStats = { draws: 0, losses: 0, matches: 0, wins: 0 };
   const replayIds = new Set<string>();
   for (const match of input.replayHistory) {
     if (replayIds.has(match.id)) continue;
+    // Early practice records are counted from the library and never entered the played-game archive.
+    if (input.sourceHistory && !(match.replay_origin && match.id.startsWith("portable-"))
+      && !matchHistoryCanImport(input.sourceHistory, match)) continue;
     replayIds.add(match.id);
     totals.matches += 1;
     const result = playerResultForMatch(match, input.identity);

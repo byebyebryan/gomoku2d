@@ -421,5 +421,5 @@ export function savedMatchIsAfterReset(
   match: Pick<SavedMatchV2, "saved_at">,
   historyResetAt: string | null | undefined,
 ): boolean {
-  return !historyResetAt || match.saved_at > historyResetAt;
+  return !historyResetAt || Date.parse(match.saved_at) > Date.parse(historyResetAt);
 }

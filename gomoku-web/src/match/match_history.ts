@@ -170,8 +170,9 @@ export function archivedStatsFromDocument(value: unknown): ArchivedMatchStatsV1 
     return emptyArchivedMatchStats();
   }
 
+  const archivedAt = Date.parse(stringOrNull(candidate.archived_before) ?? "");
   return {
-    archived_before: stringOrNull(candidate.archived_before),
+    archived_before: Number.isFinite(archivedAt) ? new Date(archivedAt).toISOString() : null,
     archived_count: Math.max(0, Math.floor(Number(candidate.archived_count) || 0)),
     by_opponent_type: { bot, human },
     by_ruleset: { freestyle, renju },
@@ -237,17 +238,18 @@ function archiveWithSummaries(
   }
 
   const next: ArchivedMatchStatsV1 = JSON.parse(JSON.stringify(archivedStats)) as ArchivedMatchStatsV1;
+  let latest = Date.parse(next.archived_before ?? "");
   for (const summary of summaries) {
     incrementCounter(next.totals, summary);
     incrementCounter(next.by_ruleset[summary.ruleset], summary);
     incrementCounter(next.by_side[summary.side], summary);
     incrementCounter(next.by_opponent_type[summary.opponent.kind], summary);
+    const savedAt = Date.parse(summary.saved_at);
+    if (Number.isFinite(savedAt) && (!Number.isFinite(latest) || savedAt > latest)) latest = savedAt;
   }
 
   next.archived_count += summaries.length;
-  next.archived_before = summaries
-    .map((summary) => summary.saved_at)
-    .reduce((latest, savedAt) => (latest && latest > savedAt ? latest : savedAt), next.archived_before);
+  next.archived_before = Number.isFinite(latest) ? new Date(latest).toISOString() : null;
 
   return next;
 }
@@ -330,6 +332,18 @@ export function isMatchSummaryV1(value: unknown): value is MatchSummaryV1 {
   );
 }
 
+export function compareMatchSavedAt(
+  left: { saved_at: string },
+  right: { saved_at: string },
+): number {
+  const a = Date.parse(left.saved_at);
+  const b = Date.parse(right.saved_at);
+  if (Number.isFinite(a) && Number.isFinite(b)) return a - b;
+  if (Number.isFinite(a)) return 1;
+  if (Number.isFinite(b)) return -1;
+  return left.saved_at.localeCompare(right.saved_at);
+}
+
 export function mergeMatchSummaryState(input: {
   archivedStats: ArchivedMatchStatsV1;
   identity?: MatchSummaryIdentity;
@@ -348,7 +362,8 @@ export function mergeMatchSummaryState(input: {
     if (replayMatchIds.has(summary.id)) {
       continue;
     }
-    byId.set(summary.id, summary);
+    const existing = byId.get(summary.id);
+    if (!existing || compareMatchSavedAt(summary, existing) >= 0) byId.set(summary.id, summary);
   }
 
   for (const match of input.matches) {
@@ -362,12 +377,12 @@ export function mergeMatchSummaryState(input: {
     }
 
     const existing = byId.get(summary.id);
-    if (!existing || summary.saved_at >= existing.saved_at) {
+    if (!existing || compareMatchSavedAt(summary, existing) >= 0) {
       byId.set(summary.id, summary);
     }
   }
 
-  const sorted = Array.from(byId.values()).sort((left, right) => right.saved_at.localeCompare(left.saved_at));
+  const sorted = Array.from(byId.values()).sort((left, right) => compareMatchSavedAt(right, left));
   const summaryMatches = sorted.slice(0, SUMMARY_MATCHES_LIMIT);
   const evicted = sorted.slice(SUMMARY_MATCHES_LIMIT);
 
@@ -388,6 +403,16 @@ export function emptyMatchHistory(): MatchHistory {
 export function matchHistoryHasMatch(history: MatchHistory, matchId: string): boolean {
   return history.replayMatches.some((match) => match.id === matchId)
     || history.summaryMatches.some((match) => match.id === matchId);
+}
+
+/** Older incoming records may already be in the aggregate, which has no match IDs. */
+export function matchHistoryCanImport(
+  history: MatchHistory,
+  match: Pick<SavedMatchV2, "id" | "saved_at">,
+): boolean {
+  const { archived_before: cutoff, archived_count: count } = history.archivedStats;
+  return count === 0 || !Number.isFinite(Date.parse(cutoff ?? ""))
+    || savedMatchIsAfterReset(match, cutoff) || matchHistoryHasMatch(history, match.id);
 }
 
 export function matchHistoryIsEmpty(history: MatchHistory): boolean {

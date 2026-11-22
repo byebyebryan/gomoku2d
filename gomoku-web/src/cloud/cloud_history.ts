@@ -13,9 +13,7 @@ import {
   cloudProfileFromDocument,
   cloudProfileSnapshotUpdate,
   cloudSettingsFromProfileSettings,
-  mergeCloudMatchSummaryState,
-  mergeCloudReplayMatches,
-  type CloudMatchHistory,
+  projectCloudMatchHistory,
   type CloudProfile,
   type CloudProfileDocument,
 } from "./cloud_profile";
@@ -94,20 +92,13 @@ export async function saveCloudHistorySnapshot(
   options: CloudHistoryOptions = {},
 ): Promise<CloudSaveHistoryResult> {
   const backend = resolveCloudHistoryBackend(user, options, input.cloudProfile);
-  const replayMatches = mergeCloudReplayMatches(user, input.matches, input.cloudProfile.resetAt);
-  const summaryState = mergeCloudMatchSummaryState({
-    archivedStats: input.cloudProfile.matchHistory.archivedStats,
+  const { matchHistory } = projectCloudMatchHistory({
+    existing: input.cloudProfile.matchHistory,
     matches: input.matches,
-    replayMatches,
+    replaceReplays: true,
     resetAt: input.cloudProfile.resetAt,
-    summaries: input.cloudProfile.matchHistory.summaryMatches,
     user,
   });
-  const matchHistory: CloudMatchHistory = {
-    archivedStats: summaryState.archivedStats,
-    replayMatches,
-    summaryMatches: summaryState.summaryMatches,
-  };
   const patch = cloudProfileSnapshotUpdate({
     displayName: input.displayName,
     matchHistory,
@@ -119,7 +110,7 @@ export async function saveCloudHistorySnapshot(
   const syncedAt = new Date().toISOString();
 
   return {
-    matches: replayMatches,
+    matches: matchHistory.replayMatches,
     profile: {
       ...input.cloudProfile,
       displayName: input.displayName,

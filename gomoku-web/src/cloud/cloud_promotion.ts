@@ -1,6 +1,5 @@
 import type { Firestore } from "firebase/firestore";
 
-import { savedMatchIsAfterReset } from "../match/saved_match";
 import {
   DEFAULT_LOCAL_DISPLAY_NAME,
   type LocalProfileMatchHistory,
@@ -14,12 +13,9 @@ import {
   cloudProfileSnapshotUpdate,
   cloudSettingsDocument,
   cloudSettingsFromProfileSettings,
-  cloudMatchHistoryIsEmpty,
   existingCloudProfileUpdate,
   emptyCloudMatchHistory,
-  mergeCloudArchivedMatchStats,
-  mergeCloudMatchSummaryState,
-  mergeCloudReplayMatches,
+  projectCloudMatchHistory,
   type CloudMatchHistory,
   type CloudProfileSettings,
   type CloudProfile,
@@ -128,39 +124,26 @@ export function promotionInputKey(input: LocalProfilePromotionInput): string {
 
 /** One history projection for sync preflight, writes and the local cache patch. */
 export function planPromotedMatchHistory(input: Pick<LocalProfilePromotionInput,
-  "cloudMatchHistory" | "localMatchHistory" | "resetAt" | "user"
+  "cloudMatchHistory" | "localMatchHistory" | "resetAt" | "sourceProfile" | "user"
 >): { matchHistory: CloudMatchHistory; localMatchesSynced: number } {
-  const localReplayMatches = input.localMatchHistory.replayMatches;
-  const eligibleHistory = localReplayMatches.filter((match) => savedMatchIsAfterReset(match, input.resetAt));
-  const cloudMatchHistory = input.cloudMatchHistory ?? emptyCloudMatchHistory();
-  const replayMatches = mergeCloudReplayMatches(
-    input.user,
-    [...cloudMatchHistory.replayMatches, ...eligibleHistory],
-    input.resetAt,
-  );
-  const archivedStats = cloudMatchHistoryIsEmpty(cloudMatchHistory)
-    ? mergeCloudArchivedMatchStats(cloudMatchHistory.archivedStats, input.localMatchHistory.archivedStats)
-    : cloudMatchHistory.archivedStats;
-  const summaryState = mergeCloudMatchSummaryState({
-    archivedStats,
-    matches: [...cloudMatchHistory.replayMatches, ...eligibleHistory],
-    replayMatches,
-    resetAt: input.resetAt,
-    summaries: [
-      ...cloudMatchHistory.summaryMatches,
-      ...input.localMatchHistory.summaryMatches.map((summary) => ({
-        ...summary,
-        trust: "client_uploaded" as const,
-      })),
-    ],
+  const existing = input.sourceProfile?.matchHistory ?? input.cloudMatchHistory;
+  const resetAt = input.sourceProfile ? input.sourceProfile.resetAt : input.resetAt;
+  const localArchive = input.localMatchHistory.archivedStats;
+  const initialArchive = localArchive.archived_count > 0 && !localArchive.archived_before && input.sourceProfile?.updatedAt
+    ? { ...localArchive, archived_before: input.sourceProfile.updatedAt }
+    : localArchive;
+  const { matchHistory, importedReplayCount } = projectCloudMatchHistory({
+    existing: existing ?? emptyCloudMatchHistory(),
+    initialArchive: existing ? initialArchive : undefined,
+    matches: input.localMatchHistory.replayMatches,
+    resetAt,
+    summaries: input.localMatchHistory.summaryMatches.map((summary) => ({
+      ...summary,
+      trust: "client_uploaded",
+    })),
     user: input.user,
   });
-  const matchHistory: CloudMatchHistory = {
-    archivedStats: summaryState.archivedStats,
-    replayMatches,
-    summaryMatches: summaryState.summaryMatches,
-  };
-  return { matchHistory, localMatchesSynced: eligibleHistory.length };
+  return { matchHistory, localMatchesSynced: importedReplayCount };
 }
 
 export async function promoteLocalProfileToCloud(
@@ -169,7 +152,7 @@ export async function promoteLocalProfileToCloud(
 ): Promise<LocalProfilePromotionResult> {
   const backend = resolvePromotionBackend(input.user, options, input.sourceProfile);
   const { matchHistory, localMatchesSynced } = planPromotedMatchHistory(input);
-  const cloudMatchHistory = input.cloudMatchHistory ?? emptyCloudMatchHistory();
+  const cloudMatchHistory = input.sourceProfile?.matchHistory ?? input.cloudMatchHistory ?? emptyCloudMatchHistory();
   const profileUpdate = cloudProfilePromotionUpdate(input);
   const displayName = typeof profileUpdate?.display_name === "string"
     ? profileUpdate.display_name

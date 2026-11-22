@@ -2,6 +2,7 @@ import { createJSONStorage, persist, type StateStorage } from "zustand/middlewar
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 import { isSavedMatchV2, savedMatchIsAfterReset, type SavedMatchV2 } from "../match/saved_match";
+import { matchHistoryCanImport } from "../match/match_history";
 import { localProfileStore } from "../profile/local_profile_store";
 import { bestEffortStorage } from "../profile/best_effort_storage";
 import type { ProfileSettings } from "../profile/profile_settings";
@@ -243,6 +244,7 @@ function cacheWithProfileSnapshot(
     Object.entries(cache.pendingMatches).filter(([matchId, match]) => (
       savedMatchIsAfterReset(match, historyResetAt)
         && !cloudMatchHistoryHasMatch(profile.matchHistory, matchId)
+        && matchHistoryCanImport(profile.matchHistory, match)
     )),
   );
   const pendingMatchIds = new Set(Object.keys(pendingMatches));
@@ -447,6 +449,8 @@ export function createCloudHistoryStore(
             }));
             return;
           }
+          const profile = cloudProfileForUser(user.uid);
+          if (profile && !matchHistoryCanImport(profile.matchHistory, match)) return;
 
           set((state) => ({
             errorMessage: null,

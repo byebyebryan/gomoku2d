@@ -11,9 +11,13 @@ import {
 } from "../profile/local_profile_store";
 
 import type { CloudAuthUser } from "./auth_store";
-import { cloudProfilePromotionUpdate, promoteLocalProfileToCloud, type CloudPromotionBackend } from "./cloud_promotion";
+import { cloudProfilePromotionUpdate, planPromotedMatchHistory, promoteLocalProfileToCloud, type CloudPromotionBackend } from "./cloud_promotion";
+import { createCloudSavedMatch } from "./cloud_match";
 import {
+  CLOUD_REPLAY_MATCHES_LIMIT,
+  CLOUD_SUMMARY_MATCHES_LIMIT,
   cloudMatchSummaryForMatch,
+  cloudProfileFromDocument,
   emptyCloudArchivedMatchStats,
   emptyCloudMatchHistory,
   mergeCloudMatchSummaryState,
@@ -169,6 +173,145 @@ describe("cloudProfilePromotionUpdate", () => {
     });
 
     expect(update).not.toHaveProperty("display_name");
+  });
+});
+
+describe("promoted history retention", () => {
+  const savedAt = match.saved_at;
+  const oneArchivedGame = {
+    ...emptyCloudArchivedMatchStats(),
+    archived_before: savedAt,
+    archived_count: 1,
+    totals: { matches: 1, wins: 0, losses: 0, draws: 1, moves: 1 },
+  };
+
+  it("converges at both retention limits and admits newly arrived games after the archive cutoff once", async () => {
+    const later = (index: number) => createCloudSavedMatch(user, {
+      ...match,
+      id: `retained-${index}`,
+      saved_at: new Date(Date.parse(savedAt) + index * 1000).toISOString(),
+    });
+    const summaryMatches = Array.from({ length: CLOUD_SUMMARY_MATCHES_LIMIT }, (_, index) =>
+      cloudMatchSummaryForMatch({ profileUid: user.uid }, later(index + 5)));
+    const replayMatches = Array.from({ length: CLOUD_REPLAY_MATCHES_LIMIT }, (_, index) =>
+      later(index + CLOUD_SUMMARY_MATCHES_LIMIT + 5));
+    const localMatchHistory = {
+      ...emptyLocalMatchHistory(),
+      replayMatches: [
+        match,
+        { ...match, id: "late-replay", saved_at: "2026-04-27T01:02:06.000Z" },
+      ],
+      summaryMatches: [cloudMatchSummaryForMatch({ localProfileId: localProfile.id }, {
+        ...match, id: "late-summary", saved_at: "2026-04-27T02:02:05+01:00",
+      })],
+    };
+    const first = planPromotedMatchHistory({
+      cloudMatchHistory: { archivedStats: emptyCloudArchivedMatchStats(), replayMatches, summaryMatches },
+      localMatchHistory,
+      user,
+    }).matchHistory;
+    expect(first.archivedStats).toMatchObject({ archived_count: 3, archived_before: "2026-04-27T01:02:06.000Z" });
+    expect(first.replayMatches).toHaveLength(CLOUD_REPLAY_MATCHES_LIMIT);
+    expect(first.summaryMatches).toHaveLength(CLOUD_SUMMARY_MATCHES_LIMIT);
+
+    const second = planPromotedMatchHistory({ cloudMatchHistory: first, localMatchHistory, user });
+    expect(second.matchHistory).toEqual(first);
+    expect(second.localMatchesSynced).toBe(0);
+    const { backend } = createBackend();
+    await promoteLocalProfileToCloud({
+      cloudMatchHistory: first,
+      cloudDisplayName: user.displayName,
+      cloudSettings: settings,
+      localMatchHistory,
+      localProfile: { ...localProfile, displayName: "Guest" },
+      settings,
+      user,
+    }, { backend });
+    expect(backend.updateProfile).not.toHaveBeenCalled();
+
+    const nextDeviceHistory = {
+      ...localMatchHistory,
+      replayMatches: [...localMatchHistory.replayMatches, {
+        ...match, id: "newly-arrived", saved_at: "2026-04-27T01:02:07.000Z",
+      }],
+    };
+    const third = planPromotedMatchHistory({
+      cloudMatchHistory: first,
+      localMatchHistory: nextDeviceHistory,
+      user,
+    }).matchHistory;
+    expect(third.archivedStats.archived_count).toBe(4);
+    expect(planPromotedMatchHistory({
+      cloudMatchHistory: third,
+      localMatchHistory: nextDeviceHistory,
+      user,
+    }).matchHistory).toEqual(third);
+  });
+
+  it("imports a complete initial device snapshot including retained rows at its archive timestamp", () => {
+    const localMatchHistory = {
+      archivedStats: oneArchivedGame,
+      replayMatches: [match],
+      summaryMatches: [cloudMatchSummaryForMatch({ localProfileId: localProfile.id }, { ...match, id: "summary" })],
+    };
+    const first = planPromotedMatchHistory({ cloudMatchHistory: emptyCloudMatchHistory(), localMatchHistory, user }).matchHistory;
+    expect(first.archivedStats).toEqual(oneArchivedGame);
+    expect(first.replayMatches.map((row) => row.id)).toEqual([match.id]);
+    expect(first.summaryMatches.map((row) => row.id)).toEqual(["summary"]);
+    expect(planPromotedMatchHistory({ cloudMatchHistory: first, localMatchHistory, user }).matchHistory).toEqual(first);
+
+    const secondDevice = {
+      ...localMatchHistory,
+      replayMatches: [
+        { ...match, id: "other-game-at-cutoff" },
+        { ...match, status: "black_won" as const },
+        { ...match, id: "summary", status: "black_won" as const },
+      ],
+      summaryMatches: [{ ...localMatchHistory.summaryMatches[0]!, outcome: "win" as const }],
+    };
+    expect(planPromotedMatchHistory({ cloudMatchHistory: first, localMatchHistory: secondDevice, user }).matchHistory).toEqual(first);
+  });
+
+  it("uses the loaded reset barrier and excludes opaque local aggregates and pre-reset rows", () => {
+    const sourceProfile = {
+      ...cloudProfileFromDocument(user, settings, null),
+      resetAt: "2026-04-27T01:02:03.000Z",
+    };
+    const localMatchHistory = {
+      archivedStats: { ...oneArchivedGame, archived_before: "2026-04-28T01:02:03.000Z" },
+      replayMatches: [{ ...match, saved_at: "2026-04-27T02:02:03+01:00" }],
+      summaryMatches: [cloudMatchSummaryForMatch({ localProfileId: localProfile.id }, { ...match, id: "pre-reset-summary" })],
+    };
+    expect(planPromotedMatchHistory({ sourceProfile, localMatchHistory, user }).matchHistory).toEqual(emptyCloudMatchHistory());
+  });
+
+  it("uses a legacy archive's cloud snapshot date when there is no usable archive cutoff", () => {
+    const sourceProfile = cloudProfileFromDocument(user, settings, {
+      updated_at: new Date("2026-04-27T01:02:04.000Z"),
+      match_history: {
+        archived_stats: { ...oneArchivedGame, archived_before: null },
+        replay_matches: [],
+        summary_matches: [],
+      },
+    });
+    expect(sourceProfile.matchHistory.archivedStats.archived_before).toBe("2026-04-27T01:02:04.000Z");
+    const { matchHistory } = planPromotedMatchHistory({
+      sourceProfile,
+      localMatchHistory: localMatchHistory([match, { ...match, id: "new", saved_at: "2026-04-27T01:02:05.000Z" }]),
+      user,
+    });
+    expect(matchHistory.replayMatches.map((row) => row.id)).toEqual(["new"]);
+    expect(matchHistory.archivedStats.archived_count).toBe(1);
+  });
+
+  it("drops an existing cloud aggregate whose most recent archived game is at the reset instant", () => {
+    const resetAt = new Date(savedAt);
+    const sourceProfile = cloudProfileFromDocument(user, settings, {
+      updated_at: resetAt,
+      reset_at: resetAt,
+      match_history: { archived_stats: oneArchivedGame, replay_matches: [], summary_matches: [] },
+    });
+    expect(sourceProfile.matchHistory).toEqual(emptyCloudMatchHistory());
   });
 });
 

@@ -383,6 +383,31 @@ describe("createCloudHistoryStore", () => {
     expect(store.getState().users["uid-1"]?.pendingMatches).toEqual({});
   });
 
+  it("drops a queued record at the newly loaded archive cutoff without a snapshot write", async () => {
+    let profile: CloudProfile | null = null;
+    const saveHistory = vi.fn();
+    const refreshCloudProfileForUser = vi.fn();
+    const store = createCloudHistoryStore({
+      cloudProfileForUser: () => profile,
+      refreshCloudProfileForUser,
+      saveHistory,
+      storage: createMemoryStorage(),
+    });
+    await store.getState().syncMatchForUser(user, match);
+    expect(store.getState().users[user.uid]?.pendingMatches[match.id]).toEqual(match);
+
+    const matchHistory = emptyCloudMatchHistory();
+    matchHistory.archivedStats.archived_count = 1;
+    matchHistory.archivedStats.archived_before = match.saved_at;
+    profile = cloudProfile({ matchHistory });
+    await store.getState().syncPendingForUser(user);
+    await store.getState().syncMatchForUser(user, match);
+
+    expect(store.getState().users[user.uid]?.pendingMatches).toEqual({});
+    expect(saveHistory).not.toHaveBeenCalled();
+    expect(refreshCloudProfileForUser).not.toHaveBeenCalled();
+  });
+
   it("clears only the local per-user cache after profile reset", async () => {
     const store = createCloudHistoryStore({
       loadHistory: vi.fn().mockResolvedValue([cloudMatch]),

@@ -135,6 +135,14 @@ Rules:
 - `match_history.archived_stats` stores aggregate stats for records that age out
   of the summary tier. These three tiers are mutually exclusive retention
   stages for the same match history.
+- Once a game is archived, the aggregate no longer has its ID. When merging
+  into a cloud history with an archive cutoff, keep the replay and summary IDs
+  already recorded by the account. An unmatched incoming game must be newer
+  than the cutoff. This includes records whose timestamps use different
+  offsets for the same instant. Older unmatched games stay on their device
+  and are excluded from the combined totals. This keeps repeated sync from
+  counting an archived game again. An older late arrival can still count once
+  if it is newer than the cutoff.
 - Writer behavior: during local profile promotion, the browser only sends
   `display_name` if the local profile has a custom name and the loaded cloud name
   still matches the provider default. If the local display name is still the
@@ -404,8 +412,19 @@ Cloud profile sync turns canonical local replay records into embedded
 `cloud_saved` records by changing `source`, `trust`, and the human player's
 `profile_uid`. Local summary records are imported as `client_uploaded` summary
 records when possible. Local archived stats are imported only when the target
-cloud history is empty, because archived counters no longer carry per-match IDs
-and cannot be safely deduped against an existing cloud archive.
+cloud history is known to be empty and has no reset barrier. At that first
+import, retained replay and summary records from the same device can share
+the date of its latest archived game. If a reset barrier is present, individual
+records must be newer than the barrier before promotion. The device's aggregate
+cannot establish that for every game it contains.
+
+Stored cloud aggregates use a canonical UTC cutoff. After reset, a cloud
+aggregate whose latest archived game is at or before the barrier, or has no
+usable timestamp, contributes no counts. For a legacy cloud aggregate without
+a usable cutoff or reset barrier, the last cloud snapshot timestamp provides
+a conservative cutoff. An aggregate cannot identify prior duplicate counts
+or split a mixture of pre-reset and post-reset records, so these changes do
+not attempt a historical recount.
 
 ## Replay library and continuations (v0.6)
 

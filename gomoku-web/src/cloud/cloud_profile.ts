@@ -41,7 +41,12 @@ import {
   emptyMatchHistory as emptyCloudMatchHistory,
   type MatchSummaryV1 as CloudMatchSummaryV1,
   type MatchHistory as CloudMatchHistory,
+  type ArchivedMatchStatsV1,
   archivedStatsFromDocument,
+  emptyArchivedMatchStats,
+  compareMatchSavedAt,
+  matchHistoryCanImport,
+  matchHistoryIsEmpty,
   mergeMatchSummaryState,
 } from "../match/match_history";
 
@@ -371,7 +376,7 @@ function isSettingsDocument(value: unknown): boolean {
 }
 
 function sortReplayMatches(matches: SavedMatchV2[]): SavedMatchV2[] {
-  return [...matches].sort((left, right) => right.saved_at.localeCompare(left.saved_at));
+  return [...matches].sort((left, right) => compareMatchSavedAt(right, left));
 }
 
 function replayMatchesFromDocument(
@@ -404,7 +409,7 @@ export function mergeCloudSavedMatches(
       : match;
     const existing = byId.get(cloudMatch.id);
 
-    if (!existing || cloudMatch.saved_at >= existing.saved_at) {
+    if (!existing || compareMatchSavedAt(cloudMatch, existing) >= 0) {
       byId.set(cloudMatch.id, cloudMatch);
     }
   }
@@ -433,7 +438,7 @@ function summaryMatchesFromDocument(
     : [];
 
   return summaries
-    .sort((left, right) => right.saved_at.localeCompare(left.saved_at))
+    .sort((left, right) => compareMatchSavedAt(right, left))
     .slice(0, CLOUD_SUMMARY_MATCHES_LIMIT);
 }
 
@@ -451,6 +456,64 @@ export function mergeCloudMatchSummaryState(input: Parameters<typeof mergeMatchS
   });
 }
 
+function archiveAfterReset(archive: ArchivedMatchStatsV1, resetAt: string | null | undefined): ArchivedMatchStatsV1 {
+  if (!resetAt) return archive;
+  const archivedAt = archive.archived_before;
+  return archivedAt && Date.parse(archivedAt) > Date.parse(resetAt) ? archive : emptyArchivedMatchStats();
+}
+
+/** Apply one retention policy to both promotion and direct history sync. */
+export function projectCloudMatchHistory(input: {
+  existing: CloudMatchHistory;
+  matches: SavedMatchV2[];
+  summaries?: CloudMatchSummaryV1[];
+  initialArchive?: ArchivedMatchStatsV1;
+  replaceReplays?: boolean;
+  resetAt?: string | null;
+  user: Pick<CloudAuthUser, "uid">;
+}): { matchHistory: CloudMatchHistory; importedReplayCount: number } {
+  const { existing, resetAt, user } = input;
+  const archivedStats = archiveAfterReset(existing.archivedStats, resetAt);
+  const retained = { ...existing, archivedStats };
+  const baseSummaries = new Map(retained.summaryMatches.map((summary) => [summary.id, summary]));
+  const incoming = input.matches.filter((match) => {
+    const summary = baseSummaries.get(match.id);
+    return savedMatchIsAfterReset(match, resetAt) && matchHistoryCanImport(retained, match)
+      && (!summary || compareMatchSavedAt(match, summary) > 0);
+  });
+  const baseReplays = new Map(retained.replayMatches.map((match) => [match.id, match]));
+  const incomingReplays = incoming.map((match) => {
+    const base = baseReplays.get(match.id);
+    return base && compareMatchSavedAt(match, base) <= 0 ? base : match;
+  });
+  const matches = input.replaceReplays ? incomingReplays : [...retained.replayMatches, ...incomingReplays];
+  const replayMatches = mergeCloudReplayMatches(user, matches, resetAt);
+  const incomingSummaries = (input.summaries ?? [])
+    .filter((summary) => matchHistoryCanImport(retained, summary))
+    .map((summary) => {
+      const base = baseSummaries.get(summary.id);
+      return base && compareMatchSavedAt(summary, base) <= 0 ? base : summary;
+    });
+  // An initial import adopts all three tiers of the same local snapshot.
+  const initialArchive = !resetAt && matchHistoryIsEmpty(existing) ? input.initialArchive : undefined;
+  const summaryState = mergeCloudMatchSummaryState({
+    archivedStats: initialArchive ?? archivedStats,
+    matches,
+    replayMatches,
+    resetAt,
+    summaries: [...retained.summaryMatches, ...incomingSummaries],
+    user,
+  });
+  return {
+    matchHistory: {
+      archivedStats: summaryState.archivedStats,
+      replayMatches,
+      summaryMatches: summaryState.summaryMatches,
+    },
+    importedReplayCount: incoming.length,
+  };
+}
+
 function matchHistoryFromDocument(
   document: CloudProfileDocument | null | undefined,
   resetAt: string | null,
@@ -459,7 +522,11 @@ function matchHistoryFromDocument(
   const candidate = document?.match_history as { archived_stats?: unknown } | null;
   const replayMatches = replayMatchesFromDocument(document?.match_history, resetAt);
   const summaryMatches = summaryMatchesFromDocument(document?.match_history, resetAt);
-  const archivedStats = archivedStatsFromDocument(candidate?.archived_stats);
+  const archive = archiveAfterReset(archivedStatsFromDocument(candidate?.archived_stats), resetAt);
+  // Legacy aggregates without a date are opaque as of the last cloud write.
+  const archivedStats = archive.archived_count > 0 && !archive.archived_before
+    ? { ...archive, archived_before: timestampIsoOrNull(document?.updated_at) }
+    : archive;
   const summaryState = mergeCloudMatchSummaryState({
     archivedStats,
     matches: [],
