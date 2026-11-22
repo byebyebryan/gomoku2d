@@ -29,13 +29,10 @@ fi
 VERSION="$1"
 TAG="v${VERSION}"
 
-if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
-  echo "Invalid version (want MAJOR.MINOR.PATCH[-prerelease]): $VERSION" >&2
-  exit 1
-fi
-
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
+
+node scripts/validate_release_ref.mjs "$TAG"
 
 if [ "$(git branch --show-current)" != "main" ]; then
   echo "Must run on main (current: $(git branch --show-current))" >&2
@@ -47,22 +44,47 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-if git remote get-url origin >/dev/null 2>&1; then
-  git fetch --quiet origin main
-  LOCAL_MAIN="$(git rev-parse main)"
-  ORIGIN_MAIN="$(git rev-parse origin/main)"
-  MERGE_BASE="$(git merge-base main origin/main)"
+LOCAL_MAIN="$(git rev-parse --verify HEAD)"
 
-  if [ "$LOCAL_MAIN" != "$ORIGIN_MAIN" ]; then
-    if [ "$LOCAL_MAIN" = "$MERGE_BASE" ]; then
-      echo "Local main is behind origin/main; pull before releasing." >&2
-    elif [ "$ORIGIN_MAIN" = "$MERGE_BASE" ]; then
-      echo "Local main has unpushed commits; push main before releasing." >&2
-    else
-      echo "Local main and origin/main have diverged; resolve before releasing." >&2
-    fi
-    exit 1
+if ! git remote get-url origin >/dev/null 2>&1; then
+  echo "Remote origin is required; configure origin before releasing." >&2
+  exit 1
+fi
+
+if FETCH_OUTPUT="$(git fetch --quiet --no-tags origin +refs/heads/main:refs/remotes/origin/main 2>&1)"; then
+  :
+else
+  FETCH_STATUS=$?
+  echo "Failed to fetch origin/main (git fetch exited ${FETCH_STATUS}); cannot verify the release source." >&2
+  if [ -n "$FETCH_OUTPUT" ]; then
+    echo "$FETCH_OUTPUT" >&2
   fi
+  exit 1
+fi
+
+if ! git show-ref --verify --quiet refs/remotes/origin/main; then
+  echo "Remote origin did not provide origin/main; cannot verify the release source." >&2
+  exit 1
+fi
+
+ORIGIN_MAIN="$(git rev-parse --verify refs/remotes/origin/main)"
+FETCHED_MAIN="$(git rev-parse --verify FETCH_HEAD)"
+
+if [ "$FETCHED_MAIN" != "$ORIGIN_MAIN" ]; then
+  echo "Fetched origin/main does not match refs/remotes/origin/main; cannot verify the release source." >&2
+  exit 1
+fi
+
+if [ "$LOCAL_MAIN" != "$ORIGIN_MAIN" ]; then
+  MERGE_BASE="$(git merge-base "$LOCAL_MAIN" "$ORIGIN_MAIN" || true)"
+  if [ "$LOCAL_MAIN" = "$MERGE_BASE" ]; then
+    echo "Local main is behind origin/main; pull before releasing." >&2
+  elif [ "$ORIGIN_MAIN" = "$MERGE_BASE" ]; then
+    echo "Local main has unpushed commits; push main before releasing." >&2
+  else
+    echo "Local main and origin/main have diverged; resolve before releasing." >&2
+  fi
+  exit 1
 fi
 
 if git rev-parse --verify --quiet "refs/tags/${TAG}" >/dev/null; then
@@ -70,47 +92,18 @@ if git rev-parse --verify --quiet "refs/tags/${TAG}" >/dev/null; then
   exit 1
 fi
 
-if git remote get-url origin >/dev/null 2>&1 &&
-  git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+if REMOTE_TAG_OUTPUT="$(git ls-remote --exit-code --tags origin "refs/tags/${TAG}" 2>&1)"; then
   echo "Tag ${TAG} already exists on origin" >&2
   exit 1
-fi
-
-PKG_VERSION="$(node -p "require('./gomoku-web/package.json').version")"
-if [ "$PKG_VERSION" != "$VERSION" ]; then
-  echo "gomoku-web/package.json version (${PKG_VERSION}) does not match ${TAG}" >&2
-  echo "Run scripts/set-web-version.sh ${VERSION} before finalizing." >&2
-  exit 1
-fi
-
-if ! grep -q "^## \\[${VERSION}\\] - " CHANGELOG.md; then
-  echo "CHANGELOG.md has no [${VERSION}] release section" >&2
-  echo "Move the prepared notes from [Unreleased] to [${VERSION}] before finalizing." >&2
-  exit 1
-fi
-
-UNRELEASED_BODY="$(
-  awk '
-    /^## \[Unreleased\]$/ {flag=1; next}
-    /^## \[/ {flag=0}
-    flag {print}
-  ' CHANGELOG.md | grep -v '^[[:space:]]*$' | head -n 1 || true
-)"
-
-if [ -n "$UNRELEASED_BODY" ]; then
-  echo "CHANGELOG.md [Unreleased] is not empty." >&2
-  echo "Release notes for ${TAG} should live under [${VERSION}] before tagging." >&2
-  exit 1
-fi
-
-if ! grep -q "^\\[Unreleased\\]: .*${TAG}\\.\\.\\.HEAD$" CHANGELOG.md; then
-  echo "CHANGELOG.md [Unreleased] compare link does not point from ${TAG} to HEAD" >&2
-  exit 1
-fi
-
-if ! grep -q "^\\[${VERSION}\\]: .*\\.\\.\\.${TAG}$" CHANGELOG.md; then
-  echo "CHANGELOG.md [${VERSION}] compare link is missing or malformed" >&2
-  exit 1
+else
+  REMOTE_TAG_STATUS=$?
+  if [ "$REMOTE_TAG_STATUS" -ne 2 ]; then
+    echo "Failed to query origin for tag ${TAG} (git ls-remote exited ${REMOTE_TAG_STATUS}); cannot confirm that the tag is absent." >&2
+    if [ -n "$REMOTE_TAG_OUTPUT" ]; then
+      echo "$REMOTE_TAG_OUTPUT" >&2
+    fi
+    exit 1
+  fi
 fi
 
 if [ "$CHECK_ONLY" -eq 1 ]; then
@@ -118,8 +111,8 @@ if [ "$CHECK_ONLY" -eq 1 ]; then
   exit 0
 fi
 
-echo "Working tree clean; tagging current HEAD as ${TAG}"
-git tag -a "${TAG}" -m "${TAG}"
+echo "Working tree clean; tagging verified commit ${LOCAL_MAIN} as ${TAG}"
+git tag -a "${TAG}" "${LOCAL_MAIN}" -m "${TAG}"
 
 cat <<EOF
 

@@ -17,16 +17,12 @@ jobs:
         with:
           node-version-file: .nvmrc
 
-      - name: Verify package.json version matches tag
+      - name: Validate release tag, package version, and changelog
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          PKG_VERSION=$(node -p "require('./gomoku-web/package.json').version")
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::package.json version ($PKG_VERSION) does not match tag (${GITHUB_REF_NAME})"
-            echo "::error::Did you run scripts/set-web-version.sh ${TAG_VERSION} before finalizing the release?"
-            exit 1
-          fi
+          node scripts/validate_release_ref.mjs "$RELEASE_TAG"
 
       - name: Build release title and body
         id: meta
@@ -35,9 +31,11 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
 
-          # Extract section between "## [VERSION]" and next "## [" header
+          # Extract the literal version section (prerelease/build metadata may
+          # contain regular-expression characters such as dots and plus signs).
           BODY=$(awk -v v="$VERSION" '
-            $0 ~ "^## \\["v"\\]" {flag=1; next}
+            index($0, "## [" v "] - ") == 1 {flag=1; next}
+            /^\[[^]]+\]: / && flag {exit}
             /^## \[/ {flag=0}
             flag {print}
           ' CHANGELOG.md)
@@ -65,6 +63,13 @@ jobs:
             TITLE="${TAG}"
           fi
 
+          VERSION_CORE="${VERSION%%+*}"
+          if [[ "$VERSION_CORE" == *-* ]]; then
+            PRERELEASE=true
+          else
+            PRERELEASE=false
+          fi
+
           {
             echo "**Play this build:** https://gomoku2d.byebyebryan.com/"
             echo
@@ -80,6 +85,7 @@ jobs:
             echo "title<<__EOF__"
             printf '%s\n' "$TITLE"
             echo "__EOF__"
+            echo "prerelease=${PRERELEASE}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
@@ -89,4 +95,4 @@ jobs:
           name: ${{ steps.meta.outputs.title }}
           body_path: release_body.md
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ steps.meta.outputs.prerelease }}

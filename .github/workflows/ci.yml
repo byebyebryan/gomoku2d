@@ -57,6 +57,9 @@ jobs:
           cache: npm
           cache-dependency-path: gomoku-web/package-lock.json
 
+      - name: Release validation fixtures
+        run: node --test scripts/tests/release_validation.test.mjs
+
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 

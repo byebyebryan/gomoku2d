@@ -43,6 +43,10 @@ run `npm run playtest`. Do not terminate an unrelated preview to claim its port.
    scripts/set-web-version.sh x.y.z
    ```
 
+   For a version with SemVer build metadata, set the full `version` in
+   `gomoku-web/package.json` and in both the top level and `packages[""]`
+   entries in `gomoku-web/package-lock.json`. `npm version` drops build metadata.
+
 3. Run relevant checks from [`testing.md`](testing.md).
    Production npm and Rust dependency audits are required for every release.
 4. Refresh curated reports only when bot/analyzer/report behavior or source data
@@ -96,10 +100,15 @@ git show "v${VERSION}"
 git push origin "v${VERSION}"
 ```
 
-The release script validates clean, pushed main and version/changelog/tag state,
-then creates an annotated local tag. It does not push. The explicit tag push
-dispatches GitHub Release, Pages deploy, and Firestore rules deploy workflows.
-Wait for all three workflows to succeed before treating publication as complete.
+The release script validates clean, pushed `main` and version/changelog/tag
+state, then creates an annotated local tag. It does not push. The explicit tag
+push dispatches GitHub Release, Pages deploy, and Firestore rules deploy
+workflows. Each tag-triggered workflow runs the shared package/tag/changelog
+validator before creating the Release, building the Pages artifact, or
+authenticating to Google Cloud. The version is matched exactly, including any
+SemVer prerelease identifier or build metadata. The exact-SHA CI check above
+remains a pre-tag operator gate. Wait for all three workflows to succeed before
+treating publication as complete.
 After deployment, verify the public URL with the applicable browser journeys and
 read-only checks; record any remaining manual acceptance deferrals.
 
@@ -112,8 +121,10 @@ against the public origin. Record an account-level cloud round trip separately
 when performed; otherwise retain its explicit acceptance deferral.
 
 For a web regression, dispatch the Pages workflow at the previously accepted
-tag/ref and verify its deployment/SHA and public behavior. Do not move release
-tags. For a rules regression, restore the recorded previous Firestore ruleset
+tag/ref and verify its deployment/SHA and public behavior. The manual Pages
+workflow remains available; a selected tag ref runs the shared release
+validator before its build. Do not move release tags. For a rules regression,
+restore the recorded previous Firestore ruleset
 release pointer through the authenticated operational path and read it back;
 redeploying main is not a rollback. Coordinate web/rules compatibility before
 choosing either. No rollback or deployment is performed by the reconciliation
@@ -126,8 +137,17 @@ copied `index.html` entries.
 ### Rules-first sequence for sharing releases
 
 1. Freeze the reviewed `main` SHA and require exact-SHA CI success.
-2. Before tagging, manually deploy Firestore rules from that frozen SHA. Read
-   back the release pointer and source, and retain the previous ruleset ID.
+2. Before tagging, manually deploy Firestore rules from that frozen SHA. Use
+   the full reviewed commit SHA as `expected_sha`:
+
+   ```sh
+   SOURCE_SHA="REPLACE_WITH_FULL_REVIEWED_COMMIT_SHA"
+   gh workflow run deploy-firestore.yml --ref main -f expected_sha="$SOURCE_SHA"
+   ```
+
+   The workflow checks that the full SHA matches its dispatched and checked-out
+   source before Google Cloud authentication. Read back the release pointer
+   and source, and retain the previous ruleset ID.
 3. Apply only the reviewed single-field index changes through the scoped
    operation. The rules workflow does not deploy index configurations. Read
    back every field and verify unrelated settings remain unchanged.

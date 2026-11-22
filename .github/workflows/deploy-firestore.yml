@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       expected_sha:
-        description: Exact source commit for a rules-first release
-        required: false
+        description: Full 40-character source commit SHA for a rules-first release
+        required: true
         type: string
 
 permissions:
@@ -25,13 +25,30 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Verify requested source
-        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Validate release tag, package version, and changelog
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/validate_release_ref.mjs "$RELEASE_TAG"
+
+      - name: Validate exact manual source SHA
+        if: github.event_name == 'workflow_dispatch'
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: |
-          if [[ "$GITHUB_SHA" != "$EXPECTED_SHA" ]]; then
-            echo "::error::The dispatched source has moved. Review main before deploying rules."
+          set -euo pipefail
+          if [[ ! "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::expected_sha must be a full 40-character commit SHA"
+            exit 1
+          fi
+
+          CHECKED_OUT_SHA=$(git rev-parse HEAD)
+          if [[ "$GITHUB_SHA" != "$EXPECTED_SHA" || "$CHECKED_OUT_SHA" != "$EXPECTED_SHA" ]]; then
+            echo "::error::The dispatched source does not match expected_sha. Review main before deploying rules."
             exit 1
           fi
 
