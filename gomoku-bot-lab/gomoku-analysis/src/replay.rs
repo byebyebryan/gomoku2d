@@ -408,7 +408,8 @@ fn finalize_replay_analysis(
     }
 }
 
-pub(crate) fn replay_prefix_boards(replay: &Replay) -> Result<Vec<Board>, AnalysisError> {
+/// Rebuilds every replay prefix in order, with the starting position at index 0 and ply `n` at index `n`.
+pub fn replay_prefix_boards(replay: &Replay) -> Result<Vec<Board>, AnalysisError> {
     let mut board = Board::new(replay.rules.clone());
     let mut boards = vec![board.clone()];
     for (idx, replay_move) in replay.moves.iter().enumerate() {

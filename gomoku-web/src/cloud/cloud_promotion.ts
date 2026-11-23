@@ -6,6 +6,7 @@ import {
   type LocalProfileIdentity,
   type LocalProfileSettings,
 } from "../profile/local_profile_store";
+import { profileSettingsEqual } from "../profile/profile_settings";
 
 import type { CloudAuthUser } from "./auth_store";
 import {
@@ -67,7 +68,7 @@ export function cloudProfilePromotionUpdate(input: LocalProfilePromotionInput): 
   const customLocal = customLocalDisplayName(input.localProfile);
   const nextSettings = cloudSettingsFromProfileSettings(input.settings);
 
-  if (!input.cloudSettings || JSON.stringify(input.cloudSettings) !== JSON.stringify(nextSettings)) {
+  if (!input.cloudSettings || !profileSettingsEqual(input.cloudSettings, nextSettings)) {
     update.settings = cloudSettingsDocument(nextSettings);
   }
 

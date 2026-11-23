@@ -53,6 +53,53 @@ pub struct MatchResult {
     pub end_reason: MatchEndReason,
 }
 
+fn match_end_reason(
+    result: &GameResult,
+    move_num: usize,
+    limits: MatchLimits,
+    start: &Instant,
+    check_time_limit: bool,
+) -> Option<MatchEndReason> {
+    if *result != GameResult::Ongoing {
+        return Some(MatchEndReason::Natural);
+    }
+    if limits
+        .max_moves
+        .is_some_and(|max_moves| move_num >= max_moves)
+    {
+        return Some(MatchEndReason::MaxMoves);
+    }
+    if check_time_limit
+        && limits
+            .max_game_ms
+            .is_some_and(|max_ms| start.elapsed().as_millis() >= max_ms as u128)
+    {
+        return Some(MatchEndReason::MaxGameTime);
+    }
+    None
+}
+
+fn finalize_match(
+    mut replay: Replay,
+    board_result: GameResult,
+    timing: MatchTiming,
+    end_reason: MatchEndReason,
+    start: &Instant,
+) -> MatchResult {
+    let result = if end_reason == MatchEndReason::Natural {
+        board_result
+    } else {
+        GameResult::Draw
+    };
+    replay.finish(&result, Some(start.elapsed().as_millis() as u64));
+    MatchResult {
+        result,
+        replay,
+        timing,
+        end_reason,
+    }
+}
+
 /// Runs a single match between two bots, calling `on_move` after each move
 /// with the move number (1-based), the player who moved, and the move itself.
 pub fn run_match(
@@ -110,28 +157,8 @@ pub fn run_match_with_setup(
         move_num += 1;
         on_move(move_num, player, mv, 0);
 
-        if result != GameResult::Ongoing {
-            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
-            return MatchResult {
-                result,
-                replay,
-                timing,
-                end_reason: MatchEndReason::Natural,
-            };
-        }
-
-        if limits
-            .max_moves
-            .is_some_and(|max_moves| move_num >= max_moves)
-        {
-            let result = GameResult::Draw;
-            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
-            return MatchResult {
-                result,
-                replay,
-                timing,
-                end_reason: MatchEndReason::MaxMoves,
-            };
+        if let Some(end_reason) = match_end_reason(&result, move_num, limits, &start, false) {
+            return finalize_match(replay, result, timing, end_reason, &start);
         }
     }
 
@@ -165,42 +192,8 @@ pub fn run_match_with_setup(
         move_num += 1;
         on_move(move_num, player, mv, move_time_ms as u64);
 
-        if result != GameResult::Ongoing {
-            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
-            return MatchResult {
-                result,
-                replay,
-                timing,
-                end_reason: MatchEndReason::Natural,
-            };
-        }
-
-        if limits
-            .max_moves
-            .is_some_and(|max_moves| move_num >= max_moves)
-        {
-            let result = GameResult::Draw;
-            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
-            return MatchResult {
-                result,
-                replay,
-                timing,
-                end_reason: MatchEndReason::MaxMoves,
-            };
-        }
-
-        if limits
-            .max_game_ms
-            .is_some_and(|max_ms| start.elapsed().as_millis() >= max_ms as u128)
-        {
-            let result = GameResult::Draw;
-            replay.finish(&result, Some(start.elapsed().as_millis() as u64));
-            return MatchResult {
-                result,
-                replay,
-                timing,
-                end_reason: MatchEndReason::MaxGameTime,
-            };
+        if let Some(end_reason) = match_end_reason(&result, move_num, limits, &start, true) {
+            return finalize_match(replay, result, timing, end_reason, &start);
         }
     }
 }
@@ -388,5 +381,106 @@ mod tests {
         assert_eq!(mr.result, GameResult::Draw);
         assert_eq!(mr.end_reason, MatchEndReason::MaxMoves);
         assert_eq!(mr.replay.moves.len(), 1);
+    }
+
+    #[test]
+    fn natural_opening_win_precedes_move_cap() {
+        let config = RuleConfig {
+            variant: Variant::Freestyle,
+            ..Default::default()
+        };
+        let mut black = RandomBot::new();
+        let mut white = RandomBot::new();
+        let opening_moves = ["H8", "A1", "I8", "A2", "J8", "A3", "K8", "B1", "L8"]
+            .into_iter()
+            .map(|notation| Move::from_notation(notation).expect("opening move should parse"))
+            .collect();
+        let mut callbacks = Vec::new();
+
+        let mr = run_match_with_setup(
+            &mut black,
+            &mut white,
+            config,
+            MatchLimits {
+                max_moves: Some(9),
+                max_game_ms: Some(0),
+            },
+            MatchSetup { opening_moves },
+            |move_num, player, mv, move_time_ms| {
+                callbacks.push((move_num, player, mv, move_time_ms));
+            },
+        );
+
+        assert_eq!(mr.result, GameResult::Winner(Color::Black));
+        assert_eq!(mr.end_reason, MatchEndReason::Natural);
+        assert_eq!(mr.replay.moves.len(), 9);
+        assert_eq!(callbacks.len(), 9);
+        assert_eq!(
+            callbacks[8],
+            (9, Color::Black, Move::from_notation("L8").unwrap(), 0)
+        );
+        assert_eq!(mr.timing, MatchTiming::default());
+    }
+
+    #[test]
+    fn zero_move_limit_records_first_bot_move_before_ending() {
+        let config = RuleConfig {
+            variant: Variant::Freestyle,
+            ..Default::default()
+        };
+        let mut black = RandomBot::new();
+        let mut white = RandomBot::new();
+        let mut callbacks = Vec::new();
+
+        let mr = run_match_with_limits(
+            &mut black,
+            &mut white,
+            config,
+            MatchLimits {
+                max_moves: Some(0),
+                max_game_ms: Some(0),
+            },
+            |move_num, player, mv, move_time_ms| {
+                callbacks.push((move_num, player, mv, move_time_ms));
+            },
+        );
+
+        assert_eq!(mr.result, GameResult::Draw);
+        assert_eq!(mr.end_reason, MatchEndReason::MaxMoves);
+        assert_eq!(mr.replay.moves.len(), 1);
+        assert_eq!(callbacks.len(), 1);
+        assert_eq!(callbacks[0].0, 1);
+        assert_eq!(mr.timing.black_moves + mr.timing.white_moves, 1);
+    }
+
+    #[test]
+    fn zero_game_time_limit_is_checked_after_first_bot_move() {
+        let config = RuleConfig {
+            variant: Variant::Freestyle,
+            ..Default::default()
+        };
+        let mut black = RandomBot::new();
+        let mut white = RandomBot::new();
+        let mut callbacks = Vec::new();
+
+        let mr = run_match_with_limits(
+            &mut black,
+            &mut white,
+            config,
+            MatchLimits {
+                max_moves: None,
+                max_game_ms: Some(0),
+            },
+            |move_num, player, mv, move_time_ms| {
+                callbacks.push((move_num, player, mv, move_time_ms));
+            },
+        );
+
+        assert_eq!(mr.result, GameResult::Draw);
+        assert_eq!(mr.end_reason, MatchEndReason::MaxGameTime);
+        assert_eq!(mr.replay.moves.len(), 1);
+        assert_eq!(callbacks.len(), 1);
+        assert_eq!(callbacks[0].0, 1);
+        assert_eq!(mr.timing.black_moves + mr.timing.white_moves, 1);
     }
 }

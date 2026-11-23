@@ -16,6 +16,12 @@ import {
   type ReplayLibraryOwner,
   type ReplayLibraryState,
 } from "./replay_library_store";
+import {
+  mergeReplayEntries,
+  matchingFingerprintHasSamePayloadAndKind,
+  replayEntriesHaveSameMetadata,
+  validateReplayMergeChoices,
+} from "./replay_library_merge";
 import type { StoreApi } from "zustand/vanilla";
 
 export interface LibrarySyncUser {
@@ -60,10 +66,6 @@ const EMPTY_ENTRIES: PrivateLibraryEntry[] = [];
 function signedInUid() {
   const auth = cloudAuthStore.getState();
   return auth.status === "signed_in" ? auth.user?.uid ?? null : null;
-}
-
-function sameMetadata(left: PrivateLibraryEntry, right: PrivateLibraryEntry): boolean {
-  return JSON.stringify(left.metadata) === JSON.stringify(right.metadata);
 }
 
 function sameEntries(left: PrivateLibraryEntry[], right: PrivateLibraryEntry[]): boolean {
@@ -346,7 +348,7 @@ export function createReplayLibrarySync(options: {
     const localByFingerprint = new Map(localEntries.map((entry) => [entry.fingerprint, entry]));
     for (const [fingerprint, localEntry] of localByFingerprint) {
       const cloudEntry = cloudByFingerprint.get(fingerprint);
-      if (cloudEntry && (cloudEntry.payload !== localEntry.payload || cloudEntry.kind !== localEntry.kind)) {
+      if (cloudEntry && !matchingFingerprintHasSamePayloadAndKind(cloudEntry, localEntry)) {
         throw new Error("A matching replay identity has different game data or kind. Keep both inputs and resolve that identity before merging.");
       }
     }
@@ -359,7 +361,7 @@ export function createReplayLibrarySync(options: {
       if (!cloudEntry) return { fingerprint, status: "local-only", local: localEntry, cloud: null };
       return {
         fingerprint,
-        status: sameMetadata(localEntry, cloudEntry) ? "same" : "metadata-conflict",
+        status: replayEntriesHaveSameMetadata(localEntry, cloudEntry) ? "same" : "metadata-conflict",
         local: localEntry,
         cloud: cloudEntry,
       };
@@ -393,19 +395,8 @@ export function createReplayLibrarySync(options: {
       || !sameEntries(current.incoming?.entries ?? [], plan.cloudEntries)) {
       throw new Error("The local or cloud library changed after review. Reload and review again.");
     }
-    for (const row of plan.rows) {
-      if (row.status === "metadata-conflict" && choices[row.fingerprint] !== "local" && choices[row.fingerprint] !== "cloud") {
-        throw new Error("Choose one complete set of private details for every differing replay.");
-      }
-      if (row.status !== "metadata-conflict" && Object.prototype.hasOwnProperty.call(choices, row.fingerprint)) {
-        throw new Error("Metadata choices are only valid for replay rows with differing details.");
-      }
-    }
-    for (const fingerprint of Object.keys(choices)) {
-      if (!plan.rows.some((row) => row.fingerprint === fingerprint && row.status === "metadata-conflict")) {
-        throw new Error("A metadata choice refers to a replay outside this review.");
-      }
-    }
+    validateReplayMergeChoices(plan.rows, choices, ["local", "cloud"],
+      "Metadata choices are only valid for replay rows with differing details.");
 
     const localByFingerprint = new Map(plan.localEntries.map((entry) => [entry.fingerprint, entry]));
     const cloudByFingerprint = new Map(plan.cloudEntries.map((entry) => [entry.fingerprint, entry]));
@@ -414,11 +405,8 @@ export function createReplayLibrarySync(options: {
       if (row.status === "cloud-only") return row.cloud!;
       const localEntry = localByFingerprint.get(row.fingerprint)!;
       const cloudEntry = cloudByFingerprint.get(row.fingerprint)!;
-      const selected = row.status === "metadata-conflict" && choices[row.fingerprint] === "cloud" ? cloudEntry : localEntry;
-      return {
-        ...selected,
-        saved_at: localEntry.saved_at < cloudEntry.saved_at ? localEntry.saved_at : cloudEntry.saved_at,
-      };
+      const preferred = row.status === "metadata-conflict" && choices[row.fingerprint] === "cloud" ? "right" : "left";
+      return mergeReplayEntries(localEntry, cloudEntry, preferred);
     });
     return commitReviewedEntries(uid, validateReplayLibraryEntries(merged), plan, authUser);
   }

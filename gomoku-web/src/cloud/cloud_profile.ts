@@ -21,6 +21,7 @@ import {
 import {
   DEFAULT_RULE_OPENING,
   createDefaultProfileSettings,
+  profileSettingsEqual,
   sanitizeBoardHints,
   sanitizeGameConfig,
   sanitizeProfileSettings,
@@ -336,10 +337,6 @@ export function cloudSettingsDocument(settings: CloudProfileSettings) {
     },
     touch_control: settings.touchControl,
   };
-}
-
-function settingsEqual(left: CloudProfileSettings, right: CloudProfileSettings): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function isSettingsDocument(value: unknown): boolean {
@@ -766,7 +763,7 @@ export function cloudProfileNeedsSnapshotSync(input: {
   const settings = cloudSettingsFromProfileSettings(input.settings);
 
   return input.cloudDisplayName !== input.displayName
-    || !settingsEqual(input.cloudSettings, settings)
+    || !profileSettingsEqual(input.cloudSettings, settings)
     || !matchHistoryEqual(input.cloudMatchHistory, input.matchHistory);
 }
 

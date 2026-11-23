@@ -325,43 +325,6 @@ function snapshotState(
   };
 }
 
-function snapshotFinishedMatch(
-  board: WasmBoard,
-  moves: MatchMove[],
-  players: [MatchPlayer, MatchPlayer],
-  botConfig: BotConfig,
-  variant: GameVariant,
-  undoFloor: number,
-): FinishedLocalMatch | null {
-  const snapshot = snapshotState(
-    board,
-    moves,
-    false,
-    players,
-    variant,
-    variant,
-    botConfig,
-    botConfig,
-    [0, 0],
-    0,
-    undoFloor,
-  );
-  if (snapshot.status === "playing") {
-    return null;
-  }
-
-  return {
-    mode: "bot",
-    moves,
-    players,
-    botConfig,
-    status: snapshot.status,
-    undoFloor,
-    variant,
-    winningCells: snapshot.winningCells,
-  };
-}
-
 export function createLocalMatchStore(
   options: LocalMatchStoreOptions = {},
 ): StoreApi<LocalMatchState> {
@@ -414,8 +377,8 @@ export function createLocalMatchStore(
       );
     };
 
-    const updateState = (nextMoves: MatchMove[], pendingBotMove: boolean): void => {
-      set(snapshotState(
+    const updateState = (nextMoves: MatchMove[], pendingBotMove: boolean) => {
+      const snapshot = snapshotState(
         board,
         nextMoves,
         pendingBotMove,
@@ -427,7 +390,9 @@ export function createLocalMatchStore(
         playerClockMs,
         turnStartedAtMs,
         undoFloor,
-      ));
+      );
+      set(snapshot);
+      return snapshot;
     };
 
     const currentPlayerSlot = (): 0 | 1 => ((board.currentPlayer() as 1 | 2) - 1) as 0 | 1;
@@ -481,19 +446,20 @@ export function createLocalMatchStore(
         },
       ];
 
-      updateState(nextMoves, false);
+      const snapshot = updateState(nextMoves, false);
       set({ botError: null });
 
-      const finishedMatch = snapshotFinishedMatch(
-        board,
-        nextMoves,
-        players,
-        currentBotConfig,
-        currentVariant,
-        undoFloor,
-      );
-      if (finishedMatch) {
-        options.onMatchFinished?.(finishedMatch);
+      if (snapshot.status !== "playing") {
+        options.onMatchFinished?.({
+          mode: "bot",
+          moves: snapshot.moves,
+          players: snapshot.players,
+          botConfig: snapshot.currentBotConfig,
+          status: snapshot.status,
+          undoFloor: snapshot.undoFloor,
+          variant: snapshot.currentVariant,
+          winningCells: snapshot.winningCells.map((cell) => ({ ...cell })),
+        });
       }
 
       return true;

@@ -61,7 +61,7 @@ pub(super) fn proof_details_from_analysis(
         return None;
     }
 
-    let boards = replay_prefix_boards(replay).ok()?;
+    let boards = gomoku_analysis::replay_prefix_boards(replay).ok()?;
     let scan_start = boards.len().checked_sub(analysis.proof_summary.len())?;
     let final_forced_start_ply = analysis.final_forced_interval.start_ply;
     let previous_prefix_ply = final_forced_start_ply.checked_sub(1);
@@ -743,21 +743,6 @@ pub(super) fn extend_unique_moves(target: &mut Vec<Move>, moves: impl IntoIterat
             target.push(mv);
         }
     }
-}
-
-pub(super) fn replay_prefix_boards(replay: &Replay) -> Result<Vec<Board>, String> {
-    let mut board = Board::new(replay.rules.clone());
-    let mut boards = vec![board.clone()];
-    for (idx, replay_move) in replay.moves.iter().enumerate() {
-        let ply = idx + 1;
-        let mv = Move::from_notation(&replay_move.mv)
-            .map_err(|message| format!("invalid replay move at ply {ply}: {message}"))?;
-        board
-            .apply_move(mv)
-            .map_err(|err| format!("invalid replay move at ply {ply}: {err}"))?;
-        boards.push(board.clone());
-    }
-    Ok(boards)
 }
 
 pub(super) fn board_snapshot(label: &str, ply: usize, board: &Board) -> AnalysisBoardSnapshot {

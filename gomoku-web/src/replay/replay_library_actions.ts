@@ -8,6 +8,12 @@ import {
   type ReplayLibraryOwner,
   type ReplayLibraryKind,
 } from "./replay_library_store";
+import {
+  mergeReplayEntries,
+  matchingFingerprintHasSamePayloadAndKind,
+  replayEntriesHaveSameMetadata,
+  validateReplayMergeChoices,
+} from "./replay_library_merge";
 import { replayLibrarySync } from "./replay_library_sync";
 
 export interface ReplayLibraryImportRow {
@@ -55,10 +61,6 @@ function authUserFor(uid: string): CloudAuthUser | null {
 }
 
 const importAuthUsers = new WeakMap<ReplayLibraryImportPlan, CloudAuthUser | null>();
-
-function sameMetadata(left: PrivateLibraryEntry, right: PrivateLibraryEntry): boolean {
-  return JSON.stringify(left.metadata) === JSON.stringify(right.metadata);
-}
 
 function cloneEntries(entries: PrivateLibraryEntry[]): PrivateLibraryEntry[] {
   return entries.map((entry) => ({ ...entry, metadata: { ...entry.metadata } }));
@@ -152,12 +154,12 @@ export async function planGuestReplayImport(uid: string): Promise<ReplayLibraryI
   const accountByFingerprint = new Map(accountEntries.map((entry) => [entry.fingerprint, entry]));
   const rows: ReplayLibraryImportRow[] = guestEntries.map((guest) => {
     const account = accountByFingerprint.get(guest.fingerprint) ?? null;
-    if (account && (account.payload !== guest.payload || account.kind !== guest.kind)) {
+    if (account && !matchingFingerprintHasSamePayloadAndKind(account, guest)) {
       throw new Error("A matching replay identity has different game data or kind. Both copies remain available; resolve that identity before importing.");
     }
     return {
       fingerprint: guest.fingerprint,
-      status: !account ? "guest-only" : sameMetadata(account, guest) ? "already-present" : "metadata-conflict",
+      status: !account ? "guest-only" : replayEntriesHaveSameMetadata(account, guest) ? "already-present" : "metadata-conflict",
       account,
       guest,
     };
@@ -198,19 +200,8 @@ export async function commitGuestReplayImport(
     throw new Error("Account or guest copies changed after review. Review the import again.");
   }
   compareCloudRevision(uid, plan.cloudRevision);
-  for (const row of plan.rows) {
-    if (row.status === "metadata-conflict" && choices[row.fingerprint] !== "account" && choices[row.fingerprint] !== "guest") {
-      throw new Error("Choose one complete set of private details for every differing replay.");
-    }
-    if (row.status !== "metadata-conflict" && Object.prototype.hasOwnProperty.call(choices, row.fingerprint)) {
-      throw new Error("Metadata choices are only valid for guest replays with differing details.");
-    }
-  }
-  for (const fingerprint of Object.keys(choices)) {
-    if (!plan.rows.some((row) => row.fingerprint === fingerprint && row.status === "metadata-conflict")) {
-      throw new Error("A metadata choice refers to a replay outside this review.");
-    }
-  }
+  validateReplayMergeChoices(plan.rows, choices, ["account", "guest"],
+    "Metadata choices are only valid for guest replays with differing details.");
 
   const accountByFingerprint = new Map(plan.accountEntries.map((entry) => [entry.fingerprint, entry]));
   const merged = [...plan.accountEntries];
@@ -219,12 +210,9 @@ export async function commitGuestReplayImport(
     if (!account) {
       merged.push(row.guest);
     } else {
-      const chosen = row.status === "metadata-conflict" && choices[row.fingerprint] === "guest" ? row.guest : account;
       const index = merged.findIndex((entry) => entry.fingerprint === row.fingerprint);
-      merged[index] = {
-        ...chosen,
-        saved_at: account.saved_at < row.guest.saved_at ? account.saved_at : row.guest.saved_at,
-      };
+      const preferred = row.status === "metadata-conflict" && choices[row.fingerprint] === "guest" ? "right" : "left";
+      merged[index] = mergeReplayEntries(account, row.guest, preferred);
     }
   }
   const validated = validateReplayLibraryEntries(merged);

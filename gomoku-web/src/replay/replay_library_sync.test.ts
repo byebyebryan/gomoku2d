@@ -143,13 +143,16 @@ describe("explicit account replay-library sync", () => {
     const firstCloud = { title: "First cloud", note: "Reviewed cloud note", opening_ply: 2 };
     const newestCloud = { title: "Newest cloud", note: "New cloud note", opening_ply: 4 };
     const entry = (await cloud.load())!.entries[0]!;
+    const localState = local.getState();
+    await localState.replaceEntries(owner, [{ ...entry, saved_at: "2026-10-20T00:00:00.000Z" }], () => true,
+      { expectedRevision: localState.revision });
     await local.getState().updateReplayMetadata(owner, fingerprint, device);
-    await cloud.save("alice", [{ ...entry, metadata: firstCloud }], 1);
+    await cloud.save("alice", [{ ...entry, saved_at: "2026-10-21T00:00:00.000Z", metadata: firstCloud }], 1);
     await sync.reload("alice");
     const plan = await sync.planReplayLibraryMerge("alice");
     const originalBytes = storage.getItem(REPLAY_LIBRARY_STORAGE_KEY);
     const originalLocal = local.getState().owners[owner];
-    await cloud.save("alice", [{ ...entry, metadata: newestCloud }], 2);
+    await cloud.save("alice", [{ ...entry, saved_at: "2026-10-22T00:00:00.000Z", metadata: newestCloud }], 2);
 
     await expect(sync.commitReplayLibraryMerge(plan, { [fingerprint]: "cloud" })).rejects.toThrow(SharingConflictError);
     expect(storage.getItem(REPLAY_LIBRARY_STORAGE_KEY)).toBe(originalBytes);
@@ -162,7 +165,10 @@ describe("explicit account replay-library sync", () => {
       status: "metadata-conflict", local: { metadata: device }, cloud: { metadata: newestCloud },
     });
     await sync.commitReplayLibraryMerge(fresh, { [fingerprint]: "local" });
-    expect((await cloud.load())?.entries[0]?.metadata).toEqual(device);
+    expect((await cloud.load())?.entries[0]).toMatchObject({
+      saved_at: "2026-10-20T00:00:00.000Z",
+      metadata: device,
+    });
     expect(local.getState().owners[owner]).toMatchObject({ baseRevision: 4, dirty: false });
   });
 

@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { BOARD_SIZE } from "../board/constants";
 import { DEFAULT_BOT_CONFIG } from "../core/bot_config";
 import { applyWasmMove, createWasmBoard } from "../core/wasm_bridge";
 import { noOpBotRunner } from "../test/local_match_fixtures";
@@ -49,7 +50,9 @@ describe("createLocalMatchStore completion", () => {
       variant: "renju",
     });
 
+    const readCell = vi.spyOn(board, "cell");
     expect(store.getState().placeHumanMove(7, 11)).toBe(true);
+    expect(readCell).toHaveBeenCalledTimes(BOARD_SIZE * BOARD_SIZE);
 
     expect(finishedMatches).toEqual([
       expect.objectContaining({
@@ -74,6 +77,9 @@ describe("createLocalMatchStore completion", () => {
     );
 
     const won = store.getState();
+    expect(finishedMatches[0].winningCells).toEqual(won.winningCells);
+    expect(finishedMatches[0].winningCells).not.toBe(won.winningCells);
+    expect(finishedMatches[0].winningCells[0]).not.toBe(won.winningCells[0]);
     expect(canUndoLocalMatch(won)).toBe(false);
     expect(won.undoLastTurn()).toBe(false);
     expect(store.getState()).toBe(won);

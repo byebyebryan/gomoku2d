@@ -132,9 +132,9 @@ mod replay_analysis_tests {
 
 #[cfg(test)]
 mod wasm_board_tests {
-    use super::{parse_bot_spec, parse_variant_value, WasmBoard};
+    use super::{game_result_string, parse_bot_spec, parse_variant_value, WasmBoard};
     use gomoku_bot::{MoveOrdering, StaticEvaluation};
-    use gomoku_core::Move;
+    use gomoku_core::{Color, GameResult, Move};
     use serde_json::Value;
 
     #[test]
@@ -163,6 +163,20 @@ mod wasm_board_tests {
 
         assert_eq!(result["result"], "ongoing");
         assert!(result["error"].is_null());
+    }
+
+    #[test]
+    fn game_result_string_covers_all_results() {
+        assert_eq!(game_result_string(&GameResult::Ongoing), "ongoing");
+        assert_eq!(
+            game_result_string(&GameResult::Winner(Color::Black)),
+            "black"
+        );
+        assert_eq!(
+            game_result_string(&GameResult::Winner(Color::White)),
+            "white"
+        );
+        assert_eq!(game_result_string(&GameResult::Draw), "draw");
     }
 
     #[test]
@@ -260,6 +274,15 @@ fn parse_variant_value(variant: &str) -> Result<Variant, String> {
         "freestyle" => Ok(Variant::Freestyle),
         "renju" => Ok(Variant::Renju),
         _ => Err(format!("unknown game variant: {variant}")),
+    }
+}
+
+fn game_result_string(result: &GameResult) -> &'static str {
+    match result {
+        GameResult::Ongoing => "ongoing",
+        GameResult::Winner(Color::Black) => "black",
+        GameResult::Winner(Color::White) => "white",
+        GameResult::Draw => "draw",
     }
 }
 
@@ -499,14 +522,8 @@ impl WasmBoard {
                 if self.threat_view.apply_move(mv).is_err() {
                     self.threat_view = RollingThreatFrontier::from_board(&self.inner);
                 }
-                let result_str = match game_result {
-                    GameResult::Ongoing => "ongoing",
-                    GameResult::Winner(Color::Black) => "black",
-                    GameResult::Winner(Color::White) => "white",
-                    GameResult::Draw => "draw",
-                };
                 ApplyMoveResult {
-                    result: Some(result_str),
+                    result: Some(game_result_string(&game_result)),
                     error: None,
                 }
             }
@@ -540,12 +557,7 @@ impl WasmBoard {
     }
 
     pub fn result(&self) -> String {
-        match self.inner.result {
-            GameResult::Ongoing => "ongoing".into(),
-            GameResult::Winner(Color::Black) => "black".into(),
-            GameResult::Winner(Color::White) => "white".into(),
-            GameResult::Draw => "draw".into(),
-        }
+        game_result_string(&self.inner.result).into()
     }
 
     #[wasm_bindgen(js_name = "moveCount")]

@@ -167,4 +167,45 @@ describe("replay library actions during cloud clearing", () => {
     expect(replayLibraryStore.getState().owners).toBe(originalDevice);
     expect(localStorage.getItem(REPLAY_LIBRARY_STORAGE_KEY)).toBe(originalBytes);
   });
+
+  it("imports one complete detail set and keeps the earliest save time", async () => {
+    const uid = "reviewed-guest-import";
+    const owner = `user:${uid}` as const;
+    signIn(uid);
+    sharingMocks.loadPrivateLibrary.mockResolvedValueOnce(null);
+    sharingMocks.savePrivateLibrary.mockImplementation(async (targetUid, entries, revision) => ({
+      uid: targetUid,
+      revision: (revision ?? 0) + 1,
+      entries: entries as PrivateLibrarySnapshot["entries"],
+      updatedAt: "2026-10-21T00:00:00.000Z",
+    }));
+    await replayLibrarySync.reload(uid);
+    const fingerprint = await replayLibraryStore.getState().saveReplay("guest", winningReplay(), "saved");
+    await replayLibraryStore.getState().saveReplay(owner, winningReplay(), "saved");
+    await replayLibraryStore.getState().updateReplayMetadata("guest", fingerprint, {
+      title: "Guest title", note: "Guest note", opening_ply: 0,
+    });
+    await replayLibraryStore.getState().updateReplayMetadata(owner, fingerprint, {
+      title: "Account title", note: "Account note", opening_ply: 2,
+    });
+
+    const setSavedAt = async (targetOwner: "guest" | typeof owner, savedAt: string) => {
+      const state = replayLibraryStore.getState();
+      const current = state.owners[targetOwner]!.entries;
+      await state.replaceEntries(targetOwner, current.map((entry) => ({ ...entry, saved_at: savedAt })), () => true,
+        { expectedRevision: state.revision });
+    };
+    await setSavedAt("guest", "2026-10-20T00:00:00.000Z");
+    await setSavedAt(owner, "2026-10-22T00:00:00.000Z");
+
+    const plan = await planGuestReplayImport(uid);
+    expect(plan.rows[0]?.status).toBe("metadata-conflict");
+    await commitGuestReplayImport(plan, { [fingerprint]: "guest" });
+
+    expect(replayLibraryStore.getState().owners[owner]?.entries[0]).toMatchObject({
+      fingerprint,
+      saved_at: "2026-10-20T00:00:00.000Z",
+      metadata: { title: "Guest title", note: "Guest note", opening_ply: 0 },
+    });
+  });
 });

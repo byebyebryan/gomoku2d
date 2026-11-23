@@ -1,5 +1,3 @@
-import { Fragment, type CSSProperties } from "react";
-
 import {
   type AnalysisEntry,
   type ProofFrame,
@@ -7,6 +5,7 @@ import {
 
 import styles from "../ReportRoute.module.css";
 import proofStyles from "./AnalysisProofFrames.module.css";
+import { ReportBoardShell } from "./ReportBoardShell";
 
 const DEFAULT_REPORT_BOARD_SIZE = 15;
 const ANALYSIS_BOARD_CELL_SIZE = 20;
@@ -192,89 +191,49 @@ function ProofBoard({
     }
   }
   const extraActualCell = extraActual ? notationToCell(extraActual.notation, boardSize) : null;
-  const gridSpan = Math.max(0, boardSize - 1) * ANALYSIS_BOARD_CELL_SIZE + 1;
-  const columnLabels = Array.from({ length: boardSize }, (_, col) =>
-    String.fromCharCode("A".charCodeAt(0) + col),
-  );
-  const style = {
-    "--proof-cell-size": `${ANALYSIS_BOARD_CELL_SIZE}px`,
-    "--proof-label-size": `${ANALYSIS_BOARD_LABEL_SIZE}px`,
-    "--proof-grid-span": `${gridSpan}px`,
-    gridTemplateColumns: `var(--proof-label-size) repeat(${boardSize}, var(--proof-cell-size)) var(--proof-label-size)`,
-    gridTemplateRows: `var(--proof-label-size) repeat(${boardSize}, var(--proof-cell-size)) var(--proof-label-size)`,
-  } as CSSProperties;
-
   return (
-    <div
-      aria-label={`Analysis board before ply ${frame.ply}: ${frame.side_to_move} to move, ${proofStatusLabel(frame.status)}`}
-      className={styles.proofBoard}
-      data-proof-board="analysis"
-      role="img"
-      style={style}
-    >
-      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-      {columnLabels.map((label) => (
-        <div className={`${styles.proofCoordinate} ${styles.proofCoordinateTop}`} key={`col-${label}`}>
-          {label}
-        </div>
-      ))}
-      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-      {Array.from({ length: boardSize }, (_, row) => (
-        <Fragment key={`row-${row}`}>
-          <div className={`${styles.proofCoordinate} ${styles.proofCoordinateLeft}`}>{row + 1}</div>
-          {Array.from({ length: boardSize }, (_, col) => {
-            const cell = row * boardSize + col;
-            const stone = stones.get(cell);
-            const marker = markersByCell.get(cell);
-            const label = markerLabel(marker);
-            const markerActualSide = marker?.kinds.includes("actual")
-              ? sideFromValue(frame.side_to_move)
-              : null;
-            const actualSide = markerActualSide ?? (extraActualCell === cell ? extraActual?.side ?? null : null);
-            const showSolidStone = stone && actualSide == null;
-            return (
-              <div
-                className={proofCellClassName(marker)}
-                key={cell}
-                data-move={cellNotation(cell, boardSize)}
-              >
-                {showSolidStone ? (
-                  <span
-                    className={`${styles.proofStone} ${
-                      stone === "black" ? styles.proofStoneBlack : styles.proofStoneWhite
-                    }`}
-                    role="img"
-                    aria-label={`${stone} stone at ${cellNotation(cell, boardSize)}`}
-                  />
-                ) : null}
-                {actualSide ? (
-                  <span
-                    className={`${proofStyles.proofActualStone} ${
-                      actualSide === "Black"
-                        ? proofStyles.proofActualStoneBlack
-                        : proofStyles.proofActualStoneWhite
-                    }`}
-                    role="img"
-                    aria-label={`${actualSide} actual move at ${cellNotation(cell, boardSize)}`}
-                  />
-                ) : null}
-                {label ? <span className={proofStyles.proofMarker}>{label}</span> : null}
-              </div>
-            );
-          })}
-          <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-        </Fragment>
-      ))}
-      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-      {Array.from({ length: boardSize }, (_, col) => (
-        <div
-          className={`${styles.proofCoordinate} ${styles.proofCorner}`}
-          key={`bottom-${col}`}
-          aria-hidden="true"
-        />
-      ))}
-      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-    </div>
+    <ReportBoardShell
+      ariaLabel={`Analysis board before ply ${frame.ply}: ${frame.side_to_move} to move, ${proofStatusLabel(frame.status)}`}
+      boardKind="analysis"
+      boardSize={boardSize}
+      cellSize={ANALYSIS_BOARD_CELL_SIZE}
+      labelSize={ANALYSIS_BOARD_LABEL_SIZE}
+      renderCell={(cell, notation) => {
+        const stone = stones.get(cell);
+        const marker = markersByCell.get(cell);
+        const label = markerLabel(marker);
+        const markerActualSide = marker?.kinds.includes("actual")
+          ? sideFromValue(frame.side_to_move)
+          : null;
+        const actualSide = markerActualSide ?? (extraActualCell === cell ? extraActual?.side ?? null : null);
+        const showSolidStone = stone && actualSide == null;
+        return (
+          <div className={proofCellClassName(marker)} key={cell} data-move={notation}>
+            {showSolidStone ? (
+              <span
+                className={`${styles.proofStone} ${
+                  stone === "black" ? styles.proofStoneBlack : styles.proofStoneWhite
+                }`}
+                role="img"
+                aria-label={`${stone} stone at ${notation}`}
+              />
+            ) : null}
+            {actualSide ? (
+              <span
+                className={`${proofStyles.proofActualStone} ${
+                  actualSide === "Black"
+                    ? proofStyles.proofActualStoneBlack
+                    : proofStyles.proofActualStoneWhite
+                }`}
+                role="img"
+                aria-label={`${actualSide} actual move at ${notation}`}
+              />
+            ) : null}
+            {label ? <span className={proofStyles.proofMarker}>{label}</span> : null}
+          </div>
+        );
+      }}
+    />
   );
 }
 
@@ -305,12 +264,6 @@ function notationToCell(notation: string, boardSize: number): number | null {
     return null;
   }
   return row * boardSize + col;
-}
-
-function cellNotation(cell: number, boardSize: number): string {
-  const row = Math.floor(cell / boardSize);
-  const col = cell % boardSize;
-  return `${String.fromCharCode("A".charCodeAt(0) + col)}${row + 1}`;
 }
 
 function proofCellClassName(marker: ProofMarker | undefined): string {

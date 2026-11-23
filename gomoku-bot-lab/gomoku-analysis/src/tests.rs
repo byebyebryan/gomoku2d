@@ -9,7 +9,7 @@ use super::{
     analyze_alternate_defender_reply_options, analyze_defender_reply_options, analyze_replay,
     corridor_analysis_model, defender_reply_candidates, failure_analysis,
     replay_frame_annotations_for_analysis, replay_frame_annotations_from_proof,
-    replay_prefix_boards, AnalysisOptions, DefenderReplyOutcome, DefenderReplyRole,
+    replay_prefix_boards, AnalysisError, AnalysisOptions, DefenderReplyOutcome, DefenderReplyRole,
     FailureAnalysisInput, FailureMode, ForcedInterval, LethalOnset, LethalOnsetComponentTier,
     LethalOnsetMechanism, LethalOnsetShape, MissedCandidateOutcome, ProofLimitCause, ProofResult,
     ProofStatus, ReplayAnalysisSession, ReplayFrameAnnotations, ReplayFrameHighlightRole,
@@ -1580,4 +1580,51 @@ fn renju_forbidden_defense_remains_model_visible() {
     .expect("ongoing renju replay should analyze");
 
     assert_eq!(analysis.root_cause, RootCause::Unclear);
+}
+
+#[test]
+fn replay_prefix_boards_keep_starting_position_and_ply_order() {
+    let replay = replay_from_moves(Variant::Freestyle, &["H8", "A1", "I8"]);
+
+    let boards = replay_prefix_boards(&replay).expect("replay prefix boards should build");
+
+    assert_eq!(boards.len(), 4);
+    assert_eq!(boards[0].cell(7, 7), None);
+    assert_eq!(boards[1].cell(7, 7), Some(Color::Black));
+    assert_eq!(boards[2].cell(0, 0), Some(Color::White));
+    assert_eq!(boards[3].cell(7, 8), Some(Color::Black));
+}
+
+#[test]
+fn replay_prefix_boards_report_invalid_move_at_its_ply() {
+    let mut replay = Replay::new(
+        RuleConfig {
+            variant: Variant::Freestyle,
+            ..RuleConfig::default()
+        },
+        "Black",
+        "White",
+    );
+    replay.push_move(mv("H8"), 0, 0, None);
+    replay.moves.push(gomoku_core::replay::ReplayMove {
+        mv: "not-a-move".into(),
+        time_ms: 0,
+        hash: 0,
+        trace: None,
+    });
+    let parse_message = Move::from_notation("not-a-move").expect_err("fixture should be invalid");
+
+    let error = replay_prefix_boards(&replay).expect_err("invalid replay move should fail");
+
+    assert_eq!(
+        error,
+        AnalysisError::InvalidReplayMove {
+            ply: 2,
+            message: parse_message.clone(),
+        }
+    );
+    assert_eq!(
+        error.to_string(),
+        format!("invalid replay move at ply 2: {parse_message}")
+    );
 }

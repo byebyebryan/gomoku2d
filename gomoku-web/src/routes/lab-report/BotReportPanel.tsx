@@ -1,7 +1,6 @@
 import {
   Fragment,
   useState,
-  type CSSProperties,
   type KeyboardEvent,
 } from "react";
 
@@ -15,6 +14,7 @@ import {
   type StandingReport,
 } from "../../reports/bot_report";
 import { botReportIntro, type BotReportView } from "./ReportSupport";
+import { ReportBoardShell } from "./ReportBoardShell";
 
 import styles from "../ReportRoute.module.css";
 
@@ -532,68 +532,33 @@ function FinishedBoard({
       sequence: index + 1,
     });
   });
-  const gridSpan = Math.max(0, boardSize - 1) * FINISHED_BOARD_CELL_SIZE + 1;
-  const columnLabels = Array.from({ length: boardSize }, (_, col) =>
-    String.fromCharCode("A".charCodeAt(0) + col),
-  );
-  const style = {
-    "--proof-cell-size": `${FINISHED_BOARD_CELL_SIZE}px`,
-    "--proof-label-size": `${FINISHED_BOARD_LABEL_SIZE}px`,
-    "--proof-grid-span": `${gridSpan}px`,
-    gridTemplateColumns: `var(--proof-label-size) repeat(${boardSize}, var(--proof-cell-size)) var(--proof-label-size)`,
-    gridTemplateRows: `var(--proof-label-size) repeat(${boardSize}, var(--proof-cell-size)) var(--proof-label-size)`,
-  } as CSSProperties;
 
   return (
-    <div
-      aria-label={`Finished board for game with ${moveCells.length} moves`}
-      className={styles.proofBoard}
-      data-report-board="finished"
-      role="img"
-      style={style}
-    >
-      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-      {columnLabels.map((label) => (
-        <div className={`${styles.proofCoordinate} ${styles.proofCoordinateTop}`} key={`col-${label}`}>
-          {label}
-        </div>
-      ))}
-      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-      {Array.from({ length: boardSize }, (_, row) => (
-        <Fragment key={`row-${row}`}>
-          <div className={`${styles.proofCoordinate} ${styles.proofCoordinateLeft}`}>{row + 1}</div>
-          {Array.from({ length: boardSize }, (_, col) => {
-            const cell = row * boardSize + col;
-            const marker = stones.get(cell);
-            return (
-              <div className={styles.proofCell} key={cell} data-move={cellNotation(cell, boardSize)}>
-                {marker ? (
-                  <span
-                    className={`${styles.proofStone} ${
-                      marker.stone === "black" ? styles.proofStoneBlack : styles.proofStoneWhite
-                    }`}
-                    role="img"
-                    aria-label={`${marker.stone} move ${marker.sequence} at ${cellNotation(cell, boardSize)}`}
-                  >
-                    {marker.sequence}
-                  </span>
-                ) : null}
-              </div>
-            );
-          })}
-          <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-        </Fragment>
-      ))}
-      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-      {Array.from({ length: boardSize }, (_, col) => (
-        <div
-          className={`${styles.proofCoordinate} ${styles.proofCorner}`}
-          key={`bottom-${col}`}
-          aria-hidden="true"
-        />
-      ))}
-      <div className={`${styles.proofCoordinate} ${styles.proofCorner}`} aria-hidden="true" />
-    </div>
+    <ReportBoardShell
+      ariaLabel={`Finished board for game with ${moveCells.length} moves`}
+      boardKind="finished"
+      boardSize={boardSize}
+      cellSize={FINISHED_BOARD_CELL_SIZE}
+      labelSize={FINISHED_BOARD_LABEL_SIZE}
+      renderCell={(cell, notation) => {
+        const marker = stones.get(cell);
+        return (
+          <div className={styles.proofCell} key={cell} data-move={notation}>
+            {marker ? (
+              <span
+                className={`${styles.proofStone} ${
+                  marker.stone === "black" ? styles.proofStoneBlack : styles.proofStoneWhite
+                }`}
+                role="img"
+                aria-label={`${marker.stone} move ${marker.sequence} at ${notation}`}
+              >
+                {marker.sequence}
+              </span>
+            ) : null}
+          </div>
+        );
+      }}
+    />
   );
 }
 
@@ -730,12 +695,6 @@ function matchEndLabel(match: PublishedMatchReport): string {
     return "finished";
   }
   return match.end_reason;
-}
-
-function cellNotation(cell: number, boardSize: number): string {
-  const row = Math.floor(cell / boardSize);
-  const col = cell % boardSize;
-  return `${String.fromCharCode("A".charCodeAt(0) + col)}${row + 1}`;
 }
 
 function formatNumber(value: number): string {
