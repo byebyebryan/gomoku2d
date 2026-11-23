@@ -14,6 +14,7 @@ const DESIGN_CASE_IDS = [
   "mobile-records-062",
   "replay-collections-064",
   "my-games-publishing-065",
+  "replay-continuation-070",
 ] as const;
 const NEW_AND_EXPANDED_CASE_IDS = [
   "board-first-shell-022",
@@ -24,9 +25,10 @@ const NEW_AND_EXPANDED_CASE_IDS = [
   "public-player-062",
   "replay-collections-064",
   "my-games-publishing-065",
+  "replay-continuation-070",
 ] as const;
 const REFERENCE_GALLERY_IDS = ["core-screens-062", "ui-evolution-024-062"] as const;
-const EXPECTED_PHASES = ["0.6", "0.5", "0.4", "0.2"];
+const EXPECTED_PHASES = ["0.7", "0.6", "0.5", "0.4", "0.2"];
 
 async function curatedReviews(): Promise<ReviewRecord[]> {
   return JSON.parse(await readFile(resolve("src/developer/reviews.json"), "utf8")) as ReviewRecord[];
@@ -99,7 +101,7 @@ test("design review index keeps source versions, order, and legacy destinations"
   const reviewNavigation = page.getByRole("navigation", { name: "UI design views" });
   await expect(reviewNavigation.getByRole("link")).toHaveCount(3);
   await expect(
-    reviewNavigation.getByRole("link", { name: "Current screens", exact: true }),
+    reviewNavigation.getByRole("link", { name: "0.6.2 screen reference", exact: true }),
   ).toHaveAttribute("href", "/dev/reviews/core-screens-062/");
   await expect(
     reviewNavigation.getByRole("link", { name: "UI history", exact: true }),
@@ -135,7 +137,7 @@ test("design review index keeps source versions, order, and legacy destinations"
   );
 
   for (const [path, activeLink] of [
-    ["/dev/reviews/core-screens-062/", "Current screens"],
+    ["/dev/reviews/core-screens-062/", "0.6.2 screen reference"],
     ["/dev/reviews/history/", "UI history"],
     ["/dev/reviews/", "Design reviews"],
   ]) {

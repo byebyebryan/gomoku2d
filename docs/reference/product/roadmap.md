@@ -18,13 +18,18 @@ retain their recorded open or deferred status.
 
 ## `0.7` Refinement
 
-`0.7.0` refines the existing game. The correctness checkpoint preserves active
-replay continuations across browser navigation and makes wins and draws final
-for the round. The release also improves Play → Analyze → Try another line and
-the return from Replay Analysis to My games. Clarify match and replay ownership,
-improve compact layouts and Guide accessibility, and compare the existing bot
-and analyzer behavior with the published baseline. Carry forward open
-real-account, physical-device and human accessibility checks.
+`0.7.0` is in local review. The published app remains `v0.6.5`. The candidate
+preserves active replay continuations across browser navigation and finalizes
+wins and draws as rounds. It improves Match → Replay → Play From Here → Source
+replay and the return from Replay Analysis to My games. The
+[refinement plan](../../working/v0_7_refinement_plan.md) records validation and
+the remaining release and manual checks.
+
+The Dev site candidate dates the 0.6.2 screen reference and adds the matched
+[replay continuation review](../../working/v0_7_ui_evidence/README.md). The
+site and its preview share a Visuals publication inventory. Lab keeps its
+recorded runs and links to the
+[engine baseline](../../working/v0_7_refinement_plan.md#bot-and-analysis-baseline).
 
 Use the refinement findings to choose later point releases. Trial one guest
 lesson after the play and replay foundation is in place, then decide whether to

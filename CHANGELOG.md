@@ -12,6 +12,34 @@ their own section.
 
 ## [Unreleased]
 
+**Theme: carry a game from its source replay through a finished round.**
+
+### Web
+
+- Start Play From Here as an explicit session before route navigation, keeping
+  active continuations and their source/result links across Back and Forward.
+- Finalize wins and draws once per round. Keep Undo available during active
+  play and save an intentional continuation as its own completed game.
+- Restore focus and position when returning from Replay Analysis to My games,
+  improve the compact finished-round layout, and add readable captions to the
+  Guide's forced sequence.
+- Prevent duplicate and pre-reset cloud history imports. Preserve profile
+  reset and delete outcomes across refreshes.
+
+### Bot lab
+
+- Keep arena result reasons consistent when a match ends naturally or reaches
+  a move or time limit. Share replay-prefix reconstruction with proof-frame
+  reporting.
+
+### Repository
+
+- Validate selected source refs in CI and release/deployment workflows.
+- Add a matched desktop and compact review of the replay-continuation journey,
+  with media for changed journeys.
+- Date the released 0.6.2 screen reference at its existing URL and publish an
+  explicit asset inventory that preserves current public paths.
+
 ## [0.6.5] - 2026-11-19
 
 **Theme: find and publish the game you meant to share.**

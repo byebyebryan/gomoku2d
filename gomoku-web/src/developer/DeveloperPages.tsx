@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { Icon } from "../ui/Icon";
-import { DEVELOPER_SECTIONS, DEV_SITE_LABEL, UI_DESIGN_ENTRY_PATH } from "../app/links";
+import {
+  DEVELOPER_SECTIONS,
+  DEV_SITE_LABEL,
+  UI_DESIGN_ENTRY_LABEL,
+  UI_DESIGN_ENTRY_PATH,
+} from "../app/links";
 
 export function DeveloperOverview() {
   useDocumentTitle(DEV_SITE_LABEL);
@@ -33,7 +38,11 @@ export function DeveloperOverview() {
           </p>
           <ul className="dev-record-list">
             <li>
-              <Link to={UI_DESIGN_ENTRY_PATH}>Open the screen reference</Link>
+              <Link to={UI_DESIGN_ENTRY_PATH}>{UI_DESIGN_ENTRY_LABEL}</Link>
+            </li>
+            <li>
+              <Link to="/dev/reviews/replay-continuation-070/">Returning to a source replay</Link>
+              <small>0.7.0 candidate · Branch at a turning point and return to it</small>
             </li>
             <li>
               <Link to="/dev/reviews/my-games-publishing-065/">Publishing from My games</Link>

@@ -26,6 +26,7 @@ test("developer direct entries keep private state and engine imports untouched",
     "/dev/process/",
     "/dev/reviews/",
     "/dev/reviews/ui-evolution-024-062/",
+    "/dev/reviews/replay-continuation-070/",
     "/dev/reviews/board-first-shell-022/",
     "/dev/reviews/portrait-play-024/",
     "/dev/reviews/replay-analysis-048/",
@@ -130,6 +131,9 @@ for (const width of [1440, 412]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/dev/");
     await expect(page.getByRole("heading", { name: "Inside Gomoku2D", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Returning to a source replay", exact: true }),
+    ).toHaveAttribute("href", "/dev/reviews/replay-continuation-070/");
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "Skip to content", exact: true })).toBeFocused();
     await page.keyboard.press("Enter");
@@ -141,7 +145,7 @@ for (const width of [1440, 412]) {
     await expect(page.locator("#developer-content")).toBeFocused();
     await expect(page.getByRole("heading", { name: "Released 0.6.2 core screens", exact: true })).toBeVisible();
     await expect(
-      page.getByRole("navigation", { name: "UI design views" }).getByRole("link", { name: "Current screens", exact: true }),
+      page.getByRole("navigation", { name: "UI design views" }).getByRole("link", { name: "0.6.2 screen reference", exact: true }),
     ).toHaveAttribute("aria-current", "page");
     await expect.poll(() => page.locator(".dev-page").evaluate((node) => node.scrollTop)).toBe(0);
     await expect(page.locator(".dev-header")).toBeInViewport();

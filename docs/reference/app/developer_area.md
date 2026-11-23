@@ -57,20 +57,21 @@ direct links to the relevant tools. The docs index keeps its full surface catalo
 `DEV_SITE_LABEL` supplies the app's public name: GOMOKU2D / DEV SITE in the
 header and Dev site in external overview links and its browser title. The
 internal first tab remains Overview; implementation names and `/dev/` stay stable.
-UI design opens Current screens at `UI_DESIGN_ENTRY_PATH`; its active navigation
-match covers the entire `/dev/reviews/*` section. The same entry is used by the
+UI design opens the 0.6.2 screen reference at `UI_DESIGN_ENTRY_PATH`. Its active
+navigation match covers the entire `/dev/reviews/*` section. The same entry is used by the
 portable preview. `/dev/reviews/` remains the Design reviews index, and existing
 record/history links retain their identities.
 
-Visual design covers the visual system and its source assets; UI design covers
-screens, layout, interaction and their evolution. UI design retains Current
-screens, UI history and Design reviews as its three views. Existing route and
-record identities remain stable; historical captures retain their original names.
+Visual design covers the visual system and its source assets. UI design covers
+screens, layout, interaction and their evolution. Its views are the dated screen
+reference, UI history and Design reviews. Existing route and record identities
+remain stable. Historical captures retain their original names.
 
 Bot lab keeps `tab=ranking|search|analysis` and `match` deep links. Its detailed
 metrics and opponent/game drill-down remain available; secondary ranking metrics
 live in the expanded row. An in-flight load survives switching local views.
-Do not rerun or relabel old tournaments to update presentation.
+The Lab links to the [0.7.0 bot and analysis comparison](../../working/v0_7_refinement_plan.md#bot-and-analysis-baseline)
+alongside the provenance of the recorded reference runs.
 
 Visual design uses `view=style|icons|sprites`, with the legacy default Style. `icon` or
 `compare` selects canonical names (unique, maximum four); `q` filters name/category.
@@ -81,6 +82,9 @@ integer enlargement exposes existing margins rather than normalizing glyphs.
 
 Style specimens use actual action classes and runtime CSS tokens. The asset
 publisher derives exported palette values from CSS while retaining editorial roles.
+The Pages build and standalone preview share a [publication inventory](../../../gomoku-web/scripts/visual_design_asset_inventory.mjs).
+The build checks the manifest references before copying assets. The existing
+font variants and social preview source stay available at their raw asset URLs.
 Sprite previews reuse `multiplyTintRgbaPixels`, preserve alpha, and check ranges
 against board constants. Only the selected loop animates, offscreen animation
 pauses, hidden pages stop playback, and reduced motion uses stepping. Historical
@@ -104,10 +108,13 @@ Each typed/validated record includes:
 `versions` identifies the product releases covered by a case. Original notes,
 later compiled release histories and each image retain their own document/build
 revisions; a release revision must not be used as the revision of a later document.
+The [0.7.0 replay continuation capture](../../working/v0_7_ui_evidence/README.md)
+pairs the released 0.6.5 artifact with a qualified local candidate. Promote a new
+screen reference only after verifying captures from the published release.
 
 The index leads with Design reviews, grouped by source minor line and ordered
-latest first. Current screens and UI history remain direct sibling links;
-reference galleries, including the endpoint pilot, remain available from the
+latest first. The dated screen reference and UI history remain direct sibling
+links. Reference galleries, including the endpoint pilot, remain available from the
 index. A `retrospective review` is a newly assembled account of documented design
 work and requires source versions and process steps. Its "Assembled" date is
 distinct from the original decision or capture date. A `retrospective comparison`
@@ -168,9 +175,9 @@ is the proposed real-device reference; its exact viewport remains unmeasured.
 `/dev/reviews/history/` groups meaningful UI releases from 0.2 through 0.6 in
 a milestone rail and lists every changed screen/state for the selected release.
 The rail lists minor lines and their milestones latest first.
-On narrow layouts the rail is an operable disclosure. Current screens, UI history
-and Design reviews remain direct sibling entries; existing case URLs and the
-endpoint pilot remain valid.
+On narrow layouts the rail is an operable disclosure. The screen reference, UI
+history and Design reviews remain direct sibling entries. Existing case URLs and
+the endpoint pilot remain valid.
 
 `/dev/reviews/history/<screen-id>/` shows a latest-first capture trail for a named
 screen state and an inspection of the selected change. Screen/view links remain

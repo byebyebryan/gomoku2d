@@ -5,14 +5,15 @@ project showcase surfaces. Captures have different source versions:
 
 | Assets | Capture source and date |
 |---|---|
-| `readme-sharing.gif`, `readme-public-profile.png`, `readme-analysis.gif`, `readme-replay-analysis.png` | Prepared `0.6.2`, October 24, 2026; clean application/version inputs at `bbc652f31fc4a211a85d1e60f61905617136f5a6`. Captured from the local emulator-enabled preview. This is candidate evidence, not production acceptance. |
-| `readme-gameplay.gif`, `readme-lab.gif`, `readme-visuals.gif`, public/source OG artwork | Prepared `0.5.5`, October 16, 2026; application/version inputs at `f300a30c7bda13738010637c700e67ec8aaa0670`. These unaffected assets were retained. |
+| `readme-gameplay.gif`, `readme-analysis.gif` | Prepared from the local 0.7 candidate on November 21, 2026, using the Guide's `Review a finished game` replay. The capture used an isolated candidate build and no production account or emulator. Source and output hashes are in the [0.7 UI evidence receipt](../working/v0_7_ui_evidence/README.md). |
+| `readme-sharing.gif`, `readme-public-profile.png`, `readme-replay-analysis.png` | Prepared `0.6.2`, October 24, 2026; clean application/version inputs at `bbc652f31fc4a211a85d1e60f61905617136f5a6`. Captured from the local emulator-enabled preview. This is candidate evidence, not production acceptance. |
+| `readme-lab.gif`, `readme-visuals.gif`, public/source OG artwork | Prepared `0.5.5`, October 16, 2026; application/version inputs at `f300a30c7bda13738010637c700e67ec8aaa0670`. These unaffected assets were retained. |
 
-The 1280×800 capture viewport keeps replay controls in frame; GIFs are 960px
-wide at 5 fps, and OG images are 1200×630. The new sharing clip is six seconds;
-the refreshed analysis clip is 5.4 seconds. The public profile uses the existing
-local 18-game Demo Player fixture, not a production player's account. Only
-keyboard focus was cleared; content/styles were not substituted for capture.
+The current 0.7 gameplay and analysis clips use a 1280×800 capture viewport,
+then scale to 960×600 at 5 fps for six seconds. OG images are 1200×630. The
+public profile uses the existing local 18-game Demo Player fixture, not a
+production player's account. Only keyboard focus was cleared; content/styles
+were not substituted for capture.
 Hashes and acceptance limits live in the
 [0.6.2 candidate](../working/v0_6_2_candidate.md) and its evidence. Publication
 is recorded in the [0.6.2 release](../archive/v0_6_2_release.md); the earlier
@@ -23,10 +24,11 @@ The October review keeps focused development screenshots in the
 
 Tracked outputs:
 
-- `readme-gameplay.gif`: a short gameplay loop with tactical hints, a played
-  move, and the bot response.
-- `readme-analysis.gif`: a short Replay Analysis loop stepping backward from a
-  finished frame through a longer setup corridor to the last escape.
+- `readme-gameplay.gif`: a six-second loop opening the finished Guide example,
+  branching at move 27, and playing the winning continuation.
+- `readme-analysis.gif`: a six-second Replay Analysis loop for the same Guide
+  example, stepping from move 28 back to move 25 and forward to move 27 with
+  the finished verdict and timeline annotations visible.
 - `readme-sharing.gif`: Guide example → finished replay → earlier move → Share.
 - `readme-public-profile.png`: public player card, optional record and game list.
 - `readme-lab.gif`: a lab report loop showing ranking, search telemetry, and a
@@ -43,8 +45,9 @@ GitHub stores its own copy; refresh it in repository Settings → General →
 Social preview when changing the artwork. See
 [GitHub's upload instructions](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/customizing-your-repositorys-social-media-preview).
 
-For the original gameplay/Lab/Visuals/OG recipe, start an owned production
-preview (verify the port is free first):
+For current gameplay and analysis, use the [0.7 UI evidence recipe](../working/v0_7_ui_evidence/README.md).
+The historical `media:readme` recipe writes both GIF paths. Use the recorded
+0.5.5 checkout to recreate the historical Lab, Visuals, and social media.
 
 ```sh
 cd gomoku-web
@@ -62,9 +65,12 @@ GOMOKU_MEDIA_BASE_URL=http://127.0.0.1:8014 npm run media:readme
 Stop the preview with Ctrl-C after capture. Run `npm run build` again to copy
 the updated public OG image into `dist/` before publishing.
 
-For sharing/profile/analysis media, use an owned emulator-enabled preview with
-a reviewed Demo Player fixture. The recipe reads that profile; it does not
-seed or mutate it. The original capture used port 8013 and UID
+The historical `media:sharing` encoder also writes `readme-analysis.gif`.
+Use the recorded 0.6.2 checkout to recreate the sharing and profile captures.
+
+For the historical sharing/profile capture, use an owned emulator-enabled
+preview with a reviewed Demo Player fixture. The recipe reads that profile; it
+does not seed or mutate it. The original capture used port 8013 and UID
 `v061-demo-player`:
 
 ```sh

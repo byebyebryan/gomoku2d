@@ -5,6 +5,49 @@ Reviewed November 20, 2026. The baseline is the published
 documentation closeout at `e6c8999`. The
 [product roadmap](../reference/product/roadmap.md) owns adopted sequencing.
 
+## Current candidate status — November 21, 2026
+
+`v0.6.5` remains the latest published release. The local `0.7.0` candidate is
+based on `main` at `2345b66` plus pending working-tree changes. The integrated
+logs in `gomoku-web/test-results/v070-refactor-integration/` were run from an
+isolated source snapshot. Its `source-shas.json` manifest covers 34 pending
+paths for those runs. The presentation checks below cover the later Dev
+review, media, and asset publication work.
+
+| Local check | Result | Receipt |
+| --- | --- | --- |
+| Rust workspace | 354 tests passed | `rust.log` |
+| Web | Typecheck passed, 610 Vitest tests passed | `web.log` |
+| Tooling | 48 checks passed | `web.log` |
+| Browser journeys | 315 passed, six expected Chromium-only WebGL cases skipped in Firefox and WebKit | `browser.log` |
+| Auth/Firestore emulator journeys | 75 passed across Chromium, Firefox and WebKit | `cloud-chromium.log`, `cloud-firefox.log`, `cloud-webkit.log` |
+| Repeated cloud races | 45 passed | `cloud-races.log` |
+| Firestore rules | 51 passed | `rules.log` |
+
+Exact-source CI for the reviewed candidate commit remains open. The `v0.7.0`
+tag, release publication, served-byte check and public-route check are also
+outstanding. The real Google account/profile,
+statistics, publication, guest readback and cleanup round trip remains open.
+Physical touch and OS-keyboard use, lower-powered-device behavior, human
+screen-reader and native-zoom checks, and two-device private continuity remain
+open or deferred.
+
+The candidate Dev review at `/dev/reviews/replay-continuation-070/` compares
+Match → Replay → Play From Here → Source replay on desktop and compact
+layouts. The [UI evidence](v0_7_ui_evidence/README.md) records its inputs and
+the refreshed README captures. The original gallery is labeled 0.6.2 screen
+reference at `/dev/reviews/core-screens-062/`. The Lab keeps the recorded runs
+and links to the [engine baseline](#bot-and-analysis-baseline).
+
+The local presentation build passed typechecking, 610 web unit tests, 50
+tooling tests, and 114 focused browser tests across Chromium, Firefox, and
+WebKit. Both standalone exports passed their browser checks from nested URLs.
+The Pages build matched 495 existing payloads against v0.6.5, including Visuals
+assets, the social image, historical reviews, UI history, and Lab reports.
+The developer export matched the 494 applicable Visuals, review, history,
+and report files.
+Local receipts are in `gomoku-web/test-results/v070-presentation-closeout/`.
+
 Use 0.7 to make the existing game more reliable, easier to learn, and easier
 to work on. **Play → Replay → Try another line** is the journey that connects
 the app, the Rust bot and analyzer, the UI, and the Dev site's design evidence.
@@ -98,8 +141,8 @@ Previously published listings and copied links retain their original content.
 | Device and human checks | Reuse the Chrome touch/compact layout lane. Use a physical phone when available to check actual touch and the software keyboard. Check keyboard focus and real screen-reader output where the UI changes. Track two-device continuity separately using existing reset and sync scenarios. Record the scope of each check and carry real-world deferrals explicitly. |
 | Release | Use the existing runbook for production dependency audits, CI on the exact commit, tag-triggered workflows and live checks. Retain the previous compatible recovery point. This plan proposes no schema, rules or index changes. |
 
-The live account check can run against the existing release before code work.
-If sharing or continuity changes, cover the change in candidate emulators and
+The real-account round trip remains separate, manually authorized work. If
+sharing or continuity changes, cover the change in candidate emulators and
 repeat the affected live steps after an authorized deployment. If a live or
 human check remains open, record the specific limit for the release decision.
 [Testing guide](../reference/ops/testing.md) ·
@@ -114,6 +157,8 @@ visible result and horizontal bounds before opening the saved replay, and
 covers Chromium, Firefox, and WebKit at 390 × 844 with normal text and 320 × 900
 with 200% CSS text.
 [Finish-screen regression](../../gomoku-web/playtests/win-screen.spec.ts)
+
+### November 20 candidate snapshot (superseded by the current status above)
 
 Local candidate checks passed on November 20. The full browser lane passed
 312 cases, with six Chromium-only WebGL checks skipped in Firefox and WebKit.
@@ -158,6 +203,8 @@ threat, the reply, and what remains open. The existing boards keep their visual
 role alongside the captions. Human screen-reader verification is still open.
 [Guide](../../gomoku-web/src/routes/GuideRoute.tsx)
 
+### November 20 integrated snapshot (superseded by the current status above)
+
 The integrated build passed typechecking, 588 web unit tests, 44 tooling tests,
 and 312 browser tests, with six Chromium-only WebGL cases skipped in Firefox
 and WebKit. All 72 Auth/Firestore emulator journeys and 45 repeated race checks
@@ -177,13 +224,12 @@ result. Choose the findings that repeatedly affect the journey.
   their observable entry points.
 - Retain the board's visual hierarchy and existing pixel controls in the design.
   Clarify how the player reaches analysis, understands a turning point, and
-  returns to play. Add plain-language descriptions of the side, threat,
-  response and consequence to the Guide's forced-sequence frames. Verify
-  those descriptions with a real screen reader when available.
-- Refresh the Dev site's Current screens with a qualified published set
-  and preserve the 0.6.2 reference at its existing URL. Add a before-and-after
-  case using matching conditions and the actual findings, changes and limits.
-  Use the existing Dev site, review catalog and history tools.
+  returns to play. The candidate adds plain-language descriptions of the side,
+  threat, response and consequence to the Guide's forced-sequence frames.
+  Verify those descriptions with a real screen reader when available.
+- Use the matched v0.6.5 and candidate review to verify replay return. Qualify
+  the published capture set before promoting a new screen reference. Keep the
+  dated 0.6.2 screen reference and curated archives at their existing URLs.
   [Developer area contract](../reference/app/developer_area.md)
 
 ### Bot and analysis baseline

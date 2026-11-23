@@ -1,6 +1,6 @@
 import { useEffect, useRef, type CSSProperties, type MouseEvent } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { UI_DESIGN_ENTRY_PATH } from "../app/links";
+import { UI_DESIGN_ENTRY_LABEL, UI_DESIGN_ENTRY_PATH } from "../app/links";
 import data from "./history.json";
 import {
   isHistoryCatalog,
@@ -110,10 +110,12 @@ export function ReviewNavigation({ designReview = false }: { designReview?: bool
       <Link
         to={UI_DESIGN_ENTRY_PATH}
         aria-current={
-          pathname.includes("core-screens-062") ? "page" : undefined
+          pathname.replace(/\/+$/, "") === UI_DESIGN_ENTRY_PATH.slice(0, -1)
+            ? "page"
+            : undefined
         }
       >
-        Current screens
+        {UI_DESIGN_ENTRY_LABEL}
       </Link>
       <Link
         to={root}

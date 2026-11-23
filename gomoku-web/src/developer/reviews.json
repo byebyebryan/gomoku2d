@@ -2200,5 +2200,114 @@
         "url": "https://github.com/byebyebryan/gomoku2d/blob/93f0a04e9ad3b11e3be49304f3aeaf76105b2a8f/docs/archive/v0_6_4_release.md"
       }
     ]
+  },
+  {
+    "schema": 1,
+    "id": "replay-continuation-070",
+    "title": "Returning to a source replay",
+    "scope": "0.7.0 candidate / Play and Replay Analysis",
+    "date": "2026-11-21",
+    "revision": "v0.6.5 \u00b7 25d67c1 Pages artifact and 0.7.0 candidate \u00b7 2345b66 + local changes (e8756475)",
+    "versions": [
+      "0.6.5",
+      "0.7.0"
+    ],
+    "question": "Can a player try a different move and return to the position that started the continuation?",
+    "summary": "A matched desktop and compact comparison of replay branching and return in the 0.7.0 candidate.",
+    "disposition": "historical checkpoint",
+    "comparisons": [
+      {
+        "id": "continuation-desktop",
+        "title": "Active continuation \u00b7 desktop",
+        "conditions": "Chromium 156.0.8078.4, 1440 \u00d7 900 CSS pixels, DPR 1, mouse. Guest opened Review a finished game, stepped to move 27 and chose Play From Here. Both captures show the active continuation at move 27.",
+        "media": [
+          {
+            "file": "match-desktop-before.png",
+            "sourcePath": "docs/working/v0_7_ui_evidence/match-desktop-before.png",
+            "sha256": "22ba03645a1ceca9393f56ef1f8768d85eb55e221ce20b4953190596f4c1510c",
+            "width": 1440,
+            "height": 900,
+            "label": "Before \u00b7 released v0.6.5",
+            "alt": "Move 27 in the active continuation on desktop in v0.6.5, with no Source replay action",
+            "kind": "application capture",
+            "revision": "v0.6.5 \u00b7 25d67c1 Pages artifact"
+          },
+          {
+            "file": "match-desktop-after.png",
+            "sourcePath": "docs/working/v0_7_ui_evidence/match-desktop-after.png",
+            "sha256": "dcbee4e485530450eada204da5b25682117a40228660bb34f70580017fbecb5b",
+            "width": 1440,
+            "height": 900,
+            "label": "After \u00b7 0.7.0 candidate",
+            "alt": "Move 27 in the active continuation on desktop with the Source replay action visible",
+            "kind": "application capture",
+            "revision": "0.7.0 candidate \u00b7 2345b66 + local changes (e8756475)"
+          }
+        ]
+      },
+      {
+        "id": "continuation-compact",
+        "title": "Active continuation \u00b7 compact",
+        "conditions": "Chromium 156.0.8078.4, 390 \u00d7 844 CSS pixels, DPR 1, emulated touch. Guest opened Review a finished game, stepped to move 27 and chose Play From Here. Both captures show the active continuation at move 27.",
+        "media": [
+          {
+            "file": "match-compact-before.png",
+            "sourcePath": "docs/working/v0_7_ui_evidence/match-compact-before.png",
+            "sha256": "083c6b764118be64baa238b2c1ce5e9b01f5e701b93c439e2e6763e802b0ef28",
+            "width": 390,
+            "height": 844,
+            "label": "Before \u00b7 released v0.6.5",
+            "alt": "Move 27 in the active continuation on compact in v0.6.5, with no Source replay action",
+            "kind": "application capture",
+            "revision": "v0.6.5 \u00b7 25d67c1 Pages artifact"
+          },
+          {
+            "file": "match-compact-after.png",
+            "sourcePath": "docs/working/v0_7_ui_evidence/match-compact-after.png",
+            "sha256": "b00e586be03b116cd55d7592d996b783e92e94cf22cf5a7507563f265e4220c1",
+            "width": 390,
+            "height": 844,
+            "label": "After \u00b7 0.7.0 candidate",
+            "alt": "Move 27 in the active continuation on compact with the Source replay action visible",
+            "kind": "application capture",
+            "revision": "0.7.0 candidate \u00b7 2345b66 + local changes (e8756475)"
+          }
+        ]
+      }
+    ],
+    "process": [
+      {
+        "id": "return-to-the-turning-point",
+        "title": "Branch at move 27",
+        "detail": "In v0.6.5, Browser Back reopened the source replay at move 28. In the 0.7.0 candidate, Source replay opens Replay Analysis at move 27. Browser Back from there returns to the active continuation.",
+        "comparisons": [
+          "continuation-desktop",
+          "continuation-compact"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "state": "fixed",
+        "title": "The branch keeps its starting position",
+        "detail": "The Source replay action goes to the exact move that seeded the active game. Its destination is distinct from Analyze, which opens the result of the game you just played."
+      }
+    ],
+    "technical": [
+      "Matched viewport captures used the same built-in finished replay and guest flow on both builds.",
+      "The v0.6.5 baseline was the verified published Pages artifact. Candidate captures came from a local source snapshot. See the capture record for the source identities and checked transitions."
+    ],
+    "human": "The compact capture used a browser viewport. Physical-device and screen-reader checks remain open.",
+    "followUp": "Qualify the published 0.7.0 build before promoting a new screen reference.",
+    "sources": [
+      {
+        "label": "Capture conditions and source receipt",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/main/docs/working/v0_7_ui_evidence/README.md"
+      },
+      {
+        "label": "Replay return and compact touch browser regression",
+        "url": "https://github.com/byebyebryan/gomoku2d/blob/main/gomoku-web/playtests/win-screen.spec.ts"
+      }
+    ]
   }
 ]

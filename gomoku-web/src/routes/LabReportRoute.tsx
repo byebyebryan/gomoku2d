@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
+import { PROJECT_SOURCE_URL } from "../app/links";
 import { useDocumentTitle } from "../app/useDocumentTitle";
 import { loadPublishedBotReport, type PublishedBotReport } from "../reports/bot_report";
 import { loadAnalysisReport, type PublishedAnalysisReport } from "../reports/analysis_report";
@@ -166,8 +167,11 @@ export function LabReportRoute() {
         ))}
       </nav>
       <p className={styles.reportNote}>
-        Published reference runs describe their recorded engine revisions. Current engine behavior
-        can differ; see Provenance for dates and settings.
+        See Provenance for the engine revisions and settings used in these runs. The{" "}
+        <a href={`${PROJECT_SOURCE_URL}/blob/main/docs/working/v0_7_refinement_plan.md#bot-and-analysis-baseline`}>
+          0.7.0 bot and analysis comparison
+        </a>
+        {" "}compares v0.6.5 with the November 20 candidate.
       </p>
       {botState.status === "loaded" && botState.report.provenance?.git_dirty ? (
         <p className={styles.warning}>Development run: generated from a dirty git worktree.</p>

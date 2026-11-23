@@ -1,6 +1,7 @@
 import { readFile, realpath } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { dirname, resolve, sep } from "node:path";
+import { readRepositoryPngIdentity } from "./catalog_media.mjs";
 const { isHistoryCatalog } = await import(
   new URL("../src/developer/history_record.ts", import.meta.url).href
 );
@@ -73,15 +74,14 @@ export async function readHistoryCatalog() {
       );
     for (const [layout, media] of Object.entries(snapshot.media)) {
       if (!media) continue;
-      const source = await repositoryFile(media.sourcePath);
-      if (
-        hash(source.bytes) !== media.sha256 ||
-        source.bytes.length < 24 ||
-        source.bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a" ||
-        source.bytes.readUInt32BE(16) !== media.width ||
-        source.bytes.readUInt32BE(20) !== media.height
-      )
-        throw new Error("History PNG identity mismatch: " + media.sourcePath);
+      const sourceAbsolute = await readRepositoryPngIdentity(
+        historyRepoRoot,
+        media,
+        {
+          outsideRepository: "History evidence leaves repository: " + media.sourcePath,
+          identityMismatch: "History PNG identity mismatch: " + media.sourcePath,
+        },
+      );
       const entry = manifest.value.captures.find(
         /** @param {any} capture */ (capture) =>
           (capture.source === `v${snapshot.version}` ||
@@ -93,7 +93,7 @@ export async function readHistoryCatalog() {
             ? capture.profile
             : capture.profile?.id) === layout &&
           typeof capture.file === "string" &&
-          resolve(dirname(manifest.path), capture.file) === source.absolute,
+          resolve(dirname(manifest.path), capture.file) === sourceAbsolute,
       );
       if (
         !entry ||

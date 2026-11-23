@@ -8,7 +8,8 @@ belong in the [reference docs](../README.md#choose-a-path).
 
 | Note | Owner and next review |
 |---|---|
-| [0.7 refinement plan](v0_7_refinement_plan.md) | First milestone scope, acceptance checks and later refinement work. |
+| [0.7 refinement plan](v0_7_refinement_plan.md) | Local candidate source, integration receipts, open release gates and later refinement work. |
+| [0.7 UI evidence](v0_7_ui_evidence/README.md) | Local v0.6.5-to-candidate comparison and capture provenance for the candidate Dev route. |
 | [v0.6 follow-up research](v0_6_followup_plan.md) | Planning snapshot with research for later curated learning. The roadmap tracks current scope. |
 
 ### Repository review follow-ups
@@ -24,15 +25,13 @@ belong in the [reference docs](../README.md#choose-a-path).
   browser with full and multi-owner collections. Reuse validation for
   identical bytes while retaining legality, fingerprint, and revision checks.
   [Replay collection review](v0_6_4_replay_collection_review.md)
-- **Visuals publication.** Use an explicit published inventory and fail the
-  build on missing manifest references. Keep the canonical asset sources, the
-  public social preview, the three linked font roles, and applicable license
-  notices. Review the duplicate social-preview source and the 12 tuning-font
-  variants as source-only candidates. Preserve existing history and review
-  image URLs and digests. [Visual design assets](../../gomoku-web/assets/README.md)
-- **Current screens.** Date the 0.6.2 pointer or refresh it from a separately
-  qualified published build. Keep the original gallery address and add one
-  matched comparison for the changed play and replay flow.
+- **Visuals URL compatibility.** The candidate inventory retains the legacy
+  social-preview source and 12 tuning-font variants. Revisit those URLs if a
+  future release retires downloads.
+  [Publication inventory](../../gomoku-web/scripts/visual_design_asset_inventory.mjs)
+- **Published screen reference.** The candidate dates the 0.6.2 gallery at its
+  original URL and includes the matched play and replay comparison. Promote a
+  new screen reference from the verified published build.
   [Developer area contract](../reference/app/developer_area.md)
 - **Player journeys.** Cancel pending replay branches when another action
   takes over, make compact verdict qualifications reachable, and recover on

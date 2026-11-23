@@ -18,7 +18,7 @@ The developer area is published in [v0.6.3](docs/archive/v0_6_3_release.md).
 
 [![CI](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/byebyebryan/gomoku2d/actions/workflows/ci.yml)
 
-![Gomoku2D gameplay with tactical hints, bot response, and a terminal winning frame](docs/assets/readme-gameplay.gif)
+![Branch from move 27 of a finished replay and play the winning move in a local match.](docs/assets/readme-gameplay.gif)
 
 Capture versions and sources are recorded in [media provenance](docs/assets/README.md).
 See [Project status](#project-status) for publication status.
@@ -55,7 +55,7 @@ new practice game.
 Analysis is bounded: a confirmed escape clears the modeled forcing corridor;
 a possible escape still needs verification. It is not a full-game solution.
 
-![Replay Analysis walks backward through the last escape, setup corridor, and lethal onset.](docs/assets/readme-analysis.gif)
+![Replay Analysis steps back from a finished game and highlights threats at earlier moves.](docs/assets/readme-analysis.gif)
 
 ## Keep And Share
 
@@ -141,6 +141,10 @@ lists checks by area.
 games and lets eligible players start a publishing draft from the game row.
 The Dev site shows the changes in the
 [My games and publishing review](https://gomoku2d.byebyebryan.com/dev/reviews/my-games-publishing-065/).
+
+`v0.7.0` is in local review. The
+[refinement plan](docs/working/v0_7_refinement_plan.md) records its source,
+integration checks and remaining release gates.
 
 Release validation includes Chrome mobile layout emulation. Real signed-in
 sharing, physical-device and human-accessibility checks retain their recorded

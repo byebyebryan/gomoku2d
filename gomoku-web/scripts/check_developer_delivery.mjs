@@ -1,8 +1,12 @@
 // Read-only parity check against a deliberately selected production-style preview.
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve, relative } from "node:path";
 import { readReviewCatalog, webRoot, repoRoot } from "./review_catalog.mjs";
+import {
+  GENERATED_VISUAL_DESIGN_MANIFEST_PATH,
+  VISUAL_DESIGN_ASSET_INVENTORY,
+} from "./visual_design_asset_inventory.mjs";
 const base = process.env.DEVELOPER_CHECK_URL;
 if (!base) throw new Error("Set DEVELOPER_CHECK_URL to an owned preview (trailing slash)");
 /** @param {Uint8Array} bytes */
@@ -51,12 +55,16 @@ for (const record of records) {
         await readFile(resolve(repoRoot, media.sourcePath)),
       );
 }
-for (const folder of ["icons", "sprites", "fonts"]) {
-  for (const name of await readdir(resolve(webRoot, "assets", folder))) {
-    if (!/\.(svg|png|ttf|txt)$/.test(name)) continue;
-    const path = `assets/${folder}/${name}`;
-    await parity(path, await readFile(resolve(webRoot, path)));
+for (const assetPath of VISUAL_DESIGN_ASSET_INVENTORY) {
+  const path = `assets/${assetPath}`;
+  const expected = await readFile(resolve(dist, path));
+  if (assetPath !== GENERATED_VISUAL_DESIGN_MANIFEST_PATH) {
+    const source = await readFile(resolve(webRoot, "assets", assetPath));
+    if (sha(source) !== sha(expected)) {
+      throw new Error(`Built Visual Design bytes differ from declared source: ${assetPath}`);
+    }
   }
+  await parity(path, expected);
 }
 console.log(
   JSON.stringify({

@@ -54,6 +54,9 @@ test("published static report routes render their current artifacts", async ({ p
   await page.goto("/lab/");
   await expect(page).toHaveTitle("Bot lab | Gomoku2D");
   await expect(page.getByRole("heading", { name: "Inside the bot lab" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "0.7.0 bot and analysis comparison", exact: true }),
+  ).toHaveAttribute("href", /v0_7_refinement_plan\.md#bot-and-analysis-baseline$/);
   await expect(page.getByRole("link", { name: "Ranking", exact:true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Search", exact:true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Analysis", exact:true })).toBeVisible();

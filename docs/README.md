@@ -13,6 +13,12 @@ from an eligible game row to the publishing draft. The
 and remaining acceptance. The [capture record](working/v0_6_5_ui_evidence/README.md)
 retains the comparison images and capture conditions.
 
+`v0.7.0` is in local review. The [refinement plan](working/v0_7_refinement_plan.md)
+records the candidate checks and open release gates. The
+[UI evidence](working/v0_7_ui_evidence/README.md) compares replay continuation
+with the published v0.6.5 build. The candidate Dev site presents that comparison
+at `/dev/reviews/replay-continuation-070/`.
+
 The [0.6 implementation index](archive/v0_6_implementation.md) connects the
 design, review and publication records. The [roadmap](reference/product/roadmap.md)
 tracks later work. The Dev site presents selected design references, inspectors
