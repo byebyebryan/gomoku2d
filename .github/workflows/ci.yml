@@ -61,7 +61,9 @@ jobs:
         run: node --test scripts/tests/release_validation.test.mjs
 
       - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        run: |
+          bash scripts/install-ci-wasm-pack.sh "$RUNNER_TEMP/gomoku-bin"
+          echo "$RUNNER_TEMP/gomoku-bin" >> "$GITHUB_PATH"
 
       - name: Cache cargo registry + wasm target
         uses: actions/cache@v6
@@ -75,7 +77,7 @@ jobs:
             ${{ runner.os }}-wasm-
 
       - name: Build wasm package
-        run: wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+        run: wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler -- --locked
 
       - name: Install web deps
         working-directory: gomoku-web

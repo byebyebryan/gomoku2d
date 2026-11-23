@@ -58,9 +58,9 @@ scenarios, fixture-only timestamp eligibility, and the difference from real OAut
 
 On Linux hosts missing WebKit libraries, `npm run test:cloud -- --container`
 keeps Java/emulators on the host and runs Playwright in the qualified Ubuntu
-container. Docker and the host's matching installed browser cache are required;
-`PLAYWRIGHT_BROWSERS_PATH` overrides its default `~/.cache/ms-playwright` location.
-The pinned Ubuntu image supplies libraries; mounted browsers match the lockfile.
+container. The launcher selects the image matching the installed Playwright
+version and uses the image's browsers by default. To use a host browser cache,
+set `PLAYWRIGHT_BROWSERS_PATH` to a directory with the matching browser revisions.
 Ordinary browser output uses `test-results/browser`; cloud output uses
 `test-results/cloud`, allowing independent lanes without clearing each other’s
 artifacts. See [v0.6 evidence](../../working/v0_6_evidence/README.md) for exact

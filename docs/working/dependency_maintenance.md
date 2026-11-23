@@ -1,7 +1,34 @@
 # Dependency Maintenance Notes
 
 Owner: manual maintenance passes. Recheck these notes when updating Firebase
-or preparing a release. Last reviewed: 2026-11-18 for `0.6.4`.
+or preparing a release. Last reviewed 2026-11-21 for the 0.7 candidate.
+
+## 0.7 Maintenance Pass
+
+- The npm lock updates React Router to 7.18.6, Zustand to 5.1.0, Vite to 8.3.8,
+  the Vite React plugin to 6.3.0, Rollup to 4.68.8, axe-core to 4.14.1,
+  and Firebase CLI to 15.37.0. Node type declarations now follow the Node 24
+  lane in `.nvmrc`.
+- Playwright stays on the 1.64 patch line and the cloud container follows the
+  installed version. Firefox 159 from Playwright 1.65.1 crashed in the C11,
+  C15, and C18 cloud accessibility checks and failed the C17 scroll check.
+  C11 reproduced with either axe-core version. Recheck those cases before
+  lifting the Playwright range. [Playwright 1.65.1 release](https://github.com/microsoft/playwright/releases/tag/v1.65.1)
+- The Cargo lock advances compatible crate versions, including wasm-bindgen
+  0.2.130 and clap 4.6.9. Rebuild the generated `gomoku-wasm` package before
+  a clean npm install. CI and Pages use the same checksummed wasm-pack 0.15.1
+  binary and build against the Cargo lock. The Wasm crate drops its unused
+  direct `js-sys` dependency.
+- Production npm and Rust audits report zero findings. The full npm audit
+  falls from 15 to 13 moderate development entries after the Firebase CLI
+  update clears the Hono findings. The remaining entries include parent
+  packages in the Firebase CLI tree. Pub/Sub still selects OpenTelemetry 1.x,
+  and the CLI's glob 10.x range stays below the audit's patched range. Upgrade
+  those chains when the CLI supports compatible fixes. The audit suggests a
+  downgrade to Firebase CLI 13.11.2 for several entries.
+  [Firebase CLI release notes](https://github.com/firebase/firebase-tools/releases/tag/v15.37.0)
+
+## 0.6.4 Release Audit
 
 The 0.6.4 lock refresh updates `re2js` to 2.10.0. Production npm and Rust
 audits are clean at the release source. The full npm audit reports 15 moderate
@@ -43,9 +70,10 @@ passing them does not establish acceptance of other Firebase CLI features.
 
 ## Deferred Major Updates
 
-Firebase 13, rules-unit-testing 6, Vitest 5, jsdom 30, testing-library/jest-dom 7,
-and TypeScript 7 remain separate migration work. The cleanup pass updates within
-the existing dependency ranges and validates the resulting product.
+Firebase 13 and rules-unit-testing 6 need a coordinated cloud qualification.
+Vitest 5, jsdom 31, jest-dom 8, and TypeScript 7 remain separate tooling
+migrations. Confirm peer dependencies and run the relevant unit and browser
+lanes for each migration.
 
 ## 0.5.5 Release Audit
 

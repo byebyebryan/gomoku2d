@@ -52,10 +52,12 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        run: |
+          bash scripts/install-ci-wasm-pack.sh "$RUNNER_TEMP/gomoku-bin"
+          echo "$RUNNER_TEMP/gomoku-bin" >> "$GITHUB_PATH"
 
       - name: Build WASM package
-        run: wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+        run: wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler -- --locked
 
       - name: Install npm dependencies
         run: npm ci

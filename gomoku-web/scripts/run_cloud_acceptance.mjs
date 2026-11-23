@@ -4,7 +4,6 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { homedir } from "node:os";
 import { cloudPortOffset, cloudTestPorts, cloudTestOrigins } from "./cloud_test_environment.mjs";
 
 const root = resolve(import.meta.dirname, "..");
@@ -98,15 +97,17 @@ try {
   const playwright = ["node_modules/@playwright/test/cli.js", "test", "--config", "playwright.cloud.config.ts",
     ...(args.some((arg) => arg.startsWith("--browser")) ? [] : ["--browser=all"]), ...args];
   if (inContainer) {
-    // The host owns Java/emulators. Ubuntu supplies browser libraries; use the
-    // host's installed browser cache so it matches the lockfile's Playwright.
-    const browserCache = process.env.PLAYWRIGHT_BROWSERS_PATH ?? resolve(homedir(), ".cache/ms-playwright");
+    // The host owns Java and the emulators. The matching image supplies browsers and system libraries.
+    const { version } = JSON.parse(await readFile(resolve(root, "node_modules/playwright/package.json"), "utf8"));
+    const image = `mcr.microsoft.com/playwright:v${version}-noble`;
+    const browserCache = process.env.PLAYWRIGHT_BROWSERS_PATH;
+    const browserMount = browserCache && browserCache !== "0" ? ["-v", `${resolve(browserCache)}:/ms-playwright:ro`] : [];
     await completed(startCommand("docker", ["run", "--rm", "--init", "--network", "host", "--ipc", "host",
       "--user", `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`, "-e", "CI=1",
       "-e", `GOMOKU_CLOUD_PORT_OFFSET=${cloudPortOffset}`,
       "-e", `GOMOKU_WRITE_EVIDENCE=${process.env.GOMOKU_WRITE_EVIDENCE === "1" ? "1" : "0"}`,
-      "-v", `${resolve(root, "..")}:/workspace`, "-v", `${browserCache}:/ms-playwright:ro`,
-      "-w", "/workspace/gomoku-web", "mcr.microsoft.com/playwright:v1.59.1-noble", "node", ...playwright]));
+      "-v", `${resolve(root, "..")}:/workspace`, ...browserMount,
+      "-w", "/workspace/gomoku-web", image, "node", ...playwright]));
   } else await completed(start(playwright));
 } catch (error) {
   console.error(error);
