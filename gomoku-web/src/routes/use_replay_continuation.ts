@@ -40,6 +40,12 @@ export function useReplayContinuation({
 
   const canResume = useStore(localMatchSessionStore, canResumeCurrent);
 
+  function cancel() {
+    if (!requestRef.current) return;
+    requestRef.current = null;
+    setPending(false);
+  }
+
   useLayoutEffect(() => {
     setPending(false);
     setError("");
@@ -90,5 +96,5 @@ export function useReplayContinuation({
     }
   } : undefined;
 
-  return { error, pending, resumeCurrent, start };
+  return { cancel, error, pending, resumeCurrent, start };
 }

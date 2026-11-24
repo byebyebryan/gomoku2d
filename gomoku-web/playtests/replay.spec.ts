@@ -179,6 +179,55 @@ test("local replay can start a new local match from the current replay frame", a
   await expect(page.getByTestId("player-row-black")).toHaveCSS("box-shadow", /rgb/);
 });
 
+test("opening Share cancels a pending continuation and still allows a later launch", async ({ page }) => {
+  await page.addInitScript(() => {
+    const state = window as Window & {
+      holdNextReplayFingerprint?: boolean;
+      replayFingerprintHeld?: boolean;
+      releaseReplayFingerprint?: () => Promise<void>;
+    };
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    Object.defineProperty(crypto.subtle, "digest", {
+      configurable: true,
+      value: (algorithm: AlgorithmIdentifier, data: BufferSource) => {
+        if (!state.holdNextReplayFingerprint) return digest(algorithm, data);
+        state.holdNextReplayFingerprint = false;
+        state.replayFingerprintHeld = true;
+        return new Promise<ArrayBuffer>((resolve, reject) => {
+          state.releaseReplayFingerprint = () => digest(algorithm, data).then(resolve, reject);
+        });
+      },
+    });
+  });
+  await openFinishedReplay(page);
+  await page.getByRole("button", { name: "Previous turn" }).click();
+  await expect(page.getByTestId("replay-move-count")).toHaveText("Move 8 / 10");
+  await page.evaluate(() => {
+    (window as Window & { holdNextReplayFingerprint?: boolean }).holdNextReplayFingerprint = true;
+  });
+
+  await page.getByRole("button", { name: "Play From Here" }).click();
+  await expect.poll(() => page.evaluate(() =>
+    (window as Window & { replayFingerprintHeld?: boolean }).replayFingerprintHeld,
+  )).toBe(true);
+  await page.getByRole("button", { name: "Share replay" }).click();
+  await expect(page.getByRole("heading", { name: "Share replay" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Replay link" })).toHaveValue(/\/replay\/shared\//);
+
+  await page.evaluate(() => {
+    return (window as Window & { releaseReplayFingerprint?: () => Promise<void> })
+      .releaseReplayFingerprint?.();
+  });
+  await expect(page.getByRole("heading", { name: "Share replay" })).toBeVisible();
+  await expect(page).toHaveURL(/\/replay\/fixture-replay-match$/);
+  await expect(page.getByRole("heading", { name: "Local Match" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Back to replay" }).click();
+  await page.getByRole("button", { name: "Play From Here" }).click();
+  await expect(page.getByRole("heading", { name: "Local Match" })).toBeVisible();
+  await expect(page.getByTestId("match-move-count")).toHaveText("Move 8");
+});
+
 test("desktop replay rail keeps compact transport and player spacing", async ({ page }) => {
   await openFinishedReplay(page);
 

@@ -181,8 +181,9 @@ export function ReplayViewer({ match, localDisplayName, preserveNames = false, i
   }, [sidebar]);
 
   const openSidebar = (panel: "share" | "publish" | "details") => {
-    if (panel === "publish") {
-      if (!canPublish || !signedInUid) return;
+    if (panel === "publish" && (!canPublish || !signedInUid)) return;
+    continuation.cancel();
+    if (panel === "publish" && signedInUid) {
       setPublishEntry({ uid: signedInUid, move: frame.moveIndex, fromRow: false });
     }
     deckScrollRef.current = deckRef.current?.scrollTop ?? 0;
