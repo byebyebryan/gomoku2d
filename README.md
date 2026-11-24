@@ -137,22 +137,17 @@ lists checks by area.
 
 ## Project Status
 
-`v0.6.5` closes the 0.6 line. My games shows the final board for replayable
-games and lets eligible players start a publishing draft from the game row.
-The Dev site shows the changes in the
-[My games and publishing review](https://gomoku2d.byebyebryan.com/dev/reviews/my-games-publishing-065/).
+`v0.7.0` is published. Replay continuations survive navigation, completed
+rounds save once, and compact play and private-history recovery are more
+reliable. The [replay continuation review](https://gomoku2d.byebyebryan.com/dev/reviews/replay-continuation-070/)
+shows the journey on desktop and compact layouts.
 
-`v0.7.0` is in release preparation. The
-[refinement plan](docs/working/v0_7_refinement_plan.md) records its source,
-integration checks and remaining release gates.
-
-Chrome validation covers mobile layouts and existing-account sharing on the
-published 0.6.5 build, including signed-out readback and cleanup. First-time
-Google consent, fresh public-profile setup, physical-device and human
-accessibility checks retain their recorded limits.
+The [release record](docs/archive/v0_7_0_release.md) documents exact-source CI,
+public browser and artifact checks, and the remaining account, device, and
+human accessibility checks.
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
-[v0.6.5 changelog](CHANGELOG.md#065---2026-11-19) ·
+[v0.7.0 changelog](CHANGELOG.md#070---2026-11-24) ·
 [Roadmap](docs/reference/product/roadmap.md)
 
 ## Project References

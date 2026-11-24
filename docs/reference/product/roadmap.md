@@ -6,28 +6,21 @@ behavior live in the reference contracts; completed work lives in
 
 ## Current Status
 
-`v0.6.5` was published on November 19, 2026 and closes the 0.6 line. It adds
-final-board previews to My games and opens the publishing draft from eligible
-game rows. The Dev site records the changes in the My games and publishing review.
-
-The 0.6.5 mobile layout gate passed in Chrome emulation. A later live Chrome
-check covered Google return to an existing account, publication, statistics,
-signed-out readback and cleanup. First-time consent, new public-profile setup,
-physical-device, human accessibility, two-device private-account and
-novice-feedback checks retain their recorded open or deferred status.
-[Release record](../../archive/v0_6_5_release.md)
+`v0.7.0` was published on November 24, 2026. The public build passed guest
+smoke checks across Chromium, Firefox, and WebKit. First-time Google consent,
+new public-profile setup, physical-device, human accessibility, two-device
+private-account and novice-feedback checks retain their recorded limits.
+[Release record](../../archive/v0_7_0_release.md)
 
 ## `0.7` Refinement
 
-`0.7.0` is in release preparation. The published app remains `v0.6.5`. The
-candidate preserves active replay continuations across browser navigation and
+The release preserves active replay continuations across browser navigation and
 finalizes wins and draws as rounds. It improves the path from Match through
 Replay and Play From Here to the source replay, and the return from Replay
-Analysis to My games. The
-[refinement plan](../../working/v0_7_refinement_plan.md) records validation and
-the remaining release and manual checks.
+Analysis to My games. The [refinement plan](../../working/v0_7_refinement_plan.md)
+records the scope and pre-release checks.
 
-The Dev site candidate dates the 0.6.2 screen reference and adds the matched
+The Dev site dates the 0.6.2 screen reference and adds the matched
 [replay continuation review](../../working/v0_7_ui_evidence/README.md). The
 site and its preview share a Visuals publication inventory. Lab keeps its
 recorded runs and links to the

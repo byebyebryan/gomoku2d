@@ -142,3 +142,11 @@ path from an eligible row to the publishing draft. Returning to My games
 restores focus to the selected game. The Dev site retains the comparison
 captures. Curated learning remains unnumbered and multiplayer remains deferred.
 [Release record](v0_6_5_release.md)
+
+## `v0.7` Replay and Release Refinement
+
+`v0.7.0` made replay continuations survive navigation, finalized completed
+rounds, and improved private history, reset reliability, and compact play.
+The Dev site records the replay continuation journey and preserves historical
+media paths. The release also refreshed dependencies and aligned CI with
+Pages' locked Wasm build. [Release record](v0_7_0_release.md)

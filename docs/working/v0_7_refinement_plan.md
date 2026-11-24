@@ -5,6 +5,10 @@ Reviewed November 20, 2026. The baseline is the published
 documentation closeout at `e6c8999`. The
 [product roadmap](../reference/product/roadmap.md) owns adopted sequencing.
 
+Published November 24, 2026. The
+[release record](../archive/v0_7_0_release.md) contains the exact tagged source,
+CI, deployment and public acceptance evidence.
+
 ## Release preparation — November 24, 2026
 
 The versioned rehearsal used `0e380ec` and the reviewed documentation diff.

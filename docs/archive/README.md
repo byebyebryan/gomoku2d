@@ -18,6 +18,9 @@ records the later integration matrix, sync repair and fixed desktop workloads.
 
 ## Release Records
 
+The [0.7.0 release record](v0_7_0_release.md) covers replay continuation,
+round finalization, exact-source CI, Pages recovery, and public verification.
+
 The [0.6.5 release record](v0_6_5_release.md) closes the 0.6 line with
 My games and publishing polish. It records CI, the Chrome layout check,
 the exact public artifact and Firestore readbacks.
