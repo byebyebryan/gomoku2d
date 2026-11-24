@@ -4,8 +4,16 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to build with the selected workflow
+        type: string
+      expected_sha:
+        description: Full commit SHA required when a release tag is supplied
+        type: string
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -22,6 +30,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -31,10 +41,19 @@ jobs:
           cache-dependency-path: gomoku-web/package-lock.json
 
       - name: Validate release tag, package version, and changelog
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: node scripts/validate_release_ref.mjs "$RELEASE_TAG"
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+          DISPATCHED_RELEASE: ${{ inputs.release_tag }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          SOURCE_SHA=$(git rev-parse HEAD)
+          if [[ -n "$DISPATCHED_RELEASE" && "$SOURCE_SHA" != "$EXPECTED_SHA" ]]; then
+            echo "::error::Tagged source does not match expected_sha."
+            exit 1
+          fi
+          node scripts/validate_release_ref.mjs "$RELEASE_TAG"
+          echo "Release source: $RELEASE_TAG at $SOURCE_SHA"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -81,10 +100,34 @@ jobs:
         uses: actions/configure-pages@v6
 
       - name: Upload artifact
+        id: upload
         uses: actions/upload-pages-artifact@v5
         with:
+          name: github-pages-${{ github.run_attempt }}
           path: gomoku-web/dist
+
+      - name: Wait for Pages artifact availability
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
+          ARTIFACT_NAME: github-pages-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          for ((attempt = 1; attempt <= 12; attempt++)); do
+            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=$ARTIFACT_NAME" |
+              jq -e --arg id "$ARTIFACT_ID" '
+                .artifacts | length == 1 and
+                (.[0].id | tostring) == $id and .[0].expired == false
+              ' >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Pages artifact $ARTIFACT_ID did not become available."
+          exit 1
 
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}

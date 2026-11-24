@@ -134,9 +134,11 @@ against the public origin. Record an account-level cloud round trip separately
 when performed; otherwise retain its explicit acceptance deferral.
 
 For a web regression, dispatch the Pages workflow at the previously accepted
-tag/ref and verify its deployment/SHA and public behavior. The manual Pages
-workflow remains available; a selected tag ref runs the shared release
-validator before its build. Do not move release tags. For a rules regression,
+tag/ref and verify its deployment/SHA and public behavior. A manual dispatch
+at a tag runs the shared release validator before building. To use the current
+Pages workflow with an existing release, dispatch it on `main` with
+`release_tag` and the full tagged commit as `expected_sha`. It verifies that
+checkout before building. Do not move release tags. For a rules regression,
 restore the recorded previous Firestore ruleset
 release pointer through the authenticated operational path and read it back;
 redeploying main is not a rollback. Coordinate web/rules compatibility before
