@@ -116,7 +116,7 @@ do not duplicate long command lines here.
 From the repo root:
 
 ```sh
-wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler -- --locked
 ```
 
 This produces `gomoku-bot-lab/gomoku-wasm/pkg/`, consumed by `gomoku-web` via a

@@ -1,9 +1,9 @@
 # Docs
 
 Gomoku2D keeps product decisions, implementation contracts, runbooks, and
-release history beside the code. Use this page to enter the docs by area rather
-than browsing the tree. Active docs describe current intent or behavior;
-historical context belongs in [`archive/`](archive/).
+release history beside the code. Use this page to enter the docs by area.
+The [archive index](archive/README.md) covers historical decisions, release
+records, and evidence used by the Dev site.
 
 ## Current Status
 
@@ -67,7 +67,7 @@ to the published listing.
 | [`reference/lab/`](reference/lab/) | Current bot, tactical, replay-analysis, corridor, lethal-threat, and Renju models |
 | [`reference/corpora/`](reference/corpora/) | Fixture indexes and validation-corpus entrypoints |
 | [`reference/ops/`](reference/ops/) | Release, infra, cost, tournament, and test runbooks |
-| [`working/`](working/) | Active notes only; should be pruned or archived regularly |
+| [`working/`](working/) | Active notes, maintained procedures, and capture evidence at paths used by the Dev site |
 | [`archive/`](archive/) | Historical context, retired plans, rejected paths, and old release notes |
 
 ## Internal Working Notes
@@ -87,6 +87,7 @@ canonical product documentation.
 ## Maintenance Rule
 
 Reference docs are current contracts. Working notes are temporary and need an
-owner. Archive docs preserve context but are not authoritative. Dated lab logs,
-old experiment tables, generated board dumps, and release diaries do not belong
-in canonical references.
+owner. The archive index identifies completed work and the
+[historical Dev site evidence](archive/README.md#historical-dev-site-evidence)
+kept at its source paths. New reference pages should link to dated logs,
+experiment tables, captures, and release records when they use that evidence.

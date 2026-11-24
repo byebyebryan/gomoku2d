@@ -43,6 +43,20 @@ automated production acceptance and pending real signed-in sharing check.
 The [0.5.5 preparation record](v0_5_5_release_preparation.md) captures version,
 media provenance, release audits, acceptance limits, and the publication handoff.
 
+## Historical Dev Site Evidence
+
+- [Released 0.6.2 screen reference](../working/v0_6_3_core_reference/README.md)
+  records the six player surfaces used by the original gallery.
+- [Retrospective capture pilot](../working/v0_6_3_retrospective_capture/pilot-2026-10-25/README.md)
+  records the v0.2.4 and v0.6.2 endpoint comparison.
+- [UI history capture record](../working/v0_6_3_retrospective_capture/history-2026-10-25/README.md)
+  records the qualified historical screens, build receipts, and capture conditions.
+
+The [review catalog](../../gomoku-web/src/developer/reviews.json) and
+[history catalog](../../gomoku-web/src/developer/history.json) select the files
+published by the Dev site. The build verifies their paths and digests. The
+cataloged sources stay at the recorded locations under `docs/working/`.
+
 ## Earlier Plans and Context
 
 | Doc | What it was | Superseded by |

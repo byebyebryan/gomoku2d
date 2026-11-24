@@ -1,8 +1,8 @@
 # Working Notes
 
-Active design drafts and maintained procedures. Completed reviews belong in
-the [archive](../archive/README.md); current product and implementation contracts
-belong in the [reference docs](../README.md#choose-a-path).
+Active design drafts and maintained procedures. Current contracts live in the
+[reference docs](../README.md#choose-a-path). The
+[archive index](../archive/README.md) lists completed work.
 
 ## Follow-up Research
 
@@ -33,10 +33,9 @@ belong in the [reference docs](../README.md#choose-a-path).
   original URL and includes the matched play and replay comparison. Promote a
   new screen reference from the verified published build.
   [Developer area contract](../reference/app/developer_area.md)
-- **Player journeys.** Cancel pending replay branches when another action
-  takes over, make compact verdict qualifications reachable, and recover on
-  Back after a failed route load. Before adding Guide lessons, compare lazy
-  initialization or static diagrams with the nine off-screen WebGL contexts
+- **Player journeys.** Make compact verdict qualifications reachable and
+  recover on Back after a failed route load. Before adding Guide lessons,
+  compare lazy initialization or static diagrams with the nine off-screen WebGL contexts
   observed on a compact Examples visit. Preserve the sprite output and
   accessible captions. Physical device and real screen-reader checks remain
   open.
@@ -48,6 +47,12 @@ accepted designs, review evidence, and published release records. Use the
 [0.6.5 release record](../archive/v0_6_5_release.md) for production results and
 open acceptance. The [0.6.5 capture record](v0_6_5_ui_evidence/README.md) retains
 the comparison images and emulator scope.
+
+## Historical Dev Site Evidence
+
+The [archive index](../archive/README.md#historical-dev-site-evidence) points to
+the frozen screen reference, capture pilot, and UI history. The build verifies
+the capture and manifest paths and digests recorded in the Dev catalogs.
 
 ## Completed Follow-up
 

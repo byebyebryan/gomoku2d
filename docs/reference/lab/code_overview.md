@@ -266,7 +266,7 @@ cargo test --workspace
 For wasm-boundary changes, start at the repo root:
 
 ```sh
-wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler -- --locked
 cd gomoku-web
 npm install
 npm run typecheck

@@ -5,14 +5,38 @@ Reviewed November 20, 2026. The baseline is the published
 documentation closeout at `e6c8999`. The
 [product roadmap](../reference/product/roadmap.md) owns adopted sequencing.
 
-## Current candidate status — November 21, 2026
+## Release preparation — November 24, 2026
 
-`v0.6.5` remains the latest published release. The local `0.7.0` candidate is
-based on `main` at `2345b66` plus pending working-tree changes. The integrated
-logs in `gomoku-web/test-results/v070-refactor-integration/` were run from an
-isolated source snapshot. Its `source-shas.json` manifest covers 34 pending
-paths for those runs. The presentation checks below cover the later Dev
-review, media, and asset publication work.
+The versioned rehearsal used `0e380ec` and the reviewed documentation diff.
+It passed 42 focused browser checks, 24 cloud continuity and reset checks,
+12 publication checks across Chromium, Firefox, and WebKit, and 202 delivery
+checks. A separate Chromium pass covered 14 viewport checks at 200% browser
+zoom or compact emulated touch. Receipts are in
+`gomoku-web/test-results/v070-cut-readiness/`. The release preparation also
+includes the focused Play From Here cancellation fix. CI on the exact versioned
+commit remains the gate for tagging.
+
+The live 0.6.5 Chrome check signed out of the app and returned through Google
+to the existing account. It published and edited an isolated test replay,
+verified the selected opening and all five statistics values while signed out,
+then unpublished the test listing and turned statistics back off. The original
+listing and private history were preserved. A copied portable link still
+opened after removal. This check used an existing Google session and an
+already-enabled profile. First-time Google consent and new public-profile
+setup remain open in production. The affected production smoke checks must
+run against the deployed 0.7.0 build.
+
+Physical touch and software keyboard use, lower-powered hardware, human
+screen-reader use, two-device continuity, and novice feedback retain their
+recorded deferrals.
+
+## November 21 integration snapshot
+
+The integrated logs in `gomoku-web/test-results/v070-refactor-integration/`
+were run from `2345b66` and an isolated working-tree snapshot. Its
+`source-shas.json` manifest covers 34 pending paths for those runs. The
+presentation checks below cover the later Dev review, media, and asset
+publication work.
 
 | Local check | Result | Receipt |
 | --- | --- | --- |
@@ -23,14 +47,6 @@ review, media, and asset publication work.
 | Auth/Firestore emulator journeys | 75 passed across Chromium, Firefox and WebKit | `cloud-chromium.log`, `cloud-firefox.log`, `cloud-webkit.log` |
 | Repeated cloud races | 45 passed | `cloud-races.log` |
 | Firestore rules | 51 passed | `rules.log` |
-
-Exact-source CI for the reviewed candidate commit remains open. The `v0.7.0`
-tag, release publication, served-byte check and public-route check are also
-outstanding. The real Google account/profile,
-statistics, publication, guest readback and cleanup round trip remains open.
-Physical touch and OS-keyboard use, lower-powered-device behavior, human
-screen-reader and native-zoom checks, and two-device private continuity remain
-open or deferred.
 
 The candidate Dev review at `/dev/reviews/replay-continuation-070/` compares
 Match → Replay → Play From Here → Source replay on desktop and compact

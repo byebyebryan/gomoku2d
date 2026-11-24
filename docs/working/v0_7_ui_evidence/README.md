@@ -59,4 +59,25 @@ then steps 28 → 27 → 26 → 25 → 26 → 27.
 
 ## Reproduction
 
-Use the candidate source snapshot above, rebuild the WASM package and web app, and serve the app on `127.0.0.1:8016`. Serve the manifest-verified baseline directory on `127.0.0.1:8015`. Then run `node docs/working/v0_7_ui_evidence/capture.mjs` from the repository root with Node 24 and Playwright 1.64.1 installed under `gomoku-web`. The script captures the four matched PNGs and both GIFs. `node docs/working/v0_7_ui_evidence/capture.mjs --analysis-only` refreshes only the analysis GIF after waiting for its settled verdict and timeline annotation.
+Rebuild Wasm and the web app from the source you want to capture. Serve that
+build on `127.0.0.1:8016` and the manifest-verified v0.6.5 baseline on
+`127.0.0.1:8015`. To reproduce the original candidate capture, use the
+source snapshot recorded above. The script uses Node 24, the Playwright 1.64.1
+installation under `gomoku-web` with Chromium available, and FFmpeg.
+
+Run the full capture from the root of a separate checkout. It writes both
+README GIFs and all four cataloged PNG paths. For a README-only refresh, bring
+back the intended GIFs and record their new inputs and hashes in
+[media provenance](../../assets/README.md).
+
+```sh
+node docs/working/v0_7_ui_evidence/capture.mjs
+```
+
+The analysis-only mode uses just the candidate preview. It writes
+`docs/assets/readme-analysis.gif` after waiting for a settled verdict and
+annotated timeline.
+
+```sh
+node docs/working/v0_7_ui_evidence/capture.mjs --analysis-only
+```

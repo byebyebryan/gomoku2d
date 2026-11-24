@@ -212,7 +212,7 @@ the relevant browser journeys; the full CI lane covers all three engines.
 If the change crosses the wasm bridge, rebuild wasm from the repo root first:
 
 ```sh
-wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler -- --locked
 ```
 
 Then refresh the local dependency with `npm install` in `gomoku-web/` before

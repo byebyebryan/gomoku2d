@@ -92,8 +92,49 @@ Expected essentials:
 
 ## Firestore Rules Deploy
 
-Normal deploy goes through GitHub Actions OIDC and the dedicated deploy service
-account. Manual deploy should be break-glass only.
+Normal rules deployment uses GitHub Actions OIDC and the dedicated deploy
+service account. The `deploy-firestore.yml` workflow runs on every `v*` tag,
+alongside `release.yml` (GitHub Release) and `deploy.yml` (Pages). These tag
+workflows run independently. The Firestore job deploys rules from the tag's
+source. Tag pushes establish no ordering between rules deployment and the Pages
+build, so use the planned guarded dispatch below when rules must go live first.
+
+### Planned Rules-First Deployment
+
+For a compatibility release that needs rules live before the web app, use the
+guarded `workflow_dispatch` path on `main` before creating the tag.
+
+1. Freeze the reviewed `main` commit and require exact-SHA CI success.
+2. Run this command on `main` with that full commit SHA.
+
+   ```sh
+   SOURCE_SHA="REPLACE_WITH_FULL_REVIEWED_COMMIT_SHA"
+   gh workflow run deploy-firestore.yml --ref main -f expected_sha="$SOURCE_SHA"
+   ```
+
+   The workflow requires `expected_sha` and checks it against both the
+   dispatched SHA and checked-out commit before Google Cloud authentication.
+   It reads back the created ruleset and compares its source bytes with the
+   reviewed `firestore.rules`, records the previous ruleset, then verifies the
+   live release pointer. Wait for success and retain the previous/current
+   ruleset IDs and source/SHA evidence.
+3. If the release includes reviewed changes to `firestore.indexes.json`, apply
+   those changes separately through a scoped operation. The Firestore workflow
+   deploys rules only. Follow an operation for the specific reviewed fields and
+   read each change back, verifying unrelated settings remain unchanged. The
+   [v0.6.1 release plan](../../working/v0_6_1_release_plan.md) records the
+   single-field exemption operation used there.
+4. After the guarded dispatch and any reviewed index operation succeed, create
+   and push the release tag. The tag starts the Release, Pages and Firestore
+   workflows again. Require all three to succeed and verify the deployed source
+   and served artifact under [`release.md`](release.md#cut-release).
+
+Direct Firebase/GCP admin changes to Firestore rules or the active ruleset
+pointer outside the guarded workflow are reserved for emergency break-glass
+use. Keep the deployed rules source and active release pointer explicit, read
+both back after the operation, and retain the previous and current ruleset IDs
+for recovery. Coordinate the rules/web compatibility decision with the
+[release recovery procedure](release.md#recovery).
 
 Local checks:
 
@@ -101,9 +142,6 @@ Local checks:
 cd gomoku-web
 npm run test:rules
 ```
-
-Deploy workflow is tag/manual-gated; do not couple Firestore rules deployment
-to every web deploy unless the trust model changes.
 
 ## Remote Dev Note
 
@@ -137,8 +175,10 @@ schema-2-compatible rules before the web tag and made no index changes. The
 [v0.6.4 release record](../../archive/v0_6_4_release.md) contain release-time
 deployment/readback evidence.
 
-The real signed-in profile, statistics and publication round trip remains
-pending. See the [data contract](../backend/sharing_data.md), the
+A later Chrome check on the published 0.6.5 build verified Google return to an
+existing account, publishing and editing, statistics, signed-out readback and
+cleanup. First-time Google consent and enabling a new public profile remain
+open. See the [data contract](../backend/sharing_data.md), the
 [v0.6.1 rules-first procedure](release.md#v061-sharing-release-and-compatibility),
 and [schema-2 rollout guidance](release.md#rules-first-rollout-for-replay-library-schema-2).
 

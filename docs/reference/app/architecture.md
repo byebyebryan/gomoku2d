@@ -24,14 +24,13 @@ Current components, one repo:
   here.
 - **`gomoku-bot-lab`** is the Rust workspace. Core rules, bots, evaluation
   tools, and the wasm bridge live together because they share logic. The web
-  and (future) server both borrow from it.
+  app and native tools use the same rules.
 - **Firebase Auth + Firestore** are the deployed backend today: optional Google
   sign-in, owner-scoped profile documents, private settings/history sync,
   public profiles/catalogs, a private replay library, and hardened rules.
-- A separate trusted backend is deferred. Public profiles and replay catalogs
-  already use bounded Firestore contracts; multiplayer research prefers a small
-  matchmaking/signaling boundary with peer-to-peer moves. That research is not
-  an active server-authority implementation plan.
+- Multiplayer remains deferred. [Casual multiplayer research](../backend/p2p_multiplayer.md)
+  prefers peer-to-peer moves with a small joining and signaling service.
+  [Trusted server authority](../backend/future_cloud_run.md) is a parked design.
 
 ## Frontend stack
 
@@ -170,8 +169,6 @@ One rules implementation, reused everywhere:
   session-backed browser analyzer bridge; `gomoku-web` converts saved matches
   to core replay JSON and schedules progressive analysis in a cancellable web
   worker before rendering annotations.
-- **Server (future):** `gomoku-api` depends on `gomoku-core` as a Cargo path
-  dependency. Same Rust code, native target.
 - **CLI / eval tools:** already using `gomoku-core` via path deps.
 
 This means "is this move legal?" and "did this player win?" have exactly
@@ -230,30 +227,17 @@ This path is still intentionally low-trust:
 - one coalesced profile snapshot write instead of one cloud document per match
 - good fit for bot matches and private history
 
-Public sharing and ranked/trusted features do not rely on this path alone.
+Published casual replays contain client-supplied results and follow a separate
+opt-in [sharing contract](../backend/sharing_data.md).
 
-### Trusted / cloud-backed match (target)
+### Deferred online match designs
 
-```
-user clicks cell
-  → React POSTs move to Cloud Run
-    → Cloud Run validates move against gomoku-core
-      → Cloud Run writes authoritative match state to Firestore
-        → Firestore pushes update to subscribed clients via onSnapshot
-          → clients re-render from server-written state
-```
-
-Two trust levels exist on purpose:
-
-- **Casual / free play** — no per-move backend validation; fine for local play,
-  signed-in private bot history, and disposable local sessions.
-- **Trusted / cloud-backed play** — backend validates every move. Used for
-  ranked matches, server-owned online history, and any future server-verified
-  replay. Casual public replay publication remains client supplied and explicitly
-  unverified.
-
-Casual persistence and publication stay inexpensive client operations. Trusted
-results require the future authority boundary described above.
+The [casual multiplayer proposal](../backend/p2p_multiplayer.md) keeps validation
+in both browsers and uses the backend for joining and signaling. The
+[trusted match sketch](../backend/future_cloud_run.md#trusted-match-sketch)
+describes how a future Cloud Run service could reuse `gomoku-core` to validate
+moves and own ranked results. Adoption of either design is tracked in the
+[roadmap](../product/roadmap.md#deferred-multiplayer).
 
 ## Version sequence
 

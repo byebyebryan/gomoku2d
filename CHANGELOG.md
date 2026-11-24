@@ -12,12 +12,16 @@ their own section.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-24
+
 **Theme: carry a game from its source replay through a finished round.**
 
 ### Web
 
 - Start Play From Here as an explicit session before route navigation, keeping
   active continuations and their source/result links across Back and Forward.
+- Cancel a pending Play From Here launch when the player opens another replay
+  panel, so the game cannot start after the player switches tasks.
 - Finalize wins and draws once per round. Keep Undo available during active
   play and save an intentional continuation as its own completed game.
 - Restore focus and position when returning from Replay Analysis to My games,
@@ -35,6 +39,9 @@ their own section.
 ### Repository
 
 - Validate selected source refs in CI and release/deployment workflows.
+- Refresh the web and Rust lockfiles, align Node types with Node 24, and keep
+  Playwright on the qualified 1.64 line. CI and Pages use the same checksummed
+  wasm-pack 0.15.1 binary and build with Cargo's lockfile.
 - Add a matched desktop and compact review of the replay-continuation journey,
   with media for changed journeys.
 - Date the released 0.6.2 screen reference at its existing URL and publish an
@@ -1432,7 +1439,8 @@ together in one canvas-driven surface. That lesson drove the `v0.2.1` rewrite.
   concerns blurred together.
 - Expressive UI language, but not scalable beyond one canvas.
 
-[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.5...HEAD
+[Unreleased]: https://github.com/byebyebryan/gomoku2d/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.5...v0.7.0
 [0.6.5]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.4...v0.6.5
 [0.6.4]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/byebyebryan/gomoku2d/compare/v0.6.2...v0.6.3

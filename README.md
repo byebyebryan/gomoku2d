@@ -124,7 +124,7 @@ Install Node 24, Rust stable, and `wasm-pack`. From a fresh checkout:
 ```sh
 git clone https://github.com/byebyebryan/gomoku2d.git
 cd gomoku2d
-wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler -- --locked
 cd gomoku-web
 npm ci
 npm run dev
@@ -142,13 +142,14 @@ games and lets eligible players start a publishing draft from the game row.
 The Dev site shows the changes in the
 [My games and publishing review](https://gomoku2d.byebyebryan.com/dev/reviews/my-games-publishing-065/).
 
-`v0.7.0` is in local review. The
+`v0.7.0` is in release preparation. The
 [refinement plan](docs/working/v0_7_refinement_plan.md) records its source,
 integration checks and remaining release gates.
 
-Release validation includes Chrome mobile layout emulation. Real signed-in
-sharing, physical-device and human-accessibility checks retain their recorded
-pending or deferred status. [Release record](docs/archive/v0_6_5_release.md)
+Chrome validation covers mobile layouts and existing-account sharing on the
+published 0.6.5 build, including signed-out readback and cleanup. First-time
+Google consent, fresh public-profile setup, physical-device and human
+accessibility checks retain their recorded limits.
 
 [Published releases](https://github.com/byebyebryan/gomoku2d/releases/latest) ·
 [v0.6.5 changelog](CHANGELOG.md#065---2026-11-19) ·

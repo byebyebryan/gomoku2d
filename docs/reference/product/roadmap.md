@@ -10,18 +10,20 @@ behavior live in the reference contracts; completed work lives in
 final-board previews to My games and opens the publishing draft from eligible
 game rows. The Dev site records the changes in the My games and publishing review.
 
-The real signed-in profile, statistics and game-publication round trip remains
-pending. Chrome emulation covers the 0.6.5 mobile layout gate. Physical-device,
-human accessibility, two-device private-account and novice-feedback checks
-retain their recorded open or deferred status.
+The 0.6.5 mobile layout gate passed in Chrome emulation. A later live Chrome
+check covered Google return to an existing account, publication, statistics,
+signed-out readback and cleanup. First-time consent, new public-profile setup,
+physical-device, human accessibility, two-device private-account and
+novice-feedback checks retain their recorded open or deferred status.
 [Release record](../../archive/v0_6_5_release.md)
 
 ## `0.7` Refinement
 
-`0.7.0` is in local review. The published app remains `v0.6.5`. The candidate
-preserves active replay continuations across browser navigation and finalizes
-wins and draws as rounds. It improves Match → Replay → Play From Here → Source
-replay and the return from Replay Analysis to My games. The
+`0.7.0` is in release preparation. The published app remains `v0.6.5`. The
+candidate preserves active replay continuations across browser navigation and
+finalizes wins and draws as rounds. It improves the path from Match through
+Replay and Play From Here to the source replay, and the return from Replay
+Analysis to My games. The
 [refinement plan](../../working/v0_7_refinement_plan.md) records validation and
 the remaining release and manual checks.
 

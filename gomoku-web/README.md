@@ -104,7 +104,7 @@ Prerequisites: Node 24, Rust, and `wasm-pack`.
 From the repo root, build the wasm package once:
 
 ```sh
-wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler -- --locked
 ```
 
 Then run the web app:
@@ -150,19 +150,13 @@ npm run preview            # serve dist/ locally
 npm run playtest:smoke     # focused automated Playwright smoke
 npm run playtest:engines   # full Chromium, Firefox and WebKit journeys
 npm run profile:browser    # opt-in production browser cost/resource samples
-npm run media:readme       # regenerate README/showcase media from preview
 ```
 
-For only the profile/sharing/replay assets, use the reviewed local demo and an
-explicitly owned loopback preview:
-
-```sh
-GOMOKU_MEDIA_BASE_URL=http://127.0.0.1:8013 GOMOKU_MEDIA_PUBLIC_PROFILE_ID=v061-demo-player npm run media:sharing
-```
-
-This command captures existing UI; it does not seed or modify cloud records.
-See [media provenance](../docs/assets/README.md) and the
-[example corpus contract](../docs/reference/app/replay_examples.md).
+The [0.7 capture recipe](../docs/working/v0_7_ui_evidence/README.md#reproduction)
+explains which files each mode writes and how to refresh the README clips
+without changing the cataloged review captures. The
+[media provenance](../docs/assets/README.md) records the inputs and outputs
+of the older recipes.
 
 The `postbuild` step publishes visual assets, curated lab reports, SPA route
 entries, and `404.html`. Production builds expect these report artifacts:

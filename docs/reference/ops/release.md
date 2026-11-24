@@ -22,7 +22,7 @@ GitHub Pages serves the custom domain root. Production builds use
 Use a foreground preview on port `8001` (stop it with Ctrl-C):
 
 ```sh
-wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler
+wasm-pack build gomoku-bot-lab/gomoku-wasm --target bundler -- --locked
 cd gomoku-web
 npm ci
 npm run build
@@ -36,23 +36,32 @@ run `npm run playtest`. Do not terminate an unrelated preview to claim its port.
 
 ## Release Prep
 
-1. Decide whether screenshots/OG/README hero need refresh.
-2. If captures should show the new version, run:
+1. Set the web package version for every release. The tag validator requires
+   the `gomoku-web/package.json` version and dated changelog section to match
+   the tag exactly. Run the helper from the repository root to update the
+   package and lockfile.
 
    ```sh
    scripts/set-web-version.sh x.y.z
    ```
 
-   For a version with SemVer build metadata, set the full `version` in
-   `gomoku-web/package.json` and in both the top level and `packages[""]`
-   entries in `gomoku-web/package-lock.json`. `npm version` drops build metadata.
+   The tag validator accepts SemVer build metadata. The helper does not accept
+   build metadata, and `npm version` drops it. Set the full `version` manually
+   in `gomoku-web/package.json` and in both the top level and `packages[""]`
+   entries in `gomoku-web/package-lock.json`.
+
+2. Review whether screenshots/OG/README hero need refresh. Follow the
+   [release media guidance](../../assets/README.md). Run step 1 first when a
+   capture should show the release version.
 
 3. Run relevant checks from [`testing.md`](testing.md).
    Production npm and Rust dependency audits are required for every release.
 4. Refresh curated reports only when bot/analyzer/report behavior or source data
    changed; use [`tournament.md`](tournament.md).
 5. Update `CHANGELOG.md` with an empty `[Unreleased]` section and dated release
-   section.
+   section. Update the footer compare links so `[Unreleased]` compares from the
+   new tag to `HEAD`, and the version link ends at the new tag. The tag
+   validator checks both links.
 6. Record the available account, device, and accessibility acceptance evidence
    and any explicit deferrals. Bryan's [October manual-check deferrals](../../archive/reconciliation_2026_10/README.md#deferred-acceptance)
    remain in force; carry their limits into the release decision rather than
@@ -90,6 +99,10 @@ gh run view <run-id> --log-failed
 
 ## Cut Release
 
+For a compatibility release that requires rules before the web app, complete
+the [planned rules-first procedure](backend_infra.md#planned-rules-first-deployment)
+on the frozen `main` SHA and verify its readbacks before creating the tag.
+
 After CI passes on the exact preparation commit, run from the repo root:
 
 ```sh
@@ -101,9 +114,9 @@ git push origin "v${VERSION}"
 ```
 
 The release script validates clean, pushed `main` and version/changelog/tag
-state, then creates an annotated local tag. It does not push. The explicit tag
-push dispatches GitHub Release, Pages deploy, and Firestore rules deploy
-workflows. Each tag-triggered workflow runs the shared package/tag/changelog
+state, then creates an annotated local tag. It does not push. Pushing the tag
+triggers GitHub Release, Pages deploy and Firestore rules deploy workflows
+independently. Each tag-triggered workflow runs the shared package/tag/changelog
 validator before creating the Release, building the Pages artifact, or
 authenticating to Google Cloud. The version is matched exactly, including any
 SemVer prerelease identifier or build metadata. The exact-SHA CI check above
@@ -137,8 +150,9 @@ copied `index.html` entries.
 ### Rules-first sequence for sharing releases
 
 1. Freeze the reviewed `main` SHA and require exact-SHA CI success.
-2. Before tagging, manually deploy Firestore rules from that frozen SHA. Use
-   the full reviewed commit SHA as `expected_sha`:
+2. Before creating the tag, follow the [planned guarded rules-first procedure](backend_infra.md#planned-rules-first-deployment)
+   to deploy Firestore rules from that frozen SHA. Use the full reviewed commit
+   SHA as `expected_sha`.
 
    ```sh
    SOURCE_SHA="REPLACE_WITH_FULL_REVIEWED_COMMIT_SHA"
